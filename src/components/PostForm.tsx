@@ -1,8 +1,10 @@
-import { useState, useRef, useEffect, type KeyboardEvent, type DragEvent } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import DOMPurify from "dompurify";
 import { Editor } from "@/components/Editor";
-import { POST_CATEGORIES, slugify, uploadCoverImage, type PostCategory, type PostInput, type Post, type PostStatus } from "@/lib/posts";
+import { CoverUploader } from "@/components/CoverUploader";
+import { TagInput } from "@/components/TagInput";
+import { PostPreview } from "@/components/PostPreview";
+import { POST_CATEGORIES, slugify, type PostCategory, type PostInput, type Post, type PostStatus } from "@/lib/posts";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PostFormProps {
@@ -10,9 +12,6 @@ interface PostFormProps {
   submitting: boolean;
   onSubmit: (input: PostInput) => void;
 }
-
-const MAX_COVER_BYTES = 8 * 1024 * 1024; // 8 MB
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
 
 type Tab = "en" | "bn";
 
@@ -63,73 +62,14 @@ export function PostForm({ initial, submitting, onSubmit }: PostFormProps) {
   }, [initial?.author_name, initial?.author_image]);
 
   const [coverImage, setCoverImage] = useState<string | null>(initial?.cover_image ?? null);
-  const [coverUrlDraft, setCoverUrlDraft] = useState("");
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
-  const [tagDraft, setTagDraft] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
   const [tab, setTab] = useState<Tab>("en");
   const [preview, setPreview] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const onTitleEnChange = (v: string) => {
     setTitleEn(v);
     if (!slugTouched) setSlug(slugify(v));
   };
-
-  const onFile = async (file: File | null) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/") || !ACCEPTED_TYPES.includes(file.type)) {
-      toast.error("Please choose a JPG, PNG, WEBP, GIF, or AVIF image.");
-      return;
-    }
-    if (file.size > MAX_COVER_BYTES) {
-      toast.error("Image is too large. Max 8 MB.");
-      return;
-    }
-    try {
-      setUploading(true);
-      const url = await uploadCoverImage(file);
-      setCoverImage(url);
-      toast.success("Cover uploaded");
-    } catch (e) {
-      const msg = (e as Error).message || "Upload failed";
-      console.error("[cover upload]", e);
-      toast.error(`Upload failed: ${msg}`);
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  };
-
-  const onDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragOver(false);
-    const f = e.dataTransfer.files?.[0];
-    if (f) onFile(f);
-  };
-
-  const addTag = (raw: string) => {
-    const t = raw.trim().replace(/^#/, "");
-    if (!t) return;
-    if (tags.some((x) => x.toLowerCase() === t.toLowerCase())) {
-      setTagDraft("");
-      return;
-    }
-    setTags([...tags, t]);
-    setTagDraft("");
-  };
-
-  const onTagKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addTag(tagDraft);
-    } else if (e.key === "Backspace" && !tagDraft && tags.length) {
-      setTags(tags.slice(0, -1));
-    }
-  };
-
-  const removeTag = (t: string) => setTags(tags.filter((x) => x !== t));
 
   const handleSubmit = (status: PostStatus) => {
     if (!titleEn.trim() || !slug.trim() || !contentEn.trim()) {
@@ -142,9 +82,6 @@ export function PostForm({ initial, submitting, onSubmit }: PostFormProps) {
       setTab("bn");
       return;
     }
-    const finalTags = tagDraft.trim()
-      ? Array.from(new Set([...tags, tagDraft.trim().replace(/^#/, "")]))
-      : tags;
     onSubmit({
       title_en: titleEn.trim(),
       title_bn: titleBn.trim(),
@@ -158,9 +95,8 @@ export function PostForm({ initial, submitting, onSubmit }: PostFormProps) {
       author_name: authorName.trim() || authorFallback,
       author_image: authorImage,
       status,
-      tags: finalTags,
+      tags,
     });
-
   };
 
   const labelCls = "block text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2";
@@ -184,85 +120,21 @@ export function PostForm({ initial, submitting, onSubmit }: PostFormProps) {
     </button>
   );
 
-  const previewTitle = tab === "en" ? titleEn : titleBn;
-  const previewExcerpt = tab === "en" ? excerptEn : excerptBn;
-  const previewContent = tab === "en" ? contentEn : contentBn;
-  const previewIsHtml = /<\/?[a-z][\s\S]*>/i.test(previewContent);
-  const previewStyle = tab === "bn" ? bnStyle : undefined;
-
   if (preview) {
     return (
-      <div className="space-y-6 max-w-3xl">
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
-          <div className="flex gap-2">
-            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Preview</span>
-            <span className="text-xs uppercase tracking-[0.2em] text-foreground/70">· {tab === "en" ? "English" : "বাংলা"}</span>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setTab(tab === "en" ? "bn" : "en")}
-              className="px-4 py-2 text-xs uppercase tracking-[0.2em] border border-border hover:bg-secondary"
-            >
-              Switch to {tab === "en" ? "বাংলা" : "English"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreview(false)}
-              className="px-4 py-2 text-xs uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90"
-            >
-              Back to Edit
-            </button>
-          </div>
-        </div>
-
-        <article className="mx-auto max-w-2xl py-10">
-          <header className="mb-10 text-center">
-            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">{category}</p>
-            <h1 className="font-serif text-4xl md:text-5xl leading-[1.15]" style={previewStyle}>
-              {previewTitle || "Untitled"}
-            </h1>
-            <p className="mt-6 text-sm text-muted-foreground">
-              by {authorName || authorFallback}
-            </p>
-            {tags.length > 0 && (
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
-                {tags.map((tg) => (
-                  <span key={tg} className="text-[0.7rem] uppercase tracking-[0.14em] border border-border/50 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full hover:bg-secondary/90 transition-colors">
-                    {tg}
-                  </span>
-                ))}
-              </div>
-            )}
-          </header>
-
-          {coverImage && (
-            <div className="mb-10">
-              <img src={coverImage} alt={previewTitle} className="w-full aspect-[16/9] object-cover rounded-lg" />
-            </div>
-          )}
-
-          {previewExcerpt && (
-            <p className="font-serif text-xl text-foreground/80 italic text-center mb-8" style={previewStyle}>
-              {previewExcerpt}
-            </p>
-          )}
-
-          {previewContent ? (
-            previewIsHtml ? (
-              <div className="prose-mitra" style={previewStyle} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewContent) }} />
-            ) : (
-              <div className="prose-mitra" style={previewStyle}>
-                {previewContent.split("\n\n").filter(Boolean).map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
-            )
-          ) : (
-            <p className="text-center text-sm text-muted-foreground italic">No content yet.</p>
-          )}
-        </article>
-      </div>
+      <PostPreview
+        tab={tab}
+        onTabChange={setTab}
+        onBack={() => setPreview(false)}
+        title={tab === "en" ? titleEn : titleBn}
+        excerpt={tab === "en" ? excerptEn : excerptBn}
+        content={tab === "en" ? contentEn : contentBn}
+        category={category}
+        authorName={authorName}
+        authorFallback={authorFallback}
+        tags={tags}
+        coverImage={coverImage}
+      />
     );
   }
 
@@ -447,112 +319,9 @@ export function PostForm({ initial, submitting, onSubmit }: PostFormProps) {
         </div>
       </div>
 
+      <TagInput tags={tags} onTagsChange={setTags} />
 
-      <div>
-        <label className={labelCls}>Tags</label>
-        <div className="border border-border bg-background px-3 py-2.5 flex flex-wrap items-center gap-2">
-          {tags.map((t) => (
-            <span key={t} className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground text-xs px-2.5 py-1 rounded-sm">
-              {t}
-              <button type="button" onClick={() => removeTag(t)} className="text-muted-foreground hover:text-foreground" aria-label={`Remove ${t}`}>
-                ×
-              </button>
-            </span>
-          ))}
-          <input
-            value={tagDraft}
-            onChange={(e) => setTagDraft(e.target.value)}
-            onKeyDown={onTagKey}
-            onBlur={() => tagDraft && addTag(tagDraft)}
-            placeholder={tags.length ? "" : "Type a tag and press Enter…"}
-            className="flex-1 min-w-[140px] bg-transparent text-sm focus:outline-none"
-          />
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">Press Enter or comma to add. Backspace removes the last tag.</p>
-      </div>
-
-      <div>
-        <label className={labelCls}>Cover image</label>
-
-        {coverImage ? (
-          <div className="relative group border border-border">
-            <img src={coverImage} alt="cover" className="w-full max-h-80 object-cover" />
-            <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="px-4 py-2 text-xs uppercase tracking-[0.2em] bg-background text-foreground border border-border hover:bg-secondary disabled:opacity-50"
-              >
-                Replace
-              </button>
-              <button
-                type="button"
-                onClick={() => setCoverImage(null)}
-                disabled={uploading}
-                className="px-4 py-2 text-xs uppercase tracking-[0.2em] bg-background text-destructive border border-border hover:bg-secondary disabled:opacity-50"
-              >
-                Remove
-              </button>
-            </div>
-            {uploading && (
-              <div className="absolute inset-0 bg-background/70 flex items-center justify-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Uploading…
-              </div>
-            )}
-          </div>
-        ) : (
-          <div
-            onClick={() => !uploading && fileRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={onDrop}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileRef.current?.click(); }}
-            className={`border-2 border-dashed cursor-pointer text-center px-6 py-12 transition-colors ${
-              dragOver ? "border-foreground bg-secondary/60" : "border-border hover:border-foreground/50 hover:bg-secondary/30"
-            } ${uploading ? "opacity-60 pointer-events-none" : ""}`}
-          >
-            <p className="font-serif text-lg mb-1">
-              {uploading ? "Uploading…" : "Drop an image here, or click to choose"}
-            </p>
-            <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, GIF or AVIF — up to 8 MB</p>
-          </div>
-        )}
-
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-          onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-          className="hidden"
-        />
-
-        <div className="mt-3 flex items-center gap-2">
-          <input
-            type="url"
-            value={coverUrlDraft}
-            onChange={(e) => setCoverUrlDraft(e.target.value)}
-            placeholder="…or paste an image URL"
-            className={inputCls + " flex-1"}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const u = coverUrlDraft.trim();
-              if (!u) return;
-              try { new URL(u); } catch { toast.error("Invalid URL"); return; }
-              setCoverImage(u);
-              setCoverUrlDraft("");
-              toast.success("Cover set from URL");
-            }}
-            className="px-4 py-2.5 text-xs uppercase tracking-[0.2em] border border-border hover:bg-secondary"
-          >
-            Use URL
-          </button>
-        </div>
-      </div>
+      <CoverUploader coverImage={coverImage} onCoverChange={setCoverImage} />
 
       <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
         {initial && (
@@ -563,7 +332,7 @@ export function PostForm({ initial, submitting, onSubmit }: PostFormProps) {
         <button
           type="button"
           onClick={() => handleSubmit("draft")}
-          disabled={submitting || uploading}
+          disabled={submitting}
           className="px-6 py-3 text-xs uppercase tracking-[0.25em] border border-border text-foreground hover:bg-secondary disabled:opacity-40"
         >
           {submitting ? "Saving…" : "Save as Draft"}
@@ -571,7 +340,7 @@ export function PostForm({ initial, submitting, onSubmit }: PostFormProps) {
         <button
           type="button"
           onClick={() => handleSubmit("published")}
-          disabled={submitting || uploading}
+          disabled={submitting}
           className="px-8 py-3 text-xs uppercase tracking-[0.25em] bg-foreground text-background hover:opacity-90 disabled:opacity-40"
         >
           {submitting ? "Saving…" : currentStatus === "published" ? "Update & Keep Published" : "Publish Now"}

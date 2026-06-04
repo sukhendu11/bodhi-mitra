@@ -7,18 +7,35 @@ interface TabProps {
   update: <K extends keyof SiteConfig>(group: K, patch: Partial<SiteConfig[K]>) => void;
 }
 
+const navFields = [
+  { key: "home", label: "HOME" },
+  { key: "philosophy", label: "PHILOSOPHY (dropdown)" },
+  { key: "buddhism", label: "  ↳ BUDDHISM" },
+  { key: "mind", label: "  ↳ MIND" },
+  { key: "practice", label: "PRACTICE (dropdown)" },
+  { key: "wellness", label: "  ↳ WELLNESS" },
+  { key: "today", label: "  ↳ TODAY" },
+  { key: "books", label: "BOOKS" },
+  { key: "about", label: "ABOUT" },
+  { key: "contact", label: "CONTACT" },
+] as const;
+
 export function NavTab({ cfg, update }: TabProps): ReactNode {
   return (
     <>
       <Section title="Navigation Link Labels">
-        {(["home", "bp", "wisdom", "books", "about", "contact"] as const).map((k) => (
-          <FieldRow key={k}>
-            <Field label={`${k.toUpperCase()} — English`}
-              value={(cfg.nav as Record<string, string>)[`${k}_en`]}
-              onChange={(v) => update("nav", { [`${k}_en`]: v } as Partial<SiteConfig["nav"]>)} />
-            <Field label={`${k.toUpperCase()} — বাংলা`}
-              value={(cfg.nav as Record<string, string>)[`${k}_bn`]}
-              onChange={(v) => update("nav", { [`${k}_bn`]: v } as Partial<SiteConfig["nav"]>)} />
+        <p className="text-xs text-muted-foreground mb-4 -mt-2">
+          Customize every label in the header navigation. Dropdown parents (Philosophy, Practice)
+          are the clickable trigger labels; indented items appear inside the dropdown.
+        </p>
+        {navFields.map(({ key, label }) => (
+          <FieldRow key={key}>
+            <Field label={`${label} — English`}
+              value={(cfg.nav as Record<string, string>)[`${key}_en`]}
+              onChange={(v) => update("nav", { [`${key}_en`]: v } as Partial<SiteConfig["nav"]>)} />
+            <Field label={`${label} — বাংলা`}
+              value={(cfg.nav as Record<string, string>)[`${key}_bn`]}
+              onChange={(v) => update("nav", { [`${key}_bn`]: v } as Partial<SiteConfig["nav"]>)} />
           </FieldRow>
         ))}
       </Section>

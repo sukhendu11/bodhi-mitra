@@ -15,6 +15,7 @@ export function useAuthSession() {
     const invalidateUserData = () => {
       queryClient.invalidateQueries({ queryKey: ["is-admin"] });
       queryClient.invalidateQueries({ queryKey: ["comments"] });
+      queryClient.invalidateQueries({ queryKey: ["user-role"] });
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
@@ -51,12 +52,32 @@ const HARDCODED_ADMIN_EMAIL = "admin@bodhimitra.test";
 
 /**
  * Hardcoded admin bypass for demo/development.
- * Anyone who signs in with the default admin email is treated as admin
+ * Anyone who signs in with the default admin email is treated as super_admin
  * without needing a `user_roles` database entry.
  */
 export function isHardcodedAdmin(user: User | null) {
   if (!user?.email) return false;
   return user.email.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase();
+}
+
+/** Get the current user's role from the database. Returns null if no role assigned. */
+export function useUserRole(user: User | null) {
+  return useQuery({
+    queryKey: ["user-role", user?.id ?? null],
+    queryFn: async () => {
+      if (!user) return null;
+      if (isHardcodedAdmin(user)) return "super_admin";
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error || !data) return null;
+      return data.role as string;
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
 }
 
 export function useIsAdmin(user: User | null) {
@@ -70,7 +91,28 @@ export function useIsAdmin(user: User | null) {
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
-        .eq("role", "admin")
+        .in("role", ["admin", "super_admin"])
+        .maybeSingle();
+      if (error) return false;
+      return !!data;
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+}
+
+/** Check if user can manage other users (super_admin only). */
+export function useCanManageUsers(user: User | null) {
+  return useQuery({
+    queryKey: ["can-manage-users", user?.id ?? null],
+    queryFn: async () => {
+      if (!user) return false;
+      if (isHardcodedAdmin(user)) return true;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "super_admin")
         .maybeSingle();
       if (error) return false;
       return !!data;

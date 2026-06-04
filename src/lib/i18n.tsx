@@ -7,8 +7,12 @@ const STORAGE_KEY = "bodhi-mitra-lang";
 const dict = {
   // Nav & system actions — ALWAYS English in both languages
   nav_home: { en: "Home", bn: "Home" },
-  nav_buddhist_psychology: { en: "Buddhist Psychology", bn: "Buddhist Psychology" },
-  nav_wisdom: { en: "Wisdom", bn: "Wisdom" },
+  nav_philosophy: { en: "Philosophy", bn: "Philosophy" },
+  nav_practice: { en: "Practice", bn: "Practice" },
+  nav_buddhism: { en: "Buddhism", bn: "Buddhism" },
+  nav_mind: { en: "Mind (Buddhist Psychology)", bn: "Mind (Buddhist Psychology)" },
+  nav_wellness: { en: "Wellness (Mental Health Approach)", bn: "Wellness (Mental Health Approach)" },
+  nav_today: { en: "Today (Modern Relevance)", bn: "Today (Modern Relevance)" },
   nav_books: { en: "Books", bn: "Books" },
   nav_about: { en: "About", bn: "About" },
   nav_admin: { en: "Admin Panel", bn: "Admin Panel" },

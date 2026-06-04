@@ -100,55 +100,90 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-const desktopNavItems = [
-  { to: "/", labelKey: "home" as const },
-  { to: "/about", labelKey: "about" as const },
-  { to: "/contact", labelKey: "contact" as const },
+/* ─── Navigation structure ─────────────────────────────────────────────── */
+
+/** Top-level direct links — shown inline in desktop nav. */
+const topLevelLinks = [
+  { to: "/" as const, labelKey: "home" as const },
+  { to: "/books" as const, labelKey: "books" as const },
+  { to: "/about" as const, labelKey: "about" as const },
+  { to: "/contact" as const, labelKey: "contact" as const },
 ] as const;
 
-const categoryDropdownItems = [
-  { to: "/buddhist-psychology", labelKey: "bp" as const },
-  { to: "/wisdom", labelKey: "wisdom" as const },
-  { to: "/books", labelKey: "books" as const },
+/** Dropdown groups — Philosophy and Practice with their sub-items. */
+const dropdownGroups = [
+  {
+    labelKey: "philosophy" as const,
+    items: [
+      { to: "/buddhist-psychology" as const, labelKey: "buddhism" as const },
+      { to: "/wisdom" as const, labelKey: "mind" as const },
+    ],
+  },
+  {
+    labelKey: "practice" as const,
+    items: [
+      { to: "/satsang" as const, labelKey: "wellness" as const },
+      { to: "/" as const, labelKey: "today" as const },
+    ],
+  },
 ] as const;
 
-const allNavItems = [
-  { to: "/", labelKey: "home" as const },
-  { to: "/buddhist-psychology", labelKey: "bp" as const },
-  { to: "/wisdom", labelKey: "wisdom" as const },
-  { to: "/books", labelKey: "books" as const },
-  { to: "/about", labelKey: "about" as const },
-  { to: "/contact", labelKey: "contact" as const },
+/** All nav items as a flat list for mobile (groups will be rendered separately).
+ *  Only top-level items that are NOT inside dropdown groups. */
+const flatNavItems = [
+  { to: "/" as const, labelKey: "home" as const },
+  { to: "/books" as const, labelKey: "books" as const },
+  { to: "/about" as const, labelKey: "about" as const },
+  { to: "/contact" as const, labelKey: "contact" as const },
 ] as const;
+
+/** Resolve a nav label from site settings, with i18n fallback. */
+type NavKey =
+  | "home" | "philosophy" | "practice"
+  | "buddhism" | "mind" | "wellness" | "today"
+  | "books" | "about" | "contact";
+
+function resolveNavLabel(settings: ReturnType<typeof useSiteSettings>, lang: "en" | "bn", key: NavKey): string {
+  const val = (settings.nav as Record<string, string>)[`${key}_${lang}`];
+  if (val?.trim()) return val.trim();
+  // Fallback to the other language
+  const other = (settings.nav as Record<string, string>)[`${key}_${lang === "en" ? "bn" : "en"}`];
+  if (other?.trim()) return other.trim();
+  // Ultimate fallback
+  const fallbacks: Record<NavKey, string> = {
+    home: "Home", philosophy: "Philosophy", practice: "Practice",
+    buddhism: "Buddhism", mind: "Mind (Buddhist Psychology)",
+    wellness: "Wellness (Mental Health Approach)", today: "Today (Modern Relevance)",
+    books: "Books", about: "About", contact: "Contact",
+  };
+  return fallbacks[key];
+}
+
+/* ─── Header ───────────────────────────────────────────────────────────── */
 
 function Header() {
   const { user } = useAuthSession();
   const { data: isAdmin } = useIsAdmin(user);
-  const { t, lang } = useLang();
+  const { lang } = useLang();
   const settings = useSiteSettings();
   const currentPath = useRouterState({ select: (s) => s.location.href });
   const loginSearch = { message: "", redirect: currentPath === "/login" ? "/" : currentPath };
-
-  const navLabel = (k: "home" | "bp" | "wisdom" | "books" | "about" | "contact") =>
-    pickLocalized(settings.nav[`${k}_en`], settings.nav[`${k}_bn`], lang);
 
   const brandName = pickLocalized(settings.branding.site_name_en, settings.branding.site_name_bn, lang);
   const logoUrl = settings.branding.logo_url;
   const logoMaxW = settings.branding.logo_max_width;
 
+  const linkCls = "hover:text-foreground transition-colors";
+  const activeLinkCls = "text-foreground";
+
   const signInCls =
     "px-4 py-1.5 text-xs uppercase tracking-[0.2em] rounded-sm text-white transition-colors";
   const signInStyle = { backgroundColor: "var(--color-saffron)" };
-  const onSignInEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    (e.currentTarget.style.backgroundColor = "var(--color-saffron-hover)");
-  };
-  const onSignInLeave = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    (e.currentTarget.style.backgroundColor = "var(--color-saffron)");
-  };
 
   return (
     <header className="border-b border-border/60 bg-background/60 backdrop-blur-md sticky top-0 z-40">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+        {/* Brand */}
         <Link to="/" className="font-serif text-2xl tracking-tight flex items-center gap-3">
           {logoUrl ? (
             <img src={logoUrl} alt={brandName} style={{ maxWidth: logoMaxW, maxHeight: 56 }} className="object-contain" />
@@ -156,37 +191,50 @@ function Header() {
             <span>{brandName}</span>
           )}
         </Link>
+
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-          {desktopNavItems.map((item) => (
+          {/* Top-level links */}
+          {topLevelLinks.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               activeOptions={{ exact: item.to === "/" }}
-              activeProps={{ className: "text-foreground" }}
-              className="hover:text-foreground transition-colors"
+              activeProps={{ className: activeLinkCls }}
+              className={linkCls}
             >
-              {navLabel(item.labelKey)}
+              {resolveNavLabel(settings, lang, item.labelKey)}
             </Link>
           ))}
-          <NavDropdown
-            triggerLabel="Explore"
-            items={categoryDropdownItems.map((item) => ({
-              to: item.to,
-              label: navLabel(item.labelKey),
-            }))}
-          />
+
+          {/* Dropdown groups */}
+          {dropdownGroups.map((group) => (
+            <NavDropdown
+              key={group.labelKey}
+              triggerLabel={resolveNavLabel(settings, lang, group.labelKey)}
+              items={group.items.map((item) => ({
+                to: item.to,
+                label: resolveNavLabel(settings, lang, item.labelKey),
+              }))}
+            />
+          ))}
+
+          {/* Admin button */}
           {isAdmin && (
             <Link
               to="/admin"
               className="px-3 py-1.5 text-xs uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 transition-opacity"
             >
-              {t("nav_admin")}
+              Admin
             </Link>
           )}
+
           <LangToggle />
+
+          {/* Sign in / out */}
           {user ? (
-            <button onClick={() => signOut()} className="hover:text-foreground transition-colors">
-              {t("sign_out")}
+            <button onClick={() => signOut()} className={linkCls}>
+              Sign out
             </button>
           ) : (
             <Link
@@ -194,10 +242,10 @@ function Header() {
               search={loginSearch}
               className={signInCls}
               style={signInStyle}
-              onMouseEnter={onSignInEnter}
-              onMouseLeave={onSignInLeave}
+              onMouseEnter={(e) => { (e.currentTarget.style.backgroundColor = "var(--color-saffron-hover)"); }}
+              onMouseLeave={(e) => { (e.currentTarget.style.backgroundColor = "var(--color-saffron)"); }}
             >
-              {t("sign_in")}
+              Sign in
             </Link>
           )}
         </nav>
@@ -206,15 +254,22 @@ function Header() {
         <div className="md:hidden flex items-center gap-3">
           <LangToggle className="shrink-0" />
           <MobileNav
-            items={allNavItems.map((item) => ({
+            items={flatNavItems.map((item) => ({
               to: item.to,
-              label: navLabel(item.labelKey),
+              label: resolveNavLabel(settings, lang, item.labelKey),
+            }))}
+            groups={dropdownGroups.map((group) => ({
+              label: resolveNavLabel(settings, lang, group.labelKey),
+              items: group.items.map((item) => ({
+                to: item.to,
+                label: resolveNavLabel(settings, lang, item.labelKey),
+              })),
             }))}
             isAdmin={!!isAdmin}
             isSignedIn={!!user}
-            adminLabel={t("nav_admin_short")}
-            signInLabel={t("sign_in")}
-            signOutLabel={t("sign_out")}
+            adminLabel="Admin"
+            signInLabel="Sign in"
+            signOutLabel="Sign out"
             onSignOut={() => signOut()}
             loginSearch={loginSearch}
           />
@@ -223,6 +278,8 @@ function Header() {
     </header>
   );
 }
+
+/* ─── Footer ───────────────────────────────────────────────────────────── */
 
 function SocialIcon({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
   if (!href) return null;
@@ -269,6 +326,8 @@ function Footer() {
   );
 }
 
+/* ─── Root component ───────────────────────────────────────────────────── */
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
@@ -286,4 +345,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

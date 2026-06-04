@@ -24,7 +24,7 @@ export const createSiteAssetUpload = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .eq("role", "admin")
+      .in("role", ["admin", "super_admin"])
       .maybeSingle();
 
     if (!role) throw new Error("Only admins can upload site assets.");

@@ -41,8 +41,12 @@ export interface SiteConfig {
   };
   nav: {
     home_en: string; home_bn: string;
-    bp_en: string; bp_bn: string;
-    wisdom_en: string; wisdom_bn: string;
+    philosophy_en: string; philosophy_bn: string;
+    practice_en: string; practice_bn: string;
+    buddhism_en: string; buddhism_bn: string;
+    mind_en: string; mind_bn: string;
+    wellness_en: string; wellness_bn: string;
+    today_en: string; today_bn: string;
     books_en: string; books_bn: string;
     about_en: string; about_bn: string;
     contact_en: string; contact_bn: string;
@@ -161,8 +165,12 @@ export const DEFAULT_CONFIG: SiteConfig = {
   },
   nav: {
     home_en: "Home", home_bn: "Home",
-    bp_en: "Buddhist Psychology", bp_bn: "Buddhist Psychology",
-    wisdom_en: "Wisdom", wisdom_bn: "Wisdom",
+    philosophy_en: "Philosophy", philosophy_bn: "Philosophy",
+    practice_en: "Practice", practice_bn: "Practice",
+    buddhism_en: "Buddhism", buddhism_bn: "Buddhism",
+    mind_en: "Mind (Buddhist Psychology)", mind_bn: "Mind (Buddhist Psychology)",
+    wellness_en: "Wellness (Mental Health Approach)", wellness_bn: "Wellness (Mental Health Approach)",
+    today_en: "Today (Modern Relevance)", today_bn: "Today (Modern Relevance)",
     books_en: "Books", books_bn: "Books",
     about_en: "About", about_bn: "About",
     contact_en: "Contact", contact_bn: "Contact",

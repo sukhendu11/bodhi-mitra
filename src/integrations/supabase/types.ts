@@ -183,20 +183,68 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      role_hierarchy: {
+        Row: {
+          role: string
+          level: number
+          label: string
+          description: string | null
+        }
+        Insert: {
+          role: string
+          level: number
+          label: string
+          description?: string | null
+        }
+        Update: {
+          role?: string
+          level?: number
+          label?: string
+          description?: string | null
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          id: string
+          role: string
+          resource: string
+          action: string
+          allowed: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          role: string
+          resource: string
+          action: string
+          allowed?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          role?: string
+          resource?: string
+          action?: string
+          allowed?: boolean
+          created_at?: string
         }
         Relationships: []
       }
@@ -216,14 +264,49 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
+          _role: string
           _user_id: string
         }
         Returns: boolean
       }
+      has_min_role: {
+        Args: {
+          _min_level: number
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_permission: {
+        Args: {
+          _resource: string
+          _action: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      get_user_roles: {
+        Args: {
+          _admin_id: string
+        }
+        Returns: {
+          user_id: string
+          email: string | null
+          display_name: string | null
+          avatar_url: string | null
+          role: string | null
+          created_at: string | null
+        }[]
+      }
+      set_user_role: {
+        Args: {
+          _admin_id: string
+          _target_user_id: string
+          _new_role: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
-      app_role: "admin" | "user"
       post_category: "Buddhist Psychology" | "Wisdom" | "Books"
       post_status: "draft" | "published"
     }
@@ -353,7 +436,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
       post_category: ["Buddhist Psychology", "Wisdom", "Books"],
       post_status: ["draft", "published"],
     },

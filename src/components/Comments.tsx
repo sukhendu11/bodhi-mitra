@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { fetchComments, addComment, deleteComment, updateComment, type Comment } from "@/lib/comments";
+import { fetchComments, type Comment } from "@/lib/comments";
+import { addCommentFn, updateCommentFn, deleteCommentFn } from "@/lib/comment-functions";
 import { useAuthSession, useIsAdmin } from "@/hooks/useAuth";
 import { LetterAvatar } from "@/components/LetterAvatar";
-
+import { AuthModal } from "@/components/AuthModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 function snippet(text: string, max = 140) {
   const t = text.replace(/\s+/g, " ").trim();
@@ -15,21 +16,20 @@ function snippet(text: string, max = 140) {
 export function Comments({ postId }: { postId: string }) {
   const { user } = useAuthSession();
   const { data: isAdmin = false } = useIsAdmin(user);
-  const currentPath = useRouterState({ select: (s) => s.location.href });
-  const navigate = useNavigate();
-  const loginRedirect = currentPath === "/login" ? "/" : currentPath;
-  const goToLogin = () => navigate({ to: "/login", search: { message: "", redirect: loginRedirect } });
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [replyText, setReplyText] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [authOpen, setAuthOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Comment | null>(null);
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ["comments", postId],
     queryFn: () => fetchComments(postId),
     staleTime: 30_000,
+    placeholderData: (prev) => prev ?? [],
   });
 
   const commentsById = useMemo(() => {
@@ -65,13 +65,13 @@ export function Comments({ postId }: { postId: string }) {
 
   const postMutation = useMutation({
     mutationFn: async (payload: { text: string; parent_id: string | null }) => {
-      if (!user) throw new Error("Not signed in");
-      return addComment({
-        post_id: postId,
-        user_id: user.id,
-        user_name: userDisplayName(),
-        comment_text: payload.text.trim(),
-        parent_id: payload.parent_id,
+      return (addCommentFn as any)({
+        data: {
+          post_id: postId,
+          user_name: userDisplayName(),
+          comment_text: payload.text.trim(),
+          parent_id: payload.parent_id,
+        },
       });
     },
     onSuccess: (_d, vars) => {
@@ -89,18 +89,25 @@ export function Comments({ postId }: { postId: string }) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteComment,
+    mutationFn: async (id: string) => {
+      return (deleteCommentFn as any)({ data: { id } });
+    },
     onSuccess: () => {
+      setDeleteTarget(null);
+      toast.success("Comment deleted");
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const editMutation = useMutation({
-    mutationFn: (vars: { id: string; text: string }) => updateComment(vars.id, vars.text.trim()),
+    mutationFn: async (vars: { id: string; text: string }) => {
+      return (updateCommentFn as any)({ data: { id: vars.id, comment_text: vars.text.trim() } });
+    },
     onSuccess: () => {
       setEditingId(null);
       setEditingText("");
-      toast.success("Updated");
+      toast.success("Comment updated");
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -114,8 +121,8 @@ export function Comments({ postId }: { postId: string }) {
   const renderComment = (c: Comment, isReply = false) => {
     const replies = repliesByParent.get(c.id) ?? [];
     const canDelete = user && (user.id === c.user_id || isAdmin);
-    const canEdit = user && (user.id === c.user_id || isAdmin);
-    const canReply = isAdmin && !isReply;
+    const canEdit = user && user.id === c.user_id;
+    const canReply = !!user && !isReply;
     const isEditing = editingId === c.id;
 
     return (
@@ -128,7 +135,7 @@ export function Comments({ postId }: { postId: string }) {
                 {c.user_name}
                 {isReply && (
                   <span className="ml-2 text-[0.6rem] uppercase tracking-[0.18em] bg-foreground text-background px-1.5 py-0.5 align-middle">
-                    Admin
+                    {isAdmin ? "Admin" : "Reply"}
                   </span>
                 )}
               </p>
@@ -141,7 +148,6 @@ export function Comments({ postId }: { postId: string }) {
                 )}
               </time>
             </div>
-
 
         {isEditing ? (
           <form
@@ -193,20 +199,25 @@ export function Comments({ postId }: { postId: string }) {
                 {replyTo?.id === c.id ? "Cancel" : "Reply"}
               </button>
             )}
+            {!user && (
+              <button onClick={() => setAuthOpen(true)} className="hover:text-foreground">
+                Reply
+              </button>
+            )}
             {canEdit && (
               <button onClick={() => startEdit(c)} className="hover:text-foreground">
                 Edit
               </button>
             )}
             {canDelete && (
-              <button onClick={() => deleteMutation.mutate(c.id)} className="hover:text-foreground">
+              <button onClick={() => setDeleteTarget(c)} className="hover:text-foreground">
                 Delete
               </button>
             )}
           </div>
         )}
 
-        {replyTo?.id === c.id && isAdmin && (
+        {replyTo?.id === c.id && canReply && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -222,7 +233,7 @@ export function Comments({ postId }: { postId: string }) {
             <textarea
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Reply as admin…"
+              placeholder="Write a reply…"
               rows={3}
               maxLength={2000}
               autoFocus
@@ -261,7 +272,6 @@ export function Comments({ postId }: { postId: string }) {
           </div>
         </div>
       </li>
-
     );
   };
 
@@ -269,8 +279,19 @@ export function Comments({ postId }: { postId: string }) {
     <section className="mt-20 pt-12 border-t border-border">
       <h2 className="font-serif text-2xl mb-8 text-center">Reflections</h2>
 
-      {isLoading ? (
-        <p className="text-center text-sm text-muted-foreground">Loading…</p>
+      {isLoading && comments.length === 0 ? (
+        <div className="space-y-6 mb-12 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-start gap-3 pb-6 border-b border-border/60">
+              <div className="w-9 h-9 rounded-full bg-secondary shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-24 bg-secondary rounded" />
+                <div className="h-3 w-full bg-secondary/60 rounded" />
+                <div className="h-3 w-3/4 bg-secondary/60 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : roots.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground italic mb-10">
           No reflections yet. Be the first to share.
@@ -303,7 +324,7 @@ export function Comments({ postId }: { postId: string }) {
               disabled={postMutation.isPending || text.trim().length === 0}
               className="px-6 py-2 text-xs uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-40"
             >
-              {postMutation.isPending ? "Posting…" : "Post"}
+              {postMutation.isPending ? "Commenting…" : "Comment"}
             </button>
           </div>
         </form>
@@ -311,33 +332,52 @@ export function Comments({ postId }: { postId: string }) {
         <div className="space-y-3">
           <textarea
             readOnly
-            onClick={goToLogin}
-            onFocus={goToLogin}
+            onClick={() => setAuthOpen(true)}
+            onFocus={() => setAuthOpen(true)}
             placeholder="Sign in to share a reflection…"
             rows={3}
             className="w-full border border-border bg-background px-4 py-3 text-sm font-sans opacity-60 cursor-pointer focus:outline-none focus:border-foreground/60 resize-y"
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
-              <Link
-                to="/login"
-                search={{ message: "", redirect: loginRedirect }}
+              <button
+                type="button"
+                onClick={() => setAuthOpen(true)}
                 className="hover:text-foreground underline"
               >
                 Sign in
-              </Link>
+              </button>
               {" "}to share a reflection
             </p>
             <button
               type="button"
-              onClick={goToLogin}
+              onClick={() => setAuthOpen(true)}
               className="px-6 py-2 text-xs uppercase tracking-[0.2em] bg-foreground/40 text-background cursor-pointer opacity-60 hover:opacity-100"
             >
-              Post
+              Comment
             </button>
           </div>
         </div>
       )}
+
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete reflection"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete this reflection? This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Yes, delete"
+        cancelLabel="Cancel"
+        destructive
+        onConfirm={() => {
+          if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+        }}
+      />
     </section>
   );
 }

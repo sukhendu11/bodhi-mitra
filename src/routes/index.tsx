@@ -27,11 +27,11 @@ function Home() {
   const [active, setActive] = useState<PostCategory | "All">("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filters: { labelKey: "filter_all" | "nav_buddhist_psychology" | "nav_wisdom" | "nav_books"; value: PostCategory | "All" }[] = [
-    { labelKey: "filter_all", value: "All" },
-    { labelKey: "nav_buddhist_psychology", value: "Buddhist Psychology" },
-    { labelKey: "nav_wisdom", value: "Wisdom" },
-    { labelKey: "nav_books", value: "Books" },
+  const filters: { label: string; value: PostCategory | "All" }[] = [
+    { label: "All", value: "All" },
+    { label: settings.nav.buddhism_en || "Buddhism", value: "Buddhist Psychology" },
+    { label: settings.nav.mind_en || "Mind", value: "Wisdom" },
+    { label: settings.nav.books_en || "Books", value: "Books" },
   ];
 
   const heroTitle = pickLocalized(hero.title_en, hero.title_bn, lang);
@@ -92,7 +92,7 @@ function Home() {
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {t(f.labelKey)}
+                {f.label}
               </button>
             ))}
           </div>

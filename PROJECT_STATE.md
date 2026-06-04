@@ -63,14 +63,19 @@ If a change is made:
 - Tags with comma/enter input and visual chips
 - Author name + profile picture upload (Supabase Storage)
 - Category filters: All / Buddhist Psychology / Wisdom / Books
+- **PostForm.tsx decomposed** — CoverUploader, TagInput, PostPreview extracted (~400→160 lines)
 
 ### Comment System
 - Nested threads with parent-child relationships
-- CRUD: signed-in users can comment; admin can reply/edit/delete any
+- CRUD via server functions with auth/permission enforcement (add, edit own, delete own or admin)
+- AuthModal: sign in/sign up modal (email + Google OAuth) triggers on guest comment/reply actions
+- ConfirmDialog: shadcn AlertDialog for delete confirmation ("Yes, delete" / "Cancel")
+- Any authenticated user can reply (not just admins)
+- Instant rendering: skeleton loading animation + placeholderData, no lazy/Suspense delay
+- "Comment" label replaces "Post" throughout UI
 - Edit history tracked via updated_at timestamp
-- Admin reply UI with quote preview
 - LetterAvatar for comment authors (deterministic color palette)
-- 2,000 character limit per comment
+- 2,000 character limit per comment, validated client + server side
 
 ### Media Upload
 - Cover images to blog-images Supabase Storage bucket
@@ -148,24 +153,35 @@ If a change is made:
 
 ### Performance
 - No pagination on post lists (all rows fetched at once)
-- No database indexes beyond Supabase defaults
+- Database indexes added on posts (slug, created_at, category, status) and comments (post_id)
 - No staleTime on most React Query hooks (re-fetches on every mount)
-- No route-level code splitting
+- Route-level code splitting: lazy-loaded Comments, PostForm/TipTap, DOMPurify via SanitizedHtml
 
 ### Security
 - No rate limiting on auth endpoints
 - supabaseAdmin service-role client exists but unused (risk if imported client-side)
-- Direct Supabase queries from browser for writes (RLS is only protection)
+- Comment mutations now use server functions with auth/permission enforcement (add, edit, delete)
+- Role-based RLS policies on all tables (posts, comments, site_settings, storage, contact_messages)
+- Database-level permission checks via `has_permission()` and `has_min_role()` RPC functions
+- Hierarchical role enforcement: admins cannot assign roles at or above their own level
+- Super admin only can manage other super admins and modify role permissions
 
 ### Code Quality
-- admin.settings.tsx (~830 lines) should be decomposed
-- PostForm.tsx (~400 lines) could be decomposed
-- Comments.tsx (~300 lines) could be decomposed
+- admin.settings.tsx decomposed into 11 tab components ✅
+- PostForm.tsx decomposed into CoverUploader, TagInput, PostPreview ✅
+- Comments.tsx partially decomposed (AuthModal, ConfirmDialog extracted)
 - Legacy single-language post fields should be cleaned up after migration
 - Translation dict has some overlap with DEFAULT_CONFIG content
+- useRole.ts extracted for role-level client-side checks
 
 ### Features
-- Some route-level meta titles still hardcoded with Bodhi Mitra
+- Route-level meta titles now dynamic from site settings (all routes) ✅
+- Navbar restructured: Philosophy + Practice dropdowns with grouped sub-items ✅
+- Mobile nav supports expandable accordion groups for dropdown items ✅
+- Nav labels CMS-configurable via Site Settings (all 10 labels) ✅
+- Role-based administration system with 6 tiers (super_admin → user) ✅
+- Admin Users page with inline role assignment and hierarchical permission enforcement ✅
+- Admin sidebar layout redesigned with nav + user info panel ✅
 - No RSS feed or newsletter subscription backend
 
 ---
