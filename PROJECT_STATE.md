@@ -96,21 +96,38 @@ Single source of truth for project progress. Must always reflect the real system
 
 ### Infrastructure
 - GitHub repo connected: https://github.com/sukhendu11/bodhi-mitra
-- TypeScript typecheck passes cleanly
+- TypeScript typecheck passes cleanly (zero errors)
 - Dev server verified: all pages load, language toggle works, admin redirects
-- 142 files in initial commit
+- 📄 LICENSE file added (MIT)
+- `.env` added to `.gitignore`, `node_modules_old/` added to `.gitignore`
+- npm dependencies installed (564 packages)
+- Supabase project credentials present (needs service_role key to complete setup)
+
+### Documentation
+- README.md -- comprehensive project docs (description, tech stack, setup, architecture)
+- DESIGN_FLOW.md -- system philosophy, user flows, route map, design system
+- CODING_FLOW.md -- architecture pattern, file organization, naming, best practices
+- PROJECT_STATE.md -- this file
+
+### Visual Polish
+- Tags now render as modern rounded-full pills with border, hover transitions, and subtle transparency
+- Consistent tag styling across post page, post cards, and admin preview
+
+### Bug Fixes
+- Fixed TypeScript error in Comments.tsx: `<Link to="/login">` now passes required `search` prop
 
 ---
 
 ## 🟡 IN PROGRESS
-- (None currently)
+- Supabase project connection — user provided new project URL (`ptqxdikjfcbgnwhwfefi.supabase.co`), awaiting anon key and service_role key to complete setup and run 23 migrations
 
 ---
 
 ## 🔴 PENDING
 
 ### Database & Data
-- No Supabase project connected for development (needs env vars + migrations)
+- Supabase project needs anon + service_role keys configured in `.env`
+- 23 migrations ready to run (create tables: profiles, posts, comments, user_roles, site_settings + RLS policies)
 - No seed data (no posts or comments in the database yet)
 - Site settings stored as monolithic JSON blob -- write contention risk
 
