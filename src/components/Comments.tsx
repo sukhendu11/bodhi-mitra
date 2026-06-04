@@ -307,6 +307,7 @@ export function Comments({ postId }: { postId: string }) {
           <p className="text-sm text-muted-foreground mb-4">Sign in to share a reflection.</p>
           <Link
             to="/login"
+            search={{ message: "", redirect: "/" }}
             className="inline-block px-6 py-2 text-xs uppercase tracking-[0.2em] border border-foreground/60 hover:bg-foreground hover:text-background"
           >
             Sign in

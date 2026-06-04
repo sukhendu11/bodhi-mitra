@@ -93,7 +93,7 @@ function PostPage() {
         {post.tags && post.tags.length > 0 && (
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             {post.tags.map((tg) => (
-              <span key={tg} className="text-[0.7rem] uppercase tracking-[0.14em] bg-secondary text-secondary-foreground px-2.5 py-1 rounded-sm">
+              <span key={tg} className="text-[0.7rem] uppercase tracking-[0.14em] border border-border/50 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full hover:bg-secondary/90 transition-colors">
                 {tg}
               </span>
             ))}

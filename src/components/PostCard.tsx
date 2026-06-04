@@ -48,7 +48,7 @@ export function PostCard({ post }: { post: Post }) {
       {post.tags && post.tags.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {post.tags.slice(0, 3).map((t) => (
-            <span key={t} className="text-[0.65rem] uppercase tracking-[0.12em] bg-secondary/70 text-secondary-foreground px-2 py-0.5 rounded-sm">
+            <span key={t} className="text-[0.65rem] uppercase tracking-[0.12em] border border-border/50 bg-secondary/60 text-secondary-foreground px-2.5 py-0.5 rounded-full hover:bg-secondary/90 transition-colors">
               {t}
             </span>
           ))}
