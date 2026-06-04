@@ -135,6 +135,24 @@ If a change is made:
 - Tags now render as modern rounded-full pills with border, hover transitions, and subtle transparency
 - Consistent tag styling across post page, post cards, and admin preview
 
+### UI/UX Enhancements (Session 2)
+- **Footer redesign** — 4-column grid (Brand, Philosophy, Practice, Explore) with SVG social icons, CMS-driven bilingual labels, SPA navigation
+- **Global hover effects** — Consistent `hover:translate-x-0.5` nudge + sliding underline pattern across all nav elements (header top-level links, dropdown triggers, dropdown items, mobile nav items, admin/sign-in buttons)
+- **Page fade-in animation** — `@keyframes page-enter` on `<main>` element (opacity + 6px translateY, 350ms, respects reduced motion)
+- **Post card hover lift** — `hover:-translate-y-1 hover:shadow-md` with 300ms transition
+- **Staggered post card entrance** — Cards animate in one-by-one via `stagger-enter` utility with 60ms delay increments, re-triggers on pagination
+- **Auto scroll-to-top** — Smooth scroll on route navigation via `router.subscribe`, properly cleaned up in `useEffect`
+- **Filter active indicator** — Absolute `<span>` underline on category filter buttons
+- **Shimmer loading skeletons** — `@keyframes shimmer` with moving gradient overlay on skeleton elements
+- **PostCardSkeleton** — Ghost element matching PostCard layout (cover area, category, title, excerpt, tags, author)
+- **ArticleSkeleton** — Ghost element matching article page (header, cover, paragraphs, related posts)
+- **Reading progress bar** — Fixed 3px saffron bar at top of viewport, tracks scroll position via RAF-throttled listener
+- **Scroll-triggered reveal** — `Reveal` IntersectionObserver component: fade-up on scroll with configurable delay/distance/duration, applied to hero sections, about page, article sections, contact page, satsang page, category pages
+- **Reading time badge** — Word count calculation (~200 wpm), displayed as uppercase badge in article header author line
+- **Mobile responsiveness fixes** — Pagination buttons `min-h-[44px]`, filter buttons larger touch targets, author bio `flex-wrap` for overflow protection, shimmer `will-change` GPU hint
+- **Scroll-to-top button** — Fixed bottom-right circular button, appears after 400px scroll, RAF-throttled, 44px mobile touch target
+- **Table of Contents** — Sticky desktop sidebar + mobile collapsible accordion, parses HTML headings, injects `id` + `scroll-mt-24` anchors, IntersectionObserver tracks active section, smooth scroll navigation
+
 ### Bug Fixes
 - Fixed TypeScript error in Comments.tsx: `<Link to="/login">` now passes required `search` prop
 

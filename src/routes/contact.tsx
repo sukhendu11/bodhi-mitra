@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
+import { Reveal } from "@/components/Reveal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -63,10 +64,19 @@ function ContactPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-20 md:py-28">
-      <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">Contact</p>
-      <h1 className="font-serif text-4xl md:text-5xl leading-tight">{title}</h1>
-      {intro && <p className="mt-6 text-muted-foreground leading-relaxed text-lg max-w-2xl">{intro}</p>}
+      <Reveal delay={0}>
+        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">Contact</p>
+      </Reveal>
+      <Reveal delay={0.1}>
+        <h1 className="font-serif text-4xl md:text-5xl leading-tight">{title}</h1>
+      </Reveal>
+      {intro && (
+        <Reveal delay={0.2}>
+          <p className="mt-6 text-muted-foreground leading-relaxed text-lg max-w-2xl">{intro}</p>
+        </Reveal>
+      )}
 
+      <Reveal delay={0.3}>
       <div className="mt-14 grid gap-12 md:grid-cols-[1fr_280px]">
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-1.5">
@@ -116,8 +126,10 @@ function ContactPage() {
           )}
         </aside>
       </div>
+      </Reveal>
 
       {c.map_embed_url && (
+        <Reveal delay={0.4}>
         <div className="mt-16 aspect-[16/8] w-full overflow-hidden rounded-md border border-border">
           <iframe
             src={c.map_embed_url}
@@ -127,6 +139,7 @@ function ContactPage() {
             referrerPolicy="no-referrer-when-downgrade"
           />
         </div>
+        </Reveal>
       )}
     </div>
   );

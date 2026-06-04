@@ -24,6 +24,7 @@ import { Route as PostsSlugRouteImport } from './routes/posts.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminNewRouteImport } from './routes/admin.new'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminIdRouteImport } from './routes/admin.$id'
 
 const WisdomRoute = WisdomRouteImport.update({
@@ -101,6 +102,11 @@ const AdminNewRoute = AdminNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminIdRoute = AdminIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/satsang': typeof SatsangRoute
   '/wisdom': typeof WisdomRoute
   '/admin/$id': typeof AdminIdRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/new': typeof AdminNewRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/satsang': typeof SatsangRoute
   '/wisdom': typeof WisdomRoute
   '/admin/$id': typeof AdminIdRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/new': typeof AdminNewRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/satsang': typeof SatsangRoute
   '/wisdom': typeof WisdomRoute
   '/admin/$id': typeof AdminIdRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/new': typeof AdminNewRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/satsang'
     | '/wisdom'
     | '/admin/$id'
+    | '/admin/audit'
     | '/admin/new'
     | '/admin/settings'
     | '/admin/users'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/satsang'
     | '/wisdom'
     | '/admin/$id'
+    | '/admin/audit'
     | '/admin/new'
     | '/admin/settings'
     | '/admin/users'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/satsang'
     | '/wisdom'
     | '/admin/$id'
+    | '/admin/audit'
     | '/admin/new'
     | '/admin/settings'
     | '/admin/users'
@@ -338,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminNewRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/$id': {
       id: '/admin/$id'
       path: '/$id'
@@ -350,6 +369,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminIdRoute: typeof AdminIdRoute
+  AdminAuditRoute: typeof AdminAuditRoute
   AdminNewRoute: typeof AdminNewRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -358,6 +378,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminIdRoute: AdminIdRoute,
+  AdminAuditRoute: AdminAuditRoute,
   AdminNewRoute: AdminNewRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,

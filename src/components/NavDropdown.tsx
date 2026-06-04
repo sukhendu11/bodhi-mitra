@@ -21,9 +21,10 @@ export function NavDropdown({ triggerLabel, items }: NavDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="group inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+        <button className="group relative inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-200 cursor-pointer">
           {triggerLabel}
           <ChevronDown className="h-3 w-3 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          <span className="absolute -bottom-1 left-0 h-px w-full bg-foreground/50 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -35,7 +36,7 @@ export function NavDropdown({ triggerLabel, items }: NavDropdownProps) {
           <DropdownMenuItem key={item.to} asChild className="p-0">
             <Link
               to={item.to}
-              className="block w-full rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+              className="block w-full rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
               activeProps={{ className: "text-foreground bg-secondary/40" }}
             >
               {item.label}

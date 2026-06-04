@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPosts, type PostCategory } from "@/lib/posts";
 import { PostCard } from "./PostCard";
+import { PostCardSkeleton } from "./PostCardSkeleton";
 import { useLang } from "@/lib/i18n";
 
 const PAGE_SIZE = 9;
@@ -27,13 +28,9 @@ export function PostGrid({ category, searchQuery, pageSize = PAGE_SIZE }: { cate
 
   if (isLoading) {
     return (
-      <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-x-10 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="aspect-[4/3] bg-secondary/60 mb-5" />
-            <div className="h-3 w-24 bg-secondary mb-3" />
-            <div className="h-5 w-3/4 bg-secondary" />
-          </div>
+          <PostCardSkeleton key={i} />
         ))}
       </div>
     );
@@ -48,8 +45,12 @@ export function PostGrid({ category, searchQuery, pageSize = PAGE_SIZE }: { cate
       {posts.length === 0 ? (
         <p className="text-sm text-muted-foreground italic">{t("no_posts")}</p>
       ) : (
-        <div className="grid gap-x-10 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => <PostCard key={post.id} post={post} />)}
+        <div className="grid gap-x-10 gap-y-16 md:grid-cols-2 lg:grid-cols-3" key={page}>
+          {posts.map((post, i) => (
+            <div key={post.id} className="stagger-enter" style={{ animationDelay: `${i * 0.06}s` }}>
+              <PostCard post={post} />
+            </div>
+          ))}
         </div>
       )}
 
@@ -58,7 +59,7 @@ export function PostGrid({ category, searchQuery, pageSize = PAGE_SIZE }: { cate
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="border border-border px-4 py-2 uppercase tracking-[0.15em] text-xs hover:bg-foreground hover:text-background disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            className="border border-border px-5 py-3 md:px-4 md:py-2 uppercase tracking-[0.15em] text-xs hover:bg-foreground hover:text-background disabled:opacity-30 disabled:pointer-events-none transition-colors min-h-[44px]"
           >
             ← {t("prev_page")}
           </button>
@@ -68,7 +69,7 @@ export function PostGrid({ category, searchQuery, pageSize = PAGE_SIZE }: { cate
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-            className="border border-border px-4 py-2 uppercase tracking-[0.15em] text-xs hover:bg-foreground hover:text-background disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            className="border border-border px-5 py-3 md:px-4 md:py-2 uppercase tracking-[0.15em] text-xs hover:bg-foreground hover:text-background disabled:opacity-30 disabled:pointer-events-none transition-colors min-h-[44px]"
           >
             {t("next_page")} →
           </button>

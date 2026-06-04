@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useRef } from "react";
 import { fetchPostBySlug, fetchPosts } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { LetterAvatar } from "@/components/LetterAvatar";
@@ -7,6 +8,11 @@ import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 
 import { SanitizedHtml } from "@/components/SanitizedHtml";
 import { Comments } from "@/components/Comments";
+import { ArticleSkeleton } from "@/components/ArticleSkeleton";
+import { ReadingProgress } from "@/components/ReadingProgress";
+import { Reveal } from "@/components/Reveal";
+import { TableOfContents } from "@/components/TableOfContents";
+import { parseHeadings, injectHeadingIds } from "@/lib/headings";
 
 
 export const Route = createFileRoute("/posts/$slug")({
@@ -59,6 +65,7 @@ export const Route = createFileRoute("/posts/$slug")({
 
 function PostPage() {
   const { slug } = Route.useParams();
+  const articleRef = useRef<HTMLElement>(null);
   const { lang, t } = useLang();
   const cfg = useSiteSettings();
   const a = cfg.article;
@@ -78,13 +85,7 @@ function PostPage() {
   const related = relatedData?.data ?? [];
 
   if (isLoading) {
-    return (
-      <div className="mx-auto max-w-2xl px-6 py-24 animate-pulse">
-        <div className="h-3 w-32 bg-secondary mb-6" />
-        <div className="h-10 w-3/4 bg-secondary mb-4" />
-        <div className="h-10 w-1/2 bg-secondary" />
-      </div>
-    );
+    return <ArticleSkeleton />;
   }
 
   if (!post) throw notFound();
@@ -99,6 +100,15 @@ function PostPage() {
 
   const isHtml = /<\/?[a-z][\s\S]*>/i.test(content);
 
+  // Parse headings from HTML content and inject IDs for ToC anchors
+  const headings = isHtml ? parseHeadings(content) : [];
+  const contentWithIds = isHtml ? injectHeadingIds(content) : content;
+
+  // Reading time estimate (~200 words/min, strip HTML for isHtml content)
+  const plainText = isHtml ? content.replace(/<[^>]*>/g, "") : content;
+  const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+  const readingTime = Math.max(1, Math.round(wordCount / 200));
+
   const sidebarTitle = pickLocalized(a.sidebar_title_en, a.sidebar_title_bn, lang, "");
   const sidebarText = pickLocalized(a.sidebar_text_en, a.sidebar_text_bn, lang, "");
   const newsletterTitle = pickLocalized(a.newsletter_title_en, a.newsletter_title_bn, lang, "");
@@ -107,46 +117,64 @@ function PostPage() {
   const relatedFiltered = related.filter((r) => r.id !== post.id).slice(0, 3);
 
   return (
-    <article className="mx-auto max-w-2xl px-6 py-20 md:py-28">
-      <header className="mb-14 text-center">
-        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">
-          {post.category}
-        </p>
-        <h1 className="font-serif text-4xl md:text-5xl leading-[1.15]">
-          {title}
-        </h1>
-        {a.show_author_bio && (
-          <div className="mt-6 flex items-center justify-center gap-3 text-sm text-muted-foreground">
-            <LetterAvatar name={post.author_name} src={post.author_image} size={36} />
-            <span>
-              {t("by")} <span className="italic">{post.author_name}</span> · {date}
-            </span>
-          </div>
-        )}
-
-        {post.tags && post.tags.length > 0 && (
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            {post.tags.map((tg) => (
-              <span key={tg} className="text-[0.7rem] uppercase tracking-[0.14em] border border-border/50 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full hover:bg-secondary/90 transition-colors">
-                {tg}
+    <>
+      <ReadingProgress targetRef={articleRef} />
+      <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
+        <div className={headings.length > 0 ? "lg:grid lg:grid-cols-[minmax(0,42rem)_1fr] lg:gap-8 xl:gap-12" : ""}>
+      <article ref={articleRef} className="mx-auto lg:mx-0 w-full max-w-2xl">
+      <Reveal delay={0}>
+        <header className="mb-14 text-center">
+          <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">
+            {post.category}
+          </p>
+          <h1 className="font-serif text-4xl md:text-5xl leading-[1.15]">
+            {title}
+          </h1>
+          {a.show_author_bio && (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+              <LetterAvatar name={post.author_name} src={post.author_image} size={36} />
+              <span className="inline-flex flex-wrap items-center gap-x-1.5">
+                {t("by")} <span className="italic">{post.author_name}</span>
+                <span className="text-muted-foreground/40" aria-hidden="true">·</span>
+                <span>{date}</span>
+                <span className="text-muted-foreground/40" aria-hidden="true">·</span>
+                <span className="text-xs uppercase tracking-[0.12em] whitespace-nowrap">
+                  {readingTime} {t("min_read")}
+                </span>
               </span>
-            ))}
-          </div>
-        )}
-      </header>
+            </div>
+          )}
+
+          {post.tags && post.tags.length > 0 && (
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              {post.tags.map((tg) => (
+                <span key={tg} className="text-[0.7rem] uppercase tracking-[0.14em] border border-border/50 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full hover:bg-secondary/90 transition-colors">
+                  {tg}
+                </span>
+              ))}
+            </div>
+          )}
+        </header>
+      </Reveal>
 
       {post.cover_image && (
-        <div className="mb-14 -mx-6 md:mx-0">
-          <img
-            src={post.cover_image}
-            alt={title}
-            className="w-full aspect-[16/9] object-cover rounded-md"
-          />
-        </div>
+        <Reveal delay={0.1}>
+          <div className="mb-14 -mx-6 md:mx-0">
+            <img
+              src={post.cover_image}
+              alt={title}
+              className="w-full aspect-[16/9] object-cover rounded-md"
+            />
+          </div>
+        </Reveal>
       )}
 
+      <Reveal delay={0.15}>
+      {/* Mobile ToC (collapsible, only with headings) */}
+      {headings.length > 0 && <TableOfContents headings={headings} />}
+
       {isHtml ? (
-        <SanitizedHtml html={content} />
+        <SanitizedHtml html={contentWithIds} />
       ) : (
         <div className="prose-mitra">
           {content.split("\n\n").filter(Boolean).map((p, i, arr) => {
@@ -163,7 +191,10 @@ function PostPage() {
         </div>
       )}
 
+      </Reveal>
+
       {(sidebarTitle || sidebarText || newsletterTitle || newsletterText) && (
+        <Reveal delay={0.2}>
         <aside className="mt-16 grid gap-6 md:grid-cols-2">
           {(sidebarTitle || sidebarText) && (
             <div className="border border-border rounded-md p-6 bg-secondary/30">
@@ -178,11 +209,15 @@ function PostPage() {
             </div>
           )}
         </aside>
+        </Reveal>
       )}
 
-      <Comments postId={post.id} />
+      <Reveal delay={0.25}>
+        <Comments postId={post.id} />
+      </Reveal>
 
       {a.show_related_posts && relatedFiltered.length > 0 && (
+        <Reveal delay={0.3}>
         <section className="mt-20 pt-10 border-t border-border">
           <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-6">
             {lang === "bn" ? "সম্পর্কিত প্রতিফলন" : "Related reflections"}
@@ -200,14 +235,27 @@ function PostPage() {
             })}
           </ul>
         </section>
+        </Reveal>
       )}
 
+      <Reveal delay={0.35}>
       <footer className="mt-20 pt-10 border-t border-border text-center">
         <Link to="/" className="text-sm text-muted-foreground hover:text-foreground border-b border-transparent hover:border-foreground/40 pb-0.5">
           {t("back_all")}
         </Link>
       </footer>
+      </Reveal>
     </article>
+
+    {/* Desktop ToC sidebar */}
+    {headings.length > 0 && (
+      <aside className="hidden lg:block">
+        <TableOfContents headings={headings} />
+      </aside>
+    )}
+        </div>
+      </div>
+    </>
   );
 }
 

@@ -52,6 +52,9 @@ const dict = {
   prev_page: { en: "Previous", bn: "Previous" },
   next_page: { en: "Next", bn: "Next" },
 
+  // Reading time
+  min_read: { en: "min read", bn: "মিনিট পড়া" },
+
   // Category descriptions
   cat_bp_desc: {
     en: "Where the Buddha's two-and-a-half-millennia of inquiry into the mind meets the evidence base of modern psychiatry.",

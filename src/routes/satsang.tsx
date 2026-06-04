@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
+import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/satsang")({
   loader: () => getSiteName(),
@@ -35,13 +36,21 @@ function SatsangPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-20 md:py-28">
       {page.banner_url && (
-        <div className="mb-12 -mx-6 md:mx-0 overflow-hidden rounded-md">
-          <img src={page.banner_url} alt={heading} className="w-full aspect-[21/9] object-cover" />
-        </div>
+        <Reveal delay={0}>
+          <div className="mb-12 -mx-6 md:mx-0 overflow-hidden rounded-md">
+            <img src={page.banner_url} alt={heading} className="w-full aspect-[21/9] object-cover" />
+          </div>
+        </Reveal>
       )}
-      <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">{eyebrow}</p>
-      <h1 className="font-serif text-4xl md:text-5xl leading-tight">{heading}</h1>
-      <div className="prose-mitra mt-10 whitespace-pre-line">{body}</div>
+      <Reveal delay={0.1}>
+        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">{eyebrow}</p>
+      </Reveal>
+      <Reveal delay={0.2}>
+        <h1 className="font-serif text-4xl md:text-5xl leading-tight">{heading}</h1>
+      </Reveal>
+      <Reveal delay={0.3}>
+        <div className="prose-mitra mt-10 whitespace-pre-line">{body}</div>
+      </Reveal>
     </div>
   );
 }

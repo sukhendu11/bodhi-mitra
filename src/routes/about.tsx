@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
+import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/about")({
   loader: () => getSiteName(),
@@ -30,31 +31,43 @@ function About() {
 
   return (
     <article className="mx-auto max-w-2xl px-6 py-20 md:py-28">
-      <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">{eyebrow}</p>
-      <h1 className="font-serif text-4xl md:text-5xl leading-tight">{title}</h1>
+      <Reveal delay={0}>
+        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">{eyebrow}</p>
+      </Reveal>
+      <Reveal delay={0.1}>
+        <h1 className="font-serif text-4xl md:text-5xl leading-tight">{title}</h1>
+      </Reveal>
 
       {a.image_url && (
-        <div className="mt-12 -mx-6 md:mx-0">
-          <img src={a.image_url} alt={imageAlt} className="w-full aspect-[16/9] object-cover rounded-md" />
-        </div>
+        <Reveal delay={0.2}>
+          <div className="mt-12 -mx-6 md:mx-0">
+            <img src={a.image_url} alt={imageAlt} className="w-full aspect-[16/9] object-cover rounded-md" />
+          </div>
+        </Reveal>
       )}
 
-      <div className="prose-mitra mt-12 whitespace-pre-line">{body}</div>
+      <Reveal delay={0.25}>
+        <div className="prose-mitra mt-12 whitespace-pre-line">{body}</div>
+      </Reveal>
 
       {mission && (
-        <div className="mt-12 p-6 border-l-2 border-foreground/30 bg-secondary/30">
-          <p className="text-[0.7rem] uppercase tracking-[0.25em] text-muted-foreground mb-3">
-            {lang === "bn" ? "মিশন" : "Mission"}
-          </p>
-          <p className="font-serif text-xl leading-relaxed whitespace-pre-line">{mission}</p>
-        </div>
+        <Reveal delay={0.35}>
+          <div className="mt-12 p-6 border-l-2 border-foreground/30 bg-secondary/30">
+            <p className="text-[0.7rem] uppercase tracking-[0.25em] text-muted-foreground mb-3">
+              {lang === "bn" ? "মিশন" : "Mission"}
+            </p>
+            <p className="font-serif text-xl leading-relaxed whitespace-pre-line">{mission}</p>
+          </div>
+        </Reveal>
       )}
 
       {(noteTitle || noteText) && (
-        <div className="mt-16 border-t border-border pt-10 text-sm text-muted-foreground">
-          {noteTitle && <p className="font-serif text-base text-foreground mb-2">{noteTitle}</p>}
-          {noteText && <p className="whitespace-pre-line">{noteText}</p>}
-        </div>
+        <Reveal delay={0.45}>
+          <div className="mt-16 border-t border-border pt-10 text-sm text-muted-foreground">
+            {noteTitle && <p className="font-serif text-base text-foreground mb-2">{noteTitle}</p>}
+            {noteText && <p className="whitespace-pre-line">{noteText}</p>}
+          </div>
+        </Reveal>
       )}
     </article>
   );

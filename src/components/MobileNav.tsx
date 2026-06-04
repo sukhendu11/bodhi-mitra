@@ -63,7 +63,7 @@ export function MobileNav({
               <Link
                 to={item.to}
                 activeOptions={{ exact: item.to === "/" }}
-                className="rounded-md px-4 py-3 text-base text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                className="rounded-md px-4 py-3 text-base text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
                 activeProps={{ className: "text-foreground bg-secondary/40 font-medium" }}
               >
                 {item.label}
@@ -76,7 +76,7 @@ export function MobileNav({
             <div key={group.label} className="mt-1">
               <button
                 onClick={() => setOpenGroup(openGroup === group.label ? null : group.label)}
-                className="flex items-center justify-between w-full rounded-md px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                className="flex items-center justify-between w-full rounded-md px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
               >
                 <span>{group.label}</span>
                 <ChevronRight
@@ -91,7 +91,7 @@ export function MobileNav({
                     <SheetClose key={item.to} asChild>
                       <Link
                         to={item.to}
-                        className="block rounded-md px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
+                        className="block rounded-md px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/40 hover:translate-x-0.5 transition-all duration-200"
                         activeProps={{ className: "text-foreground bg-secondary/30 font-medium" }}
                       >
                         {item.label}
@@ -107,7 +107,7 @@ export function MobileNav({
             <SheetClose key="/admin" asChild>
               <Link
                 to="/admin"
-                className="mt-2 rounded-md px-4 py-3 text-base text-foreground font-medium hover:bg-secondary/60 transition-colors"
+                className="mt-2 rounded-md px-4 py-3 text-base text-foreground font-medium hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
               >
                 {adminLabel}
               </Link>
@@ -122,7 +122,7 @@ export function MobileNav({
           {isSignedIn ? (
             <button
               onClick={onSignOut}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-200"
             >
               {signOutLabel}
             </button>
@@ -131,7 +131,7 @@ export function MobileNav({
               <Link
                 to="/login"
                 search={loginSearch ?? { message: "", redirect: "/" }}
-                className="px-4 py-1.5 text-xs uppercase tracking-[0.2em] rounded-sm text-white transition-colors"
+                className="px-4 py-1.5 text-xs uppercase tracking-[0.2em] rounded-sm text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 hover:brightness-110"
                 style={{ backgroundColor: "var(--color-saffron)" }}
               >
                 {signInLabel}

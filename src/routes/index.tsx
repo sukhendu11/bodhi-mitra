@@ -6,6 +6,7 @@ import { SearchBar } from "@/components/SearchBar";
 import type { PostCategory } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
+import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/")({
   loader: () => getSiteName(),
@@ -48,55 +49,66 @@ function Home() {
             <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/10 to-background/70" />
           </div>
           <div className="relative mx-auto max-w-4xl px-6 py-32 md:py-44 text-center">
-            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-6">
-              {heroEyebrow}
-            </p>
-            <h1 className="font-serif text-5xl md:text-7xl leading-[1.05] text-foreground whitespace-pre-line">
-              {heroTitle}
-            </h1>
-            <p className="mt-8 max-w-xl mx-auto text-base md:text-lg text-muted-foreground leading-relaxed whitespace-pre-line">
-              {heroDesc}
-            </p>
+            <Reveal delay={0}>
+              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-6">
+                {heroEyebrow}
+              </p>
+            </Reveal>
+            <Reveal delay={0.15}>
+              <h1 className="font-serif text-5xl md:text-7xl leading-[1.05] text-foreground whitespace-pre-line">
+                {heroTitle}
+              </h1>
+            </Reveal>
+            <Reveal delay={0.3}>
+              <p className="mt-8 max-w-xl mx-auto text-base md:text-lg text-muted-foreground leading-relaxed whitespace-pre-line">
+                {heroDesc}
+              </p>
+            </Reveal>
             {hero.cta_label && hero.cta_url && (
-              isExternal ? (
-                <a
-                  href={hero.cta_url}
-                  className="mt-10 inline-block border-b border-foreground/50 pb-1 text-sm tracking-wide hover:border-foreground"
-                >
-                  {hero.cta_label} →
-                </a>
-              ) : (
-                <Link
-                  to={hero.cta_url}
-                  className="mt-10 inline-block border-b border-foreground/50 pb-1 text-sm tracking-wide hover:border-foreground"
-                >
-                  {hero.cta_label} →
-                </Link>
-              )
+              <Reveal delay={0.45}>
+                {isExternal ? (
+                  <a
+                    href={hero.cta_url}
+                    className="mt-10 inline-block border-b border-foreground/50 pb-1 text-sm tracking-wide hover:border-foreground"
+                  >
+                    {hero.cta_label} →
+                  </a>
+                ) : (
+                  <Link
+                    to={hero.cta_url}
+                    className="mt-10 inline-block border-b border-foreground/50 pb-1 text-sm tracking-wide hover:border-foreground"
+                  >
+                    {hero.cta_label} →
+                  </Link>
+                )}
+              </Reveal>
             )}
           </div>
         </section>
       )}
 
       <section className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-        <div className="flex flex-wrap items-center justify-between gap-6 mb-14">
+        <Reveal delay={0.1} className="flex flex-wrap items-center justify-between gap-6 mb-14">
           <h2 className="font-serif text-3xl">{t("recent_reflections")}</h2>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <div className="relative flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {filters.map((f) => (
               <button
                 key={f.value}
                 onClick={() => setActive(f.value)}
-                className={`pb-1 border-b transition-colors ${
+                className={`relative py-3 md:py-1 transition-colors duration-200 ${
                   active === f.value
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {f.label}
+                {active === f.value && (
+                  <span className="absolute bottom-0 left-0 right-0 h-px bg-foreground scale-x-100" />
+                )}
               </button>
             ))}
           </div>
-        </div>
+        </Reveal>
         <div className="mb-10 max-w-md">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>

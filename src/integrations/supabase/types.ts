@@ -200,6 +200,33 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          id: string
+          actor_id: string
+          action: string
+          target_user_id: string | null
+          details: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          actor_id: string
+          action: string
+          target_user_id?: string | null
+          details?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          actor_id?: string
+          action?: string
+          target_user_id?: string | null
+          details?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
       role_hierarchy: {
         Row: {
           role: string

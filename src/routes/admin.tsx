@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { canManageUsers } from "@/hooks/useRole";
 import { cn } from "@/lib/utils";
 import {
-  FileText, PlusCircle, Users, Settings,
+  FileText, PlusCircle, Users, Settings, Activity,
   LogOut, PanelLeftClose, PanelLeft,
   type LucideIcon,
 } from "lucide-react";
@@ -88,6 +88,7 @@ function AdminLayout() {
       label: "Management",
       items: [
         ...(showUsers ? [{ to: "/admin/users" as const, label: "Users" as const, icon: Users as LucideIcon, exact: false }] : []),
+        { to: "/admin/audit" as const, label: "Audit Log" as const, icon: Activity as LucideIcon, exact: false },
         { to: "/admin/settings" as const, label: "Settings" as const, icon: Settings as LucideIcon, exact: false },
       ],
     },
@@ -232,6 +233,7 @@ function AdminLayout() {
                 <Link to="/admin" activeOptions={{ exact: true }} className="px-2 py-1 text-muted-foreground hover:text-foreground">Posts</Link>
                 <Link to="/admin/new" className="px-2 py-1 text-muted-foreground hover:text-foreground">New</Link>
                 {showUsers && <Link to="/admin/users" className="px-2 py-1 text-muted-foreground hover:text-foreground">Users</Link>}
+                <Link to="/admin/audit" className="px-2 py-1 text-muted-foreground hover:text-foreground">Audit</Link>
                 <Link to="/admin/settings" className="px-2 py-1 text-muted-foreground hover:text-foreground">Settings</Link>
                 <button onClick={() => signOut()} className="px-2 py-1 text-muted-foreground hover:text-foreground">Exit</button>
               </div>
@@ -270,6 +272,7 @@ function CurrentPageLabel({ currentPath }: { currentPath: string }) {
     "/admin": "Posts",
     "/admin/new": "New Post",
     "/admin/users": "Users",
+    "/admin/audit": "Audit Log",
     "/admin/settings": "Settings",
   };
   const label = labels[currentPath] || Object.entries(labels).find(([path]) =>

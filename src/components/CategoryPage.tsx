@@ -2,6 +2,7 @@ import { PostGrid } from "./PostGrid";
 import type { PostCategory } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { useSiteSettings } from "@/lib/siteSettings";
+import { Reveal } from "@/components/Reveal";
 
 export function CategoryPage({
   category,
@@ -42,15 +43,19 @@ export function CategoryPage({
   return (
     <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
       {page?.banner_url && (
-        <div className="mb-12 -mx-6 md:mx-0 overflow-hidden rounded-md">
-          <img src={page.banner_url} alt={heading} className="w-full aspect-[21/9] object-cover" />
-        </div>
+        <Reveal delay={0}>
+          <div className="mb-12 -mx-6 md:mx-0 overflow-hidden rounded-md">
+            <img src={page.banner_url} alt={heading} className="w-full aspect-[21/9] object-cover" />
+          </div>
+        </Reveal>
       )}
-      <header className="max-w-2xl mb-20">
-        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">{eyebrow}</p>
-        <h1 className="font-serif text-4xl md:text-5xl leading-tight">{heading}</h1>
-        <p className="mt-6 text-muted-foreground leading-relaxed text-lg whitespace-pre-line">{description}</p>
-      </header>
+      <Reveal delay={0.1}>
+        <header className="max-w-2xl mb-20">
+          <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">{eyebrow}</p>
+          <h1 className="font-serif text-4xl md:text-5xl leading-tight">{heading}</h1>
+          <p className="mt-6 text-muted-foreground leading-relaxed text-lg whitespace-pre-line">{description}</p>
+        </header>
+      </Reveal>
       <PostGrid category={category} />
     </div>
   );

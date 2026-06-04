@@ -18,7 +18,7 @@ export function PostCard({ post }: { post: Post }) {
     <Link
       to="/posts/$slug"
       params={{ slug: post.slug }}
-      className="group block"
+      className="group block hover:-translate-y-1 hover:shadow-md transition-all duration-300 rounded-xl"
     >
       {post.cover_image ? (
         <div className="aspect-[4/3] overflow-hidden bg-muted mb-5 rounded-lg">
