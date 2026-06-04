@@ -26,6 +26,7 @@ supabase/.temp/
 
 # Generated assets
 textureAtlas.png
+nul
 
 # Wrangler / Cloudflare
 .wrangler/

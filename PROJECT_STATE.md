@@ -152,6 +152,7 @@ If a change is made:
 - **Mobile responsiveness fixes** — Pagination buttons `min-h-[44px]`, filter buttons larger touch targets, author bio `flex-wrap` for overflow protection, shimmer `will-change` GPU hint
 - **Scroll-to-top button** — Fixed bottom-right circular button, appears after 400px scroll, RAF-throttled, 44px mobile touch target
 - **Table of Contents** — Sticky desktop sidebar + mobile collapsible accordion, parses HTML headings, injects `id` + `scroll-mt-24` anchors, IntersectionObserver tracks active section, smooth scroll navigation
+- **Hover dropdown menu** — Philosophy/Practice dropdowns in desktop nav now open on hover (not click) with 150ms close delay, smooth zoom+fade+slide animation via `tw-animate-css`, click still works on mobile
 
 ### Bug Fixes
 - Fixed TypeScript error in Comments.tsx: `<Link to="/login">` now passes required `search` prop
