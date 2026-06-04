@@ -50,6 +50,20 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
+      {/* Demo environment banner */}
+      <div className="mb-8 border border-amber-400/40 bg-amber-50 dark:bg-amber-950/30 px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-sm">
+        <div className="flex items-center gap-3">
+          <span className="text-amber-700 dark:text-amber-400 text-xs uppercase tracking-[0.2em] font-semibold shrink-0">
+            ⚠ Demo
+          </span>
+          <p className="text-xs text-amber-800 dark:text-amber-300/80">
+            This is a demo environment. Data may be reset at any time.
+          </p>
+        </div>
+        <p className="text-[0.6rem] text-amber-600 dark:text-amber-400/60 font-mono truncate">
+          admin@bodhimitra.test / BodhiMitra@2026!Demo
+        </p>
+      </div>
       <header className="flex items-center justify-between border-b border-border pb-6 mb-10">
         <div>
           <h1 className="font-serif text-3xl">Admin</h1>
