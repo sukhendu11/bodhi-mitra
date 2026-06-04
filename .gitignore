@@ -18,6 +18,15 @@ dist-ssr
 *.local
 .env
 
+# Supabase CLI cache
+supabase/.temp/
+
+# Development scripts
+scripts/
+
+# Generated assets
+textureAtlas.png
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

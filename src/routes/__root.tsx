@@ -14,6 +14,9 @@ import appCss from "../styles.css?url";
 import { useAuthSession, useIsAdmin, signOut } from "@/hooks/useAuth";
 import { LanguageProvider, useLang, pickLocalized } from "@/lib/i18n";
 import { SiteSettingsProvider, useSiteSettings, fetchSiteSettings, DEFAULT_CONFIG } from "@/lib/siteSettings";
+import { LangToggle } from "@/components/LangToggle";
+import { NavDropdown } from "@/components/NavDropdown";
+import { MobileNav } from "@/components/MobileNav";
 
 
 function NotFoundComponent() {
@@ -97,7 +100,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-const navItems = [
+const desktopNavItems = [
+  { to: "/", labelKey: "home" as const },
+  { to: "/about", labelKey: "about" as const },
+  { to: "/contact", labelKey: "contact" as const },
+] as const;
+
+const categoryDropdownItems = [
+  { to: "/buddhist-psychology", labelKey: "bp" as const },
+  { to: "/wisdom", labelKey: "wisdom" as const },
+  { to: "/books", labelKey: "books" as const },
+] as const;
+
+const allNavItems = [
   { to: "/", labelKey: "home" as const },
   { to: "/buddhist-psychology", labelKey: "bp" as const },
   { to: "/wisdom", labelKey: "wisdom" as const },
@@ -105,34 +120,6 @@ const navItems = [
   { to: "/about", labelKey: "about" as const },
   { to: "/contact", labelKey: "contact" as const },
 ] as const;
-
-function LangToggle({ className = "" }: { className?: string }) {
-  const { lang, toggle } = useLang();
-  return (
-    <button
-      onClick={toggle}
-      aria-label="Toggle language"
-      title={lang === "en" ? "Switch to বাংলা" : "Switch to English"}
-      className={`inline-flex items-center rounded-full border border-border bg-background text-[11px] uppercase tracking-[0.18em] overflow-hidden select-none ${className}`}
-    >
-      <span
-        className={`px-2.5 py-1 transition-colors ${
-          lang === "en" ? "bg-foreground text-background" : "text-muted-foreground"
-        }`}
-      >
-        EN
-      </span>
-      <span
-        className={`px-2.5 py-1 transition-colors ${
-          lang === "bn" ? "bg-foreground text-background" : "text-muted-foreground"
-        }`}
-        style={{ fontFamily: "var(--font-bn)", letterSpacing: 0 }}
-      >
-        বাং
-      </span>
-    </button>
-  );
-}
 
 function Header() {
   const { user } = useAuthSession();
@@ -170,7 +157,7 @@ function Header() {
           )}
         </Link>
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-          {navItems.map((item) => (
+          {desktopNavItems.map((item) => (
             <Link
               key={item.to}
               to={item.to}
@@ -181,6 +168,13 @@ function Header() {
               {navLabel(item.labelKey)}
             </Link>
           ))}
+          <NavDropdown
+            triggerLabel="Explore"
+            items={categoryDropdownItems.map((item) => ({
+              to: item.to,
+              label: navLabel(item.labelKey),
+            }))}
+          />
           {isAdmin && (
             <Link
               to="/admin"
@@ -207,40 +201,25 @@ function Header() {
             </Link>
           )}
         </nav>
+
+        {/* Mobile: hamburger + sheet */}
+        <div className="md:hidden flex items-center gap-3">
+          <LangToggle className="shrink-0" />
+          <MobileNav
+            items={allNavItems.map((item) => ({
+              to: item.to,
+              label: navLabel(item.labelKey),
+            }))}
+            isAdmin={!!isAdmin}
+            isSignedIn={!!user}
+            adminLabel={t("nav_admin_short")}
+            signInLabel={t("sign_in")}
+            signOutLabel={t("sign_out")}
+            onSignOut={() => signOut()}
+            loginSearch={loginSearch}
+          />
+        </div>
       </div>
-      <nav className="md:hidden flex items-center gap-4 overflow-x-auto px-6 pb-3 text-xs text-muted-foreground">
-        {navItems.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            activeOptions={{ exact: item.to === "/" }}
-            activeProps={{ className: "text-foreground" }}
-            className="whitespace-nowrap"
-          >
-            {navLabel(item.labelKey)}
-          </Link>
-        ))}
-        {isAdmin && (
-          <Link to="/admin" className="whitespace-nowrap text-foreground font-medium">
-            {t("nav_admin_short")}
-          </Link>
-        )}
-        <LangToggle className="ml-auto shrink-0" />
-        {user ? (
-          <button onClick={() => signOut()} className="whitespace-nowrap">
-            {t("sign_out")}
-          </button>
-        ) : (
-          <Link
-            to="/login"
-            search={loginSearch}
-            className="whitespace-nowrap px-3 py-1 rounded-sm text-white"
-            style={{ backgroundColor: "var(--color-saffron)" }}
-          >
-            {t("sign_in")}
-          </Link>
-        )}
-      </nav>
     </header>
   );
 }

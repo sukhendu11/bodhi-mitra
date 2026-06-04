@@ -57,25 +57,45 @@ function toRow(input: Partial<PostInput>) {
 }
 
 
-export async function fetchPosts(category?: PostCategory): Promise<Post[]> {
-  let query = supabase
-    .from("posts")
-    .select("*")
-    .eq("status", "published")
-    .order("created_at", { ascending: false });
-  if (category) query = query.eq("category", category);
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []) as unknown as Post[];
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
 }
 
-export async function fetchAllPostsAdmin(): Promise<Post[]> {
-  const { data, error } = await supabase
+export async function fetchPosts(category?: PostCategory, page = 1, pageSize = 9, searchQuery?: string): Promise<PaginatedResult<Post>> {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  let query = supabase
     .from("posts")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .select("*", { count: "exact" })
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .range(from, to);
+  if (category) query = query.eq("category", category);
+  if (searchQuery && searchQuery.trim()) {
+    const q = searchQuery.trim().replace(/[%_]/g, "");
+    if (q) {
+      // Use `*` wildcard (PostgREST-native) instead of `%` to avoid URL-encoding issues
+      query = query.or(`title_en.ilike.*${q}*,title_bn.ilike.*${q}*,category.ilike.*${q}*,excerpt_en.ilike.*${q}*,excerpt_bn.ilike.*${q}*`);
+    }
+  }
+  const { data, error, count } = await query;
   if (error) throw error;
-  return (data ?? []) as unknown as Post[];
+  return { data: (data ?? []) as unknown as Post[], total: count ?? 0 };
+}
+
+export async function fetchAllPostsAdmin(category?: PostCategory, page = 1, pageSize = 20): Promise<PaginatedResult<Post>> {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  let query = supabase
+    .from("posts")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+  if (category) query = query.eq("category", category);
+  const { data, error, count } = await query;
+  if (error) throw error;
+  return { data: (data ?? []) as unknown as Post[], total: count ?? 0 };
 }
 
 export async function fetchPostBySlug(slug: string): Promise<Post | null> {

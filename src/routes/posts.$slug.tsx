@@ -35,13 +35,16 @@ function PostPage() {
   const { data: post, isLoading } = useQuery({
     queryKey: ["post", slug],
     queryFn: () => fetchPostBySlug(slug),
+    staleTime: 60_000,
   });
 
-  const { data: related = [] } = useQuery({
+  const { data: relatedData } = useQuery({
     queryKey: ["related", post?.category, post?.id],
-    queryFn: () => fetchPosts(post!.category),
+    queryFn: () => fetchPosts(post!.category, 1, 10),
     enabled: !!post && a.show_related_posts,
+    staleTime: 60_000,
   });
+  const related = relatedData?.data ?? [];
 
   if (isLoading) {
     return (

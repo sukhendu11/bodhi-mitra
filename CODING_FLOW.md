@@ -211,3 +211,14 @@ Ask yourself:
 - **Does this need a migration?** -- New DB columns need SQL migrations in supabase/migrations/
 
 If uncertain -> stop and re-evaluate.
+
+---
+
+## ASK FOR HELP WHEN STUCK
+
+Some tasks require manual user intervention — e.g., providing API keys, access tokens, or credentials that the AI agent cannot generate or access. When this happens:
+
+- **Ask the user** explicitly using the `ask_user` tool — describe exactly what is needed and where to get it (include a URL if applicable)
+- **Do not guess or fabricate** secrets, tokens, or credentials
+- **Document the requirement** in this file or PROJECT_STATE.md so future sessions know the context
+- Once the user provides what's needed, **proceed immediately** and complete the task without requiring further manual steps

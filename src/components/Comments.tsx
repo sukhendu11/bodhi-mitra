@@ -25,6 +25,7 @@ export function Comments({ postId }: { postId: string }) {
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ["comments", postId],
     queryFn: () => fetchComments(postId),
+    staleTime: 30_000,
   });
 
   const commentsById = useMemo(() => {

@@ -14,10 +14,18 @@ function AdminPostList() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
 
-  const { data: posts = [], isLoading } = useQuery({
-    queryKey: ["admin-posts"],
-    queryFn: fetchAllPostsAdmin,
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-posts", page],
+    queryFn: () => fetchAllPostsAdmin(undefined, page, pageSize),
+    staleTime: 30_000,
   });
+
+  const posts = data?.data ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const del = useMutation({
     mutationFn: deletePost,
@@ -32,8 +40,7 @@ function AdminPostList() {
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading posts…</p>;
 
   const filtered = filter === "all" ? posts : posts.filter((p) => p.status === filter);
-  const draftCount = posts.filter((p) => p.status === "draft").length;
-  const publishedCount = posts.filter((p) => p.status === "published").length;
+
 
   const tabCls = (active: boolean) =>
     `pb-2 border-b-2 text-sm transition-colors ${
@@ -51,13 +58,13 @@ function AdminPostList() {
 
       <div className="flex gap-6 border-b border-border mb-6">
         <button onClick={() => setFilter("all")} className={tabCls(filter === "all")}>
-          All ({posts.length})
+          All
         </button>
         <button onClick={() => setFilter("published")} className={tabCls(filter === "published")}>
-          Published ({publishedCount})
+          Published
         </button>
         <button onClick={() => setFilter("draft")} className={tabCls(filter === "draft")}>
-          Drafts ({draftCount})
+          Drafts
         </button>
       </div>
 
@@ -113,6 +120,26 @@ function AdminPostList() {
           </li>
         )}
       </ul>
+
+      {totalPages > 1 && (
+        <nav className="mt-8 flex items-center justify-center gap-6 text-sm" aria-label="Pagination">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="text-xs uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none"
+          >
+            ← Previous
+          </button>
+          <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="text-xs uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none"
+          >
+            Next →
+          </button>
+        </nav>
+      )}
     </div>
   );
 }

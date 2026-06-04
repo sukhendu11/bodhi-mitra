@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import heroImg from "@/assets/hero.jpg";
 import { PostGrid } from "@/components/PostGrid";
+import { SearchBar } from "@/components/SearchBar";
 import type { PostCategory } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { useSiteSettings } from "@/lib/siteSettings";
@@ -23,6 +24,7 @@ function Home() {
   const settings = useSiteSettings();
   const hero = settings.hero;
   const [active, setActive] = useState<PostCategory | "All">("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filters: { labelKey: "filter_all" | "nav_buddhist_psychology" | "nav_wisdom" | "nav_books"; value: PostCategory | "All" }[] = [
     { labelKey: "filter_all", value: "All" },
@@ -94,7 +96,10 @@ function Home() {
             ))}
           </div>
         </div>
-        <PostGrid category={active === "All" ? undefined : active} />
+        <div className="mb-10 max-w-md">
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        </div>
+        <PostGrid category={active === "All" ? undefined : active} searchQuery={searchQuery} />
       </section>
     </>
   );

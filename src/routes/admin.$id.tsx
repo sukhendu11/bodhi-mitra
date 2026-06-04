@@ -16,6 +16,7 @@ function EditPostPage() {
   const { data: post, isLoading } = useQuery({
     queryKey: ["admin-post", id],
     queryFn: () => fetchPostById(id),
+    staleTime: 30_000,
   });
 
   const mutation = useMutation({

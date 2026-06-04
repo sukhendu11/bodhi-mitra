@@ -41,6 +41,13 @@ const dict = {
   no_posts: { en: "No reflections here yet. Return soon.", bn: "No reflections here yet. Return soon." },
   load_error: { en: "Unable to load posts right now.", bn: "Unable to load posts right now." },
 
+  // Search
+  search_posts: { en: "Search reflections…", bn: "Search reflections…" },
+
+  // Pagination
+  prev_page: { en: "Previous", bn: "Previous" },
+  next_page: { en: "Next", bn: "Next" },
+
   // Category descriptions
   cat_bp_desc: {
     en: "Where the Buddha's two-and-a-half-millennia of inquiry into the mind meets the evidence base of modern psychiatry.",

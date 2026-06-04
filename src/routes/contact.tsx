@@ -5,6 +5,7 @@ import { useLang, pickLocalized } from "@/lib/i18n";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -22,7 +23,8 @@ function ContactPage() {
   const cfg = useSiteSettings();
   const { lang } = useLang();
   const c = cfg.contact;
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const title = pickLocalized(c.title_en, c.title_bn, lang, "Contact");
   const intro = pickLocalized(c.intro_en, c.intro_bn, lang, "");
@@ -33,9 +35,30 @@ function ContactPage() {
   const successText = pickLocalized(c.success_text_en, c.success_text_bn, lang, "Thank you.");
   const address = pickLocalized(c.address_en, c.address_bn, lang, c.location);
 
-  const mailto = c.email
-    ? `mailto:${c.email}?subject=${encodeURIComponent("Note via Bodhi Mitra")}`
-    : "";
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setStatus("sending");
+    setErrorMsg("");
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const { error } = await (supabase as any).from("contact_messages").insert({
+        name: formData.get("name") as string,
+        email: formData.get("email") as string,
+        message: formData.get("message") as string,
+      });
+
+      if (error) throw error;
+
+      setStatus("sent");
+      form.reset();
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-20 md:py-28">
@@ -44,39 +67,38 @@ function ContactPage() {
       {intro && <p className="mt-6 text-muted-foreground leading-relaxed text-lg max-w-2xl">{intro}</p>}
 
       <div className="mt-14 grid gap-12 md:grid-cols-[1fr_280px]">
-        <form
-          className="space-y-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const data = new FormData(e.currentTarget);
-            if (c.email) {
-              const body = `${data.get("name")}\n${data.get("email")}\n\n${data.get("message")}`;
-              window.location.href = `mailto:${c.email}?subject=${encodeURIComponent("Note via Bodhi Mitra")}&body=${encodeURIComponent(body)}`;
-            }
-            setSent(true);
-          }}
-        >
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-1.5">
             <label className="text-xs uppercase tracking-wider text-muted-foreground">{nameLabel}</label>
-            <Input name="name" required />
+            <Input name="name" required disabled={status === "sending"} />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs uppercase tracking-wider text-muted-foreground">{emailLabel}</label>
-            <Input name="email" type="email" required />
+            <Input name="email" type="email" required disabled={status === "sending"} />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs uppercase tracking-wider text-muted-foreground">{msgLabel}</label>
-            <Textarea name="message" rows={6} required />
+            <Textarea name="message" rows={6} required disabled={status === "sending"} />
           </div>
-          <Button type="submit">{submitLabel}</Button>
-          {sent && <p className="text-sm text-muted-foreground">{successText}</p>}
+          {status === "sent" ? (
+            <p className="text-sm text-muted-foreground">{successText}</p>
+          ) : (
+            <div>
+              <Button type="submit" disabled={status === "sending"}>
+                {status === "sending" ? "Sending…" : submitLabel}
+              </Button>
+              {status === "error" && (
+                <p className="mt-2 text-sm text-destructive">{errorMsg}</p>
+              )}
+            </div>
+          )}
         </form>
 
         <aside className="space-y-4 text-sm text-muted-foreground">
           {c.email && (
             <div>
               <p className="text-xs uppercase tracking-wider mb-1">Email</p>
-              <a className="text-foreground hover:underline" href={mailto}>{c.email}</a>
+              <a className="text-foreground hover:underline" href={`mailto:${c.email}`}>{c.email}</a>
             </div>
           )}
           {c.phone && (

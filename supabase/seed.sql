@@ -18,8 +18,8 @@
 WITH
 seed_user AS (
   SELECT
-    '00000000-0000-0000-0000-000000000000'::uuid AS uid
-    -- ↑ REPLACE with your actual UUID from step 2 above
+    '37357014-5df2-4877-a96b-8a8baef5cdb6'::uuid AS uid
+    -- ↑ Your UUID, looked up via Auth Admin API on 2026-06-04
 ),
 
 -- ════════════════════════════════════════════════════════════════════════════

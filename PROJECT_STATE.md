@@ -3,6 +3,15 @@
 ## PURPOSE
 Single source of truth for project progress. Must always reflect the real system state.
 
+# ⚠️ VALIDATION RULE
+
+The agent must NOT mark any task as "fixed", "completed", or "working" unless explicitly validated and confirmed by the user.
+
+If a change is made:
+- It must be marked as "pending validation"
+- Only the user can confirm completion
+- The agent cannot assume success based on implementation alone
+
 ---
 
 ## 🟢 DONE
@@ -101,7 +110,15 @@ Single source of truth for project progress. Must always reflect the real system
 - 📄 LICENSE file added (MIT)
 - `.env` added to `.gitignore`, `node_modules_old/` added to `.gitignore`
 - npm dependencies installed (564 packages)
-- Supabase project credentials present (needs service_role key to complete setup)
+- Supabase project credentials present (anon + service_role keys configured)
+- Supabase CLI authenticated and project linked
+
+### Database
+- **23/23 migrations applied** — all tables created (posts, comments, profiles, user_roles, site_settings)
+- RLS policies configured for all tables and storage buckets
+- Storage buckets created: blog-images, avatars, site-assets
+- Admin RPC functions deployed: claim_admin_role(), get_admin_claim_status()
+- Site settings seeded with default singleton row
 
 ### Documentation
 - README.md -- comprehensive project docs (description, tech stack, setup, architecture)
@@ -118,17 +135,11 @@ Single source of truth for project progress. Must always reflect the real system
 
 ---
 
-## 🟡 IN PROGRESS
-- Supabase project connection — user provided new project URL (`ptqxdikjfcbgnwhwfefi.supabase.co`), awaiting anon key and service_role key to complete setup and run 23 migrations
-
----
-
 ## 🔴 PENDING
 
 ### Database & Data
-- Supabase project needs anon + service_role keys configured in `.env`
-- 23 migrations ready to run (create tables: profiles, posts, comments, user_roles, site_settings + RLS policies)
-- No seed data (no posts or comments in the database yet)
+- **Seed data deployed** — 5 sample posts + 5 comments in the database
+- Admin role granted to user `sukhenduchakma77@gmail.com` (UUID: `37357014-5df2-4877-a96b-8a8baef5cdb6`)
 - Site settings stored as monolithic JSON blob -- write contention risk
 
 ### Testing
