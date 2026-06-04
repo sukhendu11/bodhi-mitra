@@ -43,7 +43,7 @@ function Home() {
       {hero.visible && (
         <section className="relative overflow-hidden border-b border-border/60">
           <div className="absolute inset-0 opacity-90">
-            <img src={heroImg} alt="" className="w-full h-full object-cover" />
+            <img src={hero.image_url || heroImg} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/10 to-background/70" />
           </div>
           <div className="relative mx-auto max-w-4xl px-6 py-32 md:py-44 text-center">

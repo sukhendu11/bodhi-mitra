@@ -196,6 +196,19 @@ function SettingsPage() {
             <TextareaField label="Main Heading" value={cfg.hero.title_bn} onChange={(v) => update("hero", { title_bn: v })} />
             <TextareaField label="Subheading / Description" value={cfg.hero.desc_bn} onChange={(v) => update("hero", { desc_bn: v })} />
           </Section>
+          <Section title="Hero Image" desc="Upload a background image for the hero section. Recommended ~2000×1200px.">
+            <FileUploadField
+              label="Hero Image"
+              value={cfg.hero.image_url}
+              onUpload={async (f) => {
+                const url = await uploadAsset(f, "hero");
+                if (url) update("hero", { image_url: url });
+              }}
+              onClear={() => update("hero", { image_url: "" })}
+              onUrl={(url) => update("hero", { image_url: url })}
+              previewClass="h-24 w-48"
+            />
+          </Section>
           <Section title="Call-to-Action Button">
             <FieldRow>
               <Field label="Button label" value={cfg.hero.cta_label} onChange={(v) => update("hero", { cta_label: v })} />

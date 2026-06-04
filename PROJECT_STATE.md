@@ -165,8 +165,6 @@ If a change is made:
 - Translation dict has some overlap with DEFAULT_CONFIG content
 
 ### Features
-- Contact form uses mailto: -- no backend delivery
-- Hardcoded hero image (/assets/hero.jpg) not configurable from admin
 - Some route-level meta titles still hardcoded with Bodhi Mitra
 - No RSS feed or newsletter subscription backend
 

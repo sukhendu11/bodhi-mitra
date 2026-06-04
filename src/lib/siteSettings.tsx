@@ -24,6 +24,7 @@ export interface SiteConfig {
   };
   hero: {
     visible: boolean;
+    image_url: string;
     eyebrow_en: string;
     eyebrow_bn: string;
     title_en: string;
@@ -143,6 +144,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
   },
   hero: {
     visible: true,
+    image_url: "",
     eyebrow_en: "❖ Bodhi Mitra",
     eyebrow_bn: "❖ বোধি মিত্র",
     title_en: "Where ancient wisdom\nmeets modern psychology.",

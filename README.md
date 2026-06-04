@@ -21,7 +21,7 @@ A serene bilingual (English/Bengali) blog blending Buddhist teachings with moder
 | **Auth** | Supabase Auth (email/password + Google OAuth) |
 | **Storage** | Supabase Storage (images, avatars, site assets) |
 | **i18n** | English ↔ বাংলা (custom React Context) |
-| **Deployment** | Cloudflare Workers |
+| **Deployment** | Vercel (via Nitro) |
 | **Package Manager** | npm / bun |
 
 ---
@@ -133,7 +133,7 @@ supabase/
 ### Prerequisites
 - Node.js 18+ (or Bun)
 - A Supabase project (free tier works)
-- Cloudflare account (for deployment)
+- Vercel account (for deployment — free tier works)
 
 ### 1. Clone and install
 
@@ -219,14 +219,24 @@ Client: useServerFn()
 
 ## Deployment
 
-This project is configured for Cloudflare Workers via Wrangler:
+### Vercel (recommended)
 
-```bash
-npm run build
-npx wrangler deploy
-```
+This project is configured for Vercel via Nitro:
 
-The `wrangler.jsonc` and `@cloudflare/vite-plugin` handle the deployment configuration.
+1. Push your code to a GitHub repository
+2. Go to [vercel.com](https://vercel.com) and import your repository
+3. Vercel auto-detects the build settings — no manual config needed
+4. Add these environment variables in the Vercel dashboard:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+   SUPABASE_URL=your_supabase_project_url
+   SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   ```
+5. Deploy — the site goes live immediately
+
+Every push to `main` triggers an automatic redeploy on Vercel.
 
 ---
 
