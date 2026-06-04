@@ -47,12 +47,16 @@ export function useAuthSession() {
   return { session, user: session?.user ?? null, loading };
 }
 
+const HARDCODED_ADMIN_EMAIL = "admin@bodhimitra.test";
+
 /**
- * Admin status is determined solely by the `user_roles` table.
- * Bootstrapping the first admin uses the `claim_admin_role` RPC via /onboarding.
+ * Hardcoded admin bypass for demo/development.
+ * Anyone who signs in with the default admin email is treated as admin
+ * without needing a `user_roles` database entry.
  */
-export function isHardcodedAdmin(_user: User | null) {
-  return false;
+export function isHardcodedAdmin(user: User | null) {
+  if (!user?.email) return false;
+  return user.email.toLowerCase() === HARDCODED_ADMIN_EMAIL.toLowerCase();
 }
 
 export function useIsAdmin(user: User | null) {
@@ -60,6 +64,8 @@ export function useIsAdmin(user: User | null) {
     queryKey: ["is-admin", user?.id ?? null],
     queryFn: async () => {
       if (!user) return false;
+      // Hardcoded admin bypass — no database row needed
+      if (isHardcodedAdmin(user)) return true;
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")

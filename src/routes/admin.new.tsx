@@ -1,8 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { lazy, Suspense } from "react";
 import { toast } from "sonner";
-import { PostForm } from "@/components/PostForm";
 import { createPost } from "@/lib/posts";
+
+import type { PostInput } from "@/lib/posts";
+import { FormSkeleton } from "@/components/FormSkeleton";
+const PostForm = lazy(() => import("@/components/PostForm").then((m) => ({ default: m.PostForm })));
 
 export const Route = createFileRoute("/admin/new")({
   component: NewPostPage,
@@ -26,7 +30,9 @@ function NewPostPage() {
   return (
     <div>
       <h2 className="font-serif text-2xl mb-8">New post</h2>
-      <PostForm submitting={mutation.isPending} onSubmit={(input) => mutation.mutate(input)} />
+      <Suspense fallback={<FormSkeleton />}>
+        <PostForm submitting={mutation.isPending} onSubmit={(input) => mutation.mutate(input)} />
+      </Suspense>
     </div>
   );
 }

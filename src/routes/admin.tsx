@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link, redirect, isRedirect } from "@tanstack/react-router";
-import { signOut } from "@/hooks/useAuth";
+import { signOut, isHardcodedAdmin } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin")({
@@ -13,6 +13,8 @@ export const Route = createFileRoute("/admin")({
           search: { message: "Please sign in as an admin to continue.", redirect: location.href },
         });
       }
+      // Hardcoded admin bypass — grant access without user_roles check
+      if (isHardcodedAdmin(userData.user)) return;
       const { data: roleRow } = await supabase
         .from("user_roles")
         .select("role")

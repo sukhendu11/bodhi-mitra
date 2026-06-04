@@ -23,8 +23,6 @@ dist-ssr
 # Supabase CLI cache
 supabase/.temp/
 
-# Development scripts
-scripts/
 
 # Generated assets
 textureAtlas.png

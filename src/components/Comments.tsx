@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { fetchComments, addComment, deleteComment, updateComment, type Comment } from "@/lib/comments";
 import { useAuthSession, useIsAdmin } from "@/hooks/useAuth";
@@ -15,6 +15,10 @@ function snippet(text: string, max = 140) {
 export function Comments({ postId }: { postId: string }) {
   const { user } = useAuthSession();
   const { data: isAdmin = false } = useIsAdmin(user);
+  const currentPath = useRouterState({ select: (s) => s.location.href });
+  const navigate = useNavigate();
+  const loginRedirect = currentPath === "/login" ? "/" : currentPath;
+  const goToLogin = () => navigate({ to: "/login", search: { message: "", redirect: loginRedirect } });
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
@@ -304,15 +308,34 @@ export function Comments({ postId }: { postId: string }) {
           </div>
         </form>
       ) : (
-        <div className="text-center py-8 border border-border/60 bg-secondary/20">
-          <p className="text-sm text-muted-foreground mb-4">Sign in to share a reflection.</p>
-          <Link
-            to="/login"
-            search={{ message: "", redirect: "/" }}
-            className="inline-block px-6 py-2 text-xs uppercase tracking-[0.2em] border border-foreground/60 hover:bg-foreground hover:text-background"
-          >
-            Sign in
-          </Link>
+        <div className="space-y-3">
+          <textarea
+            readOnly
+            onClick={goToLogin}
+            onFocus={goToLogin}
+            placeholder="Sign in to share a reflection…"
+            rows={3}
+            className="w-full border border-border bg-background px-4 py-3 text-sm font-sans opacity-60 cursor-pointer focus:outline-none focus:border-foreground/60 resize-y"
+          />
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              <Link
+                to="/login"
+                search={{ message: "", redirect: loginRedirect }}
+                className="hover:text-foreground underline"
+              >
+                Sign in
+              </Link>
+              {" "}to share a reflection
+            </p>
+            <button
+              type="button"
+              onClick={goToLogin}
+              className="px-6 py-2 text-xs uppercase tracking-[0.2em] bg-foreground/40 text-background cursor-pointer opacity-60 hover:opacity-100"
+            >
+              Post
+            </button>
+          </div>
         </div>
       )}
     </section>

@@ -1,11 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import DOMPurify from "dompurify";
 import { fetchPostBySlug, fetchPosts } from "@/lib/posts";
-import { Comments } from "@/components/Comments";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { LetterAvatar } from "@/components/LetterAvatar";
 import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
+
+import { SanitizedHtml } from "@/components/SanitizedHtml";
+import { Comments } from "@/components/Comments";
 
 
 export const Route = createFileRoute("/posts/$slug")({
@@ -18,17 +19,24 @@ export const Route = createFileRoute("/posts/$slug")({
     return { post, siteName };
   },
   head: ({ loaderData }: Record<string, unknown>) => {
-    const ld = loaderData as { post: { title_en?: string | null; title?: string | null; excerpt_en?: string | null; cover_image?: string | null }; siteName: string } | undefined;
+    const ld = loaderData as {
+      post: { title_en?: string | null; title_bn?: string | null; title?: string | null; excerpt_en?: string | null; excerpt_bn?: string | null; cover_image?: string | null };
+      siteName: string;
+    } | undefined;
     const p = ld?.post;
     const name = ld?.siteName ?? "Bodhi Mitra";
-    const postTitle = p?.title_en || p?.title || "Post";
+    const postTitle = p?.title_en || p?.title_bn || p?.title || "Post";
+    const desc = p?.excerpt_en || p?.excerpt_bn || "Read a reflection.";
     return {
       meta: [
         { title: `${postTitle} — ${name}` },
-        { name: "description", content: p?.excerpt_en || "Read a reflection." },
+        { name: "description", content: desc },
+        { name: "twitter:description", content: desc },
         { property: "og:title", content: `${postTitle} — ${name}` },
-        { property: "og:description", content: p?.excerpt_en || "Read a reflection." },
+        { property: "og:description", content: desc },
         { property: "og:image", content: p?.cover_image || "" },
+        { name: "twitter:image", content: p?.cover_image || "" },
+        { name: "twitter:card", content: "summary_large_image" },
       ],
     };
   },
@@ -138,7 +146,7 @@ function PostPage() {
       )}
 
       {isHtml ? (
-        <div className="prose-mitra" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />
+        <SanitizedHtml html={content} />
       ) : (
         <div className="prose-mitra">
           {content.split("\n\n").filter(Boolean).map((p, i, arr) => {
