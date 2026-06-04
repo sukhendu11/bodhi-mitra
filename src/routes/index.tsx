@@ -5,14 +5,15 @@ import { PostGrid } from "@/components/PostGrid";
 import { SearchBar } from "@/components/SearchBar";
 import type { PostCategory } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
-import { useSiteSettings } from "@/lib/siteSettings";
+import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
+  loader: () => getSiteName(),
+  head: ({ loaderData }) => ({
     meta: [
-      { title: "Bodhi Mitra — Where Ancient Wisdom Meets Modern Psychology" },
+      { title: `${loaderData} — Where Ancient Wisdom Meets Modern Psychology` },
       { name: "description", content: "Reflections on Buddhist psychology, mindfulness, and mental health by practicing psychiatrists." },
-      { property: "og:title", content: "Bodhi Mitra" },
+      { property: "og:title", content: loaderData },
       { property: "og:description", content: "Where ancient wisdom meets modern psychology." },
     ],
   }),

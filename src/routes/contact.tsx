@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useSiteSettings } from "@/lib/siteSettings";
+import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/contact")({
-  head: () => ({
+  loader: () => getSiteName(),
+  head: ({ loaderData }) => ({
     meta: [
-      { title: "Contact — Bodhi Mitra" },
-      { name: "description", content: "Get in touch with Bodhi Mitra." },
-      { property: "og:title", content: "Contact — Bodhi Mitra" },
-      { property: "og:description", content: "Get in touch with Bodhi Mitra." },
+      { title: `Contact — ${loaderData}` },
+      { name: "description", content: `Get in touch with ${loaderData}.` },
+      { property: "og:title", content: `Contact — ${loaderData}` },
+      { property: "og:description", content: `Get in touch with ${loaderData}.` },
     ],
   }),
   component: ContactPage,

@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSiteSettings } from "@/lib/siteSettings";
+import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
 
 export const Route = createFileRoute("/satsang")({
-  head: () => ({
+  loader: () => getSiteName(),
+  head: ({ loaderData }) => ({
     meta: [
-      { title: "Satsang — Bodhi Mitra" },
+      { title: `Satsang — ${loaderData}` },
       { name: "description", content: "Gatherings in good company." },
-      { property: "og:title", content: "Satsang — Bodhi Mitra" },
+      { property: "og:title", content: `Satsang — ${loaderData}` },
       { property: "og:description", content: "Gatherings in good company." },
     ],
   }),

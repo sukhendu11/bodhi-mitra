@@ -265,6 +265,11 @@ export async function saveSiteSettings(config: SiteConfig): Promise<void> {
 
 const SiteSettingsContext = createContext<SiteConfig>(DEFAULT_CONFIG);
 
+export async function getSiteName(): Promise<string> {
+  const settings = await fetchSiteSettings();
+  return settings.branding.site_name_en || "Bodhi Mitra";
+}
+
 export function useSiteSettings() {
   return useContext(SiteSettingsContext);
 }

@@ -1,12 +1,14 @@
+import { getSiteName } from "@/lib/siteSettings";
 import { createFileRoute } from "@tanstack/react-router";
 import { CategoryPage } from "@/components/CategoryPage";
 
 export const Route = createFileRoute("/wisdom")({
-  head: () => ({
+  loader: () => getSiteName(),
+  head: ({ loaderData }) => ({
     meta: [
-      { title: "Wisdom — Bodhi Mitra" },
+      { title: `Wisdom — ${loaderData}` },
       { name: "description", content: "Reflections on mindfulness, philosophy, and the quiet art of living." },
-      { property: "og:title", content: "Wisdom — Bodhi Mitra" },
+      { property: "og:title", content: `Wisdom — ${loaderData}` },
       { property: "og:description", content: "Reflections on mindfulness, philosophy, and the quiet art of living." },
     ],
   }),

@@ -1,12 +1,14 @@
+import { getSiteName } from "@/lib/siteSettings";
 import { createFileRoute } from "@tanstack/react-router";
 import { CategoryPage } from "@/components/CategoryPage";
 
 export const Route = createFileRoute("/buddhist-psychology")({
-  head: () => ({
+  loader: () => getSiteName(),
+  head: ({ loaderData }) => ({
     meta: [
-      { title: "Buddhist Psychology — Bodhi Mitra" },
+      { title: `Buddhist Psychology — ${loaderData}` },
       { name: "description", content: "Essays bridging the Buddha's wisdom with the science of mental health." },
-      { property: "og:title", content: "Buddhist Psychology — Bodhi Mitra" },
+      { property: "og:title", content: `Buddhist Psychology — ${loaderData}` },
       { property: "og:description", content: "Essays bridging the Buddha's wisdom with the science of mental health." },
     ],
   }),

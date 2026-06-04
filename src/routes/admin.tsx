@@ -3,7 +3,7 @@ import { signOut } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin — Bodhi Mitra" }] }),
+  head: () => ({ meta: [{ title: "Admin" }] }),
   beforeLoad: async ({ location }) => {
     try {
       const { data: userData, error: userErr } = await supabase.auth.getUser();

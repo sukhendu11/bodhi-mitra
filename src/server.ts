@@ -66,7 +66,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   return brandedErrorResponse();
 }
 
-export default async function handler(request: Request): Promise<Response> {
+const handler = async (request: Request): Promise<Response> => {
   try {
     const entry = await getServerEntry();
     const response = await entry.fetch(request);
@@ -75,4 +75,6 @@ export default async function handler(request: Request): Promise<Response> {
     console.error(error);
     return brandedErrorResponse();
   }
-}
+};
+
+export default { fetch: handler };

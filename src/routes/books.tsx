@@ -1,12 +1,14 @@
+import { getSiteName } from "@/lib/siteSettings";
 import { createFileRoute } from "@tanstack/react-router";
 import { CategoryPage } from "@/components/CategoryPage";
 
 export const Route = createFileRoute("/books")({
-  head: () => ({
+  loader: () => getSiteName(),
+  head: ({ loaderData }) => ({
     meta: [
-      { title: "Books — Bodhi Mitra" },
+      { title: `Books — ${loaderData}` },
       { name: "description", content: "Reviews and reading recommendations on contemplative practice and the mind." },
-      { property: "og:title", content: "Books — Bodhi Mitra" },
+      { property: "og:title", content: `Books — ${loaderData}` },
       { property: "og:description", content: "Reviews and reading recommendations on contemplative practice and the mind." },
     ],
   }),

@@ -1,3 +1,4 @@
+import { getSiteName } from "@/lib/siteSettings";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -9,7 +10,8 @@ export const Route = createFileRoute("/login")({
     message: (search.message as string) || "",
     redirect: (search.redirect as string) || "/",
   }),
-  head: () => ({ meta: [{ title: "Sign in — Bodhi Mitra" }] }),
+  loader: () => getSiteName(),
+  head: ({ loaderData }) => ({ meta: [{ title: `Sign in — ${loaderData}` }] }),
   component: LoginPage,
 });
 

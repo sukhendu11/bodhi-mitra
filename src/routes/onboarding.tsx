@@ -1,3 +1,4 @@
+import { getSiteName } from "@/lib/siteSettings";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,7 +11,8 @@ import {
 } from "@/lib/onboarding.functions";
 
 export const Route = createFileRoute("/onboarding")({
-  head: () => ({ meta: [{ title: "Get started — Bodhi Mitra" }] }),
+  loader: () => getSiteName(),
+  head: ({ loaderData }) => ({ meta: [{ title: `Get started — ${loaderData}` }] }),
   component: OnboardingPage,
 });
 

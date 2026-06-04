@@ -5,10 +5,33 @@ import { fetchPostBySlug, fetchPosts } from "@/lib/posts";
 import { Comments } from "@/components/Comments";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { LetterAvatar } from "@/components/LetterAvatar";
-import { useSiteSettings } from "@/lib/siteSettings";
+import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 
 
 export const Route = createFileRoute("/posts/$slug")({
+  loader: async ({ params }) => {
+    const [post, siteName] = await Promise.all([
+      fetchPostBySlug(params.slug),
+      getSiteName(),
+    ]);
+    if (!post) throw notFound();
+    return { post, siteName };
+  },
+  head: ({ loaderData }: Record<string, unknown>) => {
+    const ld = loaderData as { post: { title_en?: string | null; title?: string | null; excerpt_en?: string | null; cover_image?: string | null }; siteName: string } | undefined;
+    const p = ld?.post;
+    const name = ld?.siteName ?? "Bodhi Mitra";
+    const postTitle = p?.title_en || p?.title || "Post";
+    return {
+      meta: [
+        { title: `${postTitle} — ${name}` },
+        { name: "description", content: p?.excerpt_en || "Read a reflection." },
+        { property: "og:title", content: `${postTitle} — ${name}` },
+        { property: "og:description", content: p?.excerpt_en || "Read a reflection." },
+        { property: "og:image", content: p?.cover_image || "" },
+      ],
+    };
+  },
   component: PostPage,
   notFoundComponent: () => (
     <div className="mx-auto max-w-2xl px-6 py-32 text-center">
