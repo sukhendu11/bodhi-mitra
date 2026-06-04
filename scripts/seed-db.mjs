@@ -1,11 +1,36 @@
 import fs from "fs";
+import path from "path";
 import https from "https";
+import { fileURLToPath } from "url";
 
 const PROJECT_REF = "ptqxdikjfcbgnwhwfefi";
-const TOKEN = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!TOKEN) {
-  console.error("Error: SUPABASE_SERVICE_ROLE_KEY environment variable is not set.");
+// ── Load .env file ──────────────────────────────────────────────────────
+// Node.js doesn't load .env automatically. Read it manually so the script
+// works when run directly (no dotenv dependency needed).
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const envPath = path.resolve(__dirname, "..", ".env");
+if (fs.existsSync(envPath)) {
+  for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const val = trimmed.slice(eqIdx + 1).trim();
+    // Only set if not already defined (allow shell env to take precedence)
+    if (!process.env[key]) process.env[key] = val;
+  }
+}
+
+// Management API token (sbp_...) — different from the JWT service_role key.
+// Falls back to SUPABASE_SERVICE_ROLE_KEY if management key isn't set.
+const MANAGEMENT_TOKEN = process.env.SUPABASE_MANAGEMENT_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!MANAGEMENT_TOKEN) {
+  console.error("Error: SUPABASE_MANAGEMENT_KEY not found in .env or environment.");
+  console.error("Add to .env:  SUPABASE_MANAGEMENT_KEY=sbp_xxxxxxxx");
+  console.error("Or pass inline: SUPABASE_MANAGEMENT_KEY=sbp_xxx node scripts/seed-db.mjs");
   process.exit(1);
 }
 
@@ -18,7 +43,7 @@ function api(query) {
         path: `/v1/projects/${PROJECT_REF}/database/query`,
         method: "POST",
         headers: {
-          Authorization: `Bearer ${TOKEN}`,
+          Authorization: `Bearer ${MANAGEMENT_TOKEN}`,
           "Content-Type": "application/json",
         },
       },

@@ -25,35 +25,56 @@ import { ThemeTab } from "@/components/SettingsThemeTab";
 import { NavTab } from "@/components/SettingsNavTab";
 import { SocialTab } from "@/components/SettingsSocialTab";
 import { SeoTab } from "@/components/SettingsSeoTab";
+import { Settings } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings")({
   loader: () => fetchSiteSettings(),
   component: SettingsPage,
 });
 
+const TABS = [
+  { id: "branding", label: "Branding" },
+  { id: "home", label: "Homepage" },
+  { id: "article", label: "Article" },
+  { id: "about", label: "About" },
+  { id: "contact", label: "Contact" },
+  { id: "pages", label: "Pages" },
+  { id: "theme", label: "Theme" },
+  { id: "nav", label: "Nav & Footer" },
+  { id: "social", label: "Social" },
+  { id: "seo", label: "SEO" },
+] as const;
+
 function SettingsPage() {
   const initial = Route.useLoaderData();
   const qc = useQueryClient();
   const createAssetUpload = useServerFn(createSiteAssetUpload);
   const [cfg, setCfg] = useState<SiteConfig>(initial ?? DEFAULT_CONFIG);
+  const [activeTab, setActiveTab] = useState("branding");
+  const [hasChanges, setHasChanges] = useState(false);
 
   const save = useMutation({
     mutationFn: (next: SiteConfig) => saveSiteSettings(next),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["site-settings"] });
+      setHasChanges(false);
       toast.success("Settings saved — UI updated.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const update = <K extends keyof SiteConfig>(group: K, patch: Partial<SiteConfig[K]>) =>
+  const update = <K extends keyof SiteConfig>(group: K, patch: Partial<SiteConfig[K]>) => {
     setCfg((c) => ({ ...c, [group]: { ...c[group], ...patch } as SiteConfig[K] }));
+    setHasChanges(true);
+  };
 
-  const updatePage = (slug: string, patch: Partial<DynamicPage>) =>
+  const updatePage = (slug: string, patch: Partial<DynamicPage>) => {
     setCfg((c) => ({
       ...c,
       pages: c.pages.map((p) => (p.slug === slug ? { ...p, ...patch } : p)),
     }));
+    setHasChanges(true);
+  };
 
   const addPage = () => {
     const slug = prompt("URL slug for new page (lowercase, no spaces):")?.trim();
@@ -75,11 +96,13 @@ function SettingsPage() {
         },
       ],
     }));
+    setHasChanges(true);
   };
 
   const removePage = (slug: string) => {
     if (!confirm(`Remove page "${slug}"?`)) return;
     setCfg((c) => ({ ...c, pages: c.pages.filter((p) => p.slug !== slug) }));
+    setHasChanges(true);
   };
 
   async function uploadAsset(file: File, kind: string): Promise<string | null> {
@@ -95,54 +118,80 @@ function SettingsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-serif text-2xl">Site Customizer</h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Full control over every page — branding, content, layout, and language variants.
-          </p>
+        <div className="flex items-center gap-3">
+          <Settings className="h-5 w-5 text-muted-foreground/60" />
+          <div>
+            <h2 className="text-lg font-semibold">Site Settings</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Customize every aspect of your journal
+            </p>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => setCfg(initial ?? DEFAULT_CONFIG)} disabled={save.isPending}>
+        <div className="flex items-center gap-2">
+          {hasChanges && (
+            <span className="text-[0.55rem] text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 px-2 py-1 rounded-full font-medium">
+              Unsaved changes
+            </span>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setCfg(initial ?? DEFAULT_CONFIG)} disabled={save.isPending}>
             Reset
           </Button>
-          <Button onClick={() => save.mutate(cfg)} disabled={save.isPending}>
-            {save.isPending ? "Saving…" : "Save settings"}
+          <Button size="sm" onClick={() => save.mutate(cfg)} disabled={save.isPending || !hasChanges}>
+            {save.isPending ? "Saving…" : "Save"}
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="branding" className="w-full">
-        <TabsList className="flex flex-wrap h-auto">
-          <TabsTrigger value="branding">Branding</TabsTrigger>
-          <TabsTrigger value="home">Homepage</TabsTrigger>
-          <TabsTrigger value="article">Article Page</TabsTrigger>
-          <TabsTrigger value="about">About Page</TabsTrigger>
-          <TabsTrigger value="contact">Contact Page</TabsTrigger>
-          <TabsTrigger value="pages">Dynamic Pages</TabsTrigger>
-          <TabsTrigger value="theme">Theme</TabsTrigger>
-          <TabsTrigger value="nav">Nav & Footer</TabsTrigger>
-          <TabsTrigger value="social">Social</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
-        </TabsList>
-        <TabsContent value="branding" className="mt-6 space-y-6"><BrandingTab {...tabProps} /></TabsContent>
-        <TabsContent value="home" className="mt-6 space-y-6"><HomepageTab {...tabProps} /></TabsContent>
-        <TabsContent value="article" className="mt-6 space-y-6"><ArticleTab {...tabProps} /></TabsContent>
-        <TabsContent value="about" className="mt-6 space-y-6"><AboutTab {...tabProps} /></TabsContent>
-        <TabsContent value="contact" className="mt-6 space-y-6"><ContactTab {...tabProps} /></TabsContent>
-        <TabsContent value="pages" className="mt-6 space-y-6"><PagesTab {...tabProps} /></TabsContent>
-        <TabsContent value="theme" className="mt-6 space-y-6"><ThemeTab {...tabProps} /></TabsContent>
-        <TabsContent value="nav" className="mt-6 space-y-6"><NavTab {...tabProps} /></TabsContent>
-        <TabsContent value="social" className="mt-6 space-y-6"><SocialTab {...tabProps} /></TabsContent>
-        <TabsContent value="seo" className="mt-6 space-y-6"><SeoTab {...tabProps} /></TabsContent>
-      </Tabs>
+      {/* Settings tabs */}
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="border-b border-border/60 px-1 pt-1">
+            <TabsList className="flex flex-wrap h-auto bg-transparent gap-0.5">
+              {TABS.map((tab) => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="data-[state=active]:bg-foreground/5 data-[state=active]:shadow-none rounded-md px-3 py-2 text-xs font-medium"
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t border-border">
-        <Button variant="outline" onClick={() => setCfg(initial ?? DEFAULT_CONFIG)} disabled={save.isPending}>
+          <div className="p-6">
+            {TABS.map((tab) => (
+              <TabsContent key={tab.id} value={tab.id} className="mt-0 space-y-6">
+                {tab.id === "branding" && <BrandingTab {...tabProps} />}
+                {tab.id === "home" && <HomepageTab {...tabProps} />}
+                {tab.id === "article" && <ArticleTab {...tabProps} />}
+                {tab.id === "about" && <AboutTab {...tabProps} />}
+                {tab.id === "contact" && <ContactTab {...tabProps} />}
+                {tab.id === "pages" && <PagesTab {...tabProps} />}
+                {tab.id === "theme" && <ThemeTab {...tabProps} />}
+                {tab.id === "nav" && <NavTab {...tabProps} />}
+                {tab.id === "social" && <SocialTab {...tabProps} />}
+                {tab.id === "seo" && <SeoTab {...tabProps} />}
+              </TabsContent>
+            ))}
+          </div>
+        </Tabs>
+      </div>
+
+      {/* Bottom save bar */}
+      <div className="flex items-center justify-end gap-2 pt-2">
+        {hasChanges && (
+          <span className="text-[0.55rem] text-amber-600 dark:text-amber-400 mr-2">
+            You have unsaved changes
+          </span>
+        )}
+        <Button variant="outline" size="sm" onClick={() => setCfg(initial ?? DEFAULT_CONFIG)} disabled={save.isPending}>
           Reset
         </Button>
-        <Button onClick={() => save.mutate(cfg)} disabled={save.isPending}>
-          {save.isPending ? "Saving…" : "Save settings"}
+        <Button size="sm" onClick={() => save.mutate(cfg)} disabled={save.isPending || !hasChanges}>
+          {save.isPending ? "Saving…" : "Save Changes"}
         </Button>
       </div>
     </div>

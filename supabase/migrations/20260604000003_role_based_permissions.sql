@@ -270,10 +270,9 @@ BEGIN
     END IF;
   END IF;
 
-  INSERT INTO public.user_roles (user_id, role)
-  VALUES (_target_user_id, _new_role)
-  ON CONFLICT (user_id, role)
-  DO UPDATE SET role = _new_role;
+  -- Delete existing role, then insert new one (avoids duplicate role rows)
+  DELETE FROM public.user_roles WHERE user_id = _target_user_id;
+  INSERT INTO public.user_roles (user_id, role) VALUES (_target_user_id, _new_role);
 
   RETURN json_build_object('ok', true, 'role', _new_role);
 END;
