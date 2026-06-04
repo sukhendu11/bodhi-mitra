@@ -1,0 +1,171 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-bn: "Hind Siliguri", "Inter", system-ui, sans-serif;
+
+  /* Saffron / Gerua brand accent */
+  --color-saffron: #d35400;
+  --color-saffron-hover: #e67e22;
+}
+
+:root {
+  --radius: 0.25rem;
+
+  /* Warm off-white / paper */
+  --background: oklch(0.985 0.008 80);
+  --foreground: oklch(0.25 0.012 60);
+
+  --card: oklch(0.98 0.008 80);
+  --card-foreground: oklch(0.25 0.012 60);
+
+  --popover: oklch(0.985 0.008 80);
+  --popover-foreground: oklch(0.25 0.012 60);
+
+  /* Earthy clay primary */
+  --primary: oklch(0.45 0.06 50);
+  --primary-foreground: oklch(0.985 0.008 80);
+
+  --secondary: oklch(0.94 0.015 75);
+  --secondary-foreground: oklch(0.3 0.015 60);
+
+  --muted: oklch(0.95 0.012 78);
+  --muted-foreground: oklch(0.5 0.018 60);
+
+  --accent: oklch(0.88 0.03 70);
+  --accent-foreground: oklch(0.28 0.015 60);
+
+  --destructive: oklch(0.55 0.18 25);
+  --destructive-foreground: oklch(0.985 0.008 80);
+
+  --border: oklch(0.9 0.012 75);
+  --input: oklch(0.9 0.012 75);
+  --ring: oklch(0.5 0.04 60);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1, h2, h3, h4, .font-serif {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  /* When Bangla is the active language, switch the entire UI to Hind Siliguri. */
+  html[data-lang="bn"],
+  html[data-lang="bn"] body,
+  html[data-lang="bn"] .font-serif,
+  html[data-lang="bn"] h1,
+  html[data-lang="bn"] h2,
+  html[data-lang="bn"] h3,
+  html[data-lang="bn"] h4,
+  html[data-lang="bn"] .prose-mitra,
+  html[data-lang="bn"] .prose-mitra h1,
+  html[data-lang="bn"] .prose-mitra h2,
+  html[data-lang="bn"] .prose-mitra h3,
+  html[data-lang="bn"] .prose-mitra h4 {
+    font-family: var(--font-bn) !important;
+    letter-spacing: 0 !important;
+  }
+}
+
+@layer components {
+  .prose-mitra {
+    font-family: var(--font-serif);
+    font-size: 1.18rem;
+    line-height: 1.85;
+    color: var(--color-foreground);
+  }
+  .prose-mitra p { margin-bottom: 1.4em; }
+  .prose-mitra h1,
+  .prose-mitra h2,
+  .prose-mitra h3,
+  .prose-mitra h4 {
+    font-family: var(--font-serif);
+    margin-top: 1.6em;
+    margin-bottom: 0.6em;
+    line-height: 1.25;
+  }
+  .prose-mitra h2 { font-size: 2rem; }
+  .prose-mitra h3 { font-size: 1.5rem; }
+  .prose-mitra strong { font-weight: 600; color: var(--color-foreground); }
+  .prose-mitra em { font-style: italic; }
+  .prose-mitra ul,
+  .prose-mitra ol {
+    margin: 0 0 1.4em 1.5em;
+    padding-left: 0.5em;
+  }
+  .prose-mitra ul { list-style: disc; }
+  .prose-mitra ol { list-style: decimal; }
+  .prose-mitra li { margin-bottom: 0.5em; }
+  .prose-mitra li > p { margin-bottom: 0.4em; }
+  .prose-mitra blockquote {
+    margin: 1.8em 0;
+    padding: 0.6em 1.4em;
+    border-left: 3px solid var(--color-primary);
+    background-color: color-mix(in oklab, var(--color-secondary) 60%, transparent);
+    color: var(--color-foreground);
+    font-style: italic;
+    font-size: 1.22rem;
+    line-height: 1.7;
+  }
+  .prose-mitra blockquote p { margin-bottom: 0.6em; }
+  .prose-mitra blockquote p:last-child { margin-bottom: 0; }
+  .prose-mitra a {
+    color: var(--color-primary);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-primary) 40%, transparent);
+  }
+  .prose-mitra a:hover { border-bottom-color: var(--color-primary); }
+  .prose-mitra code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background-color: var(--color-secondary);
+    padding: 0.1em 0.4em;
+    border-radius: 0.2em;
+    font-size: 0.9em;
+  }
+}
