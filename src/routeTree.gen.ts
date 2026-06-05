@@ -22,6 +22,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as PostsSlugRouteImport } from './routes/posts.$slug'
+import { Route as PagesSlugRouteImport } from './routes/pages.$slug'
 import { Route as AdminVideosRouteImport } from './routes/admin.videos'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTaxonomyRouteImport } from './routes/admin.taxonomy'
@@ -98,6 +99,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const PostsSlugRoute = PostsSlugRouteImport.update({
   id: '/posts/$slug',
   path: '/posts/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PagesSlugRoute = PagesSlugRouteImport.update({
+  id: '/pages/$slug',
+  path: '/pages/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminVideosRoute = AdminVideosRouteImport.update({
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
   '/posts/$slug': typeof PostsSlugRoute
+  '/pages/$slug': typeof PagesSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
   '/posts/$slug': typeof PostsSlugRoute
+  '/pages/$slug': typeof PagesSlugRoute
   '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
@@ -240,6 +248,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
   '/posts/$slug': typeof PostsSlugRoute
+  '/pages/$slug': typeof PagesSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -269,6 +278,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/videos'
     | '/posts/$slug'
+    | '/pages/$slug'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/videos'
     | '/posts/$slug'
+    | '/pages/$slug'
     | '/admin'
   id:
     | '__root__'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/videos'
     | '/posts/$slug'
+    | '/pages/$slug'
     | '/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -338,6 +350,7 @@ export interface RootRouteChildren {
   VideosRoute: typeof VideosRoute
   WisdomRoute: typeof WisdomRoute
   PostsSlugRoute: typeof PostsSlugRoute
+  PagesSlugRoute: typeof PagesSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -431,6 +444,13 @@ declare module '@tanstack/react-router' {
       path: '/posts/$slug'
       fullPath: '/posts/$slug'
       preLoaderRoute: typeof PostsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pages/$slug': {
+      id: '/pages/$slug'
+      path: '/pages/$slug'
+      fullPath: '/pages/$slug'
+      preLoaderRoute: typeof PagesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/videos': {
@@ -565,9 +585,10 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   SatsangRoute: SatsangRoute,
   VideosRoute: VideosRoute,
-  WisdomRoute: WisdomRoute,
-  PostsSlugRoute: PostsSlugRoute,
+  WisdomRoute: WisdomRoute,  PostsSlugRoute: PostsSlugRoute,
+  PagesSlugRoute: PagesSlugRoute,
 }
+
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()

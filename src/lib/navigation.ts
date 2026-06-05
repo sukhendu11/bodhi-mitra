@@ -15,9 +15,14 @@ export interface NavItem {
   icon: string;
   sort_order: number;
   visible: boolean;
+  location: string;
   created_at: string;
   updated_at: string;
 }
+
+export type NavLocation = "header" | "footer";
+
+export const NAV_LOCATIONS: NavLocation[] = ["header", "footer"];
 
 export interface NavItemInput {
   parent_id?: string | null;
@@ -29,6 +34,7 @@ export interface NavItemInput {
   icon?: string;
   sort_order?: number;
   visible?: boolean;
+  location?: NavLocation;
 }
 
 /** Flat DB row extended with computed children array (tree form). */
@@ -38,7 +44,7 @@ export interface NavTreeNode extends NavItem {
 
 /* ─── Query helpers ─────────────────────────────────────────────── */
 
-const NAV_SELECT = "id, parent_id, type, label_en, label_bn, url, slug, icon, sort_order, visible, created_at, updated_at";
+const NAV_SELECT = "id, parent_id, type, label_en, label_bn, url, slug, icon, sort_order, visible, location, created_at, updated_at";
 
 function mapRow(r: any): NavItem {
   return {
@@ -54,6 +60,7 @@ function mapRow(r: any): NavItem {
     visible: r.visible ?? true,
     created_at: r.created_at,
     updated_at: r.updated_at,
+    location: r.location ?? "header",
   };
 }
 
@@ -246,23 +253,27 @@ export function flattenTree(nodes: NavTreeNode[]): NavItem[] {
 
 /* ─── CRUD (admin — authenticated via RLS) ─────────────────── */
 
-/** Fetch all navigation items flat (for admin editing). */
-export async function fetchAllNavItems(): Promise<NavItem[]> {
-  const { data, error } = await (supabase as any)
+/** Fetch all navigation items flat (for admin editing), optionally by location. */
+export async function fetchAllNavItems(location?: NavLocation): Promise<NavItem[]> {
+  let query = (supabase as any)
     .from("navigation_items")
     .select(NAV_SELECT)
     .order("sort_order", { ascending: true });
+  if (location) query = query.eq("location", location);
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapRow);
 }
 
-/** Fetch only visible items (for public rendering). */
-export async function fetchPublicNavItems(): Promise<NavItem[]> {
-  const { data, error } = await (supabase as any)
+/** Fetch only visible items (for public rendering), optionally by location. */
+export async function fetchPublicNavItems(location?: NavLocation): Promise<NavItem[]> {
+  let query = (supabase as any)
     .from("navigation_items")
     .select(NAV_SELECT)
     .eq("visible", true)
     .order("sort_order", { ascending: true });
+  if (location) query = query.eq("location", location);
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapRow);
 }

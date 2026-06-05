@@ -8,7 +8,43 @@ Defines HOW to write safe, scalable, and consistent code for the Bodhi Mitra pro
 ## CORE RULE
 UI must NEVER break existing system. Always verify before deploying changes.
 
----
+USE THIRD-PARTY OPEN-SOURCE LIBRARIES WHEN APPROPRIATE
+
+When a feature requires standard functionality, prefer using popular, free, and well-maintained open-source libraries instead of building from scratch.
+
+Priority rule:
+- Use proven libraries for common problems (UI components, drag-drop, forms, tables, editors, caching, etc.)
+- Avoid reinventing existing solutions unless there is a strong architectural reason
+
+Library requirement:
+- Must be widely used in production
+- Must be actively maintained
+- Must be secure and trusted in the community
+
+Core CMS logic (posts, pages, books, menus, roles, settings, permissions) must remain fully custom and must NOT be replaced by third-party systems.
+
+Libraries are allowed ONLY for:
+- UI/UX acceleration
+- Developer productivity
+- Non-core infrastructure helpers
+
+
+DO NOT USE THIRD-PARTY LIBRARIES FOR CORE CMS LOGIC
+
+Avoid using external libraries when the feature involves core CMS system behavior or business rules.
+
+Never use third-party solutions for:
+- Authentication logic flow (Supabase Auth must control this)
+- Role-based access control (RBAC)
+- Posts, pages, books, or menu data structure logic
+- Navigation system or routing logic
+- Theme system or layout engine
+- Permission enforcement or security rules
+
+Reason:
+These areas define the core architecture of the CMS and must remain fully owned and controlled by the system to ensure stability, security, and predictability.
+
+If a library touches core CMS logic, it must be rejected or replaced with a custom implementation.
 
 ## ARCHITECTURE PATTERN
 

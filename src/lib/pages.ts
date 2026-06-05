@@ -1,5 +1,39 @@
 import { supabase } from "@/integrations/supabase/client";
 
+/* ─── Section Types ───────────────────────────────────────────── */
+
+export type SectionType = "hero" | "text" | "image" | "quote" | "video" | "cta";
+
+export const SECTION_TYPES: SectionType[] = ["hero", "text", "image", "quote", "video", "cta"];
+
+export interface PageSection {
+  id: string;
+  type: SectionType;
+  sort_order: number;
+  content_en: Record<string, string>;
+  content_bn: Record<string, string>;
+}
+
+export function getEmptySection(type: SectionType): PageSection {
+  const defaults: Record<SectionType, Record<string, string>> = {
+    hero: { heading: "", subheading: "", body: "", button_text: "", button_url: "" },
+    text: { body: "" },
+    image: { src: "", alt: "", caption: "" },
+    quote: { text: "", attribution: "" },
+    video: { url: "", caption: "" },
+    cta: { heading: "", body: "", button_text: "", button_url: "" },
+  };
+  return {
+    id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    type,
+    sort_order: 0,
+    content_en: { ...defaults[type] },
+    content_bn: { ...defaults[type] },
+  };
+}
+
+/* ─── Page Types ───────────────────────────────────────────────── */
+
 export interface Page {
   id: string;
   slug: string;
@@ -14,6 +48,7 @@ export interface Page {
   meta_description_bn: string;
   visible: boolean;
   sort_order: number;
+  sections: PageSection[];
   created_at: string;
   updated_at: string;
 }
@@ -31,6 +66,7 @@ export interface PageInput {
   meta_description_bn?: string;
   visible?: boolean;
   sort_order?: number;
+  sections?: PageSection[];
 }
 
 /** Fetch all visible pages (for public display). */
@@ -41,7 +77,18 @@ export async function fetchPublicPages(): Promise<Page[]> {
     .eq("visible", true)
     .order("sort_order", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as Page[];
+  return ((data ?? []) as any[]).map(normalizePage);
+}
+
+function normalizePage(row: any): Page {
+  return {
+    ...row,
+    sections: Array.isArray(row.sections) ? row.sections : [],
+  };
+}
+
+function normalizePages(rows: any[]): Page[] {
+  return (rows ?? []).map(normalizePage);
 }
 
 /** Fetch all pages for admin (including hidden). */
@@ -54,7 +101,7 @@ export async function fetchAllPages(page = 1, pageSize = 50): Promise<{ data: Pa
     .order("sort_order", { ascending: true })
     .range(from, to);
   if (error) throw error;
-  return { data: (data ?? []) as Page[], total: count ?? 0 };
+  return { data: normalizePages(data as any[]), total: count ?? 0 };
 }
 
 /** Fetch a single page by slug. */
@@ -65,7 +112,7 @@ export async function fetchPageBySlug(slug: string): Promise<Page | null> {
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw error;
-  return (data ?? null) as Page | null;
+  return data ? normalizePage(data as any) : null;
 }
 
 /** Fetch a single page by ID. */
@@ -76,18 +123,22 @@ export async function fetchPageById(id: string): Promise<Page | null> {
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return (data ?? null) as Page | null;
+  return data ? normalizePage(data as any) : null;
 }
 
 /** Create a new page. */
 export async function createPage(input: PageInput): Promise<Page> {
+  const payload = {
+    ...input,
+    sections: input.sections ?? [],
+  };
   const { data, error } = await (supabase as any)
     .from("pages")
-    .insert(input)
+    .insert(payload)
     .select()
     .single();
   if (error) throw error;
-  return data as Page;
+  return normalizePage(data as any);
 }
 
 /** Update an existing page. */
@@ -99,7 +150,7 @@ export async function updatePage(id: string, input: Partial<PageInput>): Promise
     .select()
     .single();
   if (error) throw error;
-  return data as Page;
+  return normalizePage(data as any);
 }
 
 /** Delete a page. */

@@ -60,9 +60,9 @@ export interface LayoutState {
 // Used only when Supabase AND cache both fail.
 
 const FALLBACK_NAV_ITEMS: NavItem[] = [
-  { id: "fb-home",  parent_id: null, type: "internal", label_en: "Home",    label_bn: "Home",    url: "", slug: "/",        icon: "", sort_order: 0, visible: true, created_at: "", updated_at: "" },
-  { id: "fb-about", parent_id: null, type: "internal", label_en: "About",   label_bn: "About",   url: "", slug: "/about",   icon: "", sort_order: 1, visible: true, created_at: "", updated_at: "" },
-  { id: "fb-contact",parent_id: null, type: "internal", label_en: "Contact", label_bn: "Contact", url: "", slug: "/contact", icon: "", sort_order: 2, visible: true, created_at: "", updated_at: "" },
+  { id: "fb-home",  parent_id: null, type: "internal", label_en: "Home",    label_bn: "Home",    url: "", slug: "/",        icon: "", sort_order: 0, visible: true, location: "header", created_at: "", updated_at: "" },
+  { id: "fb-about", parent_id: null, type: "internal", label_en: "About",   label_bn: "About",   url: "", slug: "/about",   icon: "", sort_order: 1, visible: true, location: "header", created_at: "", updated_at: "" },
+  { id: "fb-contact",parent_id: null, type: "internal", label_en: "Contact", label_bn: "Contact", url: "", slug: "/contact", icon: "", sort_order: 2, visible: true, location: "header", created_at: "", updated_at: "" },
 ];
 
 const FALLBACK_TREE = safeBuildNavTree(FALLBACK_NAV_ITEMS);
