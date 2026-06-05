@@ -61,6 +61,7 @@ import {
 } from "@/components/ui/form";
 import { navItemSchema, type NavItemFormValues } from "@/lib/schemas";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
+import { FIELD_LABEL } from "@/components/admin/bilingual-field";
 
 export const Route = createFileRoute("/admin/navigation")({
   component: AdminNavPage,
@@ -646,7 +647,7 @@ function AdminNavPage() {
               <div className="space-y-4">
                 <FormField control={addForm.control} name="type" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Type</FormLabel>
+                    <FormLabel className={FIELD_LABEL}>Type</FormLabel>
                     <FormControl>
                       <div className="flex items-center gap-2">
                         {(["internal", "external", "dropdown"] as NavItemType[]).map((t) => (
@@ -668,21 +669,21 @@ function AdminNavPage() {
                 )} />
                 <FormField control={addForm.control} name="label_en" render={({ field, fieldState }) => (
                   <FormItem>
-                    <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Label (English)</FormLabel>
+                    <FormLabel className={FIELD_LABEL}>Label (English)</FormLabel>
                     <FormControl><Input {...field} placeholder="Navigation label" /></FormControl>
                     {fieldState.error && <FormMessage className="text-[0.65rem]" />}
                   </FormItem>
                 )} />
                 <FormField control={addForm.control} name="label_bn" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Label (বাংলা)</FormLabel>
+                    <FormLabel className={FIELD_LABEL}>Label (বাংলা)</FormLabel>
                     <FormControl><Input {...field} value={field.value ?? ""} placeholder="ন্যাভিগেশন লেবেল" /></FormControl>
                   </FormItem>
                 )} />
                 {addForm.watch("type") === "internal" && (
                   <FormField control={addForm.control} name="slug" render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Route path</FormLabel>
+                      <FormLabel className={FIELD_LABEL}>Route path</FormLabel>
                       <FormControl><Input {...field} value={field.value ?? ""} placeholder="/books" /></FormControl>
                       {fieldState.error && <FormMessage className="text-[0.65rem]" />}
                     </FormItem>
@@ -691,7 +692,7 @@ function AdminNavPage() {
                 {addForm.watch("type") === "external" && (
                   <FormField control={addForm.control} name="url" render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">URL</FormLabel>
+                      <FormLabel className={FIELD_LABEL}>URL</FormLabel>
                       <FormControl><Input {...field} value={field.value ?? ""} placeholder="https://example.com" /></FormControl>
                       {fieldState.error && <FormMessage className="text-[0.65rem]" />}
                     </FormItem>

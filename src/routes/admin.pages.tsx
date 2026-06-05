@@ -19,15 +19,9 @@ import {
 } from "@/lib/pages";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
 } from "@/components/ui/form";
 import {
   AlertDialog,
@@ -74,6 +68,8 @@ import {
 import { pageSchema, type PageFormValues } from "@/lib/schemas";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
+import { BilingualField, FormFieldRow, FIELD_LABEL } from "@/components/admin/bilingual-field";
+import { FormActions } from "@/components/admin/form-actions";
 
 export const Route = createFileRoute("/admin/pages")({
   component: AdminPagesPage,
@@ -481,57 +477,25 @@ function AdminPagesPage() {
                   <Form {...form}>
                     <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                       <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField control={form.control} name="title_en" render={({ field, fieldState }) => (
-                            <FormItem>
-                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (EN)</FormLabel>
-                              <FormControl><Input {...field} placeholder="About" /></FormControl>
-                              {fieldState.error && <FormMessage className="text-[0.65rem]" />}
-                            </FormItem>
-                          )} />
-                          <FormField control={form.control} name="title_bn" render={({ field, fieldState }) => (
-                            <FormItem>
-                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (BN)</FormLabel>
-                              <FormControl><Input {...field} placeholder="পরিচিতি" /></FormControl>
-                              {fieldState.error && <FormMessage className="text-[0.65rem]" />}
-                            </FormItem>
-                          )} />
-                        </div>
-                        <FormField control={form.control} name="slug" render={({ field, fieldState }) => (
-                          <FormItem>
-                            <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Slug</FormLabel>
-                            <FormControl><Input {...field} placeholder="about" /></FormControl>
-                            {fieldState.error && <FormMessage className="text-[0.65rem]" />}
-                          </FormItem>
-                        )} />
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField control={form.control} name="header_en" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Header (EN)</FormLabel>
-                              <FormControl><Input {...field} value={field.value ?? ""} placeholder="About Us" /></FormControl>
-                            </FormItem>
-                          )} />
-                          <FormField control={form.control} name="header_bn" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Header (BN)</FormLabel>
-                              <FormControl><Input {...field} value={field.value ?? ""} placeholder="আমাদের সম্পর্কে" /></FormControl>
-                            </FormItem>
-                          )} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField control={form.control} name="body_en" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Body (EN)</FormLabel>
-                              <FormControl><Textarea {...field} value={field.value ?? ""} rows={6} /></FormControl>
-                            </FormItem>
-                          )} />
-                          <FormField control={form.control} name="body_bn" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Body (BN)</FormLabel>
-                              <FormControl><Textarea {...field} value={field.value ?? ""} rows={6} /></FormControl>
-                            </FormItem>
-                          )} />
-                        </div>
+                        <BilingualField
+                          control={form.control}
+                          nameEn="title_en" nameBn="title_bn"
+                          labelEn="Title (EN)" labelBn="Title (BN)"
+                          placeholderEn="About" placeholderBn="পরিচিতি"
+                        />
+                        <FormFieldRow control={form.control} name="slug" label="Slug" placeholder="about" />
+                        <BilingualField
+                          control={form.control}
+                          nameEn="header_en" nameBn="header_bn"
+                          labelEn="Header (EN)" labelBn="Header (BN)"
+                          placeholderEn="About Us" placeholderBn="আমাদের সম্পর্কে"
+                        />
+                        <BilingualField
+                          control={form.control}
+                          nameEn="body_en" nameBn="body_bn"
+                          labelEn="Body (EN)" labelBn="Body (BN)"
+                          as="textarea" textareaRows={6}
+                        />
                         <div>
                           <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Banner Image</label>
                           {bannerUrl ? (
@@ -552,20 +516,12 @@ function AdminPagesPage() {
                             </div>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField control={form.control} name="meta_description_en" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Meta Desc (EN)</FormLabel>
-                              <FormControl><Textarea {...field} value={field.value ?? ""} rows={2} /></FormControl>
-                            </FormItem>
-                          )} />
-                          <FormField control={form.control} name="meta_description_bn" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Meta Desc (BN)</FormLabel>
-                              <FormControl><Textarea {...field} value={field.value ?? ""} rows={2} /></FormControl>
-                            </FormItem>
-                          )} />
-                        </div>
+                        <BilingualField
+                          control={form.control}
+                          nameEn="meta_description_en" nameBn="meta_description_bn"
+                          labelEn="Meta Desc (EN)" labelBn="Meta Desc (BN)"
+                          as="textarea" textareaRows={2}
+                        />
                         <div className="flex items-center gap-6">
                           <label className="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" checked={visible} onChange={(e) => form.setValue("visible", e.target.checked)}
@@ -584,12 +540,11 @@ function AdminPagesPage() {
                       </div>
 
                       {/* Footer */}
-                      <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
-                        <button type="button" onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
-                        <Button size="sm" type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                          {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Page" : "Create Page"}
-                        </Button>
-                      </div>
+                      <FormActions
+                        onCancel={resetForm}
+                        isPending={createMutation.isPending || updateMutation.isPending}
+                        submitLabel={editingId ? "Update Page" : "Create Page"}
+                      />
                     </form>
                   </Form>
                 </>
@@ -639,12 +594,11 @@ function AdminPagesPage() {
                   </div>
 
                   {/* Footer */}
-                  <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
-                    <button type="button" onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
-                    <Button size="sm" type="button" onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
-                      {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Page" : "Create Page"}
-                    </Button>
-                  </div>
+                  <FormActions
+                    onCancel={resetForm}
+                    isPending={createMutation.isPending || updateMutation.isPending}
+                    submitLabel={editingId ? "Update Page" : "Create Page"}
+                  />
                 </>
               )}
             </div>

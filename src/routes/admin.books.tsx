@@ -30,7 +30,6 @@ import {
   Upload,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormField,
@@ -52,6 +51,9 @@ import {
 import { bookSchema, type BookFormValues } from "@/lib/schemas";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
+import { StatCard } from "@/components/admin/stat-card";
+import { FIELD_LABEL, BilingualField, FormFieldRow } from "@/components/admin/bilingual-field";
+import { FormActions } from "@/components/admin/form-actions";
 
 export const Route = createFileRoute("/admin/books")({
   component: AdminBooksPage,
@@ -417,27 +419,20 @@ function AdminBooksPage() {
                 <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                   <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
                     {/* Title (EN/BN) */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField control={form.control} name="title_en" render={({ field, fieldState }) => (
-                        <FormItem>
-                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (English)</FormLabel>
-                          <FormControl><Input {...field} placeholder="Book title" /></FormControl>
-                          {fieldState.error && <FormMessage className="text-[0.65rem]" />}
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="title_bn" render={({ field, fieldState }) => (
-                        <FormItem>
-                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (বাংলা)</FormLabel>
-                          <FormControl><Input {...field} placeholder="বইয়ের শিরোনাম" /></FormControl>
-                          {fieldState.error && <FormMessage className="text-[0.65rem]" />}
-                        </FormItem>
-                      )} />
-                    </div>
+                    <BilingualField
+                      control={form.control}
+                      nameEn="title_en"
+                      nameBn="title_bn"
+                      labelEn="Title (English)"
+                      labelBn="Title (বাংলা)"
+                      placeholderEn="Book title"
+                      placeholderBn="বইয়ের শিরোনাম"
+                    />
 
                     {/* Slug */}
                     <FormField control={form.control} name="slug" render={({ field, fieldState }) => (
                       <FormItem>
-                        <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Slug</FormLabel>
+                        <FormLabel className={FIELD_LABEL}>Slug</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -454,28 +449,18 @@ function AdminBooksPage() {
                     )} />
 
                     {/* Author */}
-                    <FormField control={form.control} name="author_name" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Author</FormLabel>
-                        <FormControl><Input {...field} placeholder="Author name" /></FormControl>
-                      </FormItem>
-                    )} />
+                    <FormFieldRow control={form.control} name="author_name" label="Author" placeholder="Author name" />
 
                     {/* Description (EN/BN) */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField control={form.control} name="description_en" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Description (EN)</FormLabel>
-                          <FormControl><Textarea {...field} value={field.value ?? ""} rows={3} /></FormControl>
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="description_bn" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Description (BN)</FormLabel>
-                          <FormControl><Textarea {...field} value={field.value ?? ""} rows={3} /></FormControl>
-                        </FormItem>
-                      )} />
-                    </div>
+                    <BilingualField
+                      control={form.control}
+                      nameEn="description_en"
+                      nameBn="description_bn"
+                      labelEn="Description (EN)"
+                      labelBn="Description (BN)"
+                      as="textarea"
+                      textareaRows={3}
+                    />
 
                     {/* Cover image */}
                     <div>
@@ -528,7 +513,7 @@ function AdminBooksPage() {
                     <div className="grid grid-cols-3 gap-4">
                       <FormField control={form.control} name="pages" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Pages</FormLabel>
+                          <FormLabel className={FIELD_LABEL}>Pages</FormLabel>
                           <FormControl>
                             <Input type="number" min={0} {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
                           </FormControl>
@@ -536,7 +521,7 @@ function AdminBooksPage() {
                       )} />
                       <FormField control={form.control} name="price" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Price ($)</FormLabel>
+                          <FormLabel className={FIELD_LABEL}>Price ($)</FormLabel>
                           <FormControl>
                             <Input type="number" min={0} step="0.01" {...field} disabled={isFree}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
@@ -545,7 +530,7 @@ function AdminBooksPage() {
                       )} />
                       <FormField control={form.control} name="isbn" render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">ISBN</FormLabel>
+                          <FormLabel className={FIELD_LABEL}>ISBN</FormLabel>
                           <FormControl><Input {...field} value={field.value ?? ""} placeholder="978-…" /></FormControl>
                         </FormItem>
                       )} />
@@ -579,24 +564,26 @@ function AdminBooksPage() {
                     </div>
 
                     {/* Category */}
-                    <FormField control={form.control} name="category" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Category</FormLabel>
-                        <FormControl><Input {...field} value={field.value ?? ""} placeholder="general" /></FormControl>
-                      </FormItem>
-                    )} />
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className={FIELD_LABEL}>Category</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value ?? ""} placeholder="general" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   {/* Footer */}
-                  <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
-                    <button type="button" onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      Cancel
-                    </button>
-                    <button type="submit" disabled={createMutation.isPending || updateMutation.isPending}
-                      className="px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
-                      {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Book" : "Create Book"}
-                    </button>
-                  </div>
+                  <FormActions
+                    onCancel={resetForm}
+                    isPending={createMutation.isPending || updateMutation.isPending}
+                    submitLabel={editingId ? "Update Book" : "Create Book"}
+                  />
                 </form>
               </Form>
             </div>
@@ -627,23 +614,4 @@ function AdminBooksPage() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
-  const colors: Record<string, string> = {
-    blue: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400",
-    green: "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400",
-    amber: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
-    slate: "bg-slate-50 text-slate-700 dark:bg-slate-950/30 dark:text-slate-400",
-    purple: "bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400",
-  };
-  return (
-    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 px-4 py-3">
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors[color] || colors.blue}`}>
-        <Icon className="h-4 w-4" />
-      </div>
-      <div>
-        <p className="text-lg font-semibold tracking-tight">{value}</p>
-        <p className="text-[0.55rem] text-muted-foreground">{label}</p>
-      </div>
-    </div>
-  );
-}
+
