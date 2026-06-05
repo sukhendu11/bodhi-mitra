@@ -40,17 +40,6 @@ CREATE INDEX IF NOT EXISTS idx_books_category ON public.books (category);
 CREATE INDEX IF NOT EXISTS idx_books_created_at ON public.books (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_books_sort_order ON public.books (sort_order);
 
--- Full-text search on title and description
-ALTER TABLE public.books ADD COLUMN IF NOT EXISTS search_vector tsvector
-  GENERATED ALWAYS AS (
-    to_tsvector('english', coalesce(title_en, '')) ||
-    to_tsvector('bengali', coalesce(title_bn, '')) ||
-    to_tsvector('english', coalesce(description_en, '')) ||
-    to_tsvector('bengali', coalesce(description_bn, ''))
-  ) STORED;
-
-CREATE INDEX IF NOT EXISTS idx_books_search ON public.books USING GIN (search_vector);
-
 -- Enable RLS
 ALTER TABLE public.books ENABLE ROW LEVEL SECURITY;
 
