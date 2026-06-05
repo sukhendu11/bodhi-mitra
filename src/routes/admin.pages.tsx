@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,6 +64,9 @@ import {
   Video,
   MousePointerClick,
   Layout,
+  Copy,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { pageSchema, type PageFormValues } from "@/lib/schemas";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
@@ -131,6 +134,121 @@ const SECTION_CONFIG: Record<SectionType, { label: string; icon: typeof Type; fi
   },
 };
 
+/* ─── Undo/Redo Hook ─────────────────────────────────────────────── */
+
+function useUndoRedo<T>(
+  initial: T,
+): [T, (updater: T | ((prev: T) => T)) => void, () => void, () => void, boolean, boolean] {
+  const [state, setState] = useState<T>(initial);
+  const historyRef = useRef<T[]>([initial]);
+  const indexRef = useRef(0);
+
+  const set = useCallback((updater: T | ((prev: T) => T)) => {
+    setState((prev) => {
+      const next = typeof updater === "function" ? (updater as (prev: T) => T)(prev) : updater;
+      // Truncate any redo history beyond current index
+      historyRef.current = historyRef.current.slice(0, indexRef.current + 1);
+      historyRef.current.push(next);
+      indexRef.current = historyRef.current.length - 1;
+      return next;
+    });
+  }, []);
+
+  const undo = useCallback(() => {
+    if (indexRef.current <= 0) return;
+    indexRef.current--;
+    setState(historyRef.current[indexRef.current]);
+  }, []);
+
+  const redo = useCallback(() => {
+    if (indexRef.current >= historyRef.current.length - 1) return;
+    indexRef.current++;
+    setState(historyRef.current[indexRef.current]);
+  }, []);
+
+  const canUndo = indexRef.current > 0;
+  const canRedo = indexRef.current < historyRef.current.length - 1;
+
+  return [state, set, undo, redo, canUndo, canRedo];
+}
+
+/* ─── Section Templates ──────────────────────────────────────────── */
+
+const SECTION_TEMPLATES: Record<SectionType, Array<{ name: string; desc: string; content_en: Record<string, string>; content_bn: Record<string, string> }>> = {
+  hero: [
+    {
+      name: "Centered Hero",
+      desc: "Full-width heading + subheading + CTA",
+      content_en: { heading: "Welcome", subheading: "A place for quiet reflection", body: "", button_text: "Learn more", button_url: "/about" },
+      content_bn: { heading: "স্বাগতম", subheading: "শান্ত প্রতিফলনের একটি জায়গা", body: "", button_text: "আরও জানুন", button_url: "/about" },
+    },
+    {
+      name: "Minimal Hero",
+      desc: "Just a large heading, nothing else",
+      content_en: { heading: "A quiet space", subheading: "", body: "", button_text: "", button_url: "" },
+      content_bn: { heading: "একটি শান্ত জায়গা", subheading: "", body: "", button_text: "", button_url: "" },
+    },
+  ],
+  text: [
+    {
+      name: "Simple Paragraph",
+      desc: "A single body of text",
+      content_en: { body: "Write your content here…" },
+      content_bn: { body: "আপনার লেখা এখানে লিখুন…" },
+    },
+    {
+      name: "Two-Column Text",
+      desc: "Two side-by-side paragraphs (use HTML <div class='grid grid-cols-2'>)",
+      content_en: { body: "<div class='grid md:grid-cols-2 gap-8'><p>Column 1</p><p>Column 2</p></div>" },
+      content_bn: { body: "<div class='grid md:grid-cols-2 gap-8'><p>কলাম ১</p><p>কলাম ২</p></div>" },
+    },
+  ],
+  image: [
+    {
+      name: "Full-width Image",
+      desc: "Large image spanning the content area",
+      content_en: { src: "", alt: "Descriptive alt text", caption: "" },
+      content_bn: { src: "", alt: "বর্ণনামূলক বিকল্প পাঠ্য", caption: "" },
+    },
+    {
+      name: "Image with Caption",
+      desc: "Image with a caption below",
+      content_en: { src: "", alt: "", caption: "An insightful caption." },
+      content_bn: { src: "", alt: "", caption: "একটি অন্তর্দৃষ্টিপূর্ণ ক্যাপশন।" },
+    },
+  ],
+  quote: [
+    {
+      name: "Testimonial",
+      desc: "Quote with attribution",
+      content_en: { text: "The mind is everything. What you think you become.", attribution: "— The Buddha" },
+      content_bn: { text: "মনই সবকিছু। আপনি যা ভাবেন, আপনি তাই হন।", attribution: "— বুদ্ধ" },
+    },
+  ],
+  video: [
+    {
+      name: "YouTube Video",
+      desc: "Embedded YouTube video with optional caption",
+      content_en: { url: "https://www.youtube.com/watch?v=", caption: "" },
+      content_bn: { url: "https://www.youtube.com/watch?v=", caption: "" },
+    },
+  ],
+  cta: [
+    {
+      name: "Call to Action",
+      desc: "Centered CTA with heading, body, and button",
+      content_en: { heading: "Join us", body: "Be part of something meaningful.", button_text: "Get started", button_url: "/contact" },
+      content_bn: { heading: "যোগ দিন", body: "অর্থপূর্ণ কিছুতে অংশ নিন।", button_text: "শুরু করুন", button_url: "/contact" },
+    },
+    {
+      name: "Newsletter CTA",
+      desc: "Simple email signup prompt",
+      content_en: { heading: "Stay in touch", body: "Receive new reflections by email.", button_text: "Subscribe", button_url: "" },
+      content_bn: { heading: "যোগাযোগে থাকুন", body: "ইমেলে নতুন প্রতিফলন পান।", button_text: "সাবস্ক্রাইব", button_url: "" },
+    },
+  ],
+};
+
 /* ─── Admin Pages ─────────────────────────────────────────────────── */
 
 function AdminPagesPage() {
@@ -153,7 +271,7 @@ function AdminPagesPage() {
       visible: true, sort_order: 0,
     },
   });
-  const [sections, setSections] = useState<PageSection[]>([]);
+  const [sections, setSections, undo, redo, canUndo, canRedo] = useUndoRedo<PageSection[]>([]);
 
   // Drag & drop sensors
   const sensors = useSensors(
@@ -357,10 +475,32 @@ function AdminPagesPage() {
     [],
   );
 
-  const addSection = (type: SectionType) => {
+  const addSection = (type: SectionType, template?: { content_en: Record<string, string>; content_bn: Record<string, string> }) => {
     const newSection = getEmptySection(type);
     newSection.sort_order = sections.length;
+    if (template) {
+      newSection.content_en = { ...newSection.content_en, ...template.content_en };
+      newSection.content_bn = { ...newSection.content_bn, ...template.content_bn };
+    }
     setSections((prev) => [...prev, newSection]);
+  };
+
+  const duplicateSection = (id: string) => {
+    setSections((prev) => {
+      const idx = prev.findIndex((s) => s.id === id);
+      if (idx === -1) return prev;
+      const original = prev[idx];
+      const clone: PageSection = {
+        id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        type: original.type,
+        sort_order: original.sort_order + 1,
+        content_en: { ...original.content_en },
+        content_bn: { ...original.content_bn },
+      };
+      const next = [...prev];
+      next.splice(idx + 1, 0, clone);
+      return next;
+    });
   };
 
   const removeSection = (id: string) => {
@@ -374,6 +514,24 @@ function AdminPagesPage() {
       ),
     );
   };
+
+  /* ── Undo/redo keyboard shortcuts ──────────────────────────────── */
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        if (e.shiftKey) {
+          e.preventDefault();
+          redo();
+        } else {
+          e.preventDefault();
+          undo();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [undo, redo]);
 
   /* ── Section type picker state ─────────────────────────────────── */
 
@@ -551,7 +709,31 @@ function AdminPagesPage() {
               ) : (
                 <>
                   <div className="px-6 py-5 border-b border-border/60 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold">Page Sections</h3>
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-sm font-semibold">Page Sections</h3>
+                      {/* Undo / Redo */}
+                      <div className="flex items-center gap-0.5 border-l border-border/40 pl-3">
+                        <button
+                          onClick={undo}
+                          disabled={!canUndo}
+                          className="p-1 rounded text-muted-foreground/50 hover:text-foreground hover:bg-secondary/60 transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                          title="Undo (Ctrl+Z)"
+                        >
+                          <Undo2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={redo}
+                          disabled={!canRedo}
+                          className="p-1 rounded text-muted-foreground/50 hover:text-foreground hover:bg-secondary/60 transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                          title="Redo (Ctrl+Shift+Z)"
+                        >
+                          <Redo2 className="h-3.5 w-3.5" />
+                        </button>
+                        {canUndo || canRedo ? (
+                          <span className="text-[0.45rem] text-muted-foreground/40 ml-1 hidden sm:inline">Ctrl+Z</span>
+                        ) : null}
+                      </div>
+                    </div>
                     <button
                       onClick={() => setShowSectionPicker(true)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 text-[0.55rem] font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors"
@@ -583,6 +765,7 @@ function AdminPagesPage() {
                                 section={section}
                                 index={index}
                                 onRemove={removeSection}
+                                onDuplicate={duplicateSection}
                                 onUpdateContent={updateSectionContent}
                                 total={sections.length}
                               />
@@ -609,24 +792,51 @@ function AdminPagesPage() {
       {/* Section type picker modal */}
       {showSectionPicker && (
         <div className="fixed inset-0 z-[60] bg-black/20 backdrop-blur-sm flex items-center justify-center" onClick={() => setShowSectionPicker(false)}>
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 shadow-xl p-6 w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-sm font-semibold mb-4">Add Section</h3>
-            <div className="grid grid-cols-2 gap-3">
+
+            {/* Empty / blank section */}
+            <p className="text-[0.55rem] uppercase tracking-[0.1em] text-muted-foreground/60 font-semibold mb-2">Blank Section</p>
+            <div className="grid grid-cols-3 gap-2 mb-5">
               {(Object.entries(SECTION_CONFIG) as [SectionType, typeof SECTION_CONFIG[SectionType]][]).map(([type, config]) => {
                 const Icon = config.icon;
                 return (
                   <button
                     key={type}
                     onClick={() => { addSection(type); setShowSectionPicker(false); }}
-                    className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/60 hover:border-foreground/30 hover:bg-secondary/20 transition-all group"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border/60 hover:border-foreground/30 hover:bg-secondary/20 transition-all group"
                   >
-                    <Icon className="h-6 w-6 text-muted-foreground/50 group-hover:text-foreground/70 transition-colors" />
-                    <span className="text-xs font-medium">{config.label}</span>
+                    <Icon className="h-5 w-5 text-muted-foreground/50 group-hover:text-foreground/70 transition-colors" />
+                    <span className="text-[0.5rem] font-medium">{config.label}</span>
                   </button>
                 );
               })}
             </div>
-            <div className="flex justify-end mt-4">
+
+            {/* Templates */}
+            <p className="text-[0.55rem] uppercase tracking-[0.1em] text-muted-foreground/60 font-semibold mb-2">Templates</p>
+            <div className="grid grid-cols-1 gap-2">
+              {(Object.entries(SECTION_CONFIG) as [SectionType, typeof SECTION_CONFIG[SectionType]][]).map(([type, config]) => {
+                const templates = SECTION_TEMPLATES[type];
+                if (!templates || templates.length === 0) return null;
+                const Icon = config.icon;
+                return templates.map((tmpl) => (
+                  <button
+                    key={`${type}-${tmpl.name}`}
+                    onClick={() => { addSection(type, tmpl); setShowSectionPicker(false); }}
+                    className="flex items-start gap-3 p-3 rounded-xl border border-border/60 hover:border-foreground/30 hover:bg-secondary/20 transition-all group text-left"
+                  >
+                    <Icon className="h-5 w-5 text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <span className="text-xs font-medium block">{tmpl.name}</span>
+                      <span className="text-[0.5rem] text-muted-foreground/70 block mt-0.5">{tmpl.desc}</span>
+                    </div>
+                  </button>
+                ));
+              })}
+            </div>
+
+            <div className="flex justify-end mt-4 border-t border-border/40 pt-4">
               <button onClick={() => setShowSectionPicker(false)} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Cancel
               </button>
@@ -666,12 +876,14 @@ function SortableSectionCard({
   section,
   index,
   onRemove,
+  onDuplicate,
   onUpdateContent,
   total,
 }: {
   section: PageSection;
   index: number;
   onRemove: (id: string) => void;
+  onDuplicate?: (id: string) => void;
   onUpdateContent: (id: string, locale: "content_en" | "content_bn", key: string, value: string) => void;
   total: number;
 }) {
@@ -728,6 +940,16 @@ function SortableSectionCard({
           >
             {lang === "en" ? "EN" : "বাংলা"}
           </button>
+          {onDuplicate && (
+            <button
+              type="button"
+              onClick={() => onDuplicate(section.id)}
+              className="p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors"
+              title="Duplicate section"
+            >
+              <Copy className="h-3 w-3" />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onRemove(section.id)}

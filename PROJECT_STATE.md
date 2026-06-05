@@ -167,6 +167,11 @@ If a change is made:
   - Mobile nav bar updated with all new admin routes
   - Breadcrumb labels for all new routes
 
+### Page Builder MVP Enhancements
+- **Section duplicating**: `Copy` button on each section card creates a deep clone with new UUID, inserted after original via splice
+- **Undo/Redo**: Custom `useUndoRedo` hook with ref-based history tracking, truncates redo history on new changes. Keyboard shortcuts: Ctrl+Z (undo), Ctrl+Shift+Z (redo). Buttons with keyboard hint in sections tab header.
+- **Section templates**: Pre-filled content templates per section type (Centered Hero, Testimonial, Newsletter CTA, etc.). Section picker modal shows blank sections in grid + template list below. `addSection(type, template)` merges template data over empty defaults.
+
 ### Visual Polish
 - Tags now render as modern rounded-full pills with border, hover transitions, and subtle transparency
 - Consistent tag styling across post page, post cards, and admin preview
@@ -228,6 +233,13 @@ If a change is made:
 - Legacy single-language post fields should be cleaned up after migration
 - Translation dict has some overlap with DEFAULT_CONFIG content
 - useRole.ts extracted for role-level client-side checks
+
+### Safe Fallback System — Audit PASSED 2026-06-05
+- **Navbar**: 3-layer fallback chain (Supabase → cache → hardcoded Home/About/Contact) with cycle detection, depth limits, item validation. LayoutProvider catches fetch errors silently. ✅
+- **Page Renderer**: `if (!sections || sections.length === 0) return null`. `notFoundComponent` for missing pages. Legacy body fallback when no sections exist. Loading skeletons. ✅
+- **Admin CMS**: Every route uses `??` nullish coalescing, optional chaining (`?.`), and default fallback values. Data tables use `data?.data ?? []`. API errors are caught with toast notifications. ✅
+- **Public routes**: `fetchSiteSettings().catch(() => DEFAULT_CONFIG)` in root loader. Every route has `errorComponent` or `notFoundComponent`. All text fields use `pickLocalized()` with fallback values. ✅
+- **Global error capture**: `error-capture.ts` traps unhandled errors/rejections. SSR error recovery via `renderErrorPage()`. ✅
 
 ### Features
 - Route-level meta titles now dynamic from site settings (all routes) ✅
