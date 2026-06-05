@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createColumnHelper } from "@tanstack/react-table";
 import {
   fetchAllVideos,
   createVideo,
@@ -18,11 +19,11 @@ import {
 import {
   Video as VideoIcon,
   Plus,
-  Search,
   Edit3,
   Trash2,
   CheckCircle,
   XCircle,
+  ExternalLink,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,6 +46,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { videoSchema, type VideoFormValues } from "@/lib/schemas";
+import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 
 export const Route = createFileRoute("/admin/videos")({
   component: AdminVideosPage,
@@ -91,7 +93,97 @@ function AdminVideosPage() {
 
   const videos = data?.data ?? [];
   const total = data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const columnHelper = createColumnHelper<Video>();
+
+  const videoColumns = useMemo(
+    () => [
+      columnHelper.accessor("title", {
+        header: "Title",
+        enableSorting: true,
+        cell: ({ row }) => {
+          const v = row.original;
+          const ytId = getYoutubeId(v.youtube_url);
+          return (
+            <div className="flex items-center gap-3 min-w-0">
+              {v.thumbnail_url ? (
+                <img src={v.thumbnail_url} alt="" className="w-16 h-9 rounded object-cover border border-border/40 shrink-0" />
+              ) : ytId ? (
+                <img
+                  src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+                  alt=""
+                  className="w-16 h-9 rounded object-cover border border-border/40 shrink-0"
+                />
+              ) : (
+                <div className="w-16 h-9 rounded bg-secondary/60 border border-border/40 flex items-center justify-center shrink-0">
+                  <VideoIcon className="h-4 w-4 text-muted-foreground/40" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <span className="text-sm font-medium line-clamp-1">{v.title}</span>
+                {v.description && (
+                  <span className="text-[0.6rem] text-muted-foreground line-clamp-1 block">{v.description}</span>
+                )}
+              </div>
+            </div>
+          );
+        },
+      }),
+      columnHelper.accessor("youtube_url", {
+        header: "YouTube",
+        enableSorting: false,
+        cell: ({ getValue }) => (
+          <a
+            href={getValue()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[0.55rem] font-medium text-red-600 dark:text-red-400 hover:underline"
+          >
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+            </svg>
+            Watch
+            <ExternalLink className="h-2.5 w-2.5" />
+          </a>
+        ),
+      }),
+      columnHelper.accessor("status", {
+        header: "Status",
+        enableSorting: true,
+        cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+      }),
+      columnHelper.accessor("sort_order", {
+        header: "Order",
+        enableSorting: true,
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground">{getValue() || "—"}</span>
+        ),
+      }),
+      columnHelper.accessor("created_at", {
+        header: "Created",
+        enableSorting: true,
+        cell: ({ getValue }) => <DateCell date={getValue()} />,
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-1">
+            <button onClick={() => handleEdit(row.original)}
+              className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors" title="Edit">
+              <Edit3 className="h-3.5 w-3.5" />
+            </button>
+            <button onClick={() => setDeletingId(row.original.id)}
+              className="p-1.5 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors" title="Delete">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ),
+      }),
+    ],
+    [],
+  );
 
   const createMutation = useMutation({
     mutationFn: createVideo,
@@ -215,7 +307,6 @@ function AdminVideosPage() {
           ))}
         </div>
         <div className="relative w-full sm:w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
           <input
             type="text"
             value={search}
@@ -226,11 +317,11 @@ function AdminVideosPage() {
         </div>
       </div>
 
-      {/* Video grid */}
+      {/* Video table */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse aspect-video" />
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-16 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse" />
           ))}
         </div>
       ) : videos.length === 0 ? (
@@ -239,120 +330,12 @@ function AdminVideosPage() {
           <p className="text-sm text-muted-foreground">No videos found.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {videos.map((video) => {
-            const ytId = getYoutubeId(video.youtube_url);
-            return (
-              <div
-                key={video.id}
-                className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden hover:border-foreground/30 hover:shadow-sm transition-all"
-              >
-                {/* Thumbnail */}
-                <div className="aspect-video bg-secondary/20 flex items-center justify-center overflow-hidden relative">
-                  {video.thumbnail_url ? (
-                    <img
-                      src={video.thumbnail_url}
-                      alt={video.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : ytId ? (
-                    <img
-                      src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
-                      alt={video.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <VideoIcon className="h-12 w-12 text-muted-foreground/20" />
-                  )}
-
-                  {/* Play overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                      <svg className="w-5 h-5 text-foreground ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Status badge */}
-                  <span
-                    className={`absolute top-2 left-2 text-[0.5rem] font-medium uppercase tracking-[0.08em] px-2 py-0.5 rounded-full border ${
-                      video.status === "published"
-                        ? "bg-green-50 text-green-700 border-green-300/50 dark:bg-green-950/30 dark:text-green-400"
-                        : "bg-amber-50 text-amber-700 border-amber-300/50 dark:bg-amber-950/30 dark:text-amber-400"
-                    }`}
-                  >
-                    {video.status}
-                  </span>
-
-                  {/* Hover edit/delete actions */}
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleEdit(video)}
-                      className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground shadow-sm"
-                      title="Edit"
-                    >
-                      <Edit3 className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => setDeletingId(video.id)}
-                      className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-destructive/70 hover:text-destructive shadow-sm"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="p-3">
-                  <p className="text-xs font-medium line-clamp-1">{video.title}</p>
-                  {video.description && (
-                    <p className="text-[0.6rem] text-muted-foreground mt-1 line-clamp-2">{video.description}</p>
-                  )}
-                  <div className="flex items-center gap-2 mt-2">
-                    <a
-                      href={video.youtube_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[0.55rem] font-medium text-red-600 dark:text-red-400 hover:underline"
-                    >
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                      </svg>
-                      Watch on YouTube
-                    </a>
-                    {video.sort_order > 0 && (
-                      <>
-                        <span className="text-muted-foreground/30">·</span>
-                        <span className="text-[0.5rem] text-muted-foreground">Order {video.sort_order}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Page {page} of {totalPages}</p>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-              className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors">
-              ← Previous
-            </button>
-            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-              className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors">
-              Next →
-            </button>
-          </div>
-        </div>
+        <DataTable
+          columns={videoColumns}
+          data={videos}
+          searchPlaceholder="Search videos…"
+          pageSize={15}
+        />
       )}
 
       {/* Video form modal */}

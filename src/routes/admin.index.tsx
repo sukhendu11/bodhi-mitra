@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { fetchAllPostsAdmin, deletePost, type PostStatus } from "@/lib/posts";
+import { createColumnHelper } from "@tanstack/react-table";
+import { fetchAllPostsAdmin, deletePost, type Post, type PostStatus } from "@/lib/posts";
 import { getDashboardStats } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  FileText, Eye, Edit3, Trash2, Plus, Search, LayoutDashboard, BookOpen, Globe, Users, ImageIcon, Video, MessageSquare, Menu, ArrowRight, Clock, PenSquare, Upload,
+  FileText, Eye, Edit3, Trash2, Plus, LayoutDashboard, BookOpen, Globe, Users, Video, MessageSquare, ArrowRight, Clock, PenSquare, Upload,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -18,6 +19,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -72,13 +74,93 @@ function AdminDashboard() {
 
   const filtered = posts.filter((p) => {
     if (filter !== "all" && p.status !== filter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      const title = (p.title_en || p.title || p.title_bn || "").toLowerCase();
-      if (!title.includes(q)) return false;
-    }
     return true;
   });
+
+  const columnHelper = createColumnHelper<Post>();
+
+  const postColumns = useMemo(
+    () => [
+      columnHelper.accessor("title_en", {
+        header: "Post",
+        cell: ({ row }) => {
+          const p = row.original;
+          return (
+            <div className="flex items-start gap-3 min-w-0">
+              {p.cover_image ? (
+                <img src={p.cover_image} alt="" className="w-9 h-9 rounded-lg object-cover border border-border/40 shrink-0 mt-0.5" />
+              ) : (
+                <div className="w-9 h-9 rounded-lg bg-secondary/60 border border-border/40 flex items-center justify-center shrink-0 mt-0.5">
+                  <FileText className="h-4 w-4 text-muted-foreground/50" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <Link
+                  to="/admin/$id"
+                  params={{ id: p.id }}
+                  className="text-sm font-medium hover:text-foreground/80 transition-colors line-clamp-1"
+                >
+                  {p.title_en || p.title || p.title_bn || <span className="italic text-muted-foreground">Untitled</span>}
+                </Link>
+                <p className="text-[0.65rem] text-muted-foreground mt-0.5">
+                  {p.category} · <DateCell date={p.created_at} />
+                  {p.tags?.length ? ` · ${p.tags.slice(0, 2).join(", ")}` : ""}
+                </p>
+              </div>
+            </div>
+          );
+        },
+      }),
+      columnHelper.accessor("status", {
+        header: "Status",
+        enableSorting: true,
+        cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+      }),
+      columnHelper.accessor("created_at", {
+        header: "Date",
+        enableSorting: true,
+        cell: ({ getValue }) => <DateCell date={getValue()} />,
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        enableSorting: false,
+        cell: ({ row }) => {
+          const p = row.original;
+          return (
+            <div className="flex items-center justify-end gap-1">
+              {p.status === "published" && (
+                <Link
+                  to="/posts/$slug"
+                  params={{ slug: p.slug }}
+                  className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors"
+                  title="View"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Link>
+              )}
+              <Link
+                to="/admin/$id"
+                params={{ id: p.id }}
+                className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors"
+                title="Edit"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+              </Link>
+              <button
+                onClick={() => setDeletingId(p.id)}
+                className="p-1.5 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                title="Delete"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        },
+      }),
+    ],
+    [],
+  );
 
   /* ── Quick actions ─────────────────────────────────────────────── */
 
@@ -194,170 +276,43 @@ function AdminDashboard() {
 
       {/* ── Posts Management ─────────────────────────────────────────── */}
       <div className="space-y-4">
-        {/* Section header */}
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <FileText className="h-4 w-4 text-muted-foreground/60" />
             All Posts
           </h3>
-          <Link
-            to="/admin/new"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.6rem] font-medium bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
-          >
-            <Plus className="h-3 w-3" />
-            New Post
-          </Link>
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-border/60 rounded-lg p-1">
-            {(["all", "published", "draft"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  filter === f
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {f === "all" ? "All" : f === "published" ? "Published" : "Drafts"}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full sm:w-48">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search posts…"
-              className="w-full pl-9 pr-3 py-2 text-xs border border-border/60 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Posts table */}
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden">
-          {filtered.length === 0 ? (
-            <div className="py-16 text-center">
-              <FileText className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                {search ? "No posts match your search." : filter === "all" ? "No posts yet." : `No ${filter} posts.`}
-              </p>
-              {!search && (
-                <Link to="/admin/new" className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-foreground hover:underline">
-                  <Plus className="h-3 w-3" /> Create your first post
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="divide-y divide-border/40">
-              {/* Header */}
-              <div className="hidden sm:grid grid-cols-[1fr,auto,auto] gap-4 px-5 py-3 bg-secondary/20 text-[0.6rem] uppercase tracking-[0.1em] font-semibold text-muted-foreground/60">
-                <span>Post</span>
-                <span className="w-20 text-center">Status</span>
-                <span className="w-28 text-right">Actions</span>
-              </div>
-
-              {filtered.map((p) => (
-                <div key={p.id} className="grid grid-cols-1 sm:grid-cols-[1fr,auto,auto] gap-3 sm:gap-4 px-5 py-4 hover:bg-secondary/20 transition-colors">
-                  <div className="min-w-0">
-                    <div className="flex items-start gap-3">
-                      {p.cover_image ? (
-                        <img src={p.cover_image} alt="" className="hidden sm:block w-10 h-10 rounded-lg object-cover border border-border/40 shrink-0 mt-0.5" />
-                      ) : (
-                        <div className="hidden sm:flex w-10 h-10 rounded-lg bg-secondary/60 border border-border/40 items-center justify-center shrink-0 mt-0.5">
-                          <FileText className="h-4 w-4 text-muted-foreground/50" />
-                        </div>
-                      )}
-                      <div>
-                        <Link
-                          to="/admin/$id"
-                          params={{ id: p.id }}
-                          className="text-sm font-medium hover:text-foreground/80 transition-colors line-clamp-1"
-                        >
-                          {p.title_en || p.title || p.title_bn || <span className="italic text-muted-foreground">Untitled</span>}
-                        </Link>
-                        <p className="text-[0.65rem] text-muted-foreground mt-0.5">
-                          {p.category} · {new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                          {p.tags?.length ? ` · ${p.tags.slice(0, 2).join(", ")}` : ""}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
-                    <span
-                      className={`text-[0.6rem] font-medium uppercase tracking-[0.08em] px-2.5 py-0.5 rounded-full border ${
-                        p.status === "published"
-                          ? "border-green-300/50 bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800/50"
-                          : "border-amber-300/50 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/50"
-                      }`}
-                    >
-                      {p.status}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-1">
-                    {p.status === "published" && (
-                      <Link
-                        to="/posts/$slug"
-                        params={{ slug: p.slug }}
-                        className="p-2 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors"
-                        title="View"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Link>
-                    )}
-                    <Link
-                      to="/admin/$id"
-                      params={{ id: p.id }}
-                      className="p-2 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors"
-                      title="Edit"
-                    >
-                      <Edit3 className="h-3.5 w-3.5" />
-                    </Link>
-                    <button
-                      onClick={() => setDeletingId(p.id)}
-                      className="p-2 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-border/60 rounded-lg p-1">
+              {(["all", "published", "draft"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    filter === f
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {f === "all" ? "All" : f === "published" ? "Published" : "Drafts"}
+                </button>
               ))}
             </div>
-          )}
+            <Link
+              to="/admin/new"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.6rem] font-medium bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
+            >
+              <Plus className="h-3 w-3" />
+              New Post
+            </Link>
+          </div>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              Page {page} of {totalPages} ({total} total posts)
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-              >
-                ← Previous
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-              >
-                Next →
-              </button>
-            </div>
-          </div>
-        )}
+        <DataTable
+          columns={postColumns}
+          data={filtered}
+          searchPlaceholder="Search posts…"
+          pageSize={15}
+        />
       </div>
 
       {/* Delete confirmation */}

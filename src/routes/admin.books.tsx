@@ -1,9 +1,10 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createColumnHelper } from "@tanstack/react-table";
 import {
   fetchAllBooks,
   deleteBook,
@@ -19,7 +20,6 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   BookOpen,
   Plus,
-  Search,
   Edit3,
   Eye,
   Trash2,
@@ -50,6 +50,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { bookSchema, type BookFormValues } from "@/lib/schemas";
+import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 
 export const Route = createFileRoute("/admin/books")({
   component: AdminBooksPage,
@@ -57,7 +58,6 @@ export const Route = createFileRoute("/admin/books")({
 
 function AdminBooksPage() {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [filter, setFilter] = useState<"all" | BookStatus>("all");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -112,6 +112,90 @@ function AdminBooksPage() {
   const books = data?.data ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const columnHelper = createColumnHelper<Book>();
+
+  const bookColumns = useMemo(
+    () => [
+      columnHelper.accessor("title_en", {
+        header: "Title",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3 min-w-0">
+            {row.original.cover_image ? (
+              <img src={row.original.cover_image} alt="" className="w-8 h-10 rounded object-cover border border-border/40 shrink-0" />
+            ) : (
+              <div className="w-8 h-10 rounded bg-secondary/60 border border-border/40 flex items-center justify-center shrink-0">
+                <BookOpen className="h-4 w-4 text-muted-foreground/40" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <span className="text-sm font-medium line-clamp-1">{row.original.title_en}</span>
+              {row.original.title_bn && (
+                <span className="text-[0.6rem] text-muted-foreground block">{row.original.title_bn}</span>
+              )}
+            </div>
+          </div>
+        ),
+      }),
+      columnHelper.accessor("author_name", {
+        header: "Author",
+        enableSorting: true,
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground text-xs">{getValue() || "—"}</span>
+        ),
+      }),
+      columnHelper.accessor("status", {
+        header: "Status",
+        enableSorting: true,
+        cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+      }),
+      columnHelper.accessor("is_free", {
+        header: "Price",
+        enableSorting: true,
+        cell: ({ row }) => (
+          row.original.is_free
+            ? <span className="text-green-600 dark:text-green-400 text-xs font-medium">Free</span>
+            : <span className="text-xs font-medium">${row.original.price.toFixed(2)}</span>
+        ),
+      }),
+      columnHelper.accessor("pages", {
+        header: "Pages",
+        enableSorting: true,
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground text-xs">{getValue() || "—"}</span>
+        ),
+      }),
+      columnHelper.accessor("created_at", {
+        header: "Created",
+        enableSorting: true,
+        cell: ({ getValue }) => <DateCell date={getValue()} />,
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-1">
+            {row.original.status === "published" && (
+              <Link to="/books" className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors" title="View">
+                <Eye className="h-3.5 w-3.5" />
+              </Link>
+            )}
+            <button onClick={() => handleEdit(row.original)}
+              className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors" title="Edit">
+              <Edit3 className="h-3.5 w-3.5" />
+            </button>
+            <button onClick={() => setDeletingId(row.original.id)}
+              className="p-1.5 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors" title="Delete">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ),
+      }),
+    ],
+    [],
+  );
 
   const createMutation = useMutation({
     mutationFn: (input: BookInput) => createBook(input),
@@ -276,40 +360,28 @@ function AdminBooksPage() {
         </div>
       )}
 
-      {/* Filters & search */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-border/60 rounded-lg p-1">
-          {(["all", "published", "draft", "archived"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                filter === f
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
-        <div className="relative w-full sm:w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search books…"
-            className="w-full pl-9 pr-3 py-2 text-xs border border-border/60 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
-          />
-        </div>
+      {/* Filters */}
+      <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-border/60 rounded-lg p-1 w-fit">
+        {(["all", "published", "draft", "archived"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              filter === f
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
       </div>
 
-      {/* Book grid */}
+      {/* Book table */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse aspect-[3/4]" />
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-16 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse" />
           ))}
         </div>
       ) : books.length === 0 ? (
@@ -318,109 +390,12 @@ function AdminBooksPage() {
           <p className="text-sm text-muted-foreground">No books found.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {books.map((book) => (
-            <div
-              key={book.id}
-              className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden hover:border-foreground/30 hover:shadow-sm transition-all"
-            >
-              {/* Cover */}
-              <div className="aspect-[3/4] bg-secondary/20 flex items-center justify-center overflow-hidden">
-                {book.cover_image ? (
-                  <img
-                    src={book.cover_image}
-                    alt={book.title_en}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <BookOpen className="h-16 w-16 text-muted-foreground/20" />
-                )}
-
-                {/* Status badge */}
-                <span
-                  className={`absolute top-3 left-3 text-[0.5rem] font-medium uppercase tracking-[0.08em] px-2 py-0.5 rounded-full border ${
-                    book.status === "published"
-                      ? "bg-green-50 text-green-700 border-green-300/50 dark:bg-green-950/30 dark:text-green-400"
-                      : book.status === "draft"
-                        ? "bg-amber-50 text-amber-700 border-amber-300/50 dark:bg-amber-950/30 dark:text-amber-400"
-                        : "bg-slate-50 text-slate-700 border-slate-300/50 dark:bg-slate-950/30 dark:text-slate-400"
-                  }`}
-                >
-                  {book.status}
-                </span>
-
-                {/* Price badge */}
-                <span className="absolute top-3 right-3 text-[0.55rem] font-medium px-2 py-0.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/60">
-                  {book.is_free ? (
-                    <span className="text-green-600 dark:text-green-400">Free</span>
-                  ) : (
-                    <span>${book.price.toFixed(2)}</span>
-                  )}
-                </span>
-
-                {/* Hover actions */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                  {book.status === "published" && (
-                    <Link to="/books" className="p-2 rounded-full bg-white/90 text-foreground shadow-sm hover:bg-white transition-colors">
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => handleEdit(book)}
-                    className="p-2 rounded-full bg-white/90 text-foreground shadow-sm hover:bg-white transition-colors"
-                  >
-                    <Edit3 className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setDeletingId(book.id)}
-                    className="p-2 rounded-full bg-white/90 text-destructive shadow-sm hover:bg-white transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Info */}
-              <div className="p-4">
-                <p className="text-xs font-medium line-clamp-1">{book.title_en}</p>
-                {book.author_name && (
-                  <p className="text-[0.6rem] text-muted-foreground mt-0.5">{book.author_name}</p>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  {book.is_free ? (
-                    <span className="text-[0.5rem] font-medium text-green-600 dark:text-green-400">Free</span>
-                  ) : (
-                    <span className="text-[0.5rem] font-medium">${book.price.toFixed(2)}</span>
-                  )}
-                  {book.pages > 0 && (
-                    <>
-                      <span className="text-muted-foreground/30">·</span>
-                      <span className="text-[0.5rem] text-muted-foreground">{book.pages} pages</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Page {page} of {totalPages}</p>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-              className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors">
-              ← Previous
-            </button>
-            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-              className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors">
-              Next →
-            </button>
-          </div>
-        </div>
+        <DataTable
+          columns={bookColumns}
+          data={books}
+          searchPlaceholder="Search books…"
+          pageSize={15}
+        />
       )}
 
       {/* Book form modal */}

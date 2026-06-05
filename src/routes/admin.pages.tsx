@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createColumnHelper } from "@tanstack/react-table";
 import {
   fetchAllPages,
   createPage,
@@ -60,7 +61,6 @@ import {
   Plus,
   Edit3,
   Trash2,
-  Search,
   Upload,
   XCircle,
   GripVertical,
@@ -72,6 +72,7 @@ import {
   Layout,
 } from "lucide-react";
 import { pageSchema, type PageFormValues } from "@/lib/schemas";
+import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 
 export const Route = createFileRoute("/admin/pages")({
   component: AdminPagesPage,
@@ -171,6 +172,79 @@ function AdminPagesPage() {
 
   const pages = data?.data ?? [];
   const total = data?.total ?? 0;
+
+  const columnHelper = createColumnHelper<Page>();
+
+  const pageColumns = useMemo(
+    () => [
+      columnHelper.accessor("title_en", {
+        header: "Title",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full shrink-0 ${row.original.visible ? "bg-green-500" : "bg-muted-foreground/30"}`} />
+              <span className="text-sm font-medium truncate">{row.original.title_en}</span>
+              {!row.original.visible && <span className="text-[0.5rem] text-muted-foreground italic">(hidden)</span>}
+            </div>
+            <p className="text-[0.6rem] text-muted-foreground mt-0.5">
+              /{row.original.slug} · {row.original.title_bn || "—"}
+            </p>
+          </div>
+        ),
+      }),
+      columnHelper.accessor("title_bn", {
+        header: "Bangla",
+        enableSorting: false,
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground">{getValue() || "—"}</span>
+        ),
+      }),
+      columnHelper.accessor("sort_order", {
+        header: "Order",
+        enableSorting: true,
+        cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
+      }),
+      columnHelper.accessor("sections", {
+        header: "Sections",
+        enableSorting: false,
+        cell: ({ getValue }) => {
+          const secs = getValue();
+          if (!secs || secs.length === 0) return <span className="text-muted-foreground/50">—</span>;
+          return (
+            <span className="text-[0.5rem] text-muted-foreground bg-secondary/30 px-1.5 py-0.5 rounded-full">
+              {secs.length} section{secs.length > 1 ? "s" : ""}
+            </span>
+          );
+        },
+      }),
+      columnHelper.accessor("visible", {
+        header: "Status",
+        enableSorting: true,
+        cell: ({ getValue }) => (
+          getValue() ? <StatusBadge status="published" /> : <StatusBadge status="draft" />
+        ),
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-1">
+            <button onClick={() => handleEdit(row.original)}
+              className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors" title="Edit">
+              <Edit3 className="h-3.5 w-3.5" />
+            </button>
+            <button onClick={() => setDeletingId(row.original.id)}
+              className="p-1.5 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors" title="Delete">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ),
+      }),
+    ],
+    [],
+  );
 
   const createMutation = useMutation({
     mutationFn: (input: PageInput) => createPage({ ...input, sections }),
@@ -334,17 +408,7 @@ function AdminPagesPage() {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search pages…"
-          className="w-full pl-9 pr-3 py-2 text-xs border border-border/60 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
-        />
-      </div>
+      {/* Search — handled by DataTable's built-in global search */}
 
       {/* Page list */}
       {isLoading ? (
@@ -359,45 +423,12 @@ function AdminPagesPage() {
           <p className="text-sm text-muted-foreground">No pages yet.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden divide-y divide-border/40">
-          {pages
-            .filter((p) => !search || p.title_en.toLowerCase().includes(search.toLowerCase()))
-            .map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-secondary/20 transition-colors"
-              >
-                <div className="flex items-center gap-4 min-w-0 flex-1">
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${p.visible ? "bg-green-500" : "bg-muted-foreground/30"}`}
-                    title={p.visible ? "Visible" : "Hidden"} />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate">{p.title_en}</p>
-                      {!p.visible && <span className="text-[0.5rem] text-muted-foreground italic">(hidden)</span>}
-                      {p.sections && p.sections.length > 0 && (
-                        <span className="text-[0.5rem] text-muted-foreground bg-secondary/30 px-1.5 py-0.5 rounded-full">
-                          {p.sections.length} section{p.sections.length > 1 ? "s" : ""}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[0.6rem] text-muted-foreground">
-                      /{p.slug} · {p.title_bn || "—"} · Order {p.sort_order}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => handleEdit(p)}
-                    className="p-2 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors" title="Edit">
-                    <Edit3 className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => setDeletingId(p.id)}
-                    className="p-2 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors" title="Delete">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-        </div>
+        <DataTable
+          columns={pageColumns}
+          data={search ? pages.filter((p) => p.title_en.toLowerCase().includes(search.toLowerCase())) : pages}
+          searchPlaceholder="Search pages…"
+          pageSize={50}
+        />
       )}
 
       {/* Page form modal */}
