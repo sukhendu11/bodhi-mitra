@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   fetchAllNavItems,
   createNavItem,
@@ -45,6 +47,15 @@ import {
   GripVertical,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { navItemSchema, type NavItemFormValues } from "@/lib/schemas";
 
 export const Route = createFileRoute("/admin/navigation")({
   component: AdminNavPage,
@@ -69,14 +80,18 @@ function AdminNavPage() {
   );
 
   // Add form state
-  const [newItem, setNewItem] = useState<NavItemInput>({
-    type: "internal",
-    label_en: "",
-    label_bn: "",
-    slug: "/",
-    url: "",
-    visible: true,
-    location: "header",
+  const addForm = useForm<NavItemFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(navItemSchema) as any,
+    defaultValues: {
+      type: "internal",
+      label_en: "",
+      label_bn: "",
+      slug: "/",
+      url: "",
+      visible: true,
+      location: "header",
+    },
   });
   const [addParentId, setAddParentId] = useState<string | null>(null);
 
@@ -155,7 +170,7 @@ function AdminNavPage() {
   const resetAddForm = () => {
     setShowAddForm(false);
     setAddParentId(null);
-    setNewItem({ type: "internal", label_en: "", label_bn: "", slug: "/", url: "", visible: true, location });
+    addForm.reset({ type: "internal", label_en: "", label_bn: "", slug: "/", url: "", visible: true, location });
   };
 
   /* ── dnd-kit handlers ─────────────────────────────────────────── */
@@ -213,24 +228,33 @@ function AdminNavPage() {
 
   const handleAddChild = (parentId: string) => {
     setAddParentId(parentId);
-    setNewItem({ type: "internal", label_en: "", label_bn: "", slug: "/", url: "", visible: true, location });
+    addForm.reset({ type: "internal", label_en: "", label_bn: "", slug: "/", url: "", visible: true, location });
     setShowAddForm(true);
   };
 
   const handleSubmitNew = () => {
-    if (!newItem.label_en.trim()) { toast.error("Label is required"); return; }
-    if (newItem.type === "internal" && !newItem.slug?.trim()) { toast.error("Path is required for internal links"); return; }
-    if (newItem.type === "external" && !newItem.url?.trim()) { toast.error("URL is required for external links"); return; }
+    addForm.handleSubmit(
+      (values) => {
+        const parentItems = items.filter((i) => i.parent_id === addParentId);
+        const nextOrder = parentItems.length > 0 ? Math.max(...parentItems.map((i) => i.sort_order)) + 1 : 0;
 
-    const parentItems = items.filter((i) => i.parent_id === addParentId);
-    const nextOrder = parentItems.length > 0 ? Math.max(...parentItems.map((i) => i.sort_order)) + 1 : 0;
-
-    createMutation.mutate({
-      ...newItem,
-      parent_id: addParentId,
-      sort_order: nextOrder,
-      location,
-    });
+        createMutation.mutate({
+          type: values.type,
+          label_en: values.label_en,
+          label_bn: values.label_bn || "",
+          slug: values.type === "internal" ? values.slug || "/" : "",
+          url: values.type === "external" ? values.url || "" : "",
+          visible: values.visible,
+          location,
+          parent_id: addParentId,
+          sort_order: nextOrder,
+        });
+      },
+      (errors) => {
+        const firstMsg = Object.values(errors).find((e) => e?.message);
+        toast.error(firstMsg?.message || "Please fix the form errors");
+      },
+    )();
   };
 
   const handleLocationChange = (loc: NavLocation) => {
@@ -292,7 +316,7 @@ function AdminNavPage() {
           </div>
         </div>
         <button
-          onClick={() => { setAddParentId(null); setNewItem({ type: "internal", label_en: "", label_bn: "", slug: "/", url: "", visible: true, location }); setShowAddForm(true); }}
+          onClick={() => { setAddParentId(null); addForm.reset({ type: "internal", label_en: "", label_bn: "", slug: "/", url: "", visible: true, location }); setShowAddForm(true); }}
           className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
         >
           <Plus className="h-3.5 w-3.5" /> Add Item
@@ -376,74 +400,101 @@ function AdminNavPage() {
               {addParentId ? "Add child item" : `Add ${location} menu item`}
             </h3>
 
-            <div className="space-y-4">
-              {/* Type */}
-              <div>
-                <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Type</label>
-                <div className="flex items-center gap-2">
-                  {(["internal", "external", "dropdown"] as NavItemType[]).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setNewItem((f) => ({ ...f, type: t, slug: t === "internal" ? (f.slug || "/") : "", url: t === "external" ? (f.url || "https://") : "" }))}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                        newItem.type === t
-                          ? "bg-foreground text-background border-foreground"
-                          : "border-border/60 text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {t === "internal" ? "Internal" : t === "external" ? "External" : "Dropdown"}
-                    </button>
-                  ))}
-                </div>
+            <Form {...addForm}>
+              <div className="space-y-4">
+                {/* Type */}
+                <FormField control={addForm.control} name="type" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Type</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        {(["internal", "external", "dropdown"] as NavItemType[]).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => {
+                              field.onChange(t);
+                              if (t === "internal") addForm.setValue("slug", "/");
+                              if (t === "external") addForm.setValue("url", "https://");
+                            }}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                              field.value === t
+                                ? "bg-foreground text-background border-foreground"
+                                : "border-border/60 text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {t === "internal" ? "Internal" : t === "external" ? "External" : "Dropdown"}
+                          </button>
+                        ))}
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-[0.65rem]" />
+                  </FormItem>
+                )} />
+
+                {/* Label EN */}
+                <FormField control={addForm.control} name="label_en" render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Label (English)</FormLabel>
+                    <FormControl><Input {...field} placeholder="Navigation label" /></FormControl>
+                    {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                  </FormItem>
+                )} />
+
+                {/* Label BN */}
+                <FormField control={addForm.control} name="label_bn" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Label (বাংলা)</FormLabel>
+                    <FormControl><Input {...field} value={field.value ?? ""} placeholder="ন্যাভিগেশন লেবেল" /></FormControl>
+                  </FormItem>
+                )} />
+
+                {/* Conditional: slug for internal OR url for external */}
+                {addForm.watch("type") === "internal" && (
+                  <FormField control={addForm.control} name="slug" render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Route path</FormLabel>
+                      <FormControl><Input {...field} value={field.value ?? ""} placeholder="/books" /></FormControl>
+                      {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                    </FormItem>
+                  )} />
+                )}
+
+                {addForm.watch("type") === "external" && (
+                  <FormField control={addForm.control} name="url" render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">URL</FormLabel>
+                      <FormControl><Input {...field} value={field.value ?? ""} placeholder="https://example.com" /></FormControl>
+                      {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                    </FormItem>
+                  )} />
+                )}
+
+                {/* Visibility */}
+                <FormField control={addForm.control} name="visible" render={({ field }) => (
+                  <FormItem>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30"
+                      />
+                      <span className="text-[0.6rem] font-medium">Visible</span>
+                    </label>
+                  </FormItem>
+                )} />
               </div>
-
-              {/* Label EN */}
-              <div>
-                <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Label (English)</label>
-                <Input value={newItem.label_en} onChange={(e) => setNewItem((f) => ({ ...f, label_en: e.target.value }))} placeholder="Navigation label" />
-              </div>
-
-              {/* Label BN */}
-              <div>
-                <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Label (বাংলা)</label>
-                <Input value={newItem.label_bn} onChange={(e) => setNewItem((f) => ({ ...f, label_bn: e.target.value }))} placeholder="ন্যাভিগেশন লেবেল" />
-              </div>
-
-              {/* Internal: slug */}
-              {newItem.type === "internal" && (
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Route path</label>
-                  <Input value={newItem.slug} onChange={(e) => setNewItem((f) => ({ ...f, slug: e.target.value }))} placeholder="/books" />
-                </div>
-              )}
-
-              {/* External: URL */}
-              {newItem.type === "external" && (
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">URL</label>
-                  <Input value={newItem.url} onChange={(e) => setNewItem((f) => ({ ...f, url: e.target.value }))} placeholder="https://example.com" />
-                </div>
-              )}
-
-              {/* Visibility */}
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={newItem.visible}
-                  onChange={(e) => setNewItem((f) => ({ ...f, visible: e.target.checked }))}
-                  className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30"
-                />
-                <span className="text-[0.6rem] font-medium">Visible</span>
-              </label>
-            </div>
+            </Form>
 
             <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-border/60">
-              <button onClick={resetAddForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <button type="button" onClick={resetAddForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleSubmitNew}
-                disabled={!newItem.label_en.trim() || createMutation.isPending}
+                disabled={createMutation.isPending}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 {createMutation.isPending ? "Adding…" : "Add Item"}

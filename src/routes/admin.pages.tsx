@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   fetchAllPages,
   createPage,
@@ -18,6 +20,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -61,6 +71,7 @@ import {
   MousePointerClick,
   Layout,
 } from "lucide-react";
+import { pageSchema, type PageFormValues } from "@/lib/schemas";
 
 export const Route = createFileRoute("/admin/pages")({
   component: AdminPagesPage,
@@ -134,11 +145,15 @@ function AdminPagesPage() {
   const [activeTab, setActiveTab] = useState<"content" | "sections">("content");
   const pageSize = 50;
 
-  const [form, setForm] = useState<PageInput>({
-    slug: "", title_en: "", title_bn: "", header_en: "",
-    header_bn: "", body_en: "", body_bn: "", banner_url: "",
-    meta_description_en: "", meta_description_bn: "",
-    visible: true, sort_order: 0,
+  const form = useForm<PageFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(pageSchema) as any,
+    defaultValues: {
+      slug: "", title_en: "", title_bn: "", header_en: "",
+      header_bn: "", body_en: "", body_bn: "", banner_url: "",
+      meta_description_en: "", meta_description_bn: "",
+      visible: true, sort_order: 0,
+    },
   });
   const [sections, setSections] = useState<PageSection[]>([]);
 
@@ -195,7 +210,7 @@ function AdminPagesPage() {
     setShowForm(false);
     setEditingId(null);
     setActiveTab("content");
-    setForm({
+    form.reset({
       slug: "", title_en: "", title_bn: "", header_en: "",
       header_bn: "", body_en: "", body_bn: "", banner_url: "",
       meta_description_en: "", meta_description_bn: "",
@@ -205,7 +220,7 @@ function AdminPagesPage() {
   };
 
   const handleEdit = (p: Page) => {
-    setForm({
+    form.reset({
       slug: p.slug, title_en: p.title_en, title_bn: p.title_bn,
       header_en: p.header_en, header_bn: p.header_bn,
       body_en: p.body_en, body_bn: p.body_bn,
@@ -220,20 +235,27 @@ function AdminPagesPage() {
   };
 
   const handleSubmit = () => {
-    if (!form.title_en.trim()) { toast.error("Title is required"); return; }
-    if (!form.slug.trim()) form.slug = slugifyPage(form.title_en);
+    form.handleSubmit(
+      (values) => {
+        if (!values.slug.trim()) values.slug = slugifyPage(values.title_en);
 
-    const sortedSections = sections
-      .map((s, i) => ({ ...s, sort_order: i }))
-      .map(({ id, type, sort_order, content_en, content_bn }) => ({
-        id, type, sort_order, content_en, content_bn,
-      }));
+        const sortedSections = sections
+          .map((s, i) => ({ ...s, sort_order: i }))
+          .map(({ id, type, sort_order, content_en, content_bn }) => ({
+            id, type, sort_order, content_en, content_bn,
+          }));
 
-    if (editingId) {
-      updateMutation.mutate({ id: editingId, input: { ...form, sections: sortedSections } });
-    } else {
-      createMutation.mutate({ ...form, sections: sortedSections });
-    }
+        if (editingId) {
+          updateMutation.mutate({ id: editingId, input: { ...values, sections: sortedSections } });
+        } else {
+          createMutation.mutate({ ...values, sections: sortedSections });
+        }
+      },
+      (errors) => {
+        const firstMsg = Object.values(errors).find((e) => e?.message);
+        toast.error(firstMsg?.message || "Please fix the form errors");
+      },
+    )();
   };
 
   const handleImageUpload = async (file: File) => {
@@ -245,7 +267,7 @@ function AdminPagesPage() {
     });
     if (error) { toast.error(error.message); return; }
     const { data: pub } = supabase.storage.from("site-assets").getPublicUrl(path);
-    setForm((f) => ({ ...f, banner_url: pub.publicUrl }));
+    form.setValue("banner_url", pub.publicUrl);
   };
 
   /* ── Section drag handler ─────────────────────────────────────── */
@@ -285,6 +307,9 @@ function AdminPagesPage() {
   /* ── Section type picker state ─────────────────────────────────── */
 
   const [showSectionPicker, setShowSectionPicker] = useState(false);
+
+  const bannerUrl = form.watch("banner_url");
+  const visible = form.watch("visible");
 
   /* ── Render ───────────────────────────────────────────────────── */
 
@@ -418,85 +443,120 @@ function AdminPagesPage() {
                   <div className="px-6 py-5 border-b border-border/60">
                     <h3 className="text-sm font-semibold">{editingId ? "Edit Page" : "Add New Page"}</h3>
                   </div>
-                  <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (EN)</label>
-                        <Input value={form.title_en} onChange={(e) => setForm((f) => ({ ...f, title_en: e.target.value }))} placeholder="About" />
-                      </div>
-                      <div>
-                        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (BN)</label>
-                        <Input value={form.title_bn} onChange={(e) => setForm((f) => ({ ...f, title_bn: e.target.value }))} placeholder="পরিচিতি" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Slug</label>
-                      <Input value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} placeholder="about" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Header (EN)</label>
-                        <Input value={form.header_en} onChange={(e) => setForm((f) => ({ ...f, header_en: e.target.value }))} placeholder="About Us" />
-                      </div>
-                      <div>
-                        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Header (BN)</label>
-                        <Input value={form.header_bn} onChange={(e) => setForm((f) => ({ ...f, header_bn: e.target.value }))} placeholder="আমাদের সম্পর্কে" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Body (EN)</label>
-                        <Textarea value={form.body_en} onChange={(e) => setForm((f) => ({ ...f, body_en: e.target.value }))} rows={6} />
-                      </div>
-                      <div>
-                        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Body (BN)</label>
-                        <Textarea value={form.body_bn} onChange={(e) => setForm((f) => ({ ...f, body_bn: e.target.value }))} rows={6} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Banner Image</label>
-                      {form.banner_url ? (
-                        <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border/60 mb-2">
-                          <img src={form.banner_url} alt="Banner" className="w-full h-full object-cover" />
-                          <button onClick={() => setForm((f) => ({ ...f, banner_url: "" }))}
-                            className="absolute top-2 right-2 p-1 rounded-full bg-background/80 text-muted-foreground hover:text-destructive">
-                            <XCircle className="h-4 w-4" />
-                          </button>
+                  <Form {...form}>
+                    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                      <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField control={form.control} name="title_en" render={({ field, fieldState }) => (
+                            <FormItem>
+                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (EN)</FormLabel>
+                              <FormControl><Input {...field} placeholder="About" /></FormControl>
+                              {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                            </FormItem>
+                          )} />
+                          <FormField control={form.control} name="title_bn" render={({ field, fieldState }) => (
+                            <FormItem>
+                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (BN)</FormLabel>
+                              <FormControl><Input {...field} placeholder="পরিচিতি" /></FormControl>
+                              {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                            </FormItem>
+                          )} />
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <Input value={form.banner_url} onChange={(e) => setForm((f) => ({ ...f, banner_url: e.target.value }))} placeholder="https://…" />
-                          <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors">
-                            <Upload className="h-3 w-3" /> Upload
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }} />
+                        <FormField control={form.control} name="slug" render={({ field, fieldState }) => (
+                          <FormItem>
+                            <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Slug</FormLabel>
+                            <FormControl><Input {...field} placeholder="about" /></FormControl>
+                            {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                          </FormItem>
+                        )} />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField control={form.control} name="header_en" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Header (EN)</FormLabel>
+                              <FormControl><Input {...field} value={field.value ?? ""} placeholder="About Us" /></FormControl>
+                            </FormItem>
+                          )} />
+                          <FormField control={form.control} name="header_bn" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Header (BN)</FormLabel>
+                              <FormControl><Input {...field} value={field.value ?? ""} placeholder="আমাদের সম্পর্কে" /></FormControl>
+                            </FormItem>
+                          )} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField control={form.control} name="body_en" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Body (EN)</FormLabel>
+                              <FormControl><Textarea {...field} value={field.value ?? ""} rows={6} /></FormControl>
+                            </FormItem>
+                          )} />
+                          <FormField control={form.control} name="body_bn" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Body (BN)</FormLabel>
+                              <FormControl><Textarea {...field} value={field.value ?? ""} rows={6} /></FormControl>
+                            </FormItem>
+                          )} />
+                        </div>
+                        <div>
+                          <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Banner Image</label>
+                          {bannerUrl ? (
+                            <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border/60 mb-2">
+                              <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+                              <button onClick={() => form.setValue("banner_url", "")}
+                                className="absolute top-2 right-2 p-1 rounded-full bg-background/80 text-muted-foreground hover:text-destructive">
+                                <XCircle className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <Input value={bannerUrl} onChange={(e) => form.setValue("banner_url", e.target.value)} placeholder="https://…" />
+                              <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors">
+                                <Upload className="h-3 w-3" /> Upload
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }} />
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField control={form.control} name="meta_description_en" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Meta Desc (EN)</FormLabel>
+                              <FormControl><Textarea {...field} value={field.value ?? ""} rows={2} /></FormControl>
+                            </FormItem>
+                          )} />
+                          <FormField control={form.control} name="meta_description_bn" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Meta Desc (BN)</FormLabel>
+                              <FormControl><Textarea {...field} value={field.value ?? ""} rows={2} /></FormControl>
+                            </FormItem>
+                          )} />
+                        </div>
+                        <div className="flex items-center gap-6">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={visible} onChange={(e) => form.setValue("visible", e.target.checked)}
+                              className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30" />
+                            <span className="text-[0.6rem] font-medium">Visible on site</span>
                           </label>
+                          <FormField control={form.control} name="sort_order" render={({ field }) => (
+                            <div className="flex items-center gap-2">
+                              <label className="text-[0.55rem] font-medium text-muted-foreground uppercase tracking-[0.05em]">Sort Order</label>
+                              <input type="number" min={0} value={field.value}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                className="w-16 px-2 py-1.5 text-xs border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40" />
+                            </div>
+                          )} />
                         </div>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Meta Desc (EN)</label>
-                        <Textarea value={form.meta_description_en} onChange={(e) => setForm((f) => ({ ...f, meta_description_en: e.target.value }))} rows={2} />
                       </div>
-                      <div>
-                        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Meta Desc (BN)</label>
-                        <Textarea value={form.meta_description_bn} onChange={(e) => setForm((f) => ({ ...f, meta_description_bn: e.target.value }))} rows={2} />
+
+                      {/* Footer */}
+                      <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
+                        <button type="button" onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+                        <Button size="sm" type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                          {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Page" : "Create Page"}
+                        </Button>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={form.visible} onChange={(e) => setForm((f) => ({ ...f, visible: e.target.checked }))}
-                          className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30" />
-                        <span className="text-[0.6rem] font-medium">Visible on site</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <label className="text-[0.55rem] font-medium text-muted-foreground uppercase tracking-[0.05em]">Sort Order</label>
-                        <input type="number" min={0} value={form.sort_order}
-                          onChange={(e) => setForm((f) => ({ ...f, sort_order: parseInt(e.target.value) || 0 }))}
-                          className="w-16 px-2 py-1.5 text-xs border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40" />
-                      </div>
-                    </div>
-                  </div>
+                    </form>
+                  </Form>
                 </>
               ) : (
                 <>
@@ -542,16 +602,16 @@ function AdminPagesPage() {
                       </DndContext>
                     )}
                   </div>
+
+                  {/* Footer */}
+                  <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
+                    <button type="button" onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+                    <Button size="sm" type="button" onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
+                      {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Page" : "Create Page"}
+                    </Button>
+                  </div>
                 </>
               )}
-
-              {/* Footer */}
-              <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
-                <button onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
-                <Button size="sm" onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
-                  {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Page" : "Create Page"}
-                </Button>
-              </div>
             </div>
           </div>
         </div>

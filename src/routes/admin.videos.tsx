@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   fetchAllVideos,
   createVideo,
@@ -25,6 +27,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogHeader,
@@ -34,6 +44,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import { videoSchema, type VideoFormValues } from "@/lib/schemas";
 
 export const Route = createFileRoute("/admin/videos")({
   component: AdminVideosPage,
@@ -49,14 +60,17 @@ function AdminVideosPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const pageSize = 20;
 
-  // Form state
-  const [form, setForm] = useState<VideoInput>({
-    title: "",
-    description: "",
-    thumbnail_url: "",
-    youtube_url: "",
-    sort_order: 0,
-    status: "draft",
+  const form = useForm<VideoFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(videoSchema) as any,
+    defaultValues: {
+      title: "",
+      description: "",
+      thumbnail_url: "",
+      youtube_url: "",
+      sort_order: 0,
+      status: "draft",
+    },
   });
 
   const { data, isLoading } = useQuery({
@@ -118,11 +132,11 @@ function AdminVideosPage() {
   const resetForm = () => {
     setShowForm(false);
     setEditingId(null);
-    setForm({ title: "", description: "", thumbnail_url: "", youtube_url: "", sort_order: 0, status: "draft" });
+    form.reset({ title: "", description: "", thumbnail_url: "", youtube_url: "", sort_order: 0, status: "draft" });
   };
 
   const handleEdit = (video: Video) => {
-    setForm({
+    form.reset({
       title: video.title,
       description: video.description,
       thumbnail_url: video.thumbnail_url,
@@ -135,15 +149,23 @@ function AdminVideosPage() {
   };
 
   const handleSubmit = () => {
-    if (!form.title.trim()) { toast.error("Title is required"); return; }
-    if (!form.youtube_url.trim()) { toast.error("YouTube URL is required"); return; }
-
-    if (editingId) {
-      updateMutation.mutate({ id: editingId, input: form });
-    } else {
-      createMutation.mutate(form);
-    }
+    form.handleSubmit(
+      (values) => {
+        if (editingId) {
+          updateMutation.mutate({ id: editingId, input: values });
+        } else {
+          createMutation.mutate(values);
+        }
+      },
+      (errors) => {
+        const firstMsg = Object.values(errors).find((e) => e?.message);
+        toast.error(firstMsg?.message || "Please fix the form errors");
+      },
+    )();
   };
+
+  const youtubeUrl = form.watch("youtube_url");
+  const thumbnailUrl = form.watch("thumbnail_url");
 
   return (
     <div className="space-y-6">
@@ -344,89 +366,107 @@ function AdminVideosPage() {
               <div className="px-6 py-5 border-b border-border/60">
                 <h3 className="text-sm font-semibold">{editingId ? "Edit Video" : "Add New Video"}</h3>
               </div>
-              <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-                {/* Title */}
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title</label>
-                  <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Video title" />
-                </div>
+              <Form {...form}>
+                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                  <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
+                    {/* Title */}
+                    <FormField control={form.control} name="title" render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title</FormLabel>
+                        <FormControl><Input {...field} placeholder="Video title" /></FormControl>
+                        {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                      </FormItem>
+                    )} />
 
-                {/* YouTube URL */}
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">YouTube URL</label>
-                  <Input
-                    value={form.youtube_url}
-                    onChange={(e) => setForm((f) => ({ ...f, youtube_url: e.target.value }))}
-                    placeholder="https://youtube.com/watch?v=..."
-                  />
-                  {form.youtube_url && getYoutubeId(form.youtube_url) && (
-                    <p className="text-[0.55rem] text-green-600 dark:text-green-400 mt-1">
-                      ✓ Valid YouTube URL
-                    </p>
-                  )}
-                </div>
+                    {/* YouTube URL */}
+                    <FormField control={form.control} name="youtube_url" render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">YouTube URL</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="https://youtube.com/watch?v=..." />
+                        </FormControl>
+                        {field.value && getYoutubeId(field.value) && (
+                          <p className="text-[0.55rem] text-green-600 dark:text-green-400 mt-1">
+                            ✓ Valid YouTube URL
+                          </p>
+                        )}
+                        {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                      </FormItem>
+                    )} />
 
-                {/* Thumbnail URL */}
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">
-                    Thumbnail URL <span className="text-muted-foreground/50">(optional — uses YouTube thumbnail if empty)</span>
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      value={form.thumbnail_url || ""}
-                      onChange={(e) => setForm((f) => ({ ...f, thumbnail_url: e.target.value }))}
-                      placeholder="https://..."
-                    />
-                  </div>
-                  {form.thumbnail_url && (
-                    <div className="mt-2 relative w-32 aspect-video rounded-lg overflow-hidden border border-border/60">
-                      <img src={form.thumbnail_url} alt="Preview" className="w-full h-full object-cover" />
-                      <button
-                        onClick={() => setForm((f) => ({ ...f, thumbnail_url: "" }))}
-                        className="absolute top-1 right-1 p-0.5 rounded-full bg-background/80 text-muted-foreground hover:text-destructive"
-                      >
-                        <XCircle className="h-3 w-3" />
-                      </button>
+                    {/* Thumbnail URL */}
+                    <div>
+                      <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">
+                        Thumbnail URL <span className="text-muted-foreground/50">(optional — uses YouTube thumbnail if empty)</span>
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          value={thumbnailUrl || ""}
+                          onChange={(e) => form.setValue("thumbnail_url", e.target.value)}
+                          placeholder="https://..."
+                        />
+                      </div>
+                      {thumbnailUrl && (
+                        <div className="mt-2 relative w-32 aspect-video rounded-lg overflow-hidden border border-border/60">
+                          <img src={thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => form.setValue("thumbnail_url", "")}
+                            className="absolute top-1 right-1 p-0.5 rounded-full bg-background/80 text-muted-foreground hover:text-destructive"
+                          >
+                            <XCircle className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* Description */}
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Description</label>
-                  <Textarea value={form.description || ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={3} placeholder="Short description of the video…" />
-                </div>
+                    {/* Description */}
+                    <FormField control={form.control} name="description" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Description</FormLabel>
+                        <FormControl><Textarea {...field} value={field.value ?? ""} rows={3} placeholder="Short description of the video…" /></FormControl>
+                      </FormItem>
+                    )} />
 
-                {/* Sort order + status */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Sort Order</label>
-                    <Input type="number" min={0} value={form.sort_order || 0} onChange={(e) => setForm((f) => ({ ...f, sort_order: parseInt(e.target.value) || 0 }))} />
+                    {/* Sort order + status */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="sort_order" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Sort Order</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={0} {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="status" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Status</FormLabel>
+                          <FormControl>
+                            <select
+                              value={field.value}
+                              onChange={field.onChange}
+                              className="w-full text-xs border border-border/60 rounded-lg px-3 py-2.5 bg-background focus:outline-none focus:border-foreground/40"
+                            >
+                              <option value="draft">Draft</option>
+                              <option value="published">Published</option>
+                            </select>
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Status</label>
-                    <select
-                      value={form.status || "draft"}
-                      onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as VideoStatus }))}
-                      className="w-full text-xs border border-border/60 rounded-lg px-3 py-2.5 bg-background focus:outline-none focus:border-foreground/40"
-                    >
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
 
-              {/* Footer */}
-              <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
-                <button onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                  Cancel
-                </button>
-                <button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}
-                  className="px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
-                  {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Video" : "Create Video"}
-                </button>
-              </div>
+                  {/* Footer */}
+                  <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
+                    <button type="button" onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={createMutation.isPending || updateMutation.isPending}
+                      className="px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
+                      {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Video" : "Create Video"}
+                    </button>
+                  </div>
+                </form>
+              </Form>
             </div>
           </div>
         </div>

@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   fetchAllBooks,
   deleteBook,
@@ -30,6 +32,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogHeader,
@@ -39,6 +49,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import { bookSchema, type BookFormValues } from "@/lib/schemas";
 
 export const Route = createFileRoute("/admin/books")({
   component: AdminBooksPage,
@@ -55,28 +66,31 @@ function AdminBooksPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const pageSize = 20;
 
-  // Form state
-  const [form, setForm] = useState<BookInput>({
-    slug: "",
-    title_en: "",
-    title_bn: "",
-    author_name: "",
-    description_en: "",
-    description_bn: "",
-    cover_image: "",
-    pdf_url: "",
-    pdf_file_size: 0,
-    price: 0,
-    is_free: true,
-    pages: 0,
-    isbn: "",
-    status: "draft",
-    featured: false,
-    tags: [],
-    category: "general",
-    meta_description_en: "",
-    meta_description_bn: "",
-    sort_order: 0,
+  const form = useForm<BookFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(bookSchema) as any,
+    defaultValues: {
+      slug: "",
+      title_en: "",
+      title_bn: "",
+      author_name: "",
+      description_en: "",
+      description_bn: "",
+      cover_image: "",
+      pdf_url: "",
+      pdf_file_size: 0,
+      price: 0,
+      is_free: true,
+      pages: 0,
+      isbn: "",
+      status: "draft",
+      featured: false,
+      tags: [],
+      category: "general",
+      meta_description_en: "",
+      meta_description_bn: "",
+      sort_order: 0,
+    },
   });
 
   const { data, isLoading } = useQuery({
@@ -100,7 +114,7 @@ function AdminBooksPage() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const createMutation = useMutation({
-    mutationFn: createBook,
+    mutationFn: (input: BookInput) => createBook(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-books"] });
       queryClient.invalidateQueries({ queryKey: ["book-stats"] });
@@ -141,7 +155,7 @@ function AdminBooksPage() {
   const resetForm = () => {
     setShowForm(false);
     setEditingId(null);
-    setForm({
+    form.reset({
       slug: "", title_en: "", title_bn: "", author_name: "",
       description_en: "", description_bn: "", cover_image: "",
       pdf_url: "", pdf_file_size: 0, price: 0, is_free: true,
@@ -152,7 +166,7 @@ function AdminBooksPage() {
   };
 
   const handleEdit = (book: Book) => {
-    setForm({
+    form.reset({
       slug: book.slug,
       title_en: book.title_en,
       title_bn: book.title_bn,
@@ -179,14 +193,25 @@ function AdminBooksPage() {
   };
 
   const handleSubmit = () => {
-    if (!form.title_en.trim()) { toast.error("Title is required"); return; }
-    if (!form.slug.trim()) form.slug = slugifyBook(form.title_en);
+    form.handleSubmit(
+      (values) => {
+        const input: BookInput = {
+          ...values,
+          ...(values.is_free ? { price: 0 } : {}),
+        };
+        if (!values.slug.trim()) input.slug = slugifyBook(values.title_en);
 
-    if (editingId) {
-      updateMutation.mutate({ id: editingId, input: form });
-    } else {
-      createMutation.mutate(form);
-    }
+        if (editingId) {
+          updateMutation.mutate({ id: editingId, input });
+        } else {
+          createMutation.mutate(input);
+        }
+      },
+      (errors) => {
+        const firstMsg = Object.values(errors).find((e) => e?.message);
+        toast.error(firstMsg?.message || "Please fix the form errors");
+      },
+    )();
   };
 
   const handleImageUpload = async (file: File) => {
@@ -198,7 +223,7 @@ function AdminBooksPage() {
     });
     if (error) { toast.error(error.message); return; }
     const { data: pub } = supabase.storage.from("book-covers").getPublicUrl(path);
-    setForm((f) => ({ ...f, cover_image: pub.publicUrl }));
+    form.setValue("cover_image", pub.publicUrl);
   };
 
   const handlePdfUpload = async (file: File) => {
@@ -210,8 +235,14 @@ function AdminBooksPage() {
     });
     if (error) { toast.error(error.message); return; }
     const { data: pub } = supabase.storage.from("book-covers").getPublicUrl(path);
-    setForm((f) => ({ ...f, pdf_url: pub.publicUrl, pdf_file_size: file.size }));
+    form.setValue("pdf_url", pub.publicUrl);
+    form.setValue("pdf_file_size", file.size);
   };
+
+  const isFree = form.watch("is_free");
+  const coverImage = form.watch("cover_image");
+  const pdfUrl = form.watch("pdf_url");
+  const statusVal = form.watch("status");
 
   return (
     <div className="space-y-6">
@@ -274,7 +305,7 @@ function AdminBooksPage() {
         </div>
       </div>
 
-      {/* Book grid (Shopify-style) */}
+      {/* Book grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -403,151 +434,192 @@ function AdminBooksPage() {
               <div className="px-6 py-5 border-b border-border/60">
                 <h3 className="text-sm font-semibold">{editingId ? "Edit Book" : "Add New Book"}</h3>
               </div>
-              <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-                {/* Title (EN/BN) */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (English)</label>
-                    <Input value={form.title_en} onChange={(e) => setForm((f) => ({ ...f, title_en: e.target.value }))} placeholder="Book title" />
-                  </div>
-                  <div>
-                    <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (বাংলা)</label>
-                    <Input value={form.title_bn} onChange={(e) => setForm((f) => ({ ...f, title_bn: e.target.value }))} placeholder="বইয়ের শিরোনাম" />
-                  </div>
-                </div>
-
-                {/* Slug */}
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Slug</label>
-                  <Input
-                    value={form.slug}
-                    onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                    placeholder="book-slug"
-                    onBlur={() => { if (!form.slug.trim() && form.title_en.trim()) setForm((f) => ({ ...f, slug: slugifyBook(form.title_en) })); }}
-                  />
-                </div>
-
-                {/* Author */}
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Author</label>
-                  <Input value={form.author_name} onChange={(e) => setForm((f) => ({ ...f, author_name: e.target.value }))} placeholder="Author name" />
-                </div>
-
-                {/* Description (EN/BN) */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Description (EN)</label>
-                    <Textarea value={form.description_en} onChange={(e) => setForm((f) => ({ ...f, description_en: e.target.value }))} rows={3} />
-                  </div>
-                  <div>
-                    <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Description (BN)</label>
-                    <Textarea value={form.description_bn} onChange={(e) => setForm((f) => ({ ...f, description_bn: e.target.value }))} rows={3} />
-                  </div>
-                </div>
-
-                {/* Cover image */}
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Cover Image</label>
-                  {form.cover_image ? (
-                    <div className="relative w-32 h-44 rounded-lg overflow-hidden border border-border/60 mb-2">
-                      <img src={form.cover_image} alt="Cover" className="w-full h-full object-cover" />
-                      <button
-                        onClick={() => setForm((f) => ({ ...f, cover_image: "" }))}
-                        className="absolute top-1 right-1 p-1 rounded-full bg-background/80 text-muted-foreground hover:text-destructive"
-                      >
-                        <XCircle className="h-3 w-3" />
-                      </button>
+              <Form {...form}>
+                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                  <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
+                    {/* Title (EN/BN) */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="title_en" render={({ field, fieldState }) => (
+                        <FormItem>
+                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (English)</FormLabel>
+                          <FormControl><Input {...field} placeholder="Book title" /></FormControl>
+                          {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="title_bn" render={({ field, fieldState }) => (
+                        <FormItem>
+                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Title (বাংলা)</FormLabel>
+                          <FormControl><Input {...field} placeholder="বইয়ের শিরোনাম" /></FormControl>
+                          {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                        </FormItem>
+                      )} />
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <Input value={form.cover_image} onChange={(e) => setForm((f) => ({ ...f, cover_image: e.target.value }))} placeholder="https://…" />
-                      <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors">
-                        <Upload className="h-3 w-3" /> Upload
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }} />
+
+                    {/* Slug */}
+                    <FormField control={form.control} name="slug" render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Slug</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="book-slug"
+                            onBlur={() => {
+                              if (!field.value?.trim() && form.watch("title_en")?.trim()) {
+                                form.setValue("slug", slugifyBook(form.watch("title_en")));
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                      </FormItem>
+                    )} />
+
+                    {/* Author */}
+                    <FormField control={form.control} name="author_name" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Author</FormLabel>
+                        <FormControl><Input {...field} placeholder="Author name" /></FormControl>
+                      </FormItem>
+                    )} />
+
+                    {/* Description (EN/BN) */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="description_en" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Description (EN)</FormLabel>
+                          <FormControl><Textarea {...field} value={field.value ?? ""} rows={3} /></FormControl>
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="description_bn" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Description (BN)</FormLabel>
+                          <FormControl><Textarea {...field} value={field.value ?? ""} rows={3} /></FormControl>
+                        </FormItem>
+                      )} />
+                    </div>
+
+                    {/* Cover image */}
+                    <div>
+                      <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Cover Image</label>
+                      {coverImage ? (
+                        <div className="relative w-32 h-44 rounded-lg overflow-hidden border border-border/60 mb-2">
+                          <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => form.setValue("cover_image", "")}
+                            className="absolute top-1 right-1 p-1 rounded-full bg-background/80 text-muted-foreground hover:text-destructive"
+                          >
+                            <XCircle className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <Input value={coverImage} onChange={(e) => form.setValue("cover_image", e.target.value)} placeholder="https://…" />
+                          <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors">
+                            <Upload className="h-3 w-3" /> Upload
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }} />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* PDF upload */}
+                    <div>
+                      <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">PDF File</label>
+                      {pdfUrl ? (
+                        <div className="flex items-center gap-2 p-3 rounded-lg border border-border/60 bg-secondary/20">
+                          <Download className="h-4 w-4 text-muted-foreground" />
+                          <a href={pdfUrl} target="_blank" rel="noreferrer" className="text-xs text-foreground hover:underline flex-1 truncate">
+                            {pdfUrl.split("/").pop()}
+                          </a>
+                          <button onClick={() => { form.setValue("pdf_url", ""); form.setValue("pdf_file_size", 0); }}
+                            className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors">
+                            <XCircle className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-border/60 hover:border-foreground/30 hover:bg-secondary/20 transition-colors">
+                          <Upload className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Upload PDF</span>
+                          <input type="file" accept=".pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePdfUpload(f); }} />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Metadata row */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField control={form.control} name="pages" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Pages</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={0} {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="price" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Price ($)</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={0} step="0.01" {...field} disabled={isFree}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+                          </FormControl>
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="isbn" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">ISBN</FormLabel>
+                          <FormControl><Input {...field} value={field.value ?? ""} placeholder="978-…" /></FormControl>
+                        </FormItem>
+                      )} />
+                    </div>
+
+                    {/* Toggles */}
+                    <div className="flex items-center gap-6">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={isFree} onChange={(e) => { form.setValue("is_free", e.target.checked); if (e.target.checked) form.setValue("price", 0); }}
+                          className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30" />
+                        <span className="text-[0.6rem] font-medium">Free</span>
                       </label>
+                      <FormField control={form.control} name="featured" render={({ field }) => (
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30" />
+                          <span className="text-[0.6rem] font-medium">Featured</span>
+                        </label>
+                      )} />
+                      <FormField control={form.control} name="status" render={({ field }) => (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[0.6rem] font-medium text-muted-foreground">Status:</span>
+                          <select value={field.value} onChange={field.onChange}
+                            className="text-xs border border-border/60 rounded-lg px-2 py-1 bg-background focus:outline-none">
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                            <option value="archived">Archived</option>
+                          </select>
+                        </div>
+                      )} />
                     </div>
-                  )}
-                </div>
 
-                {/* PDF upload */}
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">PDF File</label>
-                  {form.pdf_url ? (
-                    <div className="flex items-center gap-2 p-3 rounded-lg border border-border/60 bg-secondary/20">
-                      <Download className="h-4 w-4 text-muted-foreground" />
-                      <a href={form.pdf_url} target="_blank" rel="noreferrer" className="text-xs text-foreground hover:underline flex-1 truncate">
-                        {form.pdf_url.split("/").pop()}
-                      </a>
-                      <button onClick={() => setForm((f) => ({ ...f, pdf_url: "", pdf_file_size: 0 }))}
-                        className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors">
-                        <XCircle className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-border/60 hover:border-foreground/30 hover:bg-secondary/20 transition-colors">
-                      <Upload className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Upload PDF</span>
-                      <input type="file" accept=".pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePdfUpload(f); }} />
-                    </label>
-                  )}
-                </div>
-
-                {/* Metadata row */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Pages</label>
-                    <Input type="number" min={0} value={form.pages} onChange={(e) => setForm((f) => ({ ...f, pages: parseInt(e.target.value) || 0 }))} />
+                    {/* Category */}
+                    <FormField control={form.control} name="category" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Category</FormLabel>
+                        <FormControl><Input {...field} value={field.value ?? ""} placeholder="general" /></FormControl>
+                      </FormItem>
+                    )} />
                   </div>
-                  <div>
-                    <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Price ($)</label>
-                    <Input type="number" min={0} step="0.01" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: parseFloat(e.target.value) || 0 }))} disabled={form.is_free} />
-                  </div>
-                  <div>
-                    <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">ISBN</label>
-                    <Input value={form.isbn} onChange={(e) => setForm((f) => ({ ...f, isbn: e.target.value }))} placeholder="978-…" />
-                  </div>
-                </div>
 
-                {/* Toggles */}
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={form.is_free} onChange={(e) => setForm((f) => ({ ...f, is_free: e.target.checked, price: e.target.checked ? 0 : f.price }))}
-                      className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30" />
-                    <span className="text-[0.6rem] font-medium">Free</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={form.featured} onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))}
-                      className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30" />
-                    <span className="text-[0.6rem] font-medium">Featured</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[0.6rem] font-medium text-muted-foreground">Status:</span>
-                    <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as BookStatus }))}
-                      className="text-xs border border-border/60 rounded-lg px-2 py-1 bg-background focus:outline-none">
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                      <option value="archived">Archived</option>
-                    </select>
+                  {/* Footer */}
+                  <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
+                    <button type="button" onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={createMutation.isPending || updateMutation.isPending}
+                      className="px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
+                      {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Book" : "Create Book"}
+                    </button>
                   </div>
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Category</label>
-                  <Input value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="general" />
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
-                <button onClick={resetForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                  Cancel
-                </button>
-                <button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}
-                  className="px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
-                  {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update Book" : "Create Book"}
-                </button>
-              </div>
+                </form>
+              </Form>
             </div>
           </div>
         </div>
