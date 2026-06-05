@@ -10,7 +10,6 @@ import {
   type MediaAsset,
 } from "@/lib/media";
 import { supabase } from "@/integrations/supabase/client";
-import { useR2Upload } from "@/hooks/useR2Upload";
 import {
   Image,
   Upload,
@@ -52,7 +51,6 @@ function MediaLibraryPage() {
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<MediaAsset | null>(null);
-  const { uploadToR2 } = useR2Upload();
   const pageSize = 24;
 
   const { data, isLoading } = useQuery({
@@ -96,23 +94,6 @@ function MediaLibraryPage() {
 
     for (const file of Array.from(files)) {
       try {
-        // Try R2 first
-        const r2Result = await uploadToR2(`media/${targetBucket}`, file);
-        if (r2Result) {
-          await trackUpload({
-            url: r2Result.url,
-            path: r2Result.key,
-            filename: file.name,
-            fileSize: file.size,
-            mimeType: file.type || "application/octet-stream",
-            bucket: targetBucket,
-            storageProvider: "r2",
-          });
-          successCount++;
-          continue;
-        }
-
-        // Fallback to Supabase Storage
         const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
         const path = `media/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
@@ -135,7 +116,6 @@ function MediaLibraryPage() {
           fileSize: file.size,
           mimeType: file.type || "application/octet-stream",
           bucket: targetBucket,
-          storageProvider: "supabase",
         });
 
         successCount++;

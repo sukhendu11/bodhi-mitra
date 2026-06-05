@@ -21,6 +21,13 @@ export function ThemeTab({ cfg, update }: TabProps): ReactNode {
             onChange={(v) => update("theme", { accent_hover: v })} />
         </FieldRow>
       </Section>
+      <Section title="Header Visibility">
+        <div className="flex items-center gap-3">
+          <Switch checked={cfg.theme.header_visible}
+            onCheckedChange={(v) => update("theme", { header_visible: v })} />
+          <Label>{cfg.theme.header_visible ? "Header visible on site" : "Header hidden"}</Label>
+        </div>
+      </Section>
       <Section title="Background Mode">
         <div className="flex items-center gap-3">
           <Switch checked={cfg.theme.mode === "dark"}

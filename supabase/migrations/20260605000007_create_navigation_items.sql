@@ -70,15 +70,16 @@ CREATE TRIGGER trg_nav_items_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.update_nav_items_timestamp();
 
 -- ── Seed default navigation items ────────────────────────────────
--- Matches the current hardcoded nav structure in __root.tsx.
+-- Default items for the dynamic menu builder. Admins can edit, reorder, and add items via CMS.
 
 INSERT INTO public.navigation_items (id, type, label_en, label_bn, slug, sort_order, visible) VALUES
-  ('a0000000-0000-0000-0000-000000000001', 'internal', 'Home',  'Home',  '/',     1, true),
-  ('a0000000-0000-0000-0000-000000000002', 'internal', 'Books', 'Books', '/books', 2, true),
-  ('a0000000-0000-0000-0000-000000000003', 'dropdown', 'Philosophy', 'Philosophy', '', 3, true),
-  ('a0000000-0000-0000-0000-000000000004', 'dropdown', 'Practice',   'Practice',   '', 4, true),
-  ('a0000000-0000-0000-0000-000000000005', 'internal', 'About',  'About',  '/about',  5, true),
-  ('a0000000-0000-0000-0000-000000000006', 'internal', 'Contact','Contact', '/contact', 6, true)
+  ('a0000000-0000-0000-0000-000000000001', 'internal', 'Home',    'Home',    '/',       1, true),
+  ('a0000000-0000-0000-0000-000000000002', 'internal', 'Books',   'Books',   '/books',  2, true),
+  ('a0000000-0000-0000-0000-000000000007', 'internal', 'Videos',  'Videos',  '/videos', 3, true),
+  ('a0000000-0000-0000-0000-000000000003', 'dropdown', 'Philosophy', 'Philosophy', '', 4, true),
+  ('a0000000-0000-0000-0000-000000000004', 'dropdown', 'Practice',   'Practice',   '', 5, true),
+  ('a0000000-0000-0000-0000-000000000005', 'internal', 'About',  'About',  '/about',  6, true),
+  ('a0000000-0000-0000-0000-000000000006', 'internal', 'Contact','Contact', '/contact', 7, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Dropdown children (Philosophy)

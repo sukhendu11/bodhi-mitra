@@ -12,7 +12,6 @@ import {
   type PageInput,
 } from "@/lib/pages";
 import { supabase } from "@/integrations/supabase/client";
-import { useR2Upload } from "@/hooks/useR2Upload";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,6 @@ import {
   FileText,
   Plus,
   Edit3,
-  Eye,
   Trash2,
   Search,
   Upload,
@@ -48,7 +46,6 @@ function AdminPagesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { uploadToR2 } = useR2Upload();
   const pageSize = 50;
 
   const [form, setForm] = useState<PageInput>({
@@ -134,13 +131,6 @@ function AdminPagesPage() {
   };
 
   const handleImageUpload = async (file: File) => {
-    // Try R2 first
-    const r2Result = await uploadToR2("pages/banners", file);
-    if (r2Result) {
-      setForm((f) => ({ ...f, banner_url: r2Result.url }));
-      return;
-    }
-    // Fallback to Supabase Storage
     const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
     const path = `pages/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage.from("site-assets").upload(path, file, {
@@ -220,9 +210,6 @@ function AdminPagesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button className="p-2 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors" title="View">
-                    <Eye className="h-3.5 w-3.5" />
-                  </button>
                   <button onClick={() => handleEdit(p)}
                     className="p-2 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors" title="Edit">
                     <Edit3 className="h-3.5 w-3.5" />

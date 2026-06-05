@@ -108,11 +108,16 @@ function CommentModerator() {
   const doDelete = useServerFn(adminDeleteComment);
   const doEdit = useServerFn(adminUpdateComment);
 
+  const invalidatePublicComments = () => {
+    queryClient.invalidateQueries({ queryKey: ["comments"] });
+  };
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => (doDelete as any)({ data: { id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-comments"] });
       queryClient.invalidateQueries({ queryKey: ["admin-comment-stats"] });
+      invalidatePublicComments();
       toast.success("Comment deleted");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -122,6 +127,7 @@ function CommentModerator() {
     mutationFn: ({ id, text }: { id: string; text: string }) => (doEdit as any)({ data: { id, comment_text: text } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-comments"] });
+      invalidatePublicComments();
       setEditingId(null);
       toast.success("Comment updated");
     },

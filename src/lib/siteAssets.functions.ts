@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getR2Config, uploadFile, createPresignedUploadUrl } from "@/lib/r2";
 
 const SiteAssetUploadInput = z.object({
   kind: z.string().min(1).max(40).regex(/^[a-z0-9-]+$/),
@@ -38,15 +37,7 @@ export const createSiteAssetUpload = createServerFn({ method: "POST" })
     const ext = extensionFrom(data.filename, data.contentType);
     const key = generateAssetKey(data.kind, ext);
 
-    // Try R2 first
-    const r2Config = getR2Config();
-    if (r2Config) {
-      const presignedUrl = await createPresignedUploadUrl(key, data.contentType);
-      const publicUrl = `${r2Config.publicUrlBase}/${key}`;
-      return { path: key, token: presignedUrl, publicUrl, storage: "r2" };
-    }
-
-    // Fallback to Supabase Storage signed URL
+    // Use Supabase Storage signed URL
     const { data: signed, error } = await supabase.storage
       .from("site-assets")
       .createSignedUploadUrl(key);

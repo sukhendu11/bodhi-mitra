@@ -8,7 +8,6 @@ export interface MediaAsset {
   file_size: number;
   mime_type: string;
   bucket: string;
-  storage_provider: string;
   alt_text: string | null;
   uploaded_by: string | null;
   created_at: string;
@@ -22,7 +21,6 @@ export interface MediaAssetInput {
   file_size: number;
   mime_type: string;
   bucket: string;
-  storage_provider?: string;
   alt_text?: string;
 }
 
@@ -102,21 +100,12 @@ export async function deleteMediaAsset(id: string): Promise<void> {
   const asset = await fetchMediaAsset(id);
   if (!asset) throw new Error("Media asset not found");
 
-  // Use the deterministic storage_provider column instead of heuristic detection
-  if (asset.storage_provider === "r2") {
-    // Try to clean from R2 (best-effort, non-blocking)
-    try {
-      const { deleteFile } = await import("@/lib/r2");
-      await deleteFile(asset.path).catch(() => {});
-    } catch {}
-  } else {
-    // Clean from Supabase Storage
-    const { error: storageError } = await supabase.storage
-      .from(asset.bucket)
-      .remove([asset.path]);
-    if (storageError) {
-      console.warn("[media] Storage delete failed:", storageError.message);
-    }
+  // Clean from Supabase Storage
+  const { error: storageError } = await supabase.storage
+    .from(asset.bucket)
+    .remove([asset.path]);
+  if (storageError) {
+    console.warn("[media] Storage delete failed:", storageError.message);
   }
 
   // Remove the database record
@@ -132,7 +121,6 @@ export async function trackUpload(params: {
   fileSize: number;
   mimeType: string;
   bucket: string;
-  storageProvider?: string;
   altText?: string;
 }): Promise<MediaAsset> {
   return addMediaAsset({
@@ -142,7 +130,6 @@ export async function trackUpload(params: {
     file_size: params.fileSize,
     mime_type: params.mimeType,
     bucket: params.bucket,
-    storage_provider: params.storageProvider || "supabase",
     alt_text: params.altText,
   });
 }

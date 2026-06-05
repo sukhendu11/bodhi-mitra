@@ -5,6 +5,86 @@ import { createClient } from "@supabase/supabase-js";
 import type { Json } from "@/integrations/supabase/types";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+/* ── Dashboard stats types ────────────────────────────────────── */
+
+export interface DashboardStats {
+  posts: { total: number; published: number; draft: number };
+  pages: { total: number };
+  books: { total: number; published: number; draft: number; archived: number; free: number };
+  users: { total: number };
+  recentPosts: {
+    id: string;
+    title_en: string | null;
+    title_bn: string | null;
+    status: string;
+    slug: string;
+    created_at: string;
+  }[];
+}
+
+/** Fetch all dashboard stats in a single server-to-database call.
+ *  Consolidates post, page, book, and user counts — replaces 4 separate client queries.
+ *  Uses `(supabase as any)` to bypass strict typed-table constraints for count queries. */
+export const getDashboardStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const db = supabase as any;
+
+    // Run all counts and recent posts in parallel
+    const [
+      totalPosts,
+      publishedPosts,
+      draftPosts,
+      totalPages,
+      totalBooks,
+      publishedBooks,
+      draftBooks,
+      archivedBooks,
+      freeBooks,
+      totalUsers,
+      recentPosts,
+    ] = await Promise.all([
+      db.from("posts").select("*", { count: "exact", head: true }),
+      db.from("posts").select("*", { count: "exact", head: true }).eq("status", "published"),
+      db.from("posts").select("*", { count: "exact", head: true }).eq("status", "draft"),
+      db.from("pages").select("*", { count: "exact", head: true }),
+      db.from("books").select("*", { count: "exact", head: true }),
+      db.from("books").select("*", { count: "exact", head: true }).eq("status", "published"),
+      db.from("books").select("*", { count: "exact", head: true }).eq("status", "draft"),
+      db.from("books").select("*", { count: "exact", head: true }).eq("status", "archived"),
+      db.from("books").select("*", { count: "exact", head: true }).eq("is_free", true),
+      db.from("profiles").select("*", { count: "exact", head: true }),
+      db.from("posts")
+        .select("id, title_en, title_bn, status, slug, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]);
+
+    // Log errors (safe: count queries never throw — count is null on error)
+    for (const r of [totalPosts, publishedPosts, draftPosts, totalPages, totalBooks, publishedBooks, draftBooks, archivedBooks, freeBooks, totalUsers]) {
+      if (r.error) console.error("[getDashboardStats] count error:", r.error.message);
+    }
+
+    return {
+      posts: {
+        total: totalPosts.count ?? 0,
+        published: publishedPosts.count ?? 0,
+        draft: draftPosts.count ?? 0,
+      },
+      pages: { total: totalPages.count ?? 0 },
+      books: {
+        total: totalBooks.count ?? 0,
+        published: publishedBooks.count ?? 0,
+        draft: draftBooks.count ?? 0,
+        archived: archivedBooks.count ?? 0,
+        free: freeBooks.count ?? 0,
+      },
+      users: { total: totalUsers.count ?? 0 },
+      recentPosts: (recentPosts.data ?? []) as DashboardStats["recentPosts"],
+    };
+  });
+
 /* ── Audit log helper ─────────────────────────────────────────── */
 
 interface AuditLogEntry {

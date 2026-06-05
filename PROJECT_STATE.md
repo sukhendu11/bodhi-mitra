@@ -140,9 +140,10 @@ If a change is made:
   - `20260605000005` — `book-covers` storage bucket (50MB limit, JPG/PNG/WEBP/PDF) with RLS policies
   - `20260605000006` — Storage RLS policies for `blog-images` bucket (was missing from earlier migrations)
   - `20260605000007` — `navigation_items` table with parent/child relationships, type (link/dropdown/heading/external), visibility, sort order, RLS policies
-  - `20260605000008` — `storage_provider` column on `media_assets` for deterministic R2 vs Supabase detection
+  - `20260605000008` — `storage_provider` column on `media_assets` (REVERTED in 00009)
+  - `20260605000009` — DROP `storage_provider` column (R2 removed, Supabase-only restored)
 
-- **Library modules (8 new):**
+- **Library modules (7 new):**
   - `lib/pages.ts` — Full CRUD for static pages (fetchAllPages, createPage, updatePage, deletePage, fetchPageBySlug)
   - `lib/media.ts` — Centralized media asset management (fetchMediaAssets with pagination/search/bucket filter, trackUpload, deleteMediaAsset with storage cleanup, getMediaStats)
   - `lib/books.ts` — Book CRUD (fetchPublishedBooks for public, fetchAllBooks for admin, createBook, updateBook, deleteBook, getBookStats, fetchBookBySlug)
@@ -150,9 +151,8 @@ If a change is made:
   - `lib/navigation.ts` — Navigation items CRUD (fetchNavItems, create/update/delete, buildNavTree)
   - `lib/admin-comments.ts` — Admin comment moderation server functions (delete, edit, fetch contact messages)
   - `lib/seo.ts` — Server-side SEO functions (isSitemapEnabled, generateSitemapXml, generateRobotsTxt)
-  - `lib/r2.ts` + `lib/r2-functions.ts` + `lib/r2-client.ts` — Hybrid storage infrastructure (S3-compatible R2 client, presigned URLs, server upload functions, client upload hook)
 
-- **Admin routes (6 new):**
+- **Admin routes (6 new):** (R2 implementation removed — Supabase Storage is the sole storage backend)
   - `/admin/pages` — Page list with visibility indicators (green/grey dot), modal CRUD form with bilingual content, banner upload, SEO fields, visibility toggle, sort order, AlertDialog delete confirmation
   - `/admin/media` — Media Library with grid/list toggle view, bucket filter (blog-images/site-assets/book-covers/avatars), file upload with multi-file support, text search, pagination, detail slide-over panel with copy URL / open / delete actions, file size formatting
   - `/admin/books` — Shopify-style product grid with cover images, status badges (green=published/amber=draft/slate=archived), Free/Paid price badges. Stats cards (Total/Published/Drafts/Archived/Free). Modal CRUD form with cover image upload, PDF upload with file size tracking, bilingual fields, price/is_free toggle, featured toggle, pages/isbn metadata, status workflow selector (draft/published/archived). Hover overlay with View/Edit/Delete actions.
@@ -250,9 +250,6 @@ If a change is made:
 - Dynamic navigation in __root.tsx (Header + Footer) sourced from DB navigation_items table — pending validation
 - Sitemap.xml generation at server level (static routes + published posts + visible pages) — pending validation
 - Robots.txt generation with admin/auth disallows + sitemap link — pending validation
-- Hybrid storage architecture: Supabase for data + Cloudflare R2 for files (r2.ts SDK, server functions, React hook, wrangler binding) — pending validation
-- All upload flows migrated to R2-first with automatic Supabase Storage fallback — pending validation
-- `storage_provider` column added to `media_assets` via migration (replaces heuristic R2 detection with deterministic DB column) — pending validation
 - No RSS feed or newsletter subscription backend
 
 ---

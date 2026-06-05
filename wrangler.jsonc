@@ -8,11 +8,5 @@
   "main": "@tanstack/react-start/server-entry",
   "compatibility_flags": [
     "nodejs_compat"
-  ],
-  "r2_buckets": [
-    {
-      "binding": "ASSETS_BUCKET",
-      "bucket_name": "bodhi-mitra-assets"
-    }
   ]
 }

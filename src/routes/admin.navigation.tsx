@@ -8,6 +8,7 @@ import {
   updateNavItem,
   deleteNavItem,
   buildNavTree,
+  clearNavCache,
   type NavItem,
   type NavItemInput,
   type NavItemType,
@@ -67,10 +68,16 @@ function AdminNavPage() {
 
   const tree = buildNavTree(items);
 
+  const invalidateNav = () => {
+    queryClient.invalidateQueries({ queryKey: ["nav-items"] });
+    queryClient.invalidateQueries({ queryKey: ["layout-nav"] });
+    clearNavCache();
+  };
+
   const createMutation = useMutation({
     mutationFn: createNavItem,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["nav-items"] });
+      invalidateNav();
       toast.success("Item created");
       resetAddForm();
     },
@@ -80,7 +87,7 @@ function AdminNavPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, input }: { id: string; input: Partial<NavItemInput> }) => updateNavItem(id, input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["nav-items"] });
+      invalidateNav();
       toast.success("Item updated");
       setEditingId(null);
     },
@@ -90,7 +97,7 @@ function AdminNavPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteNavItem,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["nav-items"] });
+      invalidateNav();
       toast.success("Item deleted");
       setDeletingId(null);
     },
@@ -408,6 +415,8 @@ function NavTreeNodeItem({
   const [expanded, setExpanded] = useState(true);
   const [editLabel, setEditLabel] = useState(node.label_en);
   const [editLabelBn, setEditLabelBn] = useState(node.label_bn);
+  const [editSlug, setEditSlug] = useState(node.slug);
+  const [editUrl, setEditUrl] = useState(node.url);
   const isEditing = editingId === node.id;
   const isBeingDragged = drag.dragId === node.id;
   const isDropTarget = drag.overId === node.id && drag.dragId !== node.id;
@@ -419,12 +428,17 @@ function NavTreeNodeItem({
   const handleStartEdit = () => {
     setEditLabel(node.label_en);
     setEditLabelBn(node.label_bn);
+    setEditSlug(node.slug);
+    setEditUrl(node.url);
     onStartEdit(node.id);
   };
 
   const handleSave = () => {
     if (!editLabel.trim()) return;
-    onSaveEdit(node.id, { label_en: editLabel, label_bn: editLabelBn });
+    const patch: Partial<NavItemInput> = { label_en: editLabel, label_bn: editLabelBn };
+    if (node.type === "internal") patch.slug = editSlug;
+    if (node.type === "external") patch.url = editUrl;
+    onSaveEdit(node.id, patch);
   };
 
   return (
@@ -465,28 +479,50 @@ function NavTreeNodeItem({
         {/* Label + metadata */}
         <div className="flex-1 min-w-0">
           {isEditing ? (
-            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <Input
-                value={editLabel}
-                onChange={(e) => setEditLabel(e.target.value)}
-                className="h-7 text-xs px-2 py-0"
-                placeholder="Label (EN)"
-                autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }}
-              />
-              <Input
-                value={editLabelBn}
-                onChange={(e) => setEditLabelBn(e.target.value)}
-                className="h-7 text-xs px-2 py-0 w-32"
-                placeholder="Label (BN)"
-                onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }}
-              />
-              <button onClick={handleSave} className="px-2 py-1 text-[0.55rem] font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity">
-                Save
-              </button>
-              <button onClick={() => onStartEdit(null)} className="px-2 py-1 text-[0.55rem] font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Cancel
-              </button>
+            <div className="flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={editLabel}
+                  onChange={(e) => setEditLabel(e.target.value)}
+                  className="h-7 text-xs px-2 py-0"
+                  placeholder="Label (EN)"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }}
+                />
+                <Input
+                  value={editLabelBn}
+                  onChange={(e) => setEditLabelBn(e.target.value)}
+                  className="h-7 text-xs px-2 py-0 w-32"
+                  placeholder="Label (BN)"
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }}
+                />
+                <button onClick={handleSave} className="px-2 py-1 text-[0.55rem] font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity">
+                  Save
+                </button>
+                <button onClick={() => onStartEdit(null)} className="px-2 py-1 text-[0.55rem] font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  Cancel
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                {node.type === "internal" && (
+                  <Input
+                    value={editSlug}
+                    onChange={(e) => setEditSlug(e.target.value)}
+                    className="h-7 text-xs px-2 py-0 w-48"
+                    placeholder="/route-path"
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }}
+                  />
+                )}
+                {node.type === "external" && (
+                  <Input
+                    value={editUrl}
+                    onChange={(e) => setEditUrl(e.target.value)}
+                    className="h-7 text-xs px-2 py-0 w-64"
+                    placeholder="https://example.com"
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }}
+                  />
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2 min-w-0">

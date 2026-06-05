@@ -38,6 +38,7 @@ export interface SiteConfig {
     accent_color: string;
     accent_hover: string;
     mode: "light" | "dark";
+    header_visible: boolean;
   };
   nav: {
     home_en: string; home_bn: string;
@@ -163,6 +164,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     accent_color: "#d35400",
     accent_hover: "#e67e22",
     mode: "light",
+    header_visible: true,
   },
   nav: {
     home_en: "Home", home_bn: "Home",
@@ -200,7 +202,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
   seo: {
     meta_desc_en: "A serene blog blending Buddhist teachings with modern mental health, by practicing psychiatrists.",
     meta_desc_bn: "অনুশীলনরত মনোরোগ বিশেষজ্ঞদের দ্বারা বৌদ্ধ শিক্ষা ও আধুনিক মানসিক স্বাস্থ্যের সংমিশ্রণে একটি শান্ত ব্লগ।",
-    og_image_url: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/11cf2395-0332-4caa-9d73-3ad5cf777114/id-preview-36f7f9ee--2d38f8d2-888c-45a0-8b23-e5cefe82af66.lovable.app-1779959858012.png",
+    og_image_url: "",
     google_analytics_id: "",
     enable_sitemap: true,
   },

@@ -14,7 +14,6 @@ import {
   slugifyBook,
 } from "@/lib/books";
 import { supabase } from "@/integrations/supabase/client";
-import { useR2Upload } from "@/hooks/useR2Upload";
 import {
   BookOpen,
   Plus,
@@ -54,7 +53,6 @@ function AdminBooksPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { uploadToR2 } = useR2Upload();
   const pageSize = 20;
 
   // Form state
@@ -106,6 +104,7 @@ function AdminBooksPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-books"] });
       queryClient.invalidateQueries({ queryKey: ["book-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["public-books"] });
       toast.success("Book created");
       resetForm();
     },
@@ -117,6 +116,7 @@ function AdminBooksPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-books"] });
       queryClient.invalidateQueries({ queryKey: ["book-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["public-books"] });
       toast.success("Book updated");
       resetForm();
     },
@@ -128,6 +128,7 @@ function AdminBooksPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-books"] });
       queryClient.invalidateQueries({ queryKey: ["book-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["public-books"] });
       toast.success("Book deleted");
       setDeletingId(null);
     },
@@ -189,13 +190,6 @@ function AdminBooksPage() {
   };
 
   const handleImageUpload = async (file: File) => {
-    // Try R2 first
-    const r2Result = await uploadToR2("books/covers", file);
-    if (r2Result) {
-      setForm((f) => ({ ...f, cover_image: r2Result.url }));
-      return;
-    }
-    // Fallback to Supabase Storage
     const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
     const path = `books/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage.from("book-covers").upload(path, file, {
@@ -208,13 +202,6 @@ function AdminBooksPage() {
   };
 
   const handlePdfUpload = async (file: File) => {
-    // Try R2 first
-    const r2Result = await uploadToR2("books/pdfs", file);
-    if (r2Result) {
-      setForm((f) => ({ ...f, pdf_url: r2Result.url, pdf_file_size: file.size }));
-      return;
-    }
-    // Fallback to Supabase Storage
     const ext = (file.name.split(".").pop() ?? "pdf").toLowerCase();
     const path = `books/pdfs/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage.from("book-covers").upload(path, file, {
@@ -344,9 +331,9 @@ function AdminBooksPage() {
                 {/* Hover actions */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                   {book.status === "published" && (
-                    <button className="p-2 rounded-full bg-white/90 text-foreground shadow-sm hover:bg-white transition-colors">
+                    <Link to="/books" className="p-2 rounded-full bg-white/90 text-foreground shadow-sm hover:bg-white transition-colors">
                       <Eye className="h-4 w-4" />
-                    </button>
+                    </Link>
                   )}
                   <button
                     onClick={() => handleEdit(book)}

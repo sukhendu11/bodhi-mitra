@@ -3,7 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { fetchAllPostsAdmin, deletePost, type PostStatus } from "@/lib/posts";
-import { FileText, Eye, Edit3, Trash2, Plus, Search } from "lucide-react";
+import { getDashboardStats } from "@/lib/admin.functions";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  FileText, Eye, Edit3, Trash2, Plus, Search, LayoutDashboard, BookOpen, Globe, Users, ImageIcon, Video, MessageSquare, Menu, ArrowRight, Clock, PenSquare, Upload,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -27,18 +31,34 @@ function AdminDashboard() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const pageSize = 20;
 
-  const { data, isLoading } = useQuery({
+  /* ── Consolidated Dashboard Stats (single server call) ───────── */
+
+  const doGetStats = useServerFn(getDashboardStats);
+
+  const { data: stats } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: () => (doGetStats as any)(),
+    staleTime: 30_000,
+  });
+
+  /* ── Posts data (for the table below) ─────────────────────────── */
+
+  const { data: postsData, isLoading: postsLoading } = useQuery({
     queryKey: ["admin-posts", page],
     queryFn: () => fetchAllPostsAdmin(undefined, page, pageSize),
     staleTime: 30_000,
   });
 
-  const posts = data?.data ?? [];
-  const total = data?.total ?? 0;
+  const posts = postsData?.data ?? [];
+  const total = postsData?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  const published = posts.filter((p) => p.status === "published").length;
-  const drafts = posts.filter((p) => p.status === "draft").length;
+  const published = stats?.posts.published ?? 0;
+  const drafts = stats?.posts.draft ?? 0;
+  const totalPagesCount = stats?.pages.total ?? 0;
+  const totalBooksCount = stats?.books.total ?? 0;
+  const totalUsersCount = stats?.users.total ?? 0;
+  const recentPosts: Array<{ id: string; title_en: string | null; title_bn: string | null; status: string; slug: string; created_at: string }> = stats?.recentPosts ?? [];
 
   const del = useMutation({
     mutationFn: deletePost,
@@ -60,162 +80,282 @@ function AdminDashboard() {
     return true;
   });
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse" />
-          ))}
-        </div>
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 p-6 space-y-4 animate-pulse">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-12 bg-secondary/40 rounded-lg" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  /* ── Quick actions ─────────────────────────────────────────────── */
+
+  const quickActions = [
+    { to: "/admin/new", label: "New Post", icon: PenSquare, color: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400" },
+    { to: "/admin/pages", label: "New Page", icon: Globe, color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" },
+    { to: "/admin/books", label: "Add Book", icon: BookOpen, color: "bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400" },
+    { to: "/admin/media", label: "Upload Media", icon: Upload, color: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" },
+    { to: "/admin/videos", label: "Add Video", icon: Video, color: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" },
+    { to: "/admin/comments", label: "Moderation", icon: MessageSquare, color: "bg-cyan-50 text-cyan-700 dark:bg-cyan-950/30 dark:text-cyan-400" },
+  ];
+
+  /* ── Stats cards ───────────────────────────────────────────────── */
+
+  const statsCards = [
+    { icon: FileText, label: "Total Posts", value: total, color: "blue" as const },
+    { icon: Eye, label: "Published", value: published, color: "green" as const },
+    { icon: Edit3, label: "Drafts", value: drafts, color: "amber" as const },
+    { icon: Globe, label: "Pages", value: totalPagesCount, color: "emerald" as const },
+    { icon: BookOpen, label: "Books", value: totalBooksCount, color: "purple" as const },
+    { icon: Users, label: "Users", value: totalUsersCount, color: "slate" as const },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={FileText} label="Total Posts" value={total} color="blue" />
-        <StatCard icon={Eye} label="Published" value={published} color="green" />
-        <StatCard icon={Edit3} label="Drafts" value={drafts} color="amber" />
+    <div className="space-y-8">
+      {/* ── Welcome header ──────────────────────────────────────────── */}
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight">Dashboard</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          Welcome to your CMS dashboard. Here's an overview of your site.
+        </p>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-border/60 rounded-lg p-1">
-          {(["all", "published", "draft"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                filter === f
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {f === "all" ? "All" : f === "published" ? "Published" : "Drafts"}
-            </button>
-          ))}
+      {/* ── Stats grid ─────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {statsCards.map((stat) => (
+          <StatCard key={stat.label} icon={stat.icon} label={stat.label} value={stat.value} color={stat.color} />
+        ))}
+      </div>
+
+      {/* ── Quick Actions + Recent Activity ──────────────────────────── */}
+      <div className="grid lg:grid-cols-[1fr_320px] gap-6">
+        {/* Quick actions */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden">
+          <div className="px-5 py-4 border-b border-border/40">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4 text-muted-foreground/60" />
+              Quick Actions
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-border/30">
+            {quickActions.map((action) => (
+              <Link
+                key={action.to}
+                to={action.to}
+                className="flex flex-col items-center gap-2 px-4 py-6 bg-white dark:bg-zinc-900 hover:bg-secondary/20 transition-colors group"
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${action.color} group-hover:scale-110 transition-transform`}>
+                  <action.icon className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{action.label}</span>
+              </Link>
+            ))}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
+        {/* Recent Activity */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden">
+          <div className="px-5 py-4 border-b border-border/40">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground/60" />
+              Recent Activity
+            </h3>
+          </div>
+          <div className="divide-y divide-border/30 max-h-[320px] overflow-y-auto">
+            {recentPosts.length === 0 ? (
+              <div className="px-5 py-8 text-center">
+                <p className="text-xs text-muted-foreground">No recent activity.</p>
+              </div>
+            ) : (
+              recentPosts.map((post) => (
+                <div key={post.id} className="px-5 py-3 flex items-center gap-3 hover:bg-secondary/10 transition-colors">
+                  <div className="w-7 h-7 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
+                    {post.status === "published" ? (
+                      <Eye className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <Edit3 className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium truncate">
+                      {post.title_en || "Untitled"}
+                    </p>
+                    <p className="text-[0.55rem] text-muted-foreground">
+                      {post.status === "published" ? "Published" : "Saved as draft"}
+                      {" · "}
+                      {new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </p>
+                  </div>
+                  <Link
+                    to="/admin/$id"
+                    params={{ id: post.id }}
+                    className="shrink-0 p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors"
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Posts Management ─────────────────────────────────────────── */}
+      <div className="space-y-4">
+        {/* Section header */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <FileText className="h-4 w-4 text-muted-foreground/60" />
+            All Posts
+          </h3>
+          <Link
+            to="/admin/new"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.6rem] font-medium bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
+          >
+            <Plus className="h-3 w-3" />
+            New Post
+          </Link>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-border/60 rounded-lg p-1">
+            {(["all", "published", "draft"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  filter === f
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {f === "all" ? "All" : f === "published" ? "Published" : "Drafts"}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full sm:w-48">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search posts…"
-              className="w-full sm:w-48 pl-9 pr-3 py-2 text-xs border border-border/60 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-xs border border-border/60 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
             />
           </div>
-          <Link
-            to="/admin/new"
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New Post
-          </Link>
         </div>
-      </div>
 
-      {/* Posts table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="py-16 text-center">
-            <FileText className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">
-              {search ? "No posts match your search." : filter === "all" ? "No posts yet." : `No ${filter} posts.`}
-            </p>
-            {!search && (
-              <Link to="/admin/new" className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-foreground hover:underline">
-                <Plus className="h-3 w-3" /> Create your first post
-              </Link>
-            )}
-          </div>
-        ) : (
-          <div className="divide-y divide-border/40">
-            {/* Header */}
-            <div className="hidden sm:grid grid-cols-[1fr,auto,auto] gap-4 px-5 py-3 bg-secondary/20 text-[0.6rem] uppercase tracking-[0.1em] font-semibold text-muted-foreground/60">
-              <span>Post</span>
-              <span className="w-20 text-center">Status</span>
-              <span className="w-28 text-right">Actions</span>
+        {/* Posts table */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden">
+          {filtered.length === 0 ? (
+            <div className="py-16 text-center">
+              <FileText className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
+              <p className="text-sm text-muted-foreground">
+                {search ? "No posts match your search." : filter === "all" ? "No posts yet." : `No ${filter} posts.`}
+              </p>
+              {!search && (
+                <Link to="/admin/new" className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-foreground hover:underline">
+                  <Plus className="h-3 w-3" /> Create your first post
+                </Link>
+              )}
             </div>
+          ) : (
+            <div className="divide-y divide-border/40">
+              {/* Header */}
+              <div className="hidden sm:grid grid-cols-[1fr,auto,auto] gap-4 px-5 py-3 bg-secondary/20 text-[0.6rem] uppercase tracking-[0.1em] font-semibold text-muted-foreground/60">
+                <span>Post</span>
+                <span className="w-20 text-center">Status</span>
+                <span className="w-28 text-right">Actions</span>
+              </div>
 
-            {filtered.map((p) => (
-              <div key={p.id} className="grid grid-cols-1 sm:grid-cols-[1fr,auto,auto] gap-3 sm:gap-4 px-5 py-4 hover:bg-secondary/20 transition-colors">
-                <div className="min-w-0">
-                  <div className="flex items-start gap-3">
-                    {p.cover_image ? (
-                      <img src={p.cover_image} alt="" className="hidden sm:block w-10 h-10 rounded-lg object-cover border border-border/40 shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="hidden sm:flex w-10 h-10 rounded-lg bg-secondary/60 border border-border/40 items-center justify-center shrink-0 mt-0.5">
-                        <FileText className="h-4 w-4 text-muted-foreground/50" />
+              {filtered.map((p) => (
+                <div key={p.id} className="grid grid-cols-1 sm:grid-cols-[1fr,auto,auto] gap-3 sm:gap-4 px-5 py-4 hover:bg-secondary/20 transition-colors">
+                  <div className="min-w-0">
+                    <div className="flex items-start gap-3">
+                      {p.cover_image ? (
+                        <img src={p.cover_image} alt="" className="hidden sm:block w-10 h-10 rounded-lg object-cover border border-border/40 shrink-0 mt-0.5" />
+                      ) : (
+                        <div className="hidden sm:flex w-10 h-10 rounded-lg bg-secondary/60 border border-border/40 items-center justify-center shrink-0 mt-0.5">
+                          <FileText className="h-4 w-4 text-muted-foreground/50" />
+                        </div>
+                      )}
+                      <div>
+                        <Link
+                          to="/admin/$id"
+                          params={{ id: p.id }}
+                          className="text-sm font-medium hover:text-foreground/80 transition-colors line-clamp-1"
+                        >
+                          {p.title_en || p.title || p.title_bn || <span className="italic text-muted-foreground">Untitled</span>}
+                        </Link>
+                        <p className="text-[0.65rem] text-muted-foreground mt-0.5">
+                          {p.category} · {new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          {p.tags?.length ? ` · ${p.tags.slice(0, 2).join(", ")}` : ""}
+                        </p>
                       </div>
-                    )}
-                    <div>
-                      <Link
-                        to="/admin/$id"
-                        params={{ id: p.id }}
-                        className="text-sm font-medium hover:text-foreground/80 transition-colors line-clamp-1"
-                      >
-                        {p.title_en || p.title || p.title_bn || <span className="italic text-muted-foreground">Untitled</span>}
-                      </Link>
-                      <p className="text-[0.65rem] text-muted-foreground mt-0.5">
-                        {p.category} · {new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        {p.tags?.length ? ` · ${p.tags.slice(0, 2).join(", ")}` : ""}
-                      </p>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
-                  <span
-                    className={`text-[0.6rem] font-medium uppercase tracking-[0.08em] px-2.5 py-0.5 rounded-full border ${
-                      p.status === "published"
-                        ? "border-green-300/50 bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800/50"
-                        : "border-amber-300/50 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/50"
-                    }`}
-                  >
-                    {p.status}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-end gap-1">
-                  {p.status === "published" && (
-                    <Link
-                      to="/posts/$slug"
-                      params={{ slug: p.slug }}
-                      className="p-2 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors"
-                      title="View"
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
+                    <span
+                      className={`text-[0.6rem] font-medium uppercase tracking-[0.08em] px-2.5 py-0.5 rounded-full border ${
+                        p.status === "published"
+                          ? "border-green-300/50 bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800/50"
+                          : "border-amber-300/50 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/50"
+                      }`}
                     >
-                      <Eye className="h-3.5 w-3.5" />
+                      {p.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-1">
+                    {p.status === "published" && (
+                      <Link
+                        to="/posts/$slug"
+                        params={{ slug: p.slug }}
+                        className="p-2 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors"
+                        title="View"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Link>
+                    )}
+                    <Link
+                      to="/admin/$id"
+                      params={{ id: p.id }}
+                      className="p-2 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
                     </Link>
-                  )}
-                  <Link
-                    to="/admin/$id"
-                    params={{ id: p.id }}
-                    className="p-2 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors"
-                    title="Edit"
-                  >
-                    <Edit3 className="h-3.5 w-3.5" />
-                  </Link>
-                  <button
-                    onClick={() => setDeletingId(p.id)}
-                    className="p-2 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                    <button
+                      onClick={() => setDeletingId(p.id)}
+                      className="p-2 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              Page {page} of {totalPages} ({total} total posts)
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                ← Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -241,51 +381,29 @@ function AdminDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            Page {page} of {totalPages} ({total} total posts)
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            >
-              ← Previous
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            >
-              Next →
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
 /* ─── Stat card component ──────────────────────────────────────────── */
 
-function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: "blue" | "green" | "amber" }) {
-  const colors = {
+function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: "blue" | "green" | "amber" | "emerald" | "purple" | "slate" }) {
+  const colors: Record<string, string> = {
     blue: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400",
     green: "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400",
     amber: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
+    emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
+    purple: "bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400",
+    slate: "bg-slate-50 text-slate-700 dark:bg-slate-950/30 dark:text-slate-400",
   };
   return (
-    <div className="flex items-center gap-4 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 px-5 py-4">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors[color]}`}>
-        <Icon className="h-5 w-5" />
+    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 px-4 py-3">
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors[color] || colors.blue}`}>
+        <Icon className="h-4 w-4" />
       </div>
       <div>
-        <p className="text-2xl font-semibold tracking-tight">{value}</p>
-        <p className="text-[0.65rem] text-muted-foreground mt-0.5">{label}</p>
+        <p className="text-lg font-semibold tracking-tight">{value}</p>
+        <p className="text-[0.55rem] text-muted-foreground">{label}</p>
       </div>
     </div>
   );

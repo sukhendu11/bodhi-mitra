@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WisdomRouteImport } from './routes/wisdom'
+import { Route as VideosRouteImport } from './routes/videos'
 import { Route as SatsangRouteImport } from './routes/satsang'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
@@ -21,15 +22,27 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as PostsSlugRouteImport } from './routes/posts.$slug'
+import { Route as AdminVideosRouteImport } from './routes/admin.videos'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminTaxonomyRouteImport } from './routes/admin.taxonomy'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminPagesRouteImport } from './routes/admin.pages'
 import { Route as AdminNewRouteImport } from './routes/admin.new'
+import { Route as AdminNavigationRouteImport } from './routes/admin.navigation'
+import { Route as AdminMediaRouteImport } from './routes/admin.media'
+import { Route as AdminCommentsRouteImport } from './routes/admin.comments'
+import { Route as AdminBooksRouteImport } from './routes/admin.books'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminIdRouteImport } from './routes/admin.$id'
 
 const WisdomRoute = WisdomRouteImport.update({
   id: '/wisdom',
   path: '/wisdom',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideosRoute = VideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SatsangRoute = SatsangRouteImport.update({
@@ -87,9 +100,19 @@ const PostsSlugRoute = PostsSlugRouteImport.update({
   path: '/posts/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminVideosRoute = AdminVideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTaxonomyRoute = AdminTaxonomyRouteImport.update({
+  id: '/taxonomy',
+  path: '/taxonomy',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
@@ -97,9 +120,34 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPagesRoute = AdminPagesRouteImport.update({
+  id: '/pages',
+  path: '/pages',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminNewRoute = AdminNewRouteImport.update({
   id: '/new',
   path: '/new',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNavigationRoute = AdminNavigationRouteImport.update({
+  id: '/navigation',
+  path: '/navigation',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMediaRoute = AdminMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCommentsRoute = AdminCommentsRouteImport.update({
+  id: '/comments',
+  path: '/comments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBooksRoute = AdminBooksRouteImport.update({
+  id: '/books',
+  path: '/books',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAuditRoute = AdminAuditRouteImport.update({
@@ -123,12 +171,20 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/satsang': typeof SatsangRoute
+  '/videos': typeof VideosRoute
   '/wisdom': typeof WisdomRoute
   '/admin/$id': typeof AdminIdRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/books': typeof AdminBooksRoute
+  '/admin/comments': typeof AdminCommentsRoute
+  '/admin/media': typeof AdminMediaRoute
+  '/admin/navigation': typeof AdminNavigationRoute
   '/admin/new': typeof AdminNewRoute
+  '/admin/pages': typeof AdminPagesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/videos': typeof AdminVideosRoute
   '/posts/$slug': typeof PostsSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -141,12 +197,20 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/satsang': typeof SatsangRoute
+  '/videos': typeof VideosRoute
   '/wisdom': typeof WisdomRoute
   '/admin/$id': typeof AdminIdRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/books': typeof AdminBooksRoute
+  '/admin/comments': typeof AdminCommentsRoute
+  '/admin/media': typeof AdminMediaRoute
+  '/admin/navigation': typeof AdminNavigationRoute
   '/admin/new': typeof AdminNewRoute
+  '/admin/pages': typeof AdminPagesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/videos': typeof AdminVideosRoute
   '/posts/$slug': typeof PostsSlugRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -161,12 +225,20 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/satsang': typeof SatsangRoute
+  '/videos': typeof VideosRoute
   '/wisdom': typeof WisdomRoute
   '/admin/$id': typeof AdminIdRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/books': typeof AdminBooksRoute
+  '/admin/comments': typeof AdminCommentsRoute
+  '/admin/media': typeof AdminMediaRoute
+  '/admin/navigation': typeof AdminNavigationRoute
   '/admin/new': typeof AdminNewRoute
+  '/admin/pages': typeof AdminPagesRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/videos': typeof AdminVideosRoute
   '/posts/$slug': typeof PostsSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -182,12 +254,20 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/satsang'
+    | '/videos'
     | '/wisdom'
     | '/admin/$id'
     | '/admin/audit'
+    | '/admin/books'
+    | '/admin/comments'
+    | '/admin/media'
+    | '/admin/navigation'
     | '/admin/new'
+    | '/admin/pages'
     | '/admin/settings'
+    | '/admin/taxonomy'
     | '/admin/users'
+    | '/admin/videos'
     | '/posts/$slug'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -200,12 +280,20 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/satsang'
+    | '/videos'
     | '/wisdom'
     | '/admin/$id'
     | '/admin/audit'
+    | '/admin/books'
+    | '/admin/comments'
+    | '/admin/media'
+    | '/admin/navigation'
     | '/admin/new'
+    | '/admin/pages'
     | '/admin/settings'
+    | '/admin/taxonomy'
     | '/admin/users'
+    | '/admin/videos'
     | '/posts/$slug'
     | '/admin'
   id:
@@ -219,12 +307,20 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/satsang'
+    | '/videos'
     | '/wisdom'
     | '/admin/$id'
     | '/admin/audit'
+    | '/admin/books'
+    | '/admin/comments'
+    | '/admin/media'
+    | '/admin/navigation'
     | '/admin/new'
+    | '/admin/pages'
     | '/admin/settings'
+    | '/admin/taxonomy'
     | '/admin/users'
+    | '/admin/videos'
     | '/posts/$slug'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -239,6 +335,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SatsangRoute: typeof SatsangRoute
+  VideosRoute: typeof VideosRoute
   WisdomRoute: typeof WisdomRoute
   PostsSlugRoute: typeof PostsSlugRoute
 }
@@ -250,6 +347,13 @@ declare module '@tanstack/react-router' {
       path: '/wisdom'
       fullPath: '/wisdom'
       preLoaderRoute: typeof WisdomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/videos': {
+      id: '/videos'
+      path: '/videos'
+      fullPath: '/videos'
+      preLoaderRoute: typeof VideosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/satsang': {
@@ -329,11 +433,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PostsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/videos': {
+      id: '/admin/videos'
+      path: '/videos'
+      fullPath: '/admin/videos'
+      preLoaderRoute: typeof AdminVideosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/taxonomy': {
+      id: '/admin/taxonomy'
+      path: '/taxonomy'
+      fullPath: '/admin/taxonomy'
+      preLoaderRoute: typeof AdminTaxonomyRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/settings': {
@@ -343,11 +461,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/pages': {
+      id: '/admin/pages'
+      path: '/pages'
+      fullPath: '/admin/pages'
+      preLoaderRoute: typeof AdminPagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/new': {
       id: '/admin/new'
       path: '/new'
       fullPath: '/admin/new'
       preLoaderRoute: typeof AdminNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/navigation': {
+      id: '/admin/navigation'
+      path: '/navigation'
+      fullPath: '/admin/navigation'
+      preLoaderRoute: typeof AdminNavigationRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/media': {
+      id: '/admin/media'
+      path: '/media'
+      fullPath: '/admin/media'
+      preLoaderRoute: typeof AdminMediaRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/comments': {
+      id: '/admin/comments'
+      path: '/comments'
+      fullPath: '/admin/comments'
+      preLoaderRoute: typeof AdminCommentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/books': {
+      id: '/admin/books'
+      path: '/books'
+      fullPath: '/admin/books'
+      preLoaderRoute: typeof AdminBooksRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/audit': {
@@ -370,18 +523,32 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminIdRoute: typeof AdminIdRoute
   AdminAuditRoute: typeof AdminAuditRoute
+  AdminBooksRoute: typeof AdminBooksRoute
+  AdminCommentsRoute: typeof AdminCommentsRoute
+  AdminMediaRoute: typeof AdminMediaRoute
+  AdminNavigationRoute: typeof AdminNavigationRoute
   AdminNewRoute: typeof AdminNewRoute
+  AdminPagesRoute: typeof AdminPagesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminTaxonomyRoute: typeof AdminTaxonomyRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminVideosRoute: typeof AdminVideosRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminIdRoute: AdminIdRoute,
   AdminAuditRoute: AdminAuditRoute,
+  AdminBooksRoute: AdminBooksRoute,
+  AdminCommentsRoute: AdminCommentsRoute,
+  AdminMediaRoute: AdminMediaRoute,
+  AdminNavigationRoute: AdminNavigationRoute,
   AdminNewRoute: AdminNewRoute,
+  AdminPagesRoute: AdminPagesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminTaxonomyRoute: AdminTaxonomyRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminVideosRoute: AdminVideosRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -397,6 +564,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SatsangRoute: SatsangRoute,
+  VideosRoute: VideosRoute,
   WisdomRoute: WisdomRoute,
   PostsSlugRoute: PostsSlugRoute,
 }
