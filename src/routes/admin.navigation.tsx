@@ -60,6 +60,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { navItemSchema, type NavItemFormValues } from "@/lib/schemas";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 
 export const Route = createFileRoute("/admin/navigation")({
   component: AdminNavPage,
@@ -519,6 +520,9 @@ function AdminNavPage() {
   };
 
   /* ── Render ─────────────────────────────────────────────────── */
+
+  // Unsaved changes warning (only when add form modal is open)
+  useUnsavedChanges(showAddForm && addForm.formState.isDirty);
 
   return (
     <div className="space-y-6">

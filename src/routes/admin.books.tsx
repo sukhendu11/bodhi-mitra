@@ -50,6 +50,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { bookSchema, type BookFormValues } from "@/lib/schemas";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 
 export const Route = createFileRoute("/admin/books")({
@@ -327,6 +328,9 @@ function AdminBooksPage() {
   const coverImage = form.watch("cover_image");
   const pdfUrl = form.watch("pdf_url");
   const statusVal = form.watch("status");
+
+  // Unsaved changes warning (only when form modal is open)
+  useUnsavedChanges(showForm && form.formState.isDirty);
 
   return (
     <div className="space-y-6">

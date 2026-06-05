@@ -72,6 +72,7 @@ import {
   Layout,
 } from "lucide-react";
 import { pageSchema, type PageFormValues } from "@/lib/schemas";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 
 export const Route = createFileRoute("/admin/pages")({
@@ -384,6 +385,9 @@ function AdminPagesPage() {
 
   const bannerUrl = form.watch("banner_url");
   const visible = form.watch("visible");
+
+  // Unsaved changes warning (only when form modal is open)
+  useUnsavedChanges(showForm && form.formState.isDirty);
 
   /* ── Render ───────────────────────────────────────────────────── */
 

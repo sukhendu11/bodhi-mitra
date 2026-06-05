@@ -191,8 +191,8 @@ export interface FileRoutesByFullPath {
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
-  '/posts/$slug': typeof PostsSlugRoute
   '/pages/$slug': typeof PagesSlugRoute
+  '/posts/$slug': typeof PostsSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -218,8 +218,8 @@ export interface FileRoutesByTo {
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
-  '/posts/$slug': typeof PostsSlugRoute
   '/pages/$slug': typeof PagesSlugRoute
+  '/posts/$slug': typeof PostsSlugRoute
   '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
@@ -247,8 +247,8 @@ export interface FileRoutesById {
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
-  '/posts/$slug': typeof PostsSlugRoute
   '/pages/$slug': typeof PagesSlugRoute
+  '/posts/$slug': typeof PostsSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -277,8 +277,8 @@ export interface FileRouteTypes {
     | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/videos'
-    | '/posts/$slug'
     | '/pages/$slug'
+    | '/posts/$slug'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -304,8 +304,8 @@ export interface FileRouteTypes {
     | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/videos'
-    | '/posts/$slug'
     | '/pages/$slug'
+    | '/posts/$slug'
     | '/admin'
   id:
     | '__root__'
@@ -332,8 +332,8 @@ export interface FileRouteTypes {
     | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/videos'
-    | '/posts/$slug'
     | '/pages/$slug'
+    | '/posts/$slug'
     | '/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -349,8 +349,8 @@ export interface RootRouteChildren {
   SatsangRoute: typeof SatsangRoute
   VideosRoute: typeof VideosRoute
   WisdomRoute: typeof WisdomRoute
-  PostsSlugRoute: typeof PostsSlugRoute
   PagesSlugRoute: typeof PagesSlugRoute
+  PostsSlugRoute: typeof PostsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -585,10 +585,10 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   SatsangRoute: SatsangRoute,
   VideosRoute: VideosRoute,
-  WisdomRoute: WisdomRoute,  PostsSlugRoute: PostsSlugRoute,
+  WisdomRoute: WisdomRoute,
   PagesSlugRoute: PagesSlugRoute,
+  PostsSlugRoute: PostsSlugRoute,
 }
-
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()

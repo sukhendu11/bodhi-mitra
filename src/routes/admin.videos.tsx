@@ -46,6 +46,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { videoSchema, type VideoFormValues } from "@/lib/schemas";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 
 export const Route = createFileRoute("/admin/videos")({
@@ -258,6 +259,9 @@ function AdminVideosPage() {
 
   const youtubeUrl = form.watch("youtube_url");
   const thumbnailUrl = form.watch("thumbnail_url");
+
+  // Unsaved changes warning (only when form modal is open)
+  useUnsavedChanges(showForm && form.formState.isDirty);
 
   return (
     <div className="space-y-6">

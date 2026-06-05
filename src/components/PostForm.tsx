@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { postSchema, type PostFormValues } from "@/lib/schemas";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 
 interface PostFormProps {
   initial?: Post;
@@ -176,6 +177,9 @@ export function PostForm({ initial, submitting, onSubmit }: PostFormProps) {
   const watchedAuthorName = form.watch("author_name");
   const watchedAuthorImage = form.watch("author_image");
   const watchedTags = form.watch("tags");
+
+  // Unsaved changes warning (beforeunload + route guard)
+  useUnsavedChanges(form.formState.isDirty);
 
   return (
     <Form {...form}>
