@@ -77,6 +77,7 @@ export interface SiteConfig {
     meta_desc_bn: string;
     og_image_url: string;
     google_analytics_id: string;
+    enable_sitemap: boolean;
   };
   article: {
     show_author_bio: boolean;
@@ -201,6 +202,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     meta_desc_bn: "অনুশীলনরত মনোরোগ বিশেষজ্ঞদের দ্বারা বৌদ্ধ শিক্ষা ও আধুনিক মানসিক স্বাস্থ্যের সংমিশ্রণে একটি শান্ত ব্লগ।",
     og_image_url: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/11cf2395-0332-4caa-9d73-3ad5cf777114/id-preview-36f7f9ee--2d38f8d2-888c-45a0-8b23-e5cefe82af66.lovable.app-1779959858012.png",
     google_analytics_id: "",
+    enable_sitemap: true,
   },
   article: {
     show_author_bio: true,

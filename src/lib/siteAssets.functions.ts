@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getR2Config, uploadFile, createPresignedUploadUrl } from "@/lib/r2";
 
 const SiteAssetUploadInput = z.object({
   kind: z.string().min(1).max(40).regex(/^[a-z0-9-]+$/),
@@ -14,6 +15,11 @@ const extensionFrom = (filename: string, contentType: string) => {
   const subtype = contentType.split("/")[1]?.split(";")[0]?.replace(/[^a-z0-9]/g, "");
   return subtype || "png";
 };
+
+/** Generate a storage key for a site asset. */
+function generateAssetKey(kind: string, ext: string): string {
+  return `site-assets/${kind}-${Date.now()}-${crypto.randomUUID()}.${ext}`;
+}
 
 export const createSiteAssetUpload = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -30,13 +36,23 @@ export const createSiteAssetUpload = createServerFn({ method: "POST" })
     if (!role) throw new Error("Only admins can upload site assets.");
 
     const ext = extensionFrom(data.filename, data.contentType);
-    const path = `${data.kind}-${Date.now()}-${crypto.randomUUID()}.${ext}`;
+    const key = generateAssetKey(data.kind, ext);
+
+    // Try R2 first
+    const r2Config = getR2Config();
+    if (r2Config) {
+      const presignedUrl = await createPresignedUploadUrl(key, data.contentType);
+      const publicUrl = `${r2Config.publicUrlBase}/${key}`;
+      return { path: key, token: presignedUrl, publicUrl, storage: "r2" };
+    }
+
+    // Fallback to Supabase Storage signed URL
     const { data: signed, error } = await supabase.storage
       .from("site-assets")
-      .createSignedUploadUrl(path);
+      .createSignedUploadUrl(key);
 
     if (error) throw new Error(error.message);
 
-    const { data: pub } = supabase.storage.from("site-assets").getPublicUrl(path);
-    return { path, token: signed.token, publicUrl: pub.publicUrl };
+    const { data: pub } = supabase.storage.from("site-assets").getPublicUrl(key);
+    return { path: key, token: signed.token, publicUrl: pub.publicUrl, storage: "supabase" };
   });

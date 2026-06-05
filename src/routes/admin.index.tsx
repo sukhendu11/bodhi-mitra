@@ -4,6 +4,16 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { fetchAllPostsAdmin, deletePost, type PostStatus } from "@/lib/posts";
 import { FileText, Eye, Edit3, Trash2, Plus, Search } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -14,6 +24,7 @@ function AdminDashboard() {
   const [filter, setFilter] = useState<"all" | PostStatus>("all");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const pageSize = 20;
 
   const { data, isLoading } = useQuery({
@@ -196,9 +207,7 @@ function AdminDashboard() {
                     <Edit3 className="h-3.5 w-3.5" />
                   </Link>
                   <button
-                    onClick={() => {
-                      if (confirm(`Delete "${p.title_en || p.title || p.title_bn || "post"}"?`)) del.mutate(p.id);
-                    }}
+                    onClick={() => setDeletingId(p.id)}
                     className="p-2 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
                     title="Delete"
                   >
@@ -210,6 +219,28 @@ function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => { if (!open) setDeletingId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete post</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this post? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); if (deletingId) del.mutate(deletingId); }}
+              disabled={del.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {del.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Pagination */}
       {totalPages > 1 && (

@@ -131,6 +131,44 @@ If a change is made:
 - CODING_FLOW.md -- architecture pattern, file organization, naming, best practices
 - PROJECT_STATE.md -- this file
 
+### CMS Architecture Expansion — Pending Validation
+- **Database migrations (8 new):**
+  - `20260605000001` — `media_assets` table with full-text search, RLS policies, auto-timestamp trigger
+  - `20260605000002` — `pages` table with bilingual fields, visibility, sort order, auto-timestamp trigger. Seeded with 4 default pages (buddhist-psychology, wisdom, books, satsang)
+  - `20260605000003` — `books` table (PDF-based digital products) with full-text search, price/is_free/status/featured fields, RLS policies
+  - `20260605000004` — Taxonomy system: `categories` (bilingual, color, sort, visibility), `tags` (bilingual, color), and polymorphic junction tables `content_categories` + `content_tags` for any content type (post/book/page). Seeded with 3 default categories.
+  - `20260605000005` — `book-covers` storage bucket (50MB limit, JPG/PNG/WEBP/PDF) with RLS policies
+  - `20260605000006` — Storage RLS policies for `blog-images` bucket (was missing from earlier migrations)
+  - `20260605000007` — `navigation_items` table with parent/child relationships, type (link/dropdown/heading/external), visibility, sort order, RLS policies
+  - `20260605000008` — `storage_provider` column on `media_assets` for deterministic R2 vs Supabase detection
+
+- **Library modules (8 new):**
+  - `lib/pages.ts` — Full CRUD for static pages (fetchAllPages, createPage, updatePage, deletePage, fetchPageBySlug)
+  - `lib/media.ts` — Centralized media asset management (fetchMediaAssets with pagination/search/bucket filter, trackUpload, deleteMediaAsset with storage cleanup, getMediaStats)
+  - `lib/books.ts` — Book CRUD (fetchPublishedBooks for public, fetchAllBooks for admin, createBook, updateBook, deleteBook, getBookStats, fetchBookBySlug)
+  - `lib/taxonomy.ts` — Categories & tags CRUD (fetchAllCategories, createTag, setContentCategories/setContentTags for polymorphic assignment, findOrCreateTag)
+  - `lib/navigation.ts` — Navigation items CRUD (fetchNavItems, create/update/delete, buildNavTree)
+  - `lib/admin-comments.ts` — Admin comment moderation server functions (delete, edit, fetch contact messages)
+  - `lib/seo.ts` — Server-side SEO functions (isSitemapEnabled, generateSitemapXml, generateRobotsTxt)
+  - `lib/r2.ts` + `lib/r2-functions.ts` + `lib/r2-client.ts` — Hybrid storage infrastructure (S3-compatible R2 client, presigned URLs, server upload functions, client upload hook)
+
+- **Admin routes (6 new):**
+  - `/admin/pages` — Page list with visibility indicators (green/grey dot), modal CRUD form with bilingual content, banner upload, SEO fields, visibility toggle, sort order, AlertDialog delete confirmation
+  - `/admin/media` — Media Library with grid/list toggle view, bucket filter (blog-images/site-assets/book-covers/avatars), file upload with multi-file support, text search, pagination, detail slide-over panel with copy URL / open / delete actions, file size formatting
+  - `/admin/books` — Shopify-style product grid with cover images, status badges (green=published/amber=draft/slate=archived), Free/Paid price badges. Stats cards (Total/Published/Drafts/Archived/Free). Modal CRUD form with cover image upload, PDF upload with file size tracking, bilingual fields, price/is_free toggle, featured toggle, pages/isbn metadata, status workflow selector (draft/published/archived). Hover overlay with View/Edit/Delete actions.
+  - `/admin/taxonomy` — Tabs UI for Categories (color picker, bilingual name/description, visibility toggle, sort order, inline edit/create/delete) and Tags (color-coded chips with inline edit/delete, create form)
+  - `/admin/comments` — Comments Moderation with separate Comments (stats, search, inline edit/delete via server functions with supabaseAdmin) and Contact Messages (unread filter, detail panel, reply via email) tabs
+  - `/admin/navigation` — Menu Management with drag-and-drop tree builder, inline editing, nested items, external/internal/dropdown types, visibility toggles
+
+- **Public routes (2 updated):**
+  - `/books` — Rebuilt from CategoryPage wrapper into full-featured Books page. Shopify-style 4-column grid with cover images, hover preview overlay, Free/Featured badges, page/size metadata. Detail modal with cover + bilingual description + metadata (pages, ISBN, price) + inline PDF viewer (iframe) + download button.
+  - `__root.tsx` — Dynamic Header + Footer navigation sourced from DB navigation_items table
+
+- **Navigation updated:**
+  - Admin sidebar restructured into 3 sections: Content (Posts, New Post, Books, Pages, Media, Comments Moderation), Structure (Navigation, Taxonomy, Users), Management (Audit Log, Settings)
+  - Mobile nav bar updated with all new admin routes
+  - Breadcrumb labels for all new routes
+
 ### Visual Polish
 - Tags now render as modern rounded-full pills with border, hover transitions, and subtle transparency
 - Consistent tag styling across post page, post cards, and admin preview
@@ -178,7 +216,7 @@ If a change is made:
 
 ### Security
 - No rate limiting on auth endpoints
-- supabaseAdmin service-role client exists but unused (risk if imported client-side)
+- supabaseAdmin service-role client used in 3 server-only files (admin.functions.ts, admin-comments.ts, seo.ts) — properly isolated, never imported client-side
 - Comment mutations now use server functions with auth/permission enforcement (add, edit, delete)
 - Role-based RLS policies on all tables (posts, comments, site_settings, storage, contact_messages)
 - Database-level permission checks via `has_permission()` and `has_min_role()` RPC functions
@@ -198,9 +236,23 @@ If a change is made:
 - Navbar restructured: Philosophy + Practice dropdowns with grouped sub-items ✅
 - Mobile nav supports expandable accordion groups for dropdown items ✅
 - Nav labels CMS-configurable via Site Settings (all 10 labels) ✅
+- Dynamic menu management system with drag-and-drop admin UI (replaces hardcoded nav) — pending validation
 - Role-based administration system with 6 tiers (super_admin → user) ✅
 - Admin Users page with inline role assignment and hierarchical permission enforcement ✅
 - Admin sidebar layout redesigned with nav + user info panel ✅
+- Media Library page (grid/list toggle, bucket filter, multi-file upload, search, pagination) — pending validation
+- Books admin module (Shopify-style grid CRUD with PDF upload, Free/Paid, status workflow) — pending validation
+- Pages admin module (dedicated pages CRUD extracted from settings JSON) — pending validation
+- Taxonomy admin module (categories & tags management) — pending validation
+- Public Books page with grid layout + PDF viewer modal — pending validation
+- Comments Moderation admin page (Comments tab with stats, search, inline edit/delete via server functions with supabaseAdmin; Contact Messages tab with unread filter, detail panel, reply via email) — pending validation
+- Menu Management System at /admin/navigation with drag-and-drop tree builder, inline editing, nested items, external/internal/dropdown types, visibility toggles — pending validation
+- Dynamic navigation in __root.tsx (Header + Footer) sourced from DB navigation_items table — pending validation
+- Sitemap.xml generation at server level (static routes + published posts + visible pages) — pending validation
+- Robots.txt generation with admin/auth disallows + sitemap link — pending validation
+- Hybrid storage architecture: Supabase for data + Cloudflare R2 for files (r2.ts SDK, server functions, React hook, wrangler binding) — pending validation
+- All upload flows migrated to R2-first with automatic Supabase Storage fallback — pending validation
+- `storage_provider` column added to `media_assets` via migration (replaces heuristic R2 detection with deterministic DB column) — pending validation
 - No RSS feed or newsletter subscription backend
 
 ---

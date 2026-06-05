@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import { useAuthSession, useIsAdmin, signOut } from "@/hooks/useAuth";
 import { LanguageProvider, useLang, pickLocalized } from "@/lib/i18n";
 import { SiteSettingsProvider, useSiteSettings, fetchSiteSettings, DEFAULT_CONFIG } from "@/lib/siteSettings";
+import { fetchPublicNavItems, buildNavTree, type NavTreeNode } from "@/lib/navigation";
 import { LangToggle } from "@/components/LangToggle";
 import { NavDropdown } from "@/components/NavDropdown";
 import { MobileNav } from "@/components/MobileNav";
@@ -102,66 +103,54 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ─── Navigation structure ─────────────────────────────────────────────── */
+/* ─── Navigation hook ──────────────────────────────────────────── */
 
-/** Top-level direct links — shown inline in desktop nav. */
-const topLevelLinks = [
-  { to: "/" as const, labelKey: "home" as const },
-  { to: "/books" as const, labelKey: "books" as const },
-  { to: "/about" as const, labelKey: "about" as const },
-  { to: "/contact" as const, labelKey: "contact" as const },
-] as const;
+/** Fetch public nav items and build the tree. */
+function usePublicNavigation() {
+  return useQuery({
+    queryKey: ["public-nav"],
+    queryFn: async () => {
+      const items = await fetchPublicNavItems();
+      return buildNavTree(items);
+    },
+    staleTime: 60_000,
+  });
+}
 
-/** Dropdown groups — Philosophy and Practice with their sub-items. */
-const dropdownGroups = [
-  {
-    labelKey: "philosophy" as const,
-    items: [
-      { to: "/buddhist-psychology" as const, labelKey: "buddhism" as const },
-      { to: "/wisdom" as const, labelKey: "mind" as const },
-    ],
-  },
-  {
-    labelKey: "practice" as const,
-    items: [
-      { to: "/satsang" as const, labelKey: "wellness" as const },
-      { to: "/" as const, labelKey: "today" as const },
-    ],
-  },
-] as const;
-
-/** All nav items as a flat list for mobile (groups will be rendered separately).
- *  Only top-level items that are NOT inside dropdown groups. */
-const flatNavItems = [
-  { to: "/" as const, labelKey: "home" as const },
-  { to: "/books" as const, labelKey: "books" as const },
-  { to: "/about" as const, labelKey: "about" as const },
-  { to: "/contact" as const, labelKey: "contact" as const },
-] as const;
-
-/** Resolve a nav label from site settings, with i18n fallback. */
-type NavKey =
-  | "home" | "philosophy" | "practice"
-  | "buddhism" | "mind" | "wellness" | "today"
-  | "books" | "about" | "contact";
-
-function resolveNavLabel(settings: ReturnType<typeof useSiteSettings>, lang: "en" | "bn", key: NavKey): string {
-  const val = (settings.nav as Record<string, string>)[`${key}_${lang}`];
-  if (val?.trim()) return val.trim();
-  // Fallback to the other language
-  const other = (settings.nav as Record<string, string>)[`${key}_${lang === "en" ? "bn" : "en"}`];
-  if (other?.trim()) return other.trim();
-  // Ultimate fallback
-  const fallbacks: Record<NavKey, string> = {
-    home: "Home", philosophy: "Philosophy", practice: "Practice",
-    buddhism: "Buddhism", mind: "Mind (Buddhist Psychology)",
-    wellness: "Wellness (Mental Health Approach)", today: "Today (Modern Relevance)",
-    books: "Books", about: "About", contact: "Contact",
-  };
-  return fallbacks[key];
+/** Resolve a nav item's label for the current language. */
+function navLabel(item: NavTreeNode, lang: "en" | "bn"): string {
+  return lang === "bn" && item.label_bn?.trim() ? item.label_bn.trim() : item.label_en;
 }
 
 /* ─── Header ───────────────────────────────────────────────────────────── */
+
+function NavLinkItem({ node, linkCls, activeLinkCls, lang }: { node: NavTreeNode; linkCls: string; activeLinkCls: string; lang: "en" | "bn" }) {
+  if (node.type === "external") {
+    return (
+      <a
+        href={node.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkCls}
+      >
+        {navLabel(node, lang)}
+        <span className="absolute -bottom-1 left-0 h-px w-full bg-foreground/50 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left" />
+      </a>
+    );
+  }
+  const to = node.slug || "/";
+  return (
+    <Link
+      to={to as any}
+      activeOptions={{ exact: to === "/" }}
+      activeProps={{ className: `${activeLinkCls} ${linkCls}` }}
+      className={linkCls}
+    >
+      {navLabel(node, lang)}
+      <span className="absolute -bottom-1 left-0 h-px w-full bg-foreground/50 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left" />
+    </Link>
+  );
+}
 
 function Header() {
   const { user } = useAuthSession();
@@ -169,6 +158,7 @@ function Header() {
   const { lang } = useLang();
   const settings = useSiteSettings();
   const currentPath = useRouterState({ select: (s) => s.location.href });
+  const { data: navTree = [] } = usePublicNavigation();
   const loginSearch = { message: "", redirect: currentPath === "/login" ? "/" : currentPath };
 
   const brandName = pickLocalized(settings.branding.site_name_en, settings.branding.site_name_bn, lang);
@@ -181,6 +171,12 @@ function Header() {
   const signInCls =
     "px-4 py-1.5 text-xs uppercase tracking-[0.2em] rounded-sm text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 hover:brightness-110";
   const signInStyle = { backgroundColor: "var(--color-saffron)" };
+
+  // Build nav structures from the dynamic tree (preserving sort_order)
+  const dropdownGroups = navTree.filter((n) => n.type === "dropdown");
+  // Flat nav for mobile: only top-level non-dropdown items
+  // (dropdown groups are passed separately via the `groups` prop)
+  const mobileItems = navTree.filter((n) => n.type !== "dropdown");
 
   return (
     <header className="border-b border-border/60 bg-background/60 backdrop-blur-md sticky top-0 z-40">
@@ -196,31 +192,22 @@ function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-          {/* Top-level links */}
-          {topLevelLinks.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeOptions={{ exact: item.to === "/" }}
-              activeProps={{ className: `${activeLinkCls} ${linkCls}` }}
-              className={linkCls}
-            >
-              {resolveNavLabel(settings, lang, item.labelKey)}
-              <span className="absolute -bottom-1 left-0 h-px w-full bg-foreground/50 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left" />
-            </Link>
-          ))}
-
-          {/* Dropdown groups */}
-          {dropdownGroups.map((group) => (
-            <NavDropdown
-              key={group.labelKey}
-              triggerLabel={resolveNavLabel(settings, lang, group.labelKey)}
-              items={group.items.map((item) => ({
-                to: item.to,
-                label: resolveNavLabel(settings, lang, item.labelKey),
-              }))}
-            />
-          ))}
+          {/* All nav items interleaved by sort_order */}
+          {navTree.map((item) =>
+            item.type === "dropdown" ? (
+              <NavDropdown
+                key={item.id}
+                triggerLabel={navLabel(item, lang)}
+                items={item.children.map((child) => ({
+                  to: child.type === "external" ? child.url : (child.slug || "/"),
+                  label: navLabel(child, lang),
+                  external: child.type === "external",
+                }))}
+              />
+            ) : (
+              <NavLinkItem key={item.id} node={item} linkCls={linkCls} activeLinkCls={activeLinkCls} lang={lang} />
+            ),
+          )}
 
           {/* Admin button */}
           {isAdmin && (
@@ -255,15 +242,15 @@ function Header() {
         <div className="md:hidden flex items-center gap-3">
           <LangToggle className="shrink-0" />
           <MobileNav
-            items={flatNavItems.map((item) => ({
-              to: item.to,
-              label: resolveNavLabel(settings, lang, item.labelKey),
+            items={mobileItems.map((item) => ({
+              to: item.type === "external" ? item.url : (item.slug || "/"),
+              label: navLabel(item, lang),
             }))}
             groups={dropdownGroups.map((group) => ({
-              label: resolveNavLabel(settings, lang, group.labelKey),
-              items: group.items.map((item) => ({
-                to: item.to,
-                label: resolveNavLabel(settings, lang, item.labelKey),
+              label: navLabel(group, lang),
+              items: group.children.map((child) => ({
+                to: child.type === "external" ? child.url : (child.slug || "/"),
+                label: navLabel(child, lang),
               })),
             }))}
             isAdmin={!!isAdmin}
@@ -282,7 +269,20 @@ function Header() {
 
 /* ─── Footer ───────────────────────────────────────────────────────────── */
 
-function FooterLink({ to, label }: { to: string; label: string }) {
+function FooterLink({ to, label, external }: { to: string; label: string; external?: boolean }) {
+  if (external) {
+    return (
+      <a
+        href={to}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground/80 hover:text-foreground transition-all duration-200 hover:translate-x-0.5"
+      >
+        <span className="w-0 group-hover:w-2 h-px bg-foreground/40 transition-all duration-300 ease-out" />
+        {label}
+      </a>
+    );
+  }
   return (
     <Link
       to={to as any}
@@ -320,6 +320,7 @@ function SocialIcon({ href, label, children }: { href: string; label: string; ch
 function Footer() {
   const { lang } = useLang();
   const s = useSiteSettings();
+  const { data: navTree = [] } = usePublicNavigation();
   const brandName = pickLocalized(s.branding.site_name_en, s.branding.site_name_bn, lang);
   const tagline = pickLocalized(s.footer.text_en, s.footer.text_bn, lang);
   const copyrightTpl = pickLocalized(s.footer.copyright_en, s.footer.copyright_bn, lang);
@@ -327,21 +328,29 @@ function Footer() {
 
   const hasSocial = s.social.facebook || s.social.twitter || s.social.instagram || s.social.linkedin || s.social.youtube;
 
-  const navLinks = {
-    philosophy: [
-      { to: "/buddhist-psychology", label: resolveNavLabel(s, lang, "buddhism") },
-      { to: "/wisdom", label: resolveNavLabel(s, lang, "mind") },
-    ],
-    practice: [
-      { to: "/satsang", label: resolveNavLabel(s, lang, "wellness") },
-      { to: "/books", label: resolveNavLabel(s, lang, "books") },
-    ],
-    explore: [
-      { to: "/", label: resolveNavLabel(s, lang, "home") },
-      { to: "/about", label: resolveNavLabel(s, lang, "about") },
-      { to: "/contact", label: resolveNavLabel(s, lang, "contact") },
-    ],
-  };
+  // Build footer columns from the nav tree
+  const dropdownGroups = navTree.filter((n) => n.type === "dropdown");
+  const topLevelLinks = navTree.filter((n) => n.type !== "dropdown");
+  const footerSections = [
+    ...dropdownGroups.map((g) => ({
+      title: navLabel(g, lang),
+      links: g.children.map((c) => ({
+        key: c.id,
+        to: c.type === "external" ? c.url : (c.slug || "/"),
+        label: navLabel(c, lang),
+        external: c.type === "external",
+      })),
+    })),
+    {
+      title: lang === "bn" ? "অন্বেষণ" : "Explore",
+      links: topLevelLinks.map((n) => ({
+        key: n.id,
+        to: n.type === "external" ? n.url : (n.slug || "/"),
+        label: navLabel(n, lang),
+        external: n.type === "external",
+      })),
+    },
+  ].filter((s) => s.links.length > 0);
 
   return (
     <footer className="mt-24 border-t border-border/60 bg-secondary/10">
@@ -377,34 +386,26 @@ function Footer() {
             )}
           </div>
 
-          {/* Column 2: Philosophy */}
-          <FooterSection title={resolveNavLabel(s, lang, "philosophy")}>
-            {navLinks.philosophy.map((link) => (
-              <FooterLink key={link.to} to={link.to} label={link.label} />
-            ))}
-          </FooterSection>
+          {/* Dynamic footer columns from nav tree */}
+          {footerSections.map((section) => (
+            <FooterSection key={section.title} title={section.title}>
+              {section.links.map((link) => (
+                <FooterLink key={link.key} to={link.to} label={link.label} external={link.external} />
+              ))}
+            </FooterSection>
+          ))}
 
-          {/* Column 3: Practice */}
-          <FooterSection title={resolveNavLabel(s, lang, "practice")}>
-            {navLinks.practice.map((link) => (
-              <FooterLink key={link.to} to={link.to} label={link.label} />
-            ))}
-          </FooterSection>
-
-          {/* Column 4: Explore */}
-          <FooterSection title="Explore">
-            {navLinks.explore.map((link) => (
-              <FooterLink key={link.to} to={link.to} label={link.label} />
-            ))}
-            {s.contact.email && (
+          {/* Email from contact settings (always last column) */}
+          {s.contact.email && (
+            <FooterSection title={lang === "bn" ? "যোগাযোগ" : "Contact"}>
               <a
                 href={`mailto:${s.contact.email}`}
                 className="text-sm text-muted-foreground/80 hover:text-foreground transition-colors block"
               >
                 {s.contact.email}
               </a>
-            )}
-          </FooterSection>
+            </FooterSection>
+          )}
         </div>
       </div>
 

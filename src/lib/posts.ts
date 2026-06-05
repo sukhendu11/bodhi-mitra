@@ -140,6 +140,27 @@ export async function deletePost(id: string): Promise<void> {
 }
 
 export async function uploadCoverImage(file: File): Promise<string> {
+  // Try R2 via dynamic import (avoids forcing R2 as dependency in this module)
+  try {
+    const { checkR2Available } = await import("@/lib/r2-functions");
+    const isAvailable = await checkR2Available();
+    if (isAvailable.available) {
+      const { getPresignedUploadUrl } = await import("@/lib/r2-functions");
+      const { presignedUrl, publicUrl, key } = await getPresignedUploadUrl({
+        data: { prefix: "post-covers", filename: file.name, contentType: file.type || "image/jpeg" },
+      });
+      // Upload directly to R2 via presigned URL
+      const response = await fetch(presignedUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type || "image/jpeg" },
+      });
+      if (!response.ok) throw new Error(`R2 upload failed: ${response.status}`);
+      return publicUrl;
+    }
+  } catch {}
+
+  // Fallback to Supabase Storage
   const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
   const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const { error } = await supabase.storage.from("blog-images").upload(path, file, {

@@ -272,14 +272,36 @@ export function PostForm({ initial, submitting, onSubmit }: PostFormProps) {
                   setAvatarUploading(true);
                   const { data: { user } } = await supabase.auth.getUser();
                   if (!user) throw new Error("Not signed in");
-                  const ext = (f.name.split(".").pop() ?? "jpg").toLowerCase();
-                  const path = `${user.id}/${Date.now()}.${ext}`;
-                  const { error: upErr } = await supabase.storage
-                    .from("avatars")
-                    .upload(path, f, { upsert: true, contentType: f.type });
-                  if (upErr) throw upErr;
-                  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-                  const url = data.publicUrl;
+                  let url: string;
+
+                  // Try R2 first
+                  try {
+                    const { checkR2Available, getPresignedUploadUrl } = await import("@/lib/r2-functions");
+                    const { available } = await checkR2Available();
+                    if (available) {
+                      const { presignedUrl, publicUrl } = await getPresignedUploadUrl({
+                        data: { prefix: "avatars", filename: f.name, contentType: f.type || "image/jpeg" },
+                      });
+                      const r2Res = await fetch(presignedUrl, {
+                        method: "PUT", body: f,
+                        headers: { "Content-Type": f.type || "image/jpeg" },
+                      });
+                      if (!r2Res.ok) throw new Error(`R2 upload failed: ${r2Res.status}`);
+                      url = publicUrl;
+                    } else {
+                      throw new Error("R2 not available");
+                    }
+                  } catch {
+                    // Fallback to Supabase Storage
+                    const ext = (f.name.split(".").pop() ?? "jpg").toLowerCase();
+                    const path = `${user.id}/${Date.now()}.${ext}`;
+                    const { error: upErr } = await supabase.storage
+                      .from("avatars")
+                      .upload(path, f, { upsert: true, contentType: f.type });
+                    if (upErr) throw upErr;
+                    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+                    url = pub.publicUrl;
+                  }
                   setAuthorImage(url);
                   // Persist to profile so it becomes the writer's default avatar
                   await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);

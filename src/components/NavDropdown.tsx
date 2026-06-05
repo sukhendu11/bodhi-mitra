@@ -11,6 +11,7 @@ import {
 interface DropdownItem {
   to: string;
   label: string;
+  external?: boolean;
 }
 
 interface NavDropdownProps {
@@ -68,13 +69,24 @@ export function NavDropdown({ triggerLabel, items }: NavDropdownProps) {
       >
         {items.map((item) => (
           <DropdownMenuItem key={item.to} asChild className="p-0">
-            <Link
-              to={item.to}
-              className="block w-full rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
-              activeProps={{ className: "text-foreground bg-secondary/40" }}
-            >
-              {item.label}
-            </Link>
+            {item.external ? (
+              <a
+                href={item.to}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
+              >
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                to={item.to}
+                className="block w-full rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
+                activeProps={{ className: "text-foreground bg-secondary/40" }}
+              >
+                {item.label}
+              </Link>
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

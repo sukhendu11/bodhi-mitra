@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { canManageUsers } from "@/hooks/useRole";
 import { cn } from "@/lib/utils";
 import {
-  FileText, PlusCircle, Users, Settings, Activity,
+  FileText, PlusCircle, BookOpen, ImageIcon, FolderTree, Globe, MessageSquare, Users, Settings, Activity, Menu,
   LogOut, PanelLeftClose, PanelLeft,
   type LucideIcon,
 } from "lucide-react";
@@ -82,12 +82,23 @@ function AdminLayout() {
       items: [
         { to: "/admin", label: "Posts", icon: FileText, exact: true },
         { to: "/admin/new", label: "New Post", icon: PlusCircle, exact: false },
+        { to: "/admin/books", label: "Books", icon: BookOpen, exact: false },
+        { to: "/admin/pages", label: "Pages", icon: Globe, exact: false },
+        { to: "/admin/media", label: "Media", icon: ImageIcon, exact: false },
+      ],
+    },
+    {
+      label: "Community",
+      items: [
+        { to: "/admin/comments", label: "Moderation", icon: MessageSquare, exact: false },
+        { to: "/admin/navigation", label: "Navigation", icon: Menu, exact: false },
+        { to: "/admin/taxonomy", label: "Taxonomy", icon: FolderTree, exact: false },
+        ...(showUsers ? [{ to: "/admin/users" as const, label: "Users" as const, icon: Users as LucideIcon, exact: false }] : []),
       ],
     },
     {
       label: "Management",
       items: [
-        ...(showUsers ? [{ to: "/admin/users" as const, label: "Users" as const, icon: Users as LucideIcon, exact: false }] : []),
         { to: "/admin/audit" as const, label: "Audit Log" as const, icon: Activity as LucideIcon, exact: false },
         { to: "/admin/settings" as const, label: "Settings" as const, icon: Settings as LucideIcon, exact: false },
       ],
@@ -232,6 +243,12 @@ function AdminLayout() {
               <div className="md:hidden flex items-center gap-3 text-xs">
                 <Link to="/admin" activeOptions={{ exact: true }} className="px-2 py-1 text-muted-foreground hover:text-foreground">Posts</Link>
                 <Link to="/admin/new" className="px-2 py-1 text-muted-foreground hover:text-foreground">New</Link>
+                <Link to="/admin/books" className="px-2 py-1 text-muted-foreground hover:text-foreground">Books</Link>
+                <Link to="/admin/pages" className="px-2 py-1 text-muted-foreground hover:text-foreground">Pages</Link>
+                <Link to="/admin/media" className="px-2 py-1 text-muted-foreground hover:text-foreground">Media</Link>
+                <Link to="/admin/comments" className="px-2 py-1 text-muted-foreground hover:text-foreground">Mod</Link>
+                <Link to="/admin/navigation" className="px-2 py-1 text-muted-foreground hover:text-foreground">Nav</Link>
+                <Link to="/admin/taxonomy" className="px-2 py-1 text-muted-foreground hover:text-foreground">Tax</Link>
                 {showUsers && <Link to="/admin/users" className="px-2 py-1 text-muted-foreground hover:text-foreground">Users</Link>}
                 <Link to="/admin/audit" className="px-2 py-1 text-muted-foreground hover:text-foreground">Audit</Link>
                 <Link to="/admin/settings" className="px-2 py-1 text-muted-foreground hover:text-foreground">Settings</Link>
@@ -271,6 +288,12 @@ function CurrentPageLabel({ currentPath }: { currentPath: string }) {
   const labels: Record<string, string> = {
     "/admin": "Posts",
     "/admin/new": "New Post",
+    "/admin/books": "Books",
+    "/admin/pages": "Pages",
+    "/admin/media": "Media",
+    "/admin/comments": "Moderation",
+    "/admin/navigation": "Navigation",
+    "/admin/taxonomy": "Taxonomy",
     "/admin/users": "Users",
     "/admin/audit": "Audit Log",
     "/admin/settings": "Settings",
