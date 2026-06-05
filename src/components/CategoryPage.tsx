@@ -1,7 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { PostGrid } from "./PostGrid";
 import type { PostCategory } from "@/lib/posts";
+import { fetchPageBySlug } from "@/lib/pages";
 import { useLang, pickLocalized } from "@/lib/i18n";
-import { useSiteSettings } from "@/lib/siteSettings";
 import { Reveal } from "@/components/Reveal";
 
 export function CategoryPage({
@@ -20,8 +21,26 @@ export function CategoryPage({
   defaultDescriptionBn: string;
 }) {
   const { lang } = useLang();
-  const cfg = useSiteSettings();
-  const page = cfg.pages.find((p) => p.slug === slug);
+
+  const { data: page, isLoading } = useQuery({
+    queryKey: ["public-page", slug],
+    queryFn: () => fetchPageBySlug(slug),
+    staleTime: 30_000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
+        <div className="h-8 w-48 bg-secondary/60 animate-pulse rounded mb-6" />
+        <div className="h-4 w-96 bg-secondary/40 animate-pulse rounded mb-12" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-24 bg-secondary/30 animate-pulse rounded" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (page && page.visible === false) {
     return (

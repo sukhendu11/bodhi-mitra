@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
+import { useQuery } from "@tanstack/react-query";
+import { getSiteName } from "@/lib/siteSettings";
+import { fetchPageBySlug } from "@/lib/pages";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { Reveal } from "@/components/Reveal";
 
@@ -17,9 +19,26 @@ export const Route = createFileRoute("/satsang")({
 });
 
 function SatsangPage() {
-  const cfg = useSiteSettings();
   const { lang } = useLang();
-  const page = cfg.pages.find((p) => p.slug === "satsang");
+
+  const { data: page, isLoading } = useQuery({
+    queryKey: ["public-page", "satsang"],
+    queryFn: () => fetchPageBySlug("satsang"),
+    staleTime: 30_000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-20 md:py-28">
+        <div className="h-8 w-48 bg-secondary/60 animate-pulse rounded mb-6" />
+        <div className="space-y-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-24 bg-secondary/30 animate-pulse rounded" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (!page || page.visible === false) {
     return (

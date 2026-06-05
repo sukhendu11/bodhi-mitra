@@ -30,9 +30,9 @@ function Home() {
 
   const filters: { label: string; value: PostCategory | "All" }[] = [
     { label: "All", value: "All" },
-    { label: settings.nav.buddhism_en || "Buddhism", value: "Buddhist Psychology" },
-    { label: settings.nav.mind_en || "Mind", value: "Wisdom" },
-    { label: settings.nav.books_en || "Books", value: "Books" },
+    { label: "Buddhism", value: "Buddhist Psychology" },
+    { label: "Mind", value: "Wisdom" },
+    { label: "Books", value: "Books" },
   ];
 
   const heroTitle = pickLocalized(hero.title_en, hero.title_bn, lang);

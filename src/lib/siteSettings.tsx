@@ -2,18 +2,6 @@ import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface DynamicPage {
-  slug: string;
-  title_en: string;
-  title_bn: string;
-  header_en: string;
-  header_bn: string;
-  body_en: string;
-  body_bn: string;
-  banner_url: string;
-  visible: boolean;
-}
-
 export interface SiteConfig {
   branding: {
     logo_url: string;
@@ -39,18 +27,6 @@ export interface SiteConfig {
     accent_hover: string;
     mode: "light" | "dark";
     header_visible: boolean;
-  };
-  nav: {
-    home_en: string; home_bn: string;
-    philosophy_en: string; philosophy_bn: string;
-    practice_en: string; practice_bn: string;
-    buddhism_en: string; buddhism_bn: string;
-    mind_en: string; mind_bn: string;
-    wellness_en: string; wellness_bn: string;
-    today_en: string; today_bn: string;
-    books_en: string; books_bn: string;
-    about_en: string; about_bn: string;
-    contact_en: string; contact_bn: string;
   };
   footer: {
     copyright_en: string;
@@ -102,43 +78,7 @@ export interface SiteConfig {
     note_title_en: string; note_title_bn: string;
     note_text_en: string; note_text_bn: string;
   };
-  pages: DynamicPage[];
 }
-
-export const DEFAULT_PAGES: DynamicPage[] = [
-  {
-    slug: "buddhist-psychology",
-    title_en: "Buddhist Psychology", title_bn: "বৌদ্ধ মনোবিজ্ঞান",
-    header_en: "Buddhist Psychology", header_bn: "বৌদ্ধ মনোবিজ্ঞান",
-    body_en: "Where the Buddha's two-and-a-half-millennia of inquiry into the mind meets the evidence base of modern psychiatry.",
-    body_bn: "যেখানে বুদ্ধের আড়াই হাজার বছরের মনস্তাত্ত্বিক অনুসন্ধান আধুনিক মনোরোগবিদ্যার প্রমাণের সাথে মিলিত হয়।",
-    banner_url: "", visible: true,
-  },
-  {
-    slug: "wisdom",
-    title_en: "Wisdom", title_bn: "প্রজ্ঞা",
-    header_en: "Wisdom", header_bn: "প্রজ্ঞা",
-    body_en: "Short meditations on attention, equanimity, and the texture of an examined life.",
-    body_bn: "মনোযোগ, সমতা এবং পরীক্ষিত জীবনের গঠন নিয়ে সংক্ষিপ্ত ধ্যান।",
-    banner_url: "", visible: true,
-  },
-  {
-    slug: "books",
-    title_en: "Books", title_bn: "বই",
-    header_en: "Books", header_bn: "বই",
-    body_en: "A small shelf of companions — books we return to, and the ones we recommend without hesitation.",
-    body_bn: "সঙ্গীদের একটি ছোট তাক — যেসব বইয়ে আমরা ফিরে যাই, এবং যেগুলো নির্দ্বিধায় সুপারিশ করি।",
-    banner_url: "", visible: true,
-  },
-  {
-    slug: "satsang",
-    title_en: "Satsang", title_bn: "সৎসঙ্গ",
-    header_en: "Satsang", header_bn: "সৎসঙ্গ",
-    body_en: "Gatherings in good company — talks, retreats, and shared silence.",
-    body_bn: "সৎসঙ্গে সমাবেশ — আলোচনা, রিট্রিট এবং ভাগ করা নীরবতা।",
-    banner_url: "", visible: false,
-  },
-];
 
 export const DEFAULT_CONFIG: SiteConfig = {
   branding: {
@@ -165,18 +105,6 @@ export const DEFAULT_CONFIG: SiteConfig = {
     accent_hover: "#e67e22",
     mode: "light",
     header_visible: true,
-  },
-  nav: {
-    home_en: "Home", home_bn: "Home",
-    philosophy_en: "Philosophy", philosophy_bn: "Philosophy",
-    practice_en: "Practice", practice_bn: "Practice",
-    buddhism_en: "Buddhism", buddhism_bn: "Buddhism",
-    mind_en: "Mind (Buddhist Psychology)", mind_bn: "Mind (Buddhist Psychology)",
-    wellness_en: "Wellness (Mental Health Approach)", wellness_bn: "Wellness (Mental Health Approach)",
-    today_en: "Today (Modern Relevance)", today_bn: "Today (Modern Relevance)",
-    books_en: "Books", books_bn: "Books",
-    about_en: "About", about_bn: "About",
-    contact_en: "Contact", contact_bn: "Contact",
   },
   footer: {
     copyright_en: "© {year} Bodhi Mitra. All rights reserved.",
@@ -234,7 +162,6 @@ export const DEFAULT_CONFIG: SiteConfig = {
     note_text_en: "Nothing on this site constitutes medical advice. If you are suffering, please reach out to a qualified clinician in your community.",
     note_text_bn: "এই সাইটের কিছুই চিকিৎসা পরামর্শ নয়। যদি আপনি কষ্টে থাকেন, অনুগ্রহ করে আপনার কমিউনিটিতে একজন যোগ্য চিকিৎসকের কাছে যান।",
   },
-  pages: DEFAULT_PAGES,
 };
 
 /** Deep-merge a partial config onto defaults so missing keys still resolve. */
@@ -244,9 +171,7 @@ export function mergeConfig(partial: unknown): SiteConfig {
   for (const k of Object.keys(DEFAULT_CONFIG) as (keyof SiteConfig)[]) {
     const defVal = DEFAULT_CONFIG[k];
     const inVal = p[k];
-    if (Array.isArray(defVal)) {
-      (out as any)[k] = Array.isArray(inVal) && inVal.length ? inVal : defVal;
-    } else if (defVal && typeof defVal === "object") {
+    if (defVal && typeof defVal === "object") {
       (out as any)[k] = { ...(defVal as object), ...((inVal as object) || {}) };
     } else {
       (out as any)[k] = inVal ?? defVal;
@@ -327,7 +252,6 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     const existingInit = document.getElementById("ga-init");
     if (existingInit) existingInit.remove();
     if (!id) return;
-    // Strict allowlist: only valid GA4 (G-XXXXXXXX) or Universal Analytics (UA-XXXX-Y) IDs.
     const isValidGaId = /^G-[A-Z0-9]{4,20}$/.test(id) || /^UA-\d{4,12}-\d{1,4}$/.test(id);
     if (!isValidGaId) {
       console.warn("[siteSettings] Invalid Google Analytics ID format; refusing to inject script.");
@@ -340,7 +264,6 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     document.head.appendChild(s1);
     const s2 = document.createElement("script");
     s2.id = "ga-init";
-    // id is validated against a strict allowlist above, so JSON.stringify is safe here.
     s2.text = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${JSON.stringify(id)});`;
     document.head.appendChild(s2);
   }, [config.seo.google_analytics_id]);

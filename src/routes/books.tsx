@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { fetchPublishedBooks, type Book } from "@/lib/books";
-import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
+import { fetchPageBySlug } from "@/lib/pages";
+import { getSiteName } from "@/lib/siteSettings";
 import { useLang, pickLocalized, type Lang } from "@/lib/i18n";
 import {
   BookOpen,
@@ -32,7 +33,6 @@ export const Route = createFileRoute("/books")({
 
 function BooksPage() {
   const { lang, t } = useLang();
-  const settings = useSiteSettings();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -44,15 +44,20 @@ function BooksPage() {
     staleTime: 60_000,
   });
 
+  const { data: pageData } = useQuery({
+    queryKey: ["public-page", "books"],
+    queryFn: () => fetchPageBySlug("books"),
+    staleTime: 60_000,
+  });
+
   const books = data?.data ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  // Get page settings from site config
-  const pageCfg = settings.pages.find((p) => p.slug === "books");
-  const header = pageCfg?.header_en || "Books";
-  const description = pageCfg?.body_en || "A small shelf of companions — books we return to, and the ones we recommend without hesitation.";
-  const banner = pageCfg?.banner_url || "";
+  // Get page settings from the public pages table
+  const header = pageData?.header_en || "Books";
+  const description = pageData?.body_en || "A small shelf of companions — books we return to, and the ones we recommend without hesitation.";
+  const banner = pageData?.banner_url || "";
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">

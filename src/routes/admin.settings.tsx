@@ -7,7 +7,6 @@ import {
   DEFAULT_CONFIG,
   fetchSiteSettings,
   saveSiteSettings,
-  type DynamicPage,
   type SiteConfig,
 } from "@/lib/siteSettings";
 import { createSiteAssetUpload } from "@/lib/siteAssets.functions";
@@ -20,9 +19,7 @@ import { HomepageTab } from "@/components/SettingsHomepageTab";
 import { ArticleTab } from "@/components/SettingsArticleTab";
 import { AboutTab } from "@/components/SettingsAboutTab";
 import { ContactTab } from "@/components/SettingsContactTab";
-import { PagesTab } from "@/components/SettingsPagesTab";
 import { ThemeTab } from "@/components/SettingsThemeTab";
-import { NavTab } from "@/components/SettingsNavTab";
 import { SocialTab } from "@/components/SettingsSocialTab";
 import { SeoTab } from "@/components/SettingsSeoTab";
 import { Settings } from "lucide-react";
@@ -38,9 +35,7 @@ const TABS = [
   { id: "article", label: "Article" },
   { id: "about", label: "About" },
   { id: "contact", label: "Contact" },
-  { id: "pages", label: "Pages" },
   { id: "theme", label: "Theme" },
-  { id: "nav", label: "Nav & Footer" },
   { id: "social", label: "Social" },
   { id: "seo", label: "SEO" },
 ] as const;
@@ -68,43 +63,6 @@ function SettingsPage() {
     setHasChanges(true);
   };
 
-  const updatePage = (slug: string, patch: Partial<DynamicPage>) => {
-    setCfg((c) => ({
-      ...c,
-      pages: c.pages.map((p) => (p.slug === slug ? { ...p, ...patch } : p)),
-    }));
-    setHasChanges(true);
-  };
-
-  const addPage = () => {
-    const slug = prompt("URL slug for new page (lowercase, no spaces):")?.trim();
-    if (!slug) return;
-    if (cfg.pages.some((p) => p.slug === slug)) {
-      toast.error("A page with that slug already exists.");
-      return;
-    }
-    setCfg((c) => ({
-      ...c,
-      pages: [
-        ...c.pages,
-        {
-          slug,
-          title_en: slug, title_bn: slug,
-          header_en: slug, header_bn: slug,
-          body_en: "", body_bn: "",
-          banner_url: "", visible: true,
-        },
-      ],
-    }));
-    setHasChanges(true);
-  };
-
-  const removePage = (slug: string) => {
-    if (!confirm(`Remove page "${slug}"?`)) return;
-    setCfg((c) => ({ ...c, pages: c.pages.filter((p) => p.slug !== slug) }));
-    setHasChanges(true);
-  };
-
   async function uploadAsset(file: File, kind: string): Promise<string | null> {
     const signed = await createAssetUpload({ data: { kind, filename: file.name, contentType: file.type || "image/png" } });
     const { error } = await supabase.storage
@@ -114,7 +72,7 @@ function SettingsPage() {
     return signed.publicUrl;
   }
 
-  const tabProps = { cfg, update, updatePage, addPage, removePage, uploadAsset, setCfg };
+  const tabProps = { cfg, update, uploadAsset, setCfg };
 
   return (
     <div className="space-y-6">
@@ -169,9 +127,7 @@ function SettingsPage() {
                 {tab.id === "article" && <ArticleTab {...tabProps} />}
                 {tab.id === "about" && <AboutTab {...tabProps} />}
                 {tab.id === "contact" && <ContactTab {...tabProps} />}
-                {tab.id === "pages" && <PagesTab {...tabProps} />}
                 {tab.id === "theme" && <ThemeTab {...tabProps} />}
-                {tab.id === "nav" && <NavTab {...tabProps} />}
                 {tab.id === "social" && <SocialTab {...tabProps} />}
                 {tab.id === "seo" && <SeoTab {...tabProps} />}
               </TabsContent>

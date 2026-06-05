@@ -81,9 +81,7 @@ Bodhi Mitra ("Friend on the path of awakening") is a contemplative bilingual blo
         |     +-- Article tab (author bio toggle, sidebar, newsletter)
         |     +-- About tab (hero image, body, mission, note)
         |     +-- Contact tab (form labels, details, map)
-        |     +-- Pages tab (CRUD dynamic pages)
         |     +-- Theme tab (accent colors, dark mode)
-        |     +-- Nav & Footer tab (nav labels, copyright)
         |     +-- Social tab (social media URLs)
         |     +-- SEO tab (meta desc, OG image, Google Analytics)
         |
@@ -109,7 +107,10 @@ Bodhi Mitra ("Friend on the path of awakening") is a contemplative bilingual blo
 /admin/               -> Post list (All / Published / Drafts)
 /admin/$id            -> Edit post
 /admin/new            -> Create post
-/admin/settings       -> Site customizer (10 tabs)
+/admin/settings       -> Site customizer (8 tabs: branding, homepage, article, about, contact, theme, social, SEO)
+/admin/pages          -> Pages manager (bilingual content, visibility, sections)
+/admin/navigation     -> Menu manager (drag-and-drop tree, nested items, types)
+/pages/$slug          -> Public page (section-based dynamic rendering)
 /*                    -> 404: "This page has drifted into stillness"
 ```
 
@@ -123,19 +124,21 @@ RootShell (HTML shell + Scripts)
     +-- QueryClientProvider (TanStack React Query)
     |   +-- LanguageProvider (EN/BN context, localStorage)
     |       +-- SiteSettingsProvider (fetches config, injects CSS vars + GA)
-    |           +-- Header
-    |           |   +-- Logo / Site name (link to /)
-    |           |   +-- Nav links (6 items, bilingual labels)
-    |           |   +-- Admin button (visible only to admins)
-    |           |   +-- Language toggle (EN <-> Bangla)
-    |           |   +-- Sign in / Sign out
-    |           +-- <Outlet /> (route content)
-    |           |   +-- Home / CategoryPage / PostPage / AdminLayout / Login / Onboarding
-    |           +-- Footer
-    |               +-- Brand name + description
-    |               +-- Contact details (email, phone, location)
-    |               +-- Social links (FB, X, IG, IN, YT)
-    |               +-- Copyright line
+    |           +-- LayoutProvider (nav tree, footer sections, branding)
+    |               +-- Header
+    |               |   +-- Logo / Site name (link to /)
+    |               |   +-- Nav links (from NavTree, bilingual labels)
+    |               |   +-- Admin button (visible only to admins)
+    |               |   +-- Language toggle (EN <-> Bangla)
+    |               |   +-- Sign in / Sign out
+    |               +-- <Outlet /> (route content)
+    |               |   +-- Home / CategoryPage / PostPage / PublicPage / AdminLayout / Login / Onboarding
+    |               +-- Footer
+    |                   +-- Brand name + description
+    |                   +-- Nav-driven footer columns
+    |                   +-- Contact details (email, phone, location)
+    |                   +-- Social links (FB, X, IG, IN, YT)
+    |                   +-- Copyright line
     +-- Toaster (sonner notifications)
 ```
 
@@ -212,8 +215,27 @@ user_id, display_name, email, avatar_url
 ### Site Settings
 Single JSON blob stored in site_settings table:
 ```
-branding, hero, theme, nav, footer, social, contact,
-seo, article, about, pages[] (dynamic pages)
+branding, hero, theme, footer, social, contact,
+seo, article, about
+```
+Settings controls ONLY configuration (branding, SEO, social, contact, hero, footer, article, theme).
+Navigation and pages are independent modules.
+
+### Page
+Stored in dedicated `pages` Supabase table:
+```
+id, slug (unique), title_en/bn, header_en/bn, body_en/bn
+banner_url, meta_description_en/bn, visible, sort_order
+sections[] (JSON array of section objects: hero/text/image/quote/video/cta)
+created_at, updated_at
+```
+
+### Navigation Item
+Stored in dedicated `navigation_items` Supabase table:
+```
+id, parent_id (self-FK), type (internal|external|dropdown)
+label_en/bn, url, slug, icon, sort_order, visible, location (header|footer)
+created_at, updated_at
 ```
 
 ---

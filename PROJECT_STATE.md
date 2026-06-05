@@ -40,15 +40,13 @@ If a change is made:
 - Create post (/admin/new) -- bilingual EN/BN TipTap editor
 - Edit post (/admin/$id) -- pre-filled form
 - Delete post with confirmation dialog
-- Site Settings customizer at /admin/settings (10 tabs):
+- Site Settings customizer at /admin/settings (8 tabs — config only):
   - Branding (logo upload, favicon, site name)
   - Homepage hero (visibility, content, CTA -- bilingual)
   - Article page toggles (author bio, related posts, sidebar, newsletter)
   - About page (hero, body, mission, editorial note -- bilingual)
   - Contact page (form labels, details, map embed -- bilingual)
-  - Dynamic Pages CRUD (add/remove/configure pages)
   - Theme (accent color picker, dark mode, logo slider)
-  - Nav & Footer labels (bilingual)
   - Social media links
   - SEO (meta descriptions, OG image upload, Google Analytics ID)
 
@@ -218,13 +216,13 @@ If a change is made:
 - No rate limiting on auth endpoints
 - supabaseAdmin service-role client used in 3 server-only files (admin.functions.ts, admin-comments.ts, seo.ts) — properly isolated, never imported client-side
 - Comment mutations now use server functions with auth/permission enforcement (add, edit, delete)
-- Role-based RLS policies on all tables (posts, comments, site_settings, storage, contact_messages)
+- Role-based RLS policies on all tables (posts, comments, site_settings, pages, navigation_items, storage, contact_messages)
 - Database-level permission checks via `has_permission()` and `has_min_role()` RPC functions
 - Hierarchical role enforcement: admins cannot assign roles at or above their own level
 - Super admin only can manage other super admins and modify role permissions
 
 ### Code Quality
-- admin.settings.tsx decomposed into 11 tab components ✅
+- admin.settings.tsx decomposed into 8 tab components (pages + nav removed, deleted) ✅
 - PostForm.tsx decomposed into CoverUploader, TagInput, PostPreview ✅
 - Comments.tsx partially decomposed (AuthModal, ConfirmDialog extracted)
 - Legacy single-language post fields should be cleaned up after migration
@@ -235,19 +233,19 @@ If a change is made:
 - Route-level meta titles now dynamic from site settings (all routes) ✅
 - Navbar restructured: Philosophy + Practice dropdowns with grouped sub-items ✅
 - Mobile nav supports expandable accordion groups for dropdown items ✅
-- Nav labels CMS-configurable via Site Settings (all 10 labels) ✅
-- Dynamic menu management system with drag-and-drop admin UI (replaces hardcoded nav) — pending validation
+- Nav labels CMS-configurable via dedicated Navigation module (indepdendent from Settings) ✅
+- Dynamic menu management system with drag-and-drop admin UI (replaces hardcoded nav) ✅
 - Role-based administration system with 6 tiers (super_admin → user) ✅
 - Admin Users page with inline role assignment and hierarchical permission enforcement ✅
 - Admin sidebar layout redesigned with nav + user info panel ✅
-- Media Library page (grid/list toggle, bucket filter, multi-file upload, search, pagination) — pending validation
-- Books admin module (Shopify-style grid CRUD with PDF upload, Free/Paid, status workflow) — pending validation
-- Pages admin module (dedicated pages CRUD extracted from settings JSON) — pending validation
-- Taxonomy admin module (categories & tags management) — pending validation
-- Public Books page with grid layout + PDF viewer modal — pending validation
-- Comments Moderation admin page (Comments tab with stats, search, inline edit/delete via server functions with supabaseAdmin; Contact Messages tab with unread filter, detail panel, reply via email) — pending validation
-- Menu Management System at /admin/navigation with drag-and-drop tree builder, inline editing, nested items, external/internal/dropdown types, visibility toggles — pending validation
-- Dynamic navigation in __root.tsx (Header + Footer) sourced from DB navigation_items table — pending validation
+- Media Library page (grid/list toggle, bucket filter, multi-file upload, search, pagination) ✅
+- Books admin module (Shopify-style grid CRUD with PDF upload, Free/Paid, status workflow) ✅
+- Pages admin module (dedicated pages CRUD extracted from settings JSON) ✅
+- Taxonomy admin module (categories & tags management) ✅
+- Public Books page with grid layout + PDF viewer modal ✅
+- Comments Moderation admin page (Comments tab with stats, search, inline edit/delete via server functions with supabaseAdmin; Contact Messages tab with unread filter, detail panel, reply via email) ✅
+- Menu Management System at /admin/navigation with drag-and-drop tree builder, inline editing, nested items, external/internal/dropdown types, visibility toggles ✅
+- Dynamic navigation in __root.tsx (Header + Footer) sourced from DB navigation_items table ✅
 - Sitemap.xml generation at server level (static routes + published posts + visible pages) — pending validation
 - Robots.txt generation with admin/auth disallows + sitemap link — pending validation
 - No RSS feed or newsletter subscription backend
