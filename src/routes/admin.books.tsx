@@ -181,7 +181,7 @@ function AdminBooksPage() {
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1">
             {row.original.status === "published" && (
-              <Link to="/books" className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors" title="View">
+              <Link to="/books" search={{ search: "", page: 1 }} className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors" title="View">
                 <Eye className="h-3.5 w-3.5" />
               </Link>
             )}
@@ -316,13 +316,14 @@ function AdminBooksPage() {
   const handlePdfUpload = async (file: File) => {
     const ext = (file.name.split(".").pop() ?? "pdf").toLowerCase();
     const path = `books/pdfs/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error } = await supabase.storage.from("book-covers").upload(path, file, {
+    const { error } = await supabase.storage.from("book-pdfs").upload(path, file, {
       cacheControl: "3600",
       contentType: file.type || "application/pdf",
     });
     if (error) { toast.error(error.message); return; }
-    const { data: pub } = supabase.storage.from("book-covers").getPublicUrl(path);
-    form.setValue("pdf_url", pub.publicUrl);
+    // Store the bucket path instead of public URL — signed URLs will be generated at read time
+    const { data: pub } = supabase.storage.from("book-pdfs").getPublicUrl(path);
+    form.setValue("pdf_url", path);
     form.setValue("pdf_file_size", file.size);
   };
 

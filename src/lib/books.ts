@@ -24,6 +24,8 @@ export interface Book {
   meta_description_en: string;
   meta_description_bn: string;
   sort_order: number;
+  avg_rating: number;
+  total_ratings: number;
   created_at: string;
   updated_at: string;
 }

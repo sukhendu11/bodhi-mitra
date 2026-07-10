@@ -11,11 +11,13 @@ import {
 interface AuthModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Optional callback fired after successful auth — for resume flows */
+  onSuccess?: () => void;
 }
 
 type Mode = "signin" | "signup";
 
-export function AuthModal({ open, onOpenChange }: AuthModalProps) {
+export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,6 +41,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       }
       toast.success("Welcome back");
       onOpenChange(false);
+      onSuccess?.();
       return;
     }
 
@@ -57,10 +60,12 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     if (data.session) {
       toast.success("Account created");
       onOpenChange(false);
+      onSuccess?.();
       return;
     }
     toast.success("Check your email to confirm your account");
     onOpenChange(false);
+    onSuccess?.();
   };
 
   const handleGoogle = async () => {

@@ -23,6 +23,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as PostsSlugRouteImport } from './routes/posts.$slug'
 import { Route as PagesSlugRouteImport } from './routes/pages.$slug'
+import { Route as BooksSlugRouteImport } from './routes/books.$slug'
 import { Route as AdminVideosRouteImport } from './routes/admin.videos'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTaxonomyRouteImport } from './routes/admin.taxonomy'
@@ -106,6 +107,11 @@ const PagesSlugRoute = PagesSlugRouteImport.update({
   path: '/pages/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BooksSlugRoute = BooksSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BooksRoute,
+} as any)
 const AdminVideosRoute = AdminVideosRouteImport.update({
   id: '/videos',
   path: '/videos',
@@ -171,7 +177,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
-  '/books': typeof BooksRoute
+  '/books': typeof BooksRouteWithChildren
   '/buddhist-psychology': typeof BuddhistPsychologyRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
+  '/books/$slug': typeof BooksSlugRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/posts/$slug': typeof PostsSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -198,7 +205,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/books': typeof BooksRoute
+  '/books': typeof BooksRouteWithChildren
   '/buddhist-psychology': typeof BuddhistPsychologyRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
+  '/books/$slug': typeof BooksSlugRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/posts/$slug': typeof PostsSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -227,7 +235,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
-  '/books': typeof BooksRoute
+  '/books': typeof BooksRouteWithChildren
   '/buddhist-psychology': typeof BuddhistPsychologyRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
+  '/books/$slug': typeof BooksSlugRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/posts/$slug': typeof PostsSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
     | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/videos'
+    | '/books/$slug'
     | '/pages/$slug'
     | '/posts/$slug'
     | '/admin/'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
     | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/videos'
+    | '/books/$slug'
     | '/pages/$slug'
     | '/posts/$slug'
     | '/admin'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/videos'
+    | '/books/$slug'
     | '/pages/$slug'
     | '/posts/$slug'
     | '/admin/'
@@ -341,7 +353,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
-  BooksRoute: typeof BooksRoute
+  BooksRoute: typeof BooksRouteWithChildren
   BuddhistPsychologyRoute: typeof BuddhistPsychologyRoute
   ContactRoute: typeof ContactRoute
   LoginRoute: typeof LoginRoute
@@ -452,6 +464,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/pages/$slug'
       preLoaderRoute: typeof PagesSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/books/$slug': {
+      id: '/books/$slug'
+      path: '/$slug'
+      fullPath: '/books/$slug'
+      preLoaderRoute: typeof BooksSlugRouteImport
+      parentRoute: typeof BooksRoute
     }
     '/admin/videos': {
       id: '/admin/videos'
@@ -574,11 +593,21 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface BooksRouteChildren {
+  BooksSlugRoute: typeof BooksSlugRoute
+}
+
+const BooksRouteChildren: BooksRouteChildren = {
+  BooksSlugRoute: BooksSlugRoute,
+}
+
+const BooksRouteWithChildren = BooksRoute._addFileChildren(BooksRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
-  BooksRoute: BooksRoute,
+  BooksRoute: BooksRouteWithChildren,
   BuddhistPsychologyRoute: BuddhistPsychologyRoute,
   ContactRoute: ContactRoute,
   LoginRoute: LoginRoute,

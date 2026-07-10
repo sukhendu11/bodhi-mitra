@@ -47,7 +47,11 @@ function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate({ to: redirect, replace: true });
+      // Avoid redirect loops: if the target is an admin path and the
+      // user isn't an admin (which they aren't if they're being bounced),
+      // send them to the homepage instead of the admin page.
+      const target = redirect.includes("/admin") ? "/" : redirect;
+      navigate({ to: target, replace: true });
     }
   }, [user, loading, navigate, redirect]);
 
