@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { getAuditLog, type AuditLogRow } from "@/lib/admin.functions";
 import { Activity, Shield, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/audit")({
   component: AdminAuditPage,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 const ACTION_LABELS: Record<string, string> = {

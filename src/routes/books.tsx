@@ -12,6 +12,7 @@ import { getReadingProgress } from "@/lib/books-progress";
 import { checkOwnership } from "@/lib/books-purchases";
 import { getPdfReaderUrl, purchaseBookAction } from "@/lib/books-reader";
 import { AuthModal } from "@/components/AuthModal";
+import { PdfViewer } from "@/components/PdfViewer";
 import { StarRating } from "@/components/StarRating";
 import { BookSkeleton } from "@/components/BookSkeleton";
 import { Reveal } from "@/components/Reveal";
@@ -266,9 +267,13 @@ function BooksPage() {
     setPurchaseLoading(true);
     try {
       const result = await (doPurchase as any)({
-        data: { bookId: purchaseBook.id, amountPaid: 0 },
+        data: { bookId: purchaseBook.id, bookSlug: purchaseBook.slug },
       });
       setPurchaseLoading(false);
+      if (result.url) {
+        window.location.href = result.url;
+        return;
+      }
       if (result.error) {
         toast.error(result.error);
         return;
@@ -477,39 +482,14 @@ function BooksPage() {
 
       {/* ── PDF Reader Modal ────────────────────────────────────── */}
       <Dialog open={!!pdfReaderUrl} onOpenChange={(open) => { if (!open) { setPdfReaderUrl(null); setReaderBook(null); setPdfExpired(false); } }}>
-        <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col p-0 gap-0">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border/40 shrink-0">
-            <h2 className="text-sm font-medium truncate max-w-[70%]">
-              {readerBook && pickLocalized(readerBook.title_en, readerBook.title_bn, lang, "Untitled")}
-            </h2>
-            <button
-              onClick={() => { setPdfReaderUrl(null); setReaderBook(null); setPdfExpired(false); }}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="flex-1 min-h-0">
-            {pdfExpired ? (
-              <div className="flex flex-col items-center justify-center h-full">
-                <AlertCircle className="h-10 w-10 text-amber-500 mb-4" />
-                <p className="text-sm text-muted-foreground mb-4">Session expired</p>
-                <button
-                  onClick={() => readerBook && openPdfReader(readerBook)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
-                >
-                  <Loader2 className="h-3 w-3" /> Refresh
-                </button>
-              </div>
-            ) : (
-              <iframe
-                src={pdfReaderUrl ?? undefined}
-                className="w-full h-full"
-                title={readerBook ? pickLocalized(readerBook.title_en, readerBook.title_bn, lang, "PDF Reader") : "PDF Reader"}
-                onError={() => setPdfExpired(true)}
-              />
-            )}
-          </div>
+        <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col p-0 gap-0">
+          {pdfReaderUrl && (
+            <PdfViewer
+              url={pdfReaderUrl}
+              title={readerBook ? pickLocalized(readerBook.title_en, readerBook.title_bn, lang, "Untitled") : undefined}
+              onClose={() => { setPdfReaderUrl(null); setReaderBook(null); setPdfExpired(false); }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

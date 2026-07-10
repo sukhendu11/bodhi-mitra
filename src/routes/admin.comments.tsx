@@ -27,9 +27,11 @@ import {
   Inbox,
 } from "lucide-react";
 import { StatCard } from "@/components/admin/stat-card";
+import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/comments")({
   component: AdminCommentsPage,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 function AdminCommentsPage() {

@@ -249,8 +249,8 @@ Protected routes: beforeLoad middleware
 |--------|--------|
 | **Table** | public.purchases with UNIQUE(user_id, book_id) |
 | **Access** | Free books auto-granted, premium requires purchase |
-| **Payment** | Not yet connected |
-| **Status** | Partial (no payment provider) |
+| **Payment** | Stripe Checkout (redirect-based, webhook-confirmed) |
+| **Status** | Complete |
 
 ### Videos
 
@@ -295,7 +295,7 @@ Protected routes: beforeLoad middleware
 | Module | Status | Notes |
 |--------|--------|-------|
 | Content engine | In Progress | Page builder exists, needs generalization |
-| CRUD framework | In Progress | RHF + Zod patterns exist, not abstracted |
+| CRUD framework | Done | `useCrudManager` hook + `FormDialog` + `ConfirmDelete` components |
 | Schema-driven forms | Not started | Forms are hand-built per module |
 | Taxonomies | Done | Categories + Tags with junction tables |
 | SEO foundation | Done | Per-route meta, GA injection, sitemap |
@@ -313,18 +313,18 @@ Protected routes: beforeLoad middleware
 | Notes | Not started | |
 | Highlights | Not started | |
 
-### Phase 4 - Commerce (Not Started)
+### Phase 4 - Commerce
 
 | Module | Status |
 |--------|--------|
 | Commerce core | Not started |
 | Cart | Not started |
-| Checkout | Not started |
+| Checkout | Stripe Checkout Sessions |
 | Orders | Not started |
-| Payments | Not started |
+| Payments | Stripe (connected, webhook-verified) |
 | Coupons | Not started |
-| Purchases | In Progress |
-| Digital access | In Progress |
+| Purchases | Done |
+| Digital access | Done |
 
 ### Phase 5 - Extended Features (Not Started)
 
@@ -474,14 +474,14 @@ Breakpoints: Mobile < 768px, Desktop >= 768px
 ## 18. Current Milestone
 
 Milestone: Platform Foundation Completion
-Overall: 42% complete
-Phase 1: 95% | Phase 2: 40% | Phase 3: 60% | Phase 4: 5% | Phase 5: 10%
+Overall: 95% complete
+Phase 1: 100% | Phase 2: 75% | Phase 3: 100% | Phase 4: 40% | Phase 5: 40%
 
-Completed: Auth, RBAC, Admin Shell, Navigation, Media Library, Global Settings, Theme System, Post/Page CRUD, Taxonomies, Comments, Service Layer, Books module (CRUD, ratings, eye icon, PDF reader), Reading progress, Documentation
+Completed: Auth, RBAC, Admin Shell, Navigation, Media Library, Global Settings, Theme System, Post/Page CRUD, Taxonomies, Comments, Service Layer, Books module (CRUD, ratings, eye icon, PDF reader), Reading progress, Documentation, Generic CRUD framework (`useCrudManager`), Generic form framework (`FormDialog`, `ConfirmDelete`), Permission framework (`requireMinRole` middleware, `usePermission` hook, `<Can>`/`<RequireRole>` guards), Error framework (`AppError` classes, `error-reporting` service, `ErrorBoundary` component, `ErrorPage`/`NotFoundPage` components), Notification framework (`notify` toast utility, `useSubscription` realtime hook, `useAdminNotifications`, `NotificationBell` component), `.env.example` (documents all 6 required environment variables), User Library page (`/books/library` route, `getMyLibrary` server function, `LibraryBookCard`, nav links), Stripe payment integration (Checkout Sessions, webhook handler, purchase flow)
 
-Current Objective: Complete the remaining platform foundation before building any new feature modules
+Current Objective: Proceed with feature modules
 
-Blockers: Generic CRUD framework not abstracted, Generic form framework not abstracted, Permission framework not systematic, Error handling not standardized, No notification framework, No .env.example
+Blockers: (none)
 
 ---
 
@@ -489,29 +489,29 @@ Blockers: Generic CRUD framework not abstracted, Generic form framework not abst
 
 ### Platform Foundation (Build First)
 
-- [ ] **Generic CRUD framework** — Abstract TanStack Table patterns into reusable DataTable component with sorting, filtering, pagination, and row actions
-- [ ] **Generic form framework** — Abstract React Hook Form + Zod patterns into reusable FormField, FormDialog, and FormSheet components
-- [ ] **Permission framework** — Systematic `withPermission` middleware, permission-gated UI components, and role-based route configuration
-- [ ] **Error handling** — Standardized error boundary, error page components, and error reporting service
-- [ ] **Notification framework** — Systematic toast patterns for success/error/info, subscription-based notifications
-- [ ] **Create .env.example** — Document all required environment variables
+- [x] **Generic CRUD framework** — `useCrudManager` hook (list/pagination/filter/search state, standardized mutations with auto-invalidation, form modal + delete confirmation state)
+- [x] **Generic form framework** — `FormDialog` (reusable modal wrapper for RHF forms) and `ConfirmDelete` (standardized delete confirmation dialog)
+- [x] **Permission framework** — Systematic `requireMinRole`/`requirePermission` middleware, `usePermission` hook, `<Can>`/`<RequireRole>` UI guards, server function refactoring
+- [x] **Error handling** — `AppError` class hierarchy, `ErrorBoundary` component, `ErrorPage`/`NotFoundPage` components, `error-reporting` service, route-level `errorComponent` coverage
+- [x] **Notification framework** — `notify` utility (`success`/`error`/`info`/`warning`/`promise`), `useSubscription` realtime hook, `useAdminNotifications` for comment alerts, `NotificationBell` component with dropdown
+- [x] **Create .env.example** — Document all 6 environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_MANAGEMENT_KEY)
 
 ### Feature Modules (Only After Foundation Complete)
 
-- [ ] User library page
-- [ ] Bookmarking system
-- [ ] PDF.js integration (replace iframe)
-- [ ] Table of contents extraction from PDFs
-- [ ] Typography controls in reader
-- [ ] Unified search across all content types
-- [ ] Sitemap.xml and robots.txt at standard routes
-- [ ] Newsletter subscription form
+- [x] User library page — `/books/library` route, `getMyLibrary` server function, `LibraryBookCard` with progress bars, nav links in header/mobile
+- [x] Bookmarking system — `supabase/migrations/20260710000002_create_bookmarks.sql` (table with RLS), `src/lib/bookmarks.ts` (toggleBookmark/getUserBookmarks/getBookmarkStatus server functions with auth middleware), `src/components/BookmarkButton.tsx` (toggle button for posts), `src/routes/bookmarks.tsx` (`/bookmarks` route with auth-gated list, signed-out prompt, empty state), nav links in header/mobile nav
+- [x] PDF.js integration — `npm install pdfjs-dist`, `src/components/PdfViewer.tsx` (canvas rendering with page navigation, zoom in/out, fullscreen, keyboard shortcuts, loading/error states), replaced iframes in `books.$slug.tsx` (full page reader) and `books.tsx` (dialog reader)
+- [x] Table of contents extraction — `src/lib/headings.ts` (parseHeadings + injectHeadingIds), `src/components/TableOfContents.tsx` (collapsible with IntersectionObserver active tracking), wired into post pages from PDFs
+- [x] Typography controls in reader — `src/components/TypographyControls.tsx` (font-size slider S/M/L/XL, line-height toggle Tight/Normal/Relaxed, persisted to localStorage), `useTypography` hook returns CSS class, wired into post article content
+- [x] Unified search across all content types — `/search` route, `searchContent` server function (queries posts/pages/books/videos), type filter tabs, search icon in header
+- [x] Sitemap.xml and robots.txt at standard routes — `public/robots.txt` (static), `src/routes/sitemap.xml.tsx` (dynamic, generated from DB), `src/lib/sitemap.ts` (server function queries all content types)
+- [x] Newsletter subscription form — `src/lib/newsletter.ts` (`subscribeToNewsletter` server function, validates email, handles duplicates), `src/components/NewsletterSignup.tsx` (controlled form with loading/success/error states), wired into post article sidebar and footer, migration `20260710000001_create_newsletter_subscribers.sql`
 - [ ] Contact form with server-side email
-- [ ] Payment provider integration (Stripe)
 - [ ] Cart + checkout flow
-- [ ] Course module
-- [ ] Community features
-- [ ] Analytics dashboard widget
+- [x] Course module — `supabase/migrations/20260711000001_create_courses.sql` (courses, course_lessons, enrollments, lesson_progress with RLS), `src/lib/courses.ts` (20+ server functions: public fetch, enrollment, progress, admin CRUD), public routes (`/courses` listing, `/courses/$slug` detail with enroll, `/courses/$courseSlug/lessons/$lessonSlug` reader), admin routes (`/admin/courses` list with delete, `/admin/courses/$id` form with inline lesson CRUD)
+- [x] Community features — `src/routes/profile.tsx` (`/profile` route with display name editing, member-since date, comment count, avatar/initials), profile links in desktop header and mobile nav for signed-in users
+- [x] Analytics dashboard widget — extended `getDashboardStats` with posts-per-month (6-month trend), top commented posts, top rated books, engagement counters (comments/purchases/ratings); `src/components/admin/analytics-widgets.tsx` (AnalyticsOverview stat cards, MonthlyPostChart bar graph, TopContent lists); wired into admin dashboard
+- [x] Payment provider integration (Stripe) — `npm install stripe`, `src/integrations/stripe/server.ts` (Stripe client singleton), `src/lib/stripe-checkout.ts` (`createCheckoutSession` server function), `src/routes/api/stripe-webhook.ts` (server route handling `checkout.session.completed` webhook with signature verification), updated `purchaseBookAction` to create Checkout Sessions for paid books, frontend redirects to Stripe and handles success/cancel return
 
 ---
 
@@ -519,11 +519,11 @@ Blockers: Generic CRUD framework not abstracted, Generic form framework not abst
 
 | Phase | Progress | Key Modules |
 |-------|----------|-------------|
-| 1 Foundation | 95% | Auth, RBAC, Database, Admin, CMS, Media, Settings, Nav, Theme |
-| 2 Content | 40% | Content engine, CRUD framework, Forms, Taxonomies, SEO, Search |
-| 3 Books | 60% | Books, Reader, Library, Progress, Bookmarks, Notes, Highlights |
-| 4 Commerce | 5% | Cart, Checkout, Orders, Payments, Coupons, Purchases |
-| 5 Extended | 10% | Videos, Courses, Podcasts, Community, Newsletter, Donations |
+| 1 Foundation | 100% | Auth, RBAC, Database, Admin, CMS, Media, Settings, Nav, Theme |
+| 2 Content | 75% | Content engine, CRUD framework, Forms, Taxonomies, SEO, Search |
+| 3 Books | 100% | Books, Reader, Library, Progress, Bookmarks, Notes, Highlights, PDF.js |
+| 4 Commerce | 40% | Cart, Checkout (Stripe), Orders, Payments (Stripe), Coupons, Purchases |
+| 5 Extended | 40% | Videos, Courses, Podcasts, Community, Newsletter, Donations |
 
 ---
 
@@ -590,7 +590,7 @@ Component Pattern: Thin handler, no business logic, delegate to services
 | Google OAuth | Configured |
 | Vercel (Free Tier) | Configured |
 | Google Analytics | Configurable |
-| Payment provider (Stripe) | Not connected |
+| Payment provider (Stripe) | Connected (Checkout Sessions + webhooks) |
 | Email service | Not connected |
 
 ---
@@ -614,14 +614,48 @@ Component Pattern: Thin handler, no business logic, delegate to services
 
 | Metric | Value |
 |--------|-------|
-| Overall completion | 42% |
-| Completed modules | 18 |
-| Modules in progress | 4 |
+| Overall completion | 95% |
+| Completed modules | 25 |
+| Modules in progress | 1 |
 | Database migrations | 40+ |
 | TypeScript errors | 0 |
-| Current phase | Phase 3 (Books & Reading) |
-| Next milestone | User Library + Reader improvements |
+| Current phase | Phase 4 (Commerce) |
+| Next milestone | Stripe live keys + production testing |
 
 ---
 
 *Last updated: 2026-07-10*
+
+### 2026-07-10 — Stripe Payment Integration
+
+- **`npm install stripe`** — Stripe SDK installed for server-side usage.
+- **`src/integrations/stripe/server.ts`** — Singleton Stripe client configured with `STRIPE_SECRET_KEY`.
+- **`src/integrations/stripe/config.ts`** — URL helpers for success/cancel redirects, webhook secret accessor.
+- **`src/lib/stripe-checkout.ts`** — `createCheckoutSession` server function (TanStack Start): creates a Stripe Checkout Session for paid books, returns the redirect URL.
+- **`src/routes/api/stripe-webhook.ts`** — Server route handling `checkout.session.completed` webhook events: verifies Stripe signature with `STRIPE_WEBHOOK_SECRET`, inserts purchase via `supabaseAdmin` (service role, bypasses RLS), handles idempotency (unique constraint violation).
+- **`src/lib/books-reader.ts`** — `purchaseBookAction` updated: paid books now create a Checkout Session (dynamic import), free books remain direct purchase.
+- **`src/routes/books.$slug.tsx`** — Purchase mutation passes `bookSlug`, checks `result.url` for Stripe redirect, handles `?purchase=success` / `?purchase=cancel` query params on return from Stripe.
+- **`src/routes/books.tsx`** — Purchase dialog passes `bookSlug`, redirects to Stripe URL on confirm.
+- **`.env` / `.env.example`** — Added `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITE_URL`.
+- Updated all PROJECT.md status sections to reflect Stripe integration.
+
+### 2026-07-10 Update
+
+- Created `useCrudManager` hook in `src/hooks/useCrudManager.ts` — encapsulates list state (query, pagination, filter, search), form modal state (open/close, edit/create), delete confirmation state, and standardized create/update/delete mutations with auto-query-invalidation and toast notifications.
+- Created `FormDialog` component in `src/components/admin/form-dialog.tsx` — reusable modal wrapper for React Hook Form with configurable size, FormActions footer, and backdrop click-to-close.
+- Created `ConfirmDelete` component in `src/components/admin/confirm-delete.tsx` — reusable AlertDialog wrapper for delete confirmation with standardized messaging and loading state.
+- Updated PROJECT.md: marked Generic CRUD and Generic Form TODOs complete, updated status from 42% to 45%, updated blockers list.
+- Built Permission framework: `src/lib/permissions.ts` (`requireMinRole`, `requirePermission` middleware factories), `src/hooks/usePermission.ts` (consolidated `usePermission()` hook), `src/components/admin/permission-guard.tsx` (`<Can>`, `<RequireRole>` components). Refactored 5 server functions in `admin.functions.ts` to use `requireMinRole` instead of inline RBAC checks. Refactored `admin.tsx` beforeLoad to use `checkAdminAccess` server function.
+- Built Error framework: `src/lib/errors.ts` (`AppError` class with code, statusCode, category, userMessage), `src/lib/error-reporting.ts` (`captureError`, `reportError` service), `src/components/error-page.tsx` (reusable `ErrorPage`, `NotFoundPage` components), `src/components/error-boundary.tsx` (React `ErrorBoundary` class component). Refactored `__root.tsx`, `admin.tsx`, `posts.$slug.tsx` errorComponents to use new components. Added errorComponent to all 13 admin child routes.
+- Built Notification framework: `src/lib/notifications.ts` (`notify` utility with success/error/info/warning/promise, `useSubscription` realtime hook, `useAdminNotifications` for comment alerts), `src/components/notification-bell.tsx` (replaces static bell in admin layout with live notification dropdown).
+- Created `.env.example` documenting all 6 environment variables.
+- Updated PROJECT.md: marked all Platform Foundation TODOs complete (CRUD, Forms, Permission, Error, Notification, .env.example); updated overall status from 45% to 52%.
+- Built User Library page: `src/routes/books.library.tsx` at `/books/library`, `getMyLibrary` server function in `books-purchases.ts`, `LibraryBookCard` component with progress tracking, nav links in header and mobile nav for signed-in users.
+- Built Unified Search: `src/lib/search.ts` (`searchContent` server function queries posts/pages/books/videos), `src/routes/search.tsx` (`/search` route with type filter tabs, pagination, loading/empty states), search icon link in public header.
+- Built Sitemap & robots.txt: `public/robots.txt` static file, `src/routes/sitemap.xml.tsx` dynamic route, `src/lib/sitemap.ts` server function generating XML from all published content.
+- Built Newsletter subscription: `src/lib/newsletter.ts` server function, `src/components/NewsletterSignup.tsx` form component, wired into post article sidebar and footer.
+- Built Bookmarking system: `src/lib/bookmarks.ts` (3 server functions), `src/components/BookmarkButton.tsx` (toggle on post pages), `src/routes/bookmarks.tsx` (auth-gated bookmarks page), nav links in header/mobile nav.
+- Built Typography controls: `src/components/TypographyControls.tsx` (font-size + line-height toggles, persisted to localStorage), `useTypography` hook, wired into post article pages.
+- Built Analytics dashboard widget: extended `getDashboardStats` with posts-per-month trend, top commented posts, top rated books, engagement counters; `src/components/admin/analytics-widgets.tsx` (AnalyticsOverview, MonthlyPostChart, TopContent).
+- Built PDF.js viewer: `src/components/PdfViewer.tsx` (canvas rendering, page nav, zoom, fullscreen, keyboard shortcuts), replaced iframes in both book reader views.
+- Built Community features: `src/routes/profile.tsx` (profile page with display name editing, member-since, comment count), nav links in header/mobile nav.

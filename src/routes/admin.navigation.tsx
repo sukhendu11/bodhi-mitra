@@ -62,9 +62,11 @@ import {
 import { navItemSchema, type NavItemFormValues } from "@/lib/schemas";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { FIELD_LABEL } from "@/components/admin/bilingual-field";
+import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/navigation")({
   component: AdminNavPage,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 /* ─── Drop Zone Types ────────────────────────────────────────────── */

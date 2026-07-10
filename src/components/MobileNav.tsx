@@ -25,6 +25,9 @@ interface MobileNavProps {
   isAdmin?: boolean;
   isSignedIn?: boolean;
   adminLabel?: string;
+  libraryLabel?: string;
+  bookmarksLabel?: string;
+  profileLabel?: string;
   signInLabel?: string;
   signOutLabel?: string;
   onSignOut?: () => void;
@@ -38,6 +41,9 @@ export function MobileNav({
   isAdmin,
   isSignedIn,
   adminLabel,
+  libraryLabel,
+  bookmarksLabel,
+  profileLabel,
   signInLabel,
   signOutLabel,
   onSignOut,
@@ -110,6 +116,39 @@ export function MobileNav({
                 className="mt-2 rounded-md px-4 py-3 text-base text-foreground font-medium hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
               >
                 {adminLabel}
+              </Link>
+            </SheetClose>
+          )}
+          {isSignedIn && libraryLabel && (
+            <SheetClose key="/books/library" asChild>
+              <Link
+                to="/books/library"
+                search={{} as any}
+                className="mt-1 rounded-md px-4 py-3 text-base text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
+              >
+                {libraryLabel}
+              </Link>
+            </SheetClose>
+          )}
+          {isSignedIn && bookmarksLabel && (
+            <SheetClose key="/bookmarks" asChild>
+              <Link
+                to="/bookmarks"
+                search={{} as any}
+                className="mt-1 rounded-md px-4 py-3 text-base text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
+              >
+                {bookmarksLabel}
+              </Link>
+            </SheetClose>
+          )}
+          {isSignedIn && profileLabel && (
+            <SheetClose key="/profile" asChild>
+              <Link
+                to="/profile"
+                search={{} as any}
+                className="mt-1 rounded-md px-4 py-3 text-base text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
+              >
+                {profileLabel}
               </Link>
             </SheetClose>
           )}

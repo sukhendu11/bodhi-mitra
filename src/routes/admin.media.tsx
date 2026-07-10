@@ -22,9 +22,11 @@ import {
   List,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/media")({
   component: MediaLibraryPage,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 const BUCKETS: { value: string; label: string; icon: typeof Image }[] = [

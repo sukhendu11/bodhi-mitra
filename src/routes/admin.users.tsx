@@ -37,9 +37,11 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsersPage,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 const ALL_ROLES = [

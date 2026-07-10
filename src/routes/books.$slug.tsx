@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { fetchBookBySlug, type Book } from "@/lib/books";
 import { getSiteName } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
@@ -11,6 +11,7 @@ import { getPdfReaderUrl, purchaseBookAction } from "@/lib/books-reader";
 import { AuthModal } from "@/components/AuthModal";
 import { StarRating, RatingBreakdown } from "@/components/StarRating";
 import { BookDetailSkeleton } from "@/components/BookSkeleton";
+import { PdfViewer } from "@/components/PdfViewer";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -72,6 +73,7 @@ function BookDetailPage() {
   const [pdfReaderUrl, setPdfReaderUrl] = useState<string | null>(null);
   const [pdfExpired, setPdfExpired] = useState(false);
   const [isReadingAction, setIsReadingAction] = useState(false);
+  const [stripeToastShown, setStripeToastShown] = useState(false);
 
   const doGetPdfReaderUrl = useServerFn(getPdfReaderUrl);
   const doPurchase = useServerFn(purchaseBookAction);
@@ -107,6 +109,22 @@ function BookDetailPage() {
     staleTime: 30_000,
   });
 
+  /* ── Stripe redirect feedback ────────────────────────────────── */
+  useEffect(() => {
+    if (stripeToastShown || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const purchase = params.get("purchase");
+    if (purchase === "success") {
+      toast.success("Purchase complete! You now own this book.");
+      window.history.replaceState({}, "", window.location.pathname);
+      setStripeToastShown(true);
+    } else if (purchase === "cancel") {
+      toast.info("Purchase was cancelled. No charges were made.");
+      window.history.replaceState({}, "", window.location.pathname);
+      setStripeToastShown(true);
+    }
+  }, [stripeToastShown]);
+
   if (isLoading) return <BookDetailSkeleton />;
   if (!book) throw notFound();
 
@@ -132,7 +150,7 @@ function BookDetailPage() {
       // Dispatch the action after auth state propagates
       setTimeout(() => {
         if (action === "read") handleReadAction();
-        else if (action === "purchase") handlePurchaseAction();
+        else if (action === "purchase") handlePurchase();
       }, 500);
     }
   }, []);
@@ -171,26 +189,25 @@ function BookDetailPage() {
     ratingMutation.mutate(rating);
   };
 
-  /* ── Purchase mutation (with optimistic update) ──────────────── */
+  /* ── Purchase mutation (with Stripe Checkout redirect) ───────── */
   const purchaseMutation = useMutation({
     mutationFn: async () => {
-      return (doPurchase as any)({ data: { bookId: book.id, amountPaid: 0 } });
+      return (doPurchase as any)({ data: { bookId: book.id, bookSlug: book.slug } });
     },
-    onSuccess: (result) => {
-      if (result.alreadyOwned) {
+    onSuccess: (result: any) => {
+      if (result.url) {
+        window.location.href = result.url;
+      } else if (result.alreadyOwned) {
         toast.info("You already own this book.");
       } else {
         toast.success("Book added to your library!");
+        queryClient.invalidateQueries({ queryKey: ["book-owned", book.id] });
       }
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to process purchase. Try again.");
     },
   });
-
-  const handlePurchaseAction = useCallback(() => {
-    purchaseMutation.mutate();
-  }, [purchaseMutation]);
 
   const handlePurchase = () => {
     if (!user) {
@@ -241,36 +258,11 @@ function BookDetailPage() {
 
       {pdfReaderUrl ? (
         /* ── PDF Reader View ────────────────────────────────── */
-        <div className="relative rounded-xl border border-border/60 overflow-hidden bg-secondary/10">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-white dark:bg-zinc-900">
-            <h2 className="text-sm font-medium truncate">{title}</h2>
-            <button
-              onClick={() => { setPdfReaderUrl(null); setPdfExpired(false); }}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Close reader
-            </button>
-          </div>
-          {pdfExpired ? (
-            <div className="flex flex-col items-center justify-center py-24">
-              <AlertCircle className="h-8 w-8 text-amber-500 mb-3" />
-              <p className="text-sm text-muted-foreground">Session expired—refresh</p>
-              <button
-                onClick={handleReadAction}
-                className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
-              >
-                <Loader2 className="h-3 w-3" /> Refresh reader
-              </button>
-            </div>
-          ) : (
-            <iframe
-              src={pdfReaderUrl}
-              className="w-full h-[80vh]"
-              title={title}
-              onError={() => setPdfExpired(true)}
-            />
-          )}
-        </div>
+        <PdfViewer
+          url={pdfReaderUrl}
+          title={title}
+          onClose={() => { setPdfReaderUrl(null); setPdfExpired(false); }}
+        />
       ) : (
         /* ── Book Detail View ────────────────────────────────── */
         <div className="grid md:grid-cols-[320px_1fr] gap-10 md:gap-14">

@@ -7,10 +7,12 @@ import { fetchPostById, updatePost } from "@/lib/posts";
 import type { PostInput } from "@/lib/posts";
 import { FormSkeleton } from "@/components/FormSkeleton";
 import { ArrowLeft } from "lucide-react";
+import { ErrorPage } from "@/components/error-page";
 const PostForm = lazy(() => import("@/components/PostForm").then((m) => ({ default: m.PostForm })));
 
 export const Route = createFileRoute("/admin/$id")({
   component: EditPostPage,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 function EditPostPage() {

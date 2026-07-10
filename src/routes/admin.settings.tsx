@@ -23,10 +23,12 @@ import { ThemeTab } from "@/components/SettingsThemeTab";
 import { SocialTab } from "@/components/SettingsSocialTab";
 import { SeoTab } from "@/components/SettingsSeoTab";
 import { Settings } from "lucide-react";
+import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/settings")({
   loader: () => fetchSiteSettings(),
   component: SettingsPage,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 const TABS = [

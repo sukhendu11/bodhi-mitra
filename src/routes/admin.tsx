@@ -1,10 +1,12 @@
 import { createFileRoute, Outlet, Link, redirect, isRedirect, useRouterState  } from "@tanstack/react-router";
 import { signOut, isHardcodedAdmin, useAuthSession, useUserRole } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { canManageUsers } from "@/hooks/useRole";
+import { checkAdminAccess } from "@/lib/admin.functions";
+import { ErrorPage } from "@/components/error-page";
+import { NotificationBell } from "@/components/notification-bell";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, FileText, PlusCircle, BookOpen, ImageIcon, Video, Menu, Palette, Users, Settings, MessageSquare, FolderTree, Activity, Globe, Search, LogOut, PanelLeftClose, PanelLeft, ChevronDown, Bell, type LucideIcon,
+  LayoutDashboard, FileText, PlusCircle, BookOpen, ImageIcon, Video, Menu, Palette, Users, Settings, MessageSquare, FolderTree, Activity, Globe, Search, LogOut, PanelLeftClose, PanelLeft, ChevronDown, type LucideIcon,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
@@ -12,26 +14,7 @@ export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Dashboard — Bodhi Mitra CMS" }] }),
   beforeLoad: async ({ location }) => {
     try {
-      const { data: userData, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userData.user) {
-        throw redirect({
-          to: "/login",
-          search: { message: "Please sign in as an admin to continue.", redirect: location.href },
-        });
-      }
-      if (isHardcodedAdmin(userData.user)) return;
-      const { data: roleRow } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userData.user.id)
-        .in("role", ["admin", "super_admin"])
-        .maybeSingle();
-      if (!roleRow) {
-        throw redirect({
-          to: "/login",
-          search: { message: "You don't have permission to access the admin panel.", redirect: location.href },
-        });
-      }
+      await checkAdminAccess();
     } catch (e) {
       if (isRedirect(e)) throw e;
       throw redirect({
@@ -41,15 +24,7 @@ export const Route = createFileRoute("/admin")({
     }
   },
   component: AdminLayout,
-  errorComponent: ({ error, reset }) => (
-    <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="text-xl font-semibold mb-3">Something went wrong</h1>
-      <p className="text-sm text-muted-foreground mb-6">{error.message}</p>
-      <button onClick={reset} className="px-4 py-2 text-sm font-medium border border-border hover:bg-secondary rounded-lg transition-colors">
-        Try again
-      </button>
-    </div>
-  ),
+  errorComponent: ({ error, reset }) => <ErrorPage error={error} reset={reset} />,
 });
 
 /* ─── Navigation config ─────────────────────────────────────────────── */
@@ -120,6 +95,13 @@ function AdminLayout() {
       icon: Video,
       items: [
         { to: "/admin/videos", label: "All Videos", icon: Video, exact: false },
+      ],
+    },
+    {
+      label: "Courses",
+      icon: BookOpen,
+      items: [
+        { to: "/admin/courses", label: "All Courses", icon: BookOpen, exact: false },
       ],
     },
     {
@@ -313,10 +295,7 @@ function AdminLayout() {
               {/* Right: Actions + User */}
               <div className="flex items-center gap-2">
                 {/* Notifications bell */}
-                <button className="relative p-2 rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors">
-                  <Bell className="h-4 w-4" />
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-500" />
-                </button>
+                <NotificationBell />
 
                 {/* View site */}
                 <Link
@@ -406,6 +385,7 @@ function AdminLayout() {
                 <MobileNavLink to="/admin" label="Dashboard" icon={LayoutDashboard} exact />
                 <MobileNavLink to="/admin/books" label="Books" icon={BookOpen} />
                 <MobileNavLink to="/admin/videos" label="Videos" icon={Video} />
+                <MobileNavLink to="/admin/courses" label="Courses" icon={BookOpen} />
                 <MobileNavLink to="/admin/pages" label="Pages" icon={Globe} />
                 <MobileNavLink to="/admin/media" label="Media" icon={ImageIcon} />
                 <MobileNavLink to="/admin/navigation" label="Nav" icon={Menu} />
@@ -457,6 +437,7 @@ function CurrentPageLabel({ currentPath }: { currentPath: string }) {
     "/admin/new": "New Post",
     "/admin/books": "Books",
     "/admin/videos": "Videos",
+    "/admin/courses": "Courses",
     "/admin/pages": "Pages",
     "/admin/media": "Media Library",
     "/admin/comments": "Moderation",

@@ -7,7 +7,7 @@ import { fetchAllPostsAdmin, deletePost, type Post, type PostStatus } from "@/li
 import { getDashboardStats } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  FileText, Eye, Edit3, Trash2, Plus, LayoutDashboard, BookOpen, Globe, Users, Video, MessageSquare, ArrowRight, Clock, PenSquare, Upload,
+  FileText, Eye, Edit3, Trash2, Plus, LayoutDashboard, BookOpen, Globe, Users, Video, MessageSquare, ArrowRight, Clock, PenSquare, Upload, BarChart3,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -21,9 +21,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 import { StatCard } from "@/components/admin/stat-card";
+import { ErrorPage } from "@/components/error-page";
+import { AnalyticsOverview, MonthlyPostChart, TopContent } from "@/components/admin/analytics-widgets";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 function AdminDashboard() {
@@ -61,6 +64,12 @@ function AdminDashboard() {
   const totalPagesCount = stats?.pages.total ?? 0;
   const totalBooksCount = stats?.books.total ?? 0;
   const totalUsersCount = stats?.users.total ?? 0;
+  const totalComments = stats?.comments.total ?? 0;
+  const totalPurchases = stats?.purchases.total ?? 0;
+  const totalRatings = stats?.ratings.total ?? 0;
+  const postsPerMonth = stats?.postsPerMonth ?? [];
+  const topCommented = stats?.topCommented ?? [];
+  const topRatedBooks = stats?.topRatedBooks ?? [];
   const recentPosts: Array<{ id: string; title_en: string | null; title_bn: string | null; status: string; slug: string; created_at: string }> = stats?.recentPosts ?? [];
 
   const del = useMutation({
@@ -200,6 +209,29 @@ function AdminDashboard() {
         {statsCards.map((stat) => (
           <StatCard key={stat.label} icon={stat.icon} label={stat.label} value={stat.value} color={stat.color} />
         ))}
+      </div>
+
+      {/* ── Analytics Section ─────────────────────────────────────────── */}
+      <div className="space-y-6">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-muted-foreground/60" />
+          Analytics
+        </h3>
+        <AnalyticsOverview totalComments={totalComments} totalPurchases={totalPurchases} totalRatings={totalRatings} />
+        {(postsPerMonth.length > 0 || topCommented.length > 0 || topRatedBooks.length > 0) && (
+          <div className="grid lg:grid-cols-[1fr_1fr] gap-6">
+            {postsPerMonth.length > 0 && (
+              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 p-5">
+                <MonthlyPostChart data={postsPerMonth} />
+              </div>
+            )}
+            {(topCommented.length > 0 || topRatedBooks.length > 0) && (
+              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 p-5">
+                <TopContent commented={topCommented} books={topRatedBooks} />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Quick Actions + Recent Activity ──────────────────────────── */}

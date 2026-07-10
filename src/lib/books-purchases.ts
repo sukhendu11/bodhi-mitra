@@ -1,3 +1,5 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/lib/permissions";
 import { supabase } from "@/integrations/supabase/client";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -222,3 +224,79 @@ export async function getBookPurchaseStats(bookId: string): Promise<{
     totalRevenue,
   };
 }
+
+/* ─── User Library ────────────────────────────────────────────── */
+
+export interface LibraryBook {
+  bookId: string;
+  titleEn: string | null;
+  titleBn: string | null;
+  slug: string;
+  coverImage: string | null;
+  author: string | null;
+  isFree: boolean;
+  purchaseDate: string;
+  progressPct: number;
+  completed: boolean;
+  lastPage: number;
+  totalPages: number;
+  updatedAt: string | null;
+}
+
+export interface LibraryResult {
+  books: LibraryBook[];
+}
+
+export const getMyLibrary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const db = supabase as any;
+
+    const { data: purchases } = await db
+      .from("purchases")
+      .select("book_id, purchase_date, created_at")
+      .eq("user_id", userId)
+      .order("purchase_date", { ascending: false });
+
+    if (!purchases?.length) return { books: [] } as LibraryResult;
+
+    const bookIds = purchases.map((p: any) => p.book_id) as string[];
+
+    const [{ data: books }, { data: progress }] = await Promise.all([
+      db
+        .from("books")
+        .select("id, title_en, title_bn, slug, cover_image, author, is_free, pages")
+        .in("id", bookIds),
+      db
+        .from("reading_progress")
+        .select("book_id, progress_pct, completed, last_page, total_pages, updated_at")
+        .eq("user_id", userId)
+        .in("book_id", bookIds),
+    ]);
+
+    const bookMap = new Map((books ?? []).map((b: any) => [b.id, b]));
+    const progressMap = new Map((progress ?? []).map((p: any) => [p.book_id, p]));
+
+    const result: LibraryBook[] = (purchases ?? []).map((p: any) => {
+      const book = (bookMap.get(p.book_id) ?? {}) as Record<string, any>;
+      const prog = progressMap.get(p.book_id) as Record<string, any> | undefined;
+      return {
+        bookId: p.book_id,
+        titleEn: book.title_en ?? null,
+        titleBn: book.title_bn ?? null,
+        slug: book.slug ?? "",
+        coverImage: book.cover_image ?? null,
+        author: book.author ?? null,
+        isFree: !!book.is_free,
+        purchaseDate: p.purchase_date ?? p.created_at,
+        progressPct: prog?.progress_pct ?? 0,
+        completed: prog?.completed ?? false,
+        lastPage: prog?.last_page ?? 0,
+        totalPages: prog?.total_pages ?? book.pages ?? 0,
+        updatedAt: prog?.updated_at ?? null,
+      };
+    });
+
+    return { books: result } as LibraryResult;
+  });

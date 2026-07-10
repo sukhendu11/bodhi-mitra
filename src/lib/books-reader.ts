@@ -50,24 +50,20 @@ export const checkBookOwnership = createServerFn({ method: "GET" })
 /* ─── Server function: purchase a book ─────────────────────────── */
 
 /**
- * Purchase a book (idempotent). Returns `{ alreadyOwned, purchase }`.
- *
- * For paid books, verifies the book is free (since no payment provider is connected).
- * When a payment provider is added, this function should:
- *   1. Create a payment intent with the provider
- *   2. On payment success, record the purchase
- *   3. Return the purchase result
+ * Purchase a book (idempotent). Returns:
+ *   - For free books: `{ alreadyOwned, purchase }`
+ *   - For paid books: `{ url: string }` — redirect to Stripe Checkout
  */
 export const purchaseBookAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
     const { userId } = context;
-    const input = data as { bookId: string; amountPaid?: number };
+    const input = data as { bookId: string; amountPaid?: number; bookSlug?: string };
 
     // Server-side check: verify the book exists and get its price
     const { data: book } = await context.supabase
       .from("books")
-      .select("is_free, price")
+      .select("is_free, price, slug")
       .eq("id", input.bookId)
       .maybeSingle();
 
@@ -75,11 +71,13 @@ export const purchaseBookAction = createServerFn({ method: "POST" })
       throw new Error("Book not found.");
     }
 
-    // Payment guard: paid books cannot be purchased without a payment provider
+    // Paid books: create Stripe Checkout Session
     if (!book.is_free) {
-      throw new Error(
-        "Payment provider not configured. Please contact the site administrator.",
-      );
+      const { createCheckoutSession } = await import("@/lib/stripe-checkout");
+      const result = await (createCheckoutSession as any)({
+        data: { bookId: input.bookId, bookSlug: input.bookSlug ?? book.slug },
+      });
+      return { url: result.url };
     }
 
     // Free books can be purchased directly

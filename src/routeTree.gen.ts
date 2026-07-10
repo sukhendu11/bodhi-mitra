@@ -11,19 +11,27 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WisdomRouteImport } from './routes/wisdom'
 import { Route as VideosRouteImport } from './routes/videos'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as SatsangRouteImport } from './routes/satsang'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BuddhistPsychologyRouteImport } from './routes/buddhist-psychology'
 import { Route as BooksRouteImport } from './routes/books'
+import { Route as BookmarksRouteImport } from './routes/bookmarks'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as PostsSlugRouteImport } from './routes/posts.$slug'
 import { Route as PagesSlugRouteImport } from './routes/pages.$slug'
+import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
+import { Route as BooksLibraryRouteImport } from './routes/books.library'
 import { Route as BooksSlugRouteImport } from './routes/books.$slug'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe-webhook'
 import { Route as AdminVideosRouteImport } from './routes/admin.videos'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTaxonomyRouteImport } from './routes/admin.taxonomy'
@@ -32,10 +40,13 @@ import { Route as AdminPagesRouteImport } from './routes/admin.pages'
 import { Route as AdminNewRouteImport } from './routes/admin.new'
 import { Route as AdminNavigationRouteImport } from './routes/admin.navigation'
 import { Route as AdminMediaRouteImport } from './routes/admin.media'
+import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminCommentsRouteImport } from './routes/admin.comments'
 import { Route as AdminBooksRouteImport } from './routes/admin.books'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminIdRouteImport } from './routes/admin.$id'
+import { Route as AdminCoursesIdRouteImport } from './routes/admin.courses.$id'
+import { Route as CoursesCourseSlugLessonsLessonSlugRouteImport } from './routes/courses.$courseSlug.lessons.$lessonSlug'
 
 const WisdomRoute = WisdomRouteImport.update({
   id: '/wisdom',
@@ -47,9 +58,19 @@ const VideosRoute = VideosRouteImport.update({
   path: '/videos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SatsangRoute = SatsangRouteImport.update({
   id: '/satsang',
   path: '/satsang',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -60,6 +81,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesRoute = CoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -75,6 +101,11 @@ const BuddhistPsychologyRoute = BuddhistPsychologyRouteImport.update({
 const BooksRoute = BooksRouteImport.update({
   id: '/books',
   path: '/books',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookmarksRoute = BookmarksRouteImport.update({
+  id: '/bookmarks',
+  path: '/bookmarks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -97,6 +128,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const SitemapXmlRoute = SitemapXmlRouteImport.update({
+  id: '/sitemap/xml',
+  path: '/sitemap/xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PostsSlugRoute = PostsSlugRouteImport.update({
   id: '/posts/$slug',
   path: '/posts/$slug',
@@ -107,10 +143,25 @@ const PagesSlugRoute = PagesSlugRouteImport.update({
   path: '/pages/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CoursesSlugRoute = CoursesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => CoursesRoute,
+} as any)
+const BooksLibraryRoute = BooksLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => BooksRoute,
+} as any)
 const BooksSlugRoute = BooksSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => BooksRoute,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe-webhook',
+  path: '/api/stripe-webhook',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminVideosRoute = AdminVideosRouteImport.update({
   id: '/videos',
@@ -152,6 +203,11 @@ const AdminMediaRoute = AdminMediaRouteImport.update({
   path: '/media',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCoursesRoute = AdminCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCommentsRoute = AdminCommentsRouteImport.update({
   id: '/comments',
   path: '/comments',
@@ -172,23 +228,39 @@ const AdminIdRoute = AdminIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCoursesIdRoute = AdminCoursesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminCoursesRoute,
+} as any)
+const CoursesCourseSlugLessonsLessonSlugRoute =
+  CoursesCourseSlugLessonsLessonSlugRouteImport.update({
+    id: '/$courseSlug/lessons/$lessonSlug',
+    path: '/$courseSlug/lessons/$lessonSlug',
+    getParentRoute: () => CoursesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/bookmarks': typeof BookmarksRoute
   '/books': typeof BooksRouteWithChildren
   '/buddhist-psychology': typeof BuddhistPsychologyRoute
   '/contact': typeof ContactRoute
+  '/courses': typeof CoursesRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
   '/satsang': typeof SatsangRoute
+  '/search': typeof SearchRoute
   '/videos': typeof VideosRoute
   '/wisdom': typeof WisdomRoute
   '/admin/$id': typeof AdminIdRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/media': typeof AdminMediaRoute
   '/admin/navigation': typeof AdminNavigationRoute
   '/admin/new': typeof AdminNewRoute
@@ -197,26 +269,37 @@ export interface FileRoutesByFullPath {
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/books/$slug': typeof BooksSlugRoute
+  '/books/library': typeof BooksLibraryRoute
+  '/courses/$slug': typeof CoursesSlugRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/posts/$slug': typeof PostsSlugRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/courses/$courseSlug/lessons/$lessonSlug': typeof CoursesCourseSlugLessonsLessonSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/bookmarks': typeof BookmarksRoute
   '/books': typeof BooksRouteWithChildren
   '/buddhist-psychology': typeof BuddhistPsychologyRoute
   '/contact': typeof ContactRoute
+  '/courses': typeof CoursesRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
   '/satsang': typeof SatsangRoute
+  '/search': typeof SearchRoute
   '/videos': typeof VideosRoute
   '/wisdom': typeof WisdomRoute
   '/admin/$id': typeof AdminIdRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/media': typeof AdminMediaRoute
   '/admin/navigation': typeof AdminNavigationRoute
   '/admin/new': typeof AdminNewRoute
@@ -225,28 +308,39 @@ export interface FileRoutesByTo {
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/books/$slug': typeof BooksSlugRoute
+  '/books/library': typeof BooksLibraryRoute
+  '/courses/$slug': typeof CoursesSlugRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/posts/$slug': typeof PostsSlugRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/courses/$courseSlug/lessons/$lessonSlug': typeof CoursesCourseSlugLessonsLessonSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/bookmarks': typeof BookmarksRoute
   '/books': typeof BooksRouteWithChildren
   '/buddhist-psychology': typeof BuddhistPsychologyRoute
   '/contact': typeof ContactRoute
+  '/courses': typeof CoursesRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
   '/satsang': typeof SatsangRoute
+  '/search': typeof SearchRoute
   '/videos': typeof VideosRoute
   '/wisdom': typeof WisdomRoute
   '/admin/$id': typeof AdminIdRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/media': typeof AdminMediaRoute
   '/admin/navigation': typeof AdminNavigationRoute
   '/admin/new': typeof AdminNewRoute
@@ -255,10 +349,16 @@ export interface FileRoutesById {
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/videos': typeof AdminVideosRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/books/$slug': typeof BooksSlugRoute
+  '/books/library': typeof BooksLibraryRoute
+  '/courses/$slug': typeof CoursesSlugRoute
   '/pages/$slug': typeof PagesSlugRoute
   '/posts/$slug': typeof PostsSlugRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/courses/$courseSlug/lessons/$lessonSlug': typeof CoursesCourseSlugLessonsLessonSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -266,18 +366,23 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/bookmarks'
     | '/books'
     | '/buddhist-psychology'
     | '/contact'
+    | '/courses'
     | '/login'
     | '/onboarding'
+    | '/profile'
     | '/satsang'
+    | '/search'
     | '/videos'
     | '/wisdom'
     | '/admin/$id'
     | '/admin/audit'
     | '/admin/books'
     | '/admin/comments'
+    | '/admin/courses'
     | '/admin/media'
     | '/admin/navigation'
     | '/admin/new'
@@ -286,26 +391,37 @@ export interface FileRouteTypes {
     | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/videos'
+    | '/api/stripe-webhook'
     | '/books/$slug'
+    | '/books/library'
+    | '/courses/$slug'
     | '/pages/$slug'
     | '/posts/$slug'
+    | '/sitemap/xml'
     | '/admin/'
+    | '/admin/courses/$id'
+    | '/courses/$courseSlug/lessons/$lessonSlug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
+    | '/bookmarks'
     | '/books'
     | '/buddhist-psychology'
     | '/contact'
+    | '/courses'
     | '/login'
     | '/onboarding'
+    | '/profile'
     | '/satsang'
+    | '/search'
     | '/videos'
     | '/wisdom'
     | '/admin/$id'
     | '/admin/audit'
     | '/admin/books'
     | '/admin/comments'
+    | '/admin/courses'
     | '/admin/media'
     | '/admin/navigation'
     | '/admin/new'
@@ -314,27 +430,38 @@ export interface FileRouteTypes {
     | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/videos'
+    | '/api/stripe-webhook'
     | '/books/$slug'
+    | '/books/library'
+    | '/courses/$slug'
     | '/pages/$slug'
     | '/posts/$slug'
+    | '/sitemap/xml'
     | '/admin'
+    | '/admin/courses/$id'
+    | '/courses/$courseSlug/lessons/$lessonSlug'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/admin'
+    | '/bookmarks'
     | '/books'
     | '/buddhist-psychology'
     | '/contact'
+    | '/courses'
     | '/login'
     | '/onboarding'
+    | '/profile'
     | '/satsang'
+    | '/search'
     | '/videos'
     | '/wisdom'
     | '/admin/$id'
     | '/admin/audit'
     | '/admin/books'
     | '/admin/comments'
+    | '/admin/courses'
     | '/admin/media'
     | '/admin/navigation'
     | '/admin/new'
@@ -343,26 +470,38 @@ export interface FileRouteTypes {
     | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/videos'
+    | '/api/stripe-webhook'
     | '/books/$slug'
+    | '/books/library'
+    | '/courses/$slug'
     | '/pages/$slug'
     | '/posts/$slug'
+    | '/sitemap/xml'
     | '/admin/'
+    | '/admin/courses/$id'
+    | '/courses/$courseSlug/lessons/$lessonSlug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
+  BookmarksRoute: typeof BookmarksRoute
   BooksRoute: typeof BooksRouteWithChildren
   BuddhistPsychologyRoute: typeof BuddhistPsychologyRoute
   ContactRoute: typeof ContactRoute
+  CoursesRoute: typeof CoursesRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  ProfileRoute: typeof ProfileRoute
   SatsangRoute: typeof SatsangRoute
+  SearchRoute: typeof SearchRoute
   VideosRoute: typeof VideosRoute
   WisdomRoute: typeof WisdomRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   PagesSlugRoute: typeof PagesSlugRoute
   PostsSlugRoute: typeof PostsSlugRoute
+  SitemapXmlRoute: typeof SitemapXmlRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -381,11 +520,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VideosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/satsang': {
       id: '/satsang'
       path: '/satsang'
       fullPath: '/satsang'
       preLoaderRoute: typeof SatsangRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -400,6 +553,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses': {
+      id: '/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof CoursesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -421,6 +581,13 @@ declare module '@tanstack/react-router' {
       path: '/books'
       fullPath: '/books'
       preLoaderRoute: typeof BooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookmarks': {
+      id: '/bookmarks'
+      path: '/bookmarks'
+      fullPath: '/bookmarks'
+      preLoaderRoute: typeof BookmarksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -451,6 +618,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/sitemap/xml': {
+      id: '/sitemap/xml'
+      path: '/sitemap/xml'
+      fullPath: '/sitemap/xml'
+      preLoaderRoute: typeof SitemapXmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/posts/$slug': {
       id: '/posts/$slug'
       path: '/posts/$slug'
@@ -465,12 +639,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PagesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/courses/$slug': {
+      id: '/courses/$slug'
+      path: '/$slug'
+      fullPath: '/courses/$slug'
+      preLoaderRoute: typeof CoursesSlugRouteImport
+      parentRoute: typeof CoursesRoute
+    }
+    '/books/library': {
+      id: '/books/library'
+      path: '/library'
+      fullPath: '/books/library'
+      preLoaderRoute: typeof BooksLibraryRouteImport
+      parentRoute: typeof BooksRoute
+    }
     '/books/$slug': {
       id: '/books/$slug'
       path: '/$slug'
       fullPath: '/books/$slug'
       preLoaderRoute: typeof BooksSlugRouteImport
       parentRoute: typeof BooksRoute
+    }
+    '/api/stripe-webhook': {
+      id: '/api/stripe-webhook'
+      path: '/api/stripe-webhook'
+      fullPath: '/api/stripe-webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/videos': {
       id: '/admin/videos'
@@ -528,6 +723,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMediaRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/courses': {
+      id: '/admin/courses'
+      path: '/courses'
+      fullPath: '/admin/courses'
+      preLoaderRoute: typeof AdminCoursesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/comments': {
       id: '/admin/comments'
       path: '/comments'
@@ -556,14 +758,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/courses/$id': {
+      id: '/admin/courses/$id'
+      path: '/$id'
+      fullPath: '/admin/courses/$id'
+      preLoaderRoute: typeof AdminCoursesIdRouteImport
+      parentRoute: typeof AdminCoursesRoute
+    }
+    '/courses/$courseSlug/lessons/$lessonSlug': {
+      id: '/courses/$courseSlug/lessons/$lessonSlug'
+      path: '/$courseSlug/lessons/$lessonSlug'
+      fullPath: '/courses/$courseSlug/lessons/$lessonSlug'
+      preLoaderRoute: typeof CoursesCourseSlugLessonsLessonSlugRouteImport
+      parentRoute: typeof CoursesRoute
+    }
   }
 }
+
+interface AdminCoursesRouteChildren {
+  AdminCoursesIdRoute: typeof AdminCoursesIdRoute
+}
+
+const AdminCoursesRouteChildren: AdminCoursesRouteChildren = {
+  AdminCoursesIdRoute: AdminCoursesIdRoute,
+}
+
+const AdminCoursesRouteWithChildren = AdminCoursesRoute._addFileChildren(
+  AdminCoursesRouteChildren,
+)
 
 interface AdminRouteChildren {
   AdminIdRoute: typeof AdminIdRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBooksRoute: typeof AdminBooksRoute
   AdminCommentsRoute: typeof AdminCommentsRoute
+  AdminCoursesRoute: typeof AdminCoursesRouteWithChildren
   AdminMediaRoute: typeof AdminMediaRoute
   AdminNavigationRoute: typeof AdminNavigationRoute
   AdminNewRoute: typeof AdminNewRoute
@@ -580,6 +809,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
   AdminBooksRoute: AdminBooksRoute,
   AdminCommentsRoute: AdminCommentsRoute,
+  AdminCoursesRoute: AdminCoursesRouteWithChildren,
   AdminMediaRoute: AdminMediaRoute,
   AdminNavigationRoute: AdminNavigationRoute,
   AdminNewRoute: AdminNewRoute,
@@ -595,39 +825,51 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface BooksRouteChildren {
   BooksSlugRoute: typeof BooksSlugRoute
+  BooksLibraryRoute: typeof BooksLibraryRoute
 }
 
 const BooksRouteChildren: BooksRouteChildren = {
   BooksSlugRoute: BooksSlugRoute,
+  BooksLibraryRoute: BooksLibraryRoute,
 }
 
 const BooksRouteWithChildren = BooksRoute._addFileChildren(BooksRouteChildren)
+
+interface CoursesRouteChildren {
+  CoursesSlugRoute: typeof CoursesSlugRoute
+  CoursesCourseSlugLessonsLessonSlugRoute: typeof CoursesCourseSlugLessonsLessonSlugRoute
+}
+
+const CoursesRouteChildren: CoursesRouteChildren = {
+  CoursesSlugRoute: CoursesSlugRoute,
+  CoursesCourseSlugLessonsLessonSlugRoute:
+    CoursesCourseSlugLessonsLessonSlugRoute,
+}
+
+const CoursesRouteWithChildren =
+  CoursesRoute._addFileChildren(CoursesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
+  BookmarksRoute: BookmarksRoute,
   BooksRoute: BooksRouteWithChildren,
   BuddhistPsychologyRoute: BuddhistPsychologyRoute,
   ContactRoute: ContactRoute,
+  CoursesRoute: CoursesRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  ProfileRoute: ProfileRoute,
   SatsangRoute: SatsangRoute,
+  SearchRoute: SearchRoute,
   VideosRoute: VideosRoute,
   WisdomRoute: WisdomRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   PagesSlugRoute: PagesSlugRoute,
   PostsSlugRoute: PostsSlugRoute,
+  SitemapXmlRoute: SitemapXmlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

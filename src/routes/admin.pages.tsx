@@ -73,9 +73,11 @@ import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 import { BilingualField, FormFieldRow, FIELD_LABEL } from "@/components/admin/bilingual-field";
 import { FormActions } from "@/components/admin/form-actions";
+import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/pages")({
   component: AdminPagesPage,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 /* ─── Section Type Config ─────────────────────────────────────────── */

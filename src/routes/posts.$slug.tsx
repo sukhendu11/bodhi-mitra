@@ -5,9 +5,13 @@ import { fetchPostBySlug, fetchPosts } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { LetterAvatar } from "@/components/LetterAvatar";
 import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
+import { ErrorPage } from "@/components/error-page";
+import { NewsletterSignup } from "@/components/NewsletterSignup";
 
 import { SanitizedHtml } from "@/components/SanitizedHtml";
 import { Comments } from "@/components/Comments";
+import { BookmarkButton } from "@/components/BookmarkButton";
+import { TypographyControls, useTypography } from "@/components/TypographyControls";
 import { ArticleSkeleton } from "@/components/ArticleSkeleton";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { Reveal } from "@/components/Reveal";
@@ -55,12 +59,7 @@ export const Route = createFileRoute("/posts/$slug")({
       </Link>
     </div>
   ),
-  errorComponent: ({ error }) => (
-    <div className="mx-auto max-w-2xl px-6 py-32 text-center">
-      <h1 className="font-serif text-3xl">Something didn't load</h1>
-      <p className="mt-3 text-sm text-muted-foreground">{error.message}</p>
-    </div>
-  ),
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 function PostPage() {
@@ -114,6 +113,8 @@ function PostPage() {
   const newsletterTitle = pickLocalized(a.newsletter_title_en, a.newsletter_title_bn, lang, "");
   const newsletterText = pickLocalized(a.newsletter_text_en, a.newsletter_text_bn, lang, "");
 
+  const { settings: typoSettings, setSettings: setTypoSettings, typoClass } = useTypography();
+
   const relatedFiltered = related.filter((r) => r.id !== post.id).slice(0, 3);
 
   return (
@@ -154,6 +155,11 @@ function PostPage() {
               ))}
             </div>
           )}
+
+          <div className="mt-5 flex items-center justify-center gap-4">
+            <BookmarkButton postId={post.id} />
+            <TypographyControls settings={typoSettings} onChange={setTypoSettings} />
+          </div>
         </header>
       </Reveal>
 
@@ -173,6 +179,7 @@ function PostPage() {
       {/* Mobile ToC (collapsible, only with headings) */}
       {headings.length > 0 && <TableOfContents headings={headings} />}
 
+      <div className={typoClass}>
       {isHtml ? (
         <SanitizedHtml html={contentWithIds} />
       ) : (
@@ -190,6 +197,7 @@ function PostPage() {
           })}
         </div>
       )}
+      </div>
 
       </Reveal>
 
@@ -204,8 +212,7 @@ function PostPage() {
           )}
           {(newsletterTitle || newsletterText) && (
             <div className="border border-border rounded-md p-6 bg-secondary/30">
-              {newsletterTitle && <p className="font-serif text-lg mb-2">{newsletterTitle}</p>}
-              {newsletterText && <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{newsletterText}</p>}
+              <NewsletterSignup title={newsletterTitle} text={newsletterText} />
             </div>
           )}
         </aside>

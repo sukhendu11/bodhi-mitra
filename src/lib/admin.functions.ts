@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth, requireMinRole } from "@/lib/permissions";
 import type { Database } from "@/integrations/supabase/types";
 import { createClient } from "@supabase/supabase-js";
 import type { Json } from "@/integrations/supabase/types";
@@ -7,11 +7,40 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /* ── Dashboard stats types ────────────────────────────────────── */
 
+export interface MonthlyPostCount {
+  year: number;
+  month: number;
+  count: number;
+}
+
+export interface TopCommentedPost {
+  id: string;
+  slug: string;
+  title_en: string | null;
+  title_bn: string | null;
+  comment_count: number;
+}
+
+export interface TopRatedBook {
+  id: string;
+  slug: string;
+  title_en: string;
+  title_bn: string;
+  avg_rating: number;
+  total_ratings: number;
+}
+
 export interface DashboardStats {
   posts: { total: number; published: number; draft: number };
   pages: { total: number };
   books: { total: number; published: number; draft: number; archived: number; free: number };
   users: { total: number };
+  comments: { total: number };
+  purchases: { total: number };
+  ratings: { total: number };
+  postsPerMonth: MonthlyPostCount[];
+  topCommented: TopCommentedPost[];
+  topRatedBooks: TopRatedBook[];
   recentPosts: {
     id: string;
     title_en: string | null;
@@ -31,7 +60,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     const { supabase } = context;
     const db = supabase as any;
 
-    // Run all counts and recent posts in parallel
+    // Run all counts and data queries in parallel
     const [
       totalPosts,
       publishedPosts,
@@ -43,7 +72,13 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       archivedBooks,
       freeBooks,
       totalUsers,
+      totalComments,
+      totalPurchases,
+      totalRatings,
       recentPosts,
+      postsPerMonth,
+      topCommented,
+      topRatedBooks,
     ] = await Promise.all([
       db.from("posts").select("*", { count: "exact", head: true }),
       db.from("posts").select("*", { count: "exact", head: true }).eq("status", "published"),
@@ -55,16 +90,81 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       db.from("books").select("*", { count: "exact", head: true }).eq("status", "archived"),
       db.from("books").select("*", { count: "exact", head: true }).eq("is_free", true),
       db.from("profiles").select("*", { count: "exact", head: true }),
+      db.from("comments").select("*", { count: "exact", head: true }),
+      db.from("purchases").select("*", { count: "exact", head: true }),
+      db.from("book_ratings").select("*", { count: "exact", head: true }),
       db.from("posts")
         .select("id, title_en, title_bn, status, slug, created_at")
         .order("created_at", { ascending: false })
         .limit(5),
+      db.from("posts")
+        .select("id, created_at", { count: "exact" })
+        .gte("created_at", new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString()),
+      db.from("comments")
+        .select("post_id, posts!inner(id, slug, title_en, title_bn), comment_text", { count: "exact" })
+        .not("post_id", "is", null),
+      db.from("books")
+        .select("id, slug, title_en, title_bn, avg_rating, total_ratings")
+        .eq("status", "published")
+        .gt("total_ratings", 0)
+        .order("avg_rating", { ascending: false })
+        .limit(5),
     ]);
 
-    // Log errors (safe: count queries never throw — count is null on error)
-    for (const r of [totalPosts, publishedPosts, draftPosts, totalPages, totalBooks, publishedBooks, draftBooks, archivedBooks, freeBooks, totalUsers]) {
+    // Log errors
+    for (const r of [totalPosts, publishedPosts, draftPosts, totalPages, totalBooks, publishedBooks, draftBooks, archivedBooks, freeBooks, totalUsers, totalComments, totalPurchases, totalRatings]) {
       if (r.error) console.error("[getDashboardStats] count error:", r.error.message);
     }
+
+    // Compute monthly post counts
+    const now = new Date();
+    const months: MonthlyPostCount[] = [];
+    if (postsPerMonth.data) {
+      const countMap = new Map<string, number>();
+      for (const p of postsPerMonth.data) {
+        const d = new Date(p.created_at);
+        const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+        countMap.set(key, (countMap.get(key) || 0) + 1);
+      }
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+        months.push({ year: d.getFullYear(), month: d.getMonth() + 1, count: countMap.get(key) || 0 });
+      }
+    }
+
+    // Aggregate top commented posts
+    const commentCountMap = new Map<string, { id: string; slug: string; title_en: string | null; title_bn: string | null; count: number }>();
+    if (topCommented.data) {
+      for (const c of topCommented.data) {
+        const pid = c.post_id;
+        if (!pid) continue;
+        const post = c.posts;
+        if (!post) continue;
+        const existing = commentCountMap.get(pid);
+        if (existing) {
+          existing.count++;
+        } else {
+          commentCountMap.set(pid, {
+            id: pid,
+            slug: post.slug,
+            title_en: post.title_en,
+            title_bn: post.title_bn,
+            count: 1,
+          });
+        }
+      }
+    }
+    const topCommentedSorted = Array.from(commentCountMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+      .map((item) => ({
+        id: item.id,
+        slug: item.slug,
+        title_en: item.title_en,
+        title_bn: item.title_bn,
+        comment_count: item.count,
+      }));
 
     return {
       posts: {
@@ -81,6 +181,12 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         free: freeBooks.count ?? 0,
       },
       users: { total: totalUsers.count ?? 0 },
+      comments: { total: totalComments.count ?? 0 },
+      purchases: { total: totalPurchases.count ?? 0 },
+      ratings: { total: totalRatings.count ?? 0 },
+      postsPerMonth: months,
+      topCommented: topCommentedSorted,
+      topRatedBooks: (topRatedBooks.data ?? []) as TopRatedBook[],
       recentPosts: (recentPosts.data ?? []) as DashboardStats["recentPosts"],
     };
   });
@@ -125,20 +231,9 @@ export type AuditLogRow = {
 
 /** Fetch the audit log with pagination. Only accessible by super_admin. */
 export const getAuditLog = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMinRole("super_admin")])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-
-    // Verify caller is super_admin
-    const { data: callerRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .in("role", ["super_admin"])
-      .maybeSingle();
-    if (!callerRole) {
-      throw new Error("Only super admins can view the audit log");
-    }
 
     const { data, error } = await supabase
       .from("audit_log")
@@ -150,7 +245,7 @@ export const getAuditLog = createServerFn({ method: "GET" })
 
     // Enrich with actor/target info
     const userIds = new Set<string>();
-    (data ?? []).forEach((row) => {
+    (data ?? []).forEach((row: { actor_id: string; target_user_id?: string | null }) => {
       if (row.actor_id) userIds.add(row.actor_id);
       if (row.target_user_id) userIds.add(row.target_user_id);
     });
@@ -203,6 +298,13 @@ export const checkIsAdmin = createServerFn({ method: "GET" })
       .in("role", ["admin", "super_admin"])
       .maybeSingle();
     return { isAdmin: !!data, role: (data?.role as string | null) ?? null };
+  });
+
+/** Check if the current user has admin access (used by route guard). Throws if unauthorized. */
+export const checkAdminAccess = createServerFn({ method: "GET" })
+  .middleware([requireMinRole("admin")])
+  .handler(async ({ context }) => {
+    return { ok: true };
   });
 
 export type UserRoleRow = {
@@ -266,22 +368,13 @@ export interface InviteUserResult {
 /** Invite a new user by email. Sends an invitation email via Supabase Auth,
  *  creates the user, and assigns a default role. Only accessible by admin/super_admin. */
 export const inviteUserFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMinRole("admin")])
   .handler(async ({ context, data }: { context: { supabase: ReturnType<typeof createClient<Database>>; userId: string }; data: unknown }) => {
     const { supabase, userId } = context;
     const input = data as { email: string; role: string; displayName?: string };
 
     const email = input.email?.trim().toLowerCase();
     if (!email) throw new Error("Email is required");
-
-    // Only admin/super_admin can invite
-    const { data: callerRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .in("role", ["admin", "super_admin"])
-      .maybeSingle();
-    if (!callerRole) throw new Error("Only admins can invite users");
 
     // Send invitation email via Supabase Auth Admin API
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
@@ -325,24 +418,13 @@ export interface DeleteUserResult {
 /** Delete a user from the system. Removes them from auth.users and user_roles.
  *  Only accessible by admin/super_admin. Cannot delete yourself. */
 export const deleteUserFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMinRole("admin")])
   .handler(async ({ context, data }: { context: { supabase: ReturnType<typeof createClient<Database>>; userId: string }; data: unknown }) => {
     const { supabase, userId } = context;
     const input = data as { targetUserId: string };
 
     if (input.targetUserId === userId) {
       return { ok: false, error: "You cannot delete your own account." } as DeleteUserResult;
-    }
-
-    // Check caller is admin/super_admin
-    const { data: callerRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .in("role", ["admin", "super_admin"])
-      .maybeSingle();
-    if (!callerRole) {
-      return { ok: false, error: "Only admins can delete users." } as DeleteUserResult;
     }
 
     // Get target info for audit before deleting
@@ -408,7 +490,7 @@ export interface BulkActionResult {
 
 /** Bulk set role for multiple users. Validates the caller is admin and applies the role to each user. */
 export const bulkSetRoleFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMinRole("admin")])
   .handler(async ({ context, data }: { context: { supabase: ReturnType<typeof createClient<Database>>; userId: string }; data: unknown }) => {
     const { supabase, userId } = context;
     const input = data as { targetUserIds: string[]; newRole: string };
@@ -418,17 +500,6 @@ export const bulkSetRoleFn = createServerFn({ method: "POST" })
     }
     if (!input.newRole) {
       return { ok: false, error: "No role specified.", succeeded: 0, failed: 0, errors: [] } as BulkActionResult;
-    }
-
-    // Check caller has admin permissions
-    const { data: callerRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .in("role", ["admin", "super_admin"])
-      .maybeSingle();
-    if (!callerRole) {
-      return { ok: false, error: "Only admins can change user roles.", succeeded: 0, failed: 0, errors: [] } as BulkActionResult;
     }
 
     const errors: { userId: string; error: string }[] = [];
@@ -480,24 +551,13 @@ export const bulkSetRoleFn = createServerFn({ method: "POST" })
 
 /** Bulk delete multiple users. Validates each user (not self, not last super_admin) before deleting. */
 export const bulkDeleteUsersFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMinRole("admin")])
   .handler(async ({ context, data }: { context: { supabase: ReturnType<typeof createClient<Database>>; userId: string }; data: unknown }) => {
     const { supabase, userId } = context;
     const input = data as { targetUserIds: string[] };
 
     if (!input.targetUserIds?.length) {
       return { ok: false, error: "No users selected.", succeeded: 0, failed: 0, errors: [] } as BulkActionResult;
-    }
-
-    // Check caller is admin/super_admin
-    const { data: callerRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .in("role", ["admin", "super_admin"])
-      .maybeSingle();
-    if (!callerRole) {
-      return { ok: false, error: "Only admins can delete users.", succeeded: 0, failed: 0, errors: [] } as BulkActionResult;
     }
 
     // Pre-validate: check self-delete and super_admin constraints

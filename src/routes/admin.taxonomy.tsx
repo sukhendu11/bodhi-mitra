@@ -30,9 +30,11 @@ import {
   Check,
   X,
 } from "lucide-react";
+import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/taxonomy")({
   component: TaxonomyPage,
+  errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
 
 function TaxonomyPage() {

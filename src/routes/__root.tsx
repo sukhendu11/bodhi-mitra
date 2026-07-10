@@ -20,41 +20,11 @@ import type { NavTreeNode } from "@/lib/navigation";
 import { LangToggle } from "@/components/LangToggle";
 import { NavDropdown } from "@/components/NavDropdown";
 import { MobileNav } from "@/components/MobileNav";
+import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { ScrollToTop } from "@/components/ScrollToTop";
-
-
-function NotFoundComponent() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="font-serif text-7xl text-foreground">404</h1>
-        <p className="mt-4 text-muted-foreground">This page has drifted into stillness.</p>
-        <Link to="/" className="mt-8 inline-block border-b border-foreground/40 pb-0.5 text-sm tracking-wide hover:border-foreground">
-          Return home
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
-  const router = useRouter();
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="font-serif text-3xl">Something didn't load</h1>
-        <p className="mt-3 text-sm text-muted-foreground">Take a breath, and try again.</p>
-        <button
-          onClick={() => { router.invalidate(); reset(); }}
-          className="mt-6 border-b border-foreground/40 pb-0.5 text-sm tracking-wide hover:border-foreground"
-        >
-          Try again
-        </button>
-      </div>
-    </div>
-  );
-}
+import { ErrorPage, NotFoundPage } from "@/components/error-page";
+import { Search } from "lucide-react";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: () => fetchSiteSettings().catch(() => DEFAULT_CONFIG),
@@ -91,8 +61,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   },
   shellComponent: RootShell,
   component: RootComponent,
-  notFoundComponent: NotFoundComponent,
-  errorComponent: ErrorComponent,
+  notFoundComponent: NotFoundPage,
+  errorComponent: ErrorPage,
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
@@ -199,13 +169,30 @@ function Header() {
             </Link>
           )}
 
+          {/* Search */}
+          <Link to="/search" search={{} as any} className={linkCls}>
+            <Search className="h-4 w-4" />
+            <span className="sr-only">Search</span>
+          </Link>
+
           <LangToggle />
 
           {/* Sign in / out */}
           {user ? (
-            <button onClick={() => signOut()} className={linkCls}>
-              Sign out
-            </button>
+            <>
+              <Link to="/books/library" className={linkCls} search={{} as any}>
+                My Library
+              </Link>
+              <Link to="/bookmarks" className={linkCls} search={{} as any}>
+                Bookmarks
+              </Link>
+              <Link to="/profile" className={linkCls} search={{} as any}>
+                Profile
+              </Link>
+              <button onClick={() => signOut()} className={linkCls}>
+                Sign out
+              </button>
+            </>
           ) : (
             <Link
               to="/login"
@@ -236,6 +223,9 @@ function Header() {
             isAdmin={!!isAdmin}
             isSignedIn={!!user}
             adminLabel="Admin"
+            libraryLabel="My Library"
+            bookmarksLabel="Bookmarks"
+            profileLabel="Profile"
             signInLabel="Sign in"
             signOutLabel="Sign out"
             onSignOut={() => signOut()}
@@ -334,6 +324,9 @@ function Footer() {
                 </SocialIcon>
               </div>
             )}
+            <div className="mt-6 border-t border-border/40 pt-5">
+              <NewsletterSignup compact />
+            </div>
           </div>
 
           {/* Dynamic footer columns from Layout Engine */}
@@ -398,8 +391,10 @@ function RootComponent() {
   if (isAdminRoute) {
     return (
       <QueryClientProvider client={queryClient}>
-        <Outlet />
-        <Toaster position="bottom-center" />
+        <ErrorBoundary>
+          <Outlet />
+          <Toaster position="bottom-center" />
+        </ErrorBoundary>
       </QueryClientProvider>
     );
   }
@@ -407,19 +402,21 @@ function RootComponent() {
   // ── Public frontend: full theme + layout engine ────────────────
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <SiteSettingsProvider>
-          <LayoutProvider>
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <main className="flex-1"><Outlet /></main>
-              <Footer />
-            </div>
-            <ScrollToTop />
-            <Toaster position="bottom-center" />
-          </LayoutProvider>
-        </SiteSettingsProvider>
-      </LanguageProvider>
+      <ErrorBoundary>
+        <LanguageProvider>
+          <SiteSettingsProvider>
+            <LayoutProvider>
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1"><Outlet /></main>
+                <Footer />
+              </div>
+              <ScrollToTop />
+              <Toaster position="bottom-center" />
+            </LayoutProvider>
+          </SiteSettingsProvider>
+        </LanguageProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }
