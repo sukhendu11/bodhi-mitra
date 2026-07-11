@@ -12,6 +12,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { StarRating, RatingBreakdown } from "@/components/StarRating";
 import { BookDetailSkeleton } from "@/components/BookSkeleton";
 import { useServerFn } from "@tanstack/react-start";
+import { addToCart } from "@/lib/cart";
 
 const PdfViewer = lazy(() => import("@/components/PdfViewer").then((m) => ({ default: m.PdfViewer })));
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ import {
   CheckCircle,
   Lock,
   AlertCircle,
+  ShoppingCart,
 } from "lucide-react";
 
 export const Route = createFileRoute("/books/$slug")({
@@ -189,6 +191,22 @@ function BookDetailPage() {
     }
     ratingMutation.mutate(rating);
   };
+
+  /* ── Add to cart mutation ─────────────────────────────────── */
+  const cartMutation = useMutation({
+    mutationFn: (bookId: string) => (doAddToCart as any)({ data: { bookId } }),
+    onSuccess: (result: any) => {
+      if (result.alreadyInCart) {
+        toast.info(result.message);
+      } else {
+        toast.success(result.message);
+      }
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const doAddToCart = useServerFn(addToCart);
 
   /* ── Purchase mutation (with Stripe Checkout redirect) ───────── */
   const purchaseMutation = useMutation({
@@ -400,19 +418,32 @@ function BookDetailPage() {
                       )}
                     </button>
                   ) : (
-                    <button
-                      onClick={handlePurchase}
-                      disabled={purchaseMutation.isPending}
-                      className="inline-flex items-center gap-2 px-6 py-3 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
-                    >
-                      {purchaseMutation.isPending ? (
-                        <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…</>
-                      ) : book.is_free ? (
-                        <><Download className="h-3.5 w-3.5" /> Get Free Copy</>
-                      ) : (
-                        <><Lock className="h-3.5 w-3.5" /> Purchase — ${Number(book.price).toFixed(2)}</>
+                    <>
+                      <button
+                        onClick={handlePurchase}
+                        disabled={purchaseMutation.isPending}
+                        className="inline-flex items-center gap-2 px-6 py-3 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
+                      >
+                        {purchaseMutation.isPending ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…</>
+                        ) : book.is_free ? (
+                          <><Download className="h-3.5 w-3.5" /> Get Free Copy</>
+                        ) : (
+                          <><Lock className="h-3.5 w-3.5" /> Purchase — ${Number(book.price).toFixed(2)}</>
+                        )}
+                      </button>
+                      {!book.is_free && (
+                        <button
+                          onClick={() => cartMutation.mutate(book.id)}
+                          disabled={cartMutation.isPending}
+                          className="inline-flex items-center gap-2 px-4 py-3 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 hover:border-foreground/30 transition-colors disabled:opacity-40"
+                          title="Add to cart"
+                        >
+                          <ShoppingCart className="h-3.5 w-3.5" />
+                          Add to Cart
+                        </button>
                       )}
-                    </button>
+                    </>
                   )}
                 </>
               )}

@@ -16,6 +16,8 @@ export const postSchema = z.object({
   author_image: z.string().default(""),
   status: z.enum(["draft", "published"]),
   tags: z.array(z.string()).default([]),
+  meta_description_en: z.string().default(""),
+  meta_description_bn: z.string().default(""),
 });
 
 export type PostFormValues = z.infer<typeof postSchema>;
@@ -99,3 +101,28 @@ export const navItemSchema = z.object({
 });
 
 export type NavItemFormValues = z.infer<typeof navItemSchema>;
+
+/* ─── Taxonomy Schemas ────────────────────────────────────────────── */
+
+export const categorySchema = z.object({
+  slug: z.string().min(1, "Slug is required"),
+  name_en: z.string().min(1, "English name is required"),
+  name_bn: z.string().default(""),
+  description_en: z.string().default(""),
+  description_bn: z.string().default(""),
+  icon: z.string().default(""),
+  color: z.string().default("#d35400"),
+  sort_order: z.number().default(0),
+  visible: z.boolean().default(true),
+});
+
+export type CategoryFormValues = z.infer<typeof categorySchema>;
+
+export const tagSchema = z.object({
+  slug: z.string().min(1, "Slug is required"),
+  name_en: z.string().min(1, "English name is required"),
+  name_bn: z.string().default(""),
+  color: z.string().default("#666"),
+});
+
+export type TagFormValues = z.infer<typeof tagSchema>;

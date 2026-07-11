@@ -12,7 +12,8 @@ export const Route = createFileRoute("/wisdom")({
     return { settings, page };
   },
   head: ({ loaderData }) => {
-    const { settings, page } = loaderData;
+    const settings = loaderData?.settings;
+    const page = loaderData?.page;
     const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
     const metaDesc = page?.meta_description_en || "Reflections on mindfulness, philosophy, and the quiet art of living.";
     const pageTitle = page?.title_en || "Wisdom";

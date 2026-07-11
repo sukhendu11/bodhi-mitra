@@ -1,9 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useList } from "@refinedev/core";
 import { useState, useMemo } from "react";
-import { getAuditLog, type AuditLogRow } from "@/lib/admin.functions";
+import { createColumnHelper } from "@tanstack/react-table";
 import { Activity, Shield, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { DataTable } from "@/components/admin/data-table";
 import { ErrorPage } from "@/components/error-page";
+
+interface AuditEvent {
+  id: string;
+  action: string;
+  actor_id: string;
+  target_user_id?: string | null;
+  details?: Record<string, unknown> | null;
+  created_at: string;
+}
 
 export const Route = createFileRoute("/admin/audit")({
   component: AdminAuditPage,
@@ -51,42 +61,100 @@ function formatDate(dateStr: string): string {
 }
 
 function AdminAuditPage() {
-  const { data: log, isLoading, error } = useQuery<AuditLogRow[]>({
-    queryKey: ["audit-log"],
-    queryFn: () => getAuditLog() as Promise<AuditLogRow[]>,
-    staleTime: 15_000,
-    refetchInterval: 30_000,
+  const { query, result } = useList<AuditEvent>({
+    resource: "audit",
+    sorters: [{ field: "created_at", order: "desc" }],
+    pagination: { currentPage: 1, pageSize: 200 },
   });
 
+  const log = result?.data ?? [];
+  const isLoading = query?.isLoading ?? false;
+  const error = query?.error;
+
   const [filterAction, setFilterAction] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const actionTypes = useMemo(
-    () => [...new Set((log ?? []).map((e: AuditLogRow) => e.action))],
+    () => [...new Set(log.map((e) => e.action))],
     [log],
   );
 
   const filtered = useMemo(
-    () =>
-      (log ?? []).filter((e: AuditLogRow) =>
-        filterAction ? e.action === filterAction : true,
-      ),
+    () => log.filter((e) => (filterAction ? e.action === filterAction : true)),
     [log, filterAction],
   );
 
-  if (isLoading) {
+  const columnHelper = createColumnHelper<AuditEvent>();
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("action", {
+        header: "Action",
+        enableSorting: true,
+        cell: ({ getValue }) => (
+          <span
+            className={`text-[0.55rem] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap ${
+              ACTION_STYLES[getValue()] || "bg-neutral-100 text-neutral-700 border-neutral-300/50 dark:bg-neutral-800 dark:text-neutral-300"
+            }`}
+          >
+            {ACTION_LABELS[getValue()] || getValue()}
+          </span>
+        ),
+      }),
+      columnHelper.accessor("actor_id", {
+        header: "Actor",
+        enableSorting: true,
+        cell: ({ getValue }) => (
+          <span className="text-xs font-mono text-foreground/80 truncate max-w-[160px] block" title={getValue()}>
+            {getValue()}
+          </span>
+        ),
+      }),
+      columnHelper.accessor("target_user_id", {
+        header: "Target",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            {row.original.target_user_id ? (
+              <>
+                <span className="text-muted-foreground/40 text-xs">→</span>
+                <span className="text-xs font-mono text-muted-foreground truncate max-w-[160px] block" title={row.original.target_user_id}>
+                  {row.original.target_user_id}
+                </span>
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground/50 italic">—</span>
+            )}
+          </div>
+        ),
+      }),
+      columnHelper.accessor("created_at", {
+        header: "Time",
+        enableSorting: true,
+        cell: ({ getValue }) => (
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3 w-3 text-muted-foreground/40" />
+            <span className="text-xs text-muted-foreground" title={formatDate(getValue())}>
+              {timeAgo(getValue())}
+            </span>
+          </div>
+        ),
+      }),
+    ],
+    [],
+  );
+
+  /* ── Render Sub-Row for details ────────────────────────────────── */
+
+  const renderSubRow = (event: AuditEvent) => {
+    if (!event.details || Object.keys(event.details).length === 0) return null;
     return (
-      <div className="space-y-4">
-        <div className="h-8 w-32 bg-secondary/60 animate-pulse rounded-lg" />
-        <div className="h-4 w-48 bg-secondary/40 animate-pulse rounded" />
-        <div className="space-y-2 mt-6">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-16 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse" />
-          ))}
-        </div>
-      </div>
+      <pre className="text-[0.6rem] font-mono text-muted-foreground whitespace-pre-wrap overflow-x-auto">
+        {JSON.stringify(event.details, null, 2)}
+      </pre>
     );
-  }
+  };
+
+  /* ── Error state ───────────────────────────────────────────────── */
 
   if (error) {
     return (
@@ -96,6 +164,8 @@ function AdminAuditPage() {
       </div>
     );
   }
+
+  /* ── Render ────────────────────────────────────────────────────── */
 
   return (
     <div className="space-y-6">
@@ -112,14 +182,14 @@ function AdminAuditPage() {
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div className="flex items-center gap-2 flex-wrap">
+      {/* Action filter buttons */}
+      <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-border/60 rounded-lg p-1 w-fit flex-wrap">
         <button
           onClick={() => setFilterAction("")}
-          className={`px-3 py-1.5 text-[0.6rem] font-medium rounded-lg border transition-colors ${
+          className={`px-3 py-1.5 text-[0.6rem] font-medium rounded-md transition-colors ${
             !filterAction
-              ? "bg-foreground/5 text-foreground border-foreground/20"
-              : "text-muted-foreground border-border/60 hover:text-foreground hover:border-border"
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           All
@@ -128,10 +198,10 @@ function AdminAuditPage() {
           <button
             key={action}
             onClick={() => setFilterAction(action)}
-            className={`px-3 py-1.5 text-[0.6rem] font-medium rounded-lg border transition-colors ${
+            className={`px-3 py-1.5 text-[0.6rem] font-medium rounded-md transition-colors ${
               filterAction === action
-                ? "bg-foreground/5 text-foreground border-foreground/20"
-                : "text-muted-foreground border-border/60 hover:text-foreground hover:border-border"
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {ACTION_LABELS[action] || action}
@@ -139,84 +209,27 @@ function AdminAuditPage() {
         ))}
       </div>
 
-      {/* Event list */}
-      <div className="space-y-2">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-xl border border-border/60">
-            <Activity className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">No audit events found.</p>
-          </div>
-        ) : (
-          filtered.map((event) => (
-            <div
-              key={event.id}
-              className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden transition-all"
-            >
-              {/* Event row */}
-              <div className="flex items-center justify-between gap-4 px-5 py-3.5">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {/* Action badge */}
-                  <span
-                    className={`text-[0.55rem] font-medium px-2 py-0.5 rounded-full border shrink-0 ${
-                      ACTION_STYLES[event.action] || "bg-neutral-100 text-neutral-700 border-neutral-300/50"
-                    }`}
-                  >
-                    {ACTION_LABELS[event.action] || event.action}
-                  </span>
-
-                  {/* Actor */}
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate leading-tight">
-                      {event.actor_display_name || event.actor_email || "Unknown"}
-                    </p>
-                  </div>
-
-                  {/* Target */}
-                  {event.target_display_name || event.target_email ? (
-                    <>
-                      <span className="text-muted-foreground/40 text-xs shrink-0">→</span>
-                      <div className="min-w-0">
-                        <p className="text-sm truncate leading-tight text-muted-foreground">
-                          {event.target_display_name || event.target_email}
-                        </p>
-                      </div>
-                    </>
-                  ) : null}
-                </div>
-
-                {/* Time + expand */}
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="flex items-center gap-1.5 text-[0.6rem] text-muted-foreground/60">
-                    <Clock className="h-3 w-3" />
-                    <span title={formatDate(event.created_at)}>{timeAgo(event.created_at)}</span>
-                  </div>
-                  {event.details && Object.keys(event.details).length > 0 && (
-                    <button
-                      onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}
-                      className="p-1 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-secondary/60 transition-colors"
-                    >
-                      {expandedId === event.id ? (
-                        <ChevronUp className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Expanded details */}
-              {expandedId === event.id && event.details && Object.keys(event.details).length > 0 && (
-                <div className="border-t border-border/40 bg-secondary/20 px-5 py-3">
-                  <pre className="text-[0.6rem] font-mono text-muted-foreground whitespace-pre-wrap overflow-x-auto">
-                    {JSON.stringify(event.details, null, 2)}
-                  </pre>
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+      {/* Table */}
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-14 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-xl border border-border/60">
+          <Activity className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
+          <p className="text-sm text-muted-foreground">No audit events found.</p>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filtered}
+          searchPlaceholder="Search audit events…"
+          pageSize={25}
+          renderSubRow={renderSubRow}
+        />
+      )}
     </div>
   );
 }

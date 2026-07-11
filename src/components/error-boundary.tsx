@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { captureError } from "@/lib/error-reporting";
+import { captureError } from "@/lib/errors";
 import { ErrorPage } from "@/components/error-page";
 
 interface ErrorBoundaryProps {

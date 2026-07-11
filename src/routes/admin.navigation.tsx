@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useList, useCreate, useUpdate, useDelete } from "@refinedev/core";
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  fetchAllNavItems,
-  createNavItem,
   updateNavItem,
-  deleteNavItem,
   buildNavTree,
   clearNavCache,
   type NavItem,
@@ -141,11 +139,12 @@ function AdminNavPage() {
   });
   const [addParentId, setAddParentId] = useState<string | null>(null);
 
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ["nav-items", location],
-    queryFn: () => fetchAllNavItems(location),
-    staleTime: 10_000,
+  const { result, query: { isLoading } } = useList<NavItem>({
+    resource: "navigation_items",
+    filters: [{ field: "location", operator: "eq", value: location }],
+    sorters: [{ field: "sort_order", order: "asc" }],
   });
+  const items = (result?.data ?? []) as NavItem[];
 
   const tree = buildNavTree(items);
 
@@ -164,41 +163,14 @@ function AdminNavPage() {
     setExpandedIds(new Set(collectDropdownIds(tree)));
   }, [items.length]);
 
-  const invalidateNav = () => {
-    queryClient.invalidateQueries({ queryKey: ["nav-items"] });
+  const invalidateLayoutNav = () => {
     queryClient.invalidateQueries({ queryKey: ["layout-nav"] });
     clearNavCache();
   };
 
-  const createMutation = useMutation({
-    mutationFn: createNavItem,
-    onSuccess: () => {
-      invalidateNav();
-      toast.success("Item created");
-      resetAddForm();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, input }: { id: string; input: Partial<NavItemInput> }) => updateNavItem(id, input),
-    onSuccess: () => {
-      invalidateNav();
-      toast.success("Item updated");
-      setEditingId(null);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteNavItem,
-    onSuccess: () => {
-      invalidateNav();
-      toast.success("Item deleted");
-      setDeletingId(null);
-    },
-    onError: (e: Error) => { toast.error(e.message); setDeletingId(null); },
-  });
+  const { mutate: createMutate, mutation: { isPending: isCreating } } = useCreate();
+  const { mutate: updateMutate, mutation: { isPending: isUpdating } } = useUpdate();
+  const { mutate: deleteMutate, mutation: { isPending: isDeleting } } = useDelete();
 
   const batchUpdateMutation = useMutation({
     mutationFn: async (updates: { id: string; sort_order: number; parent_id: string | null }[]) => {
@@ -207,7 +179,8 @@ function AdminNavPage() {
       }
     },
     onSuccess: () => {
-      invalidateNav();
+      queryClient.invalidateQueries({ queryKey: ["nav-items"] });
+      invalidateLayoutNav();
       toast.success("Order updated");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -421,16 +394,26 @@ function AdminNavPage() {
         const nextOrder = parentItems.length > 0
           ? Math.max(...parentItems.map((i) => i.sort_order)) + 1
           : 0;
-        createMutation.mutate({
-          type: values.type,
-          label_en: values.label_en,
-          label_bn: values.label_bn || "",
-          slug: values.type === "internal" ? values.slug || "/" : "",
-          url: values.type === "external" ? values.url || "" : "",
-          visible: values.visible,
-          location,
-          parent_id: addParentId,
-          sort_order: nextOrder,
+        createMutate({
+          resource: "navigation_items",
+          values: {
+            type: values.type,
+            label_en: values.label_en,
+            label_bn: values.label_bn || "",
+            slug: values.type === "internal" ? values.slug || "/" : "",
+            url: values.type === "external" ? values.url || "" : "",
+            visible: values.visible,
+            location,
+            parent_id: addParentId,
+            sort_order: nextOrder,
+          },
+        }, {
+          onSuccess: () => {
+            invalidateLayoutNav();
+            toast.success("Item created");
+            resetAddForm();
+          },
+          onError: (e: any) => toast.error(e.message),
         });
       },
       (errors) => {
@@ -603,7 +586,18 @@ function AdminNavPage() {
                     isActive={activeId === node.id}
                     activeDropZone={activeDropZone}
                     onStartEdit={setEditingId}
-                    onSaveEdit={(id, input) => updateMutation.mutate({ id, input })}
+                    onSaveEdit={(id, input) => updateMutate({
+                      resource: "navigation_items",
+                      id,
+                      values: input,
+                    }, {
+                      onSuccess: () => {
+                        invalidateLayoutNav();
+                        toast.success("Item updated");
+                        setEditingId(null);
+                      },
+                      onError: (e: any) => toast.error(e.message),
+                    })}
                     onDelete={setDeletingId}
                     onAddChild={handleAddChild}
                     onExpandToggle={handleExpandToggle}
@@ -713,9 +707,9 @@ function AdminNavPage() {
             </Form>
             <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-border/60">
               <button type="button" onClick={resetAddForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
-              <button type="button" onClick={handleSubmitNew} disabled={createMutation.isPending}
+              <button type="button" onClick={handleSubmitNew} disabled={isCreating}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
-                {createMutation.isPending ? "Adding…" : "Add Item"}
+                {isCreating ? "Adding…" : "Add Item"}
               </button>
             </div>
           </div>
@@ -759,9 +753,19 @@ function AdminNavPage() {
             </p>
             <div className="flex items-center justify-end gap-2">
               <button onClick={() => setDeletingId(null)} className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
-              <button onClick={() => deleteMutation.mutate(deletingId!)} disabled={deleteMutation.isPending}
+              <button onClick={() => deleteMutate({
+                resource: "navigation_items",
+                id: deletingId!,
+              }, {
+                onSuccess: () => {
+                  invalidateLayoutNav();
+                  toast.success("Item deleted");
+                  setDeletingId(null);
+                },
+                onError: (e: any) => { toast.error(e.message); setDeletingId(null); },
+              })} disabled={isDeleting}
                 className="px-3 py-1.5 text-xs font-medium bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
-                {deleteMutation.isPending ? "Deleting…" : "Delete"}
+                {isDeleting ? "Deleting…" : "Delete"}
               </button>
             </div>
           </div>

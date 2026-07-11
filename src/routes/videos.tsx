@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPublishedVideos, getYoutubeId, type Video } from "@/lib/videos";
+import { fetchSiteSettings } from "@/lib/siteSettings";
 import { fetchPageBySlug } from "@/lib/pages";
 import { useState } from "react";
 import { Video as VideoIcon } from "lucide-react";
@@ -16,7 +17,8 @@ export const Route = createFileRoute("/videos")({
     return { settings, page };
   },
   head: ({ loaderData }) => {
-    const { settings, page } = loaderData;
+    const settings = loaderData?.settings;
+    const page = loaderData?.page;
     const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
     const metaDesc = page?.meta_description_en || "Curated video collection on Buddhist psychology, mindfulness, and the examined life.";
     const pageTitle = page?.title_en || "Videos";

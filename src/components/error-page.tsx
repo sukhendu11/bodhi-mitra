@@ -1,7 +1,7 @@
 import { useRouter } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { isAppError, getUserMessage } from "@/lib/errors";
-import { captureError } from "@/lib/error-reporting";
+import { captureError } from "@/lib/errors";
 
 interface ErrorPageProps {
   error: Error;

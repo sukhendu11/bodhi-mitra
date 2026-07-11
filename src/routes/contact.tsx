@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { Reveal } from "@/components/Reveal";
@@ -7,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { sendContactNotification } from "@/lib/contact-notification";
 
 export const Route = createFileRoute("/contact")({
   loader: () => getSiteName(),
@@ -28,6 +30,8 @@ function ContactPage() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
+  const doSendNotification = useServerFn(sendContactNotification);
+
   const title = pickLocalized(c.title_en, c.title_bn, lang, "Contact");
   const intro = pickLocalized(c.intro_en, c.intro_bn, lang, "");
   const nameLabel = pickLocalized(c.form_name_label_en, c.form_name_label_bn, lang, "Name");
@@ -46,13 +50,27 @@ function ContactPage() {
     const formData = new FormData(form);
 
     try {
+      const name = formData.get("name") as string;
+      const email = formData.get("email") as string;
+      const message = formData.get("message") as string;
+
+      // Store the message in the database
       const { error } = await (supabase as any).from("contact_messages").insert({
-        name: formData.get("name") as string,
-        email: formData.get("email") as string,
-        message: formData.get("message") as string,
+        name,
+        email,
+        message,
       });
 
       if (error) throw error;
+
+      // Send notification email server-side (best-effort — won't block the form submission)
+      (doSendNotification as any)({ data: { name, email, message } }).then((result: any) => {
+        if (!result.sent) {
+          console.warn("[contact] Email notification not sent:", result.reason);
+        }
+      }).catch((err: Error) => {
+        console.warn("[contact] Email notification failed:", err.message);
+      });
 
       setStatus("sent");
       form.reset();

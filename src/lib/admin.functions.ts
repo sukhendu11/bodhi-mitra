@@ -5,6 +5,17 @@ import { createClient } from "@supabase/supabase-js";
 import type { Json } from "@/integrations/supabase/types";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+/* ── Audit event type ─────────────────────────────────────────── */
+
+export interface AuditEvent {
+  id: string;
+  action: string;
+  actor_id: string;
+  target_user_id: string | null;
+  details: Json | null;
+  created_at: string;
+}
+
 /* ── Dashboard stats types ────────────────────────────────────── */
 
 export interface MonthlyPostCount {
@@ -213,78 +224,6 @@ async function logAuditEvent(entry: AuditLogEntry) {
     console.error("[audit] Failed to log event:", entry.action);
   }
 }
-
-/* ── Audit log types ──────────────────────────────────────────── */
-
-export type AuditLogRow = {
-  id: string;
-  actor_id: string;
-  action: string;
-  target_user_id: string | null;
-  details: Record<string, Json>;
-  created_at: string;
-  actor_email?: string | null;
-  actor_display_name?: string | null;
-  target_email?: string | null;
-  target_display_name?: string | null;
-};
-
-/** Fetch the audit log with pagination. Only accessible by super_admin. */
-export const getAuditLog = createServerFn({ method: "GET" })
-  .middleware([requireMinRole("super_admin")])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-
-    const { data, error } = await supabase
-      .from("audit_log")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(200);
-
-    if (error) throw new Error(error.message);
-
-    // Enrich with actor/target info
-    const userIds = new Set<string>();
-    (data ?? []).forEach((row: { actor_id: string; target_user_id?: string | null }) => {
-      if (row.actor_id) userIds.add(row.actor_id);
-      if (row.target_user_id) userIds.add(row.target_user_id);
-    });
-
-    const userMap: Record<string, { email: string | null; display_name: string | null }> = {};
-    if (userIds.size > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, email, display_name")
-        .in("user_id", Array.from(userIds));
-      if (profiles) {
-        for (const p of profiles) {
-          userMap[p.user_id] = { email: p.email ?? null, display_name: p.display_name ?? null };
-        }
-      }
-    }
-
-    const enriched: AuditLogRow[] = (data ?? []).map((r: Record<string, unknown>) => {
-      const row = r as Record<string, unknown>;
-      return {
-        id: row.id as string,
-        actor_id: row.actor_id as string,
-        action: row.action as string,
-        target_user_id: (row.target_user_id as string | null) ?? null,
-        details: (row.details ?? {}) as Record<string, Json>,
-        created_at: row.created_at as string,
-        actor_email: userMap[row.actor_id as string]?.email ?? null,
-        actor_display_name: userMap[row.actor_id as string]?.display_name ?? null,
-        target_email: row.target_user_id
-          ? userMap[row.target_user_id as string]?.email ?? null
-          : null,
-        target_display_name: row.target_user_id
-          ? userMap[row.target_user_id as string]?.display_name ?? null
-          : null,
-      } as AuditLogRow;
-    });
-
-    return enriched;
-  });
 
 /** Check if the current user has admin or super_admin role. */
 export const checkIsAdmin = createServerFn({ method: "GET" })
@@ -633,4 +572,85 @@ export const bulkDeleteUsersFn = createServerFn({ method: "POST" })
       failed: errors.length,
       errors,
     } as BulkActionResult;
+  });
+
+/* ── Admin: get audit events for a specific user ──────────────── */
+
+/** Fetch audit log entries where a specific user is the actor or target. */
+export const getUserAuditEvents = createServerFn({ method: "GET" })
+  .middleware([requireMinRole("admin")])
+  .handler(async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+    const { supabase } = context;
+    const input = data as { targetUserId: string; limit?: number };
+
+    const { data: entries, error } = await (supabase as any)
+      .from("audit_log")
+      .select("*")
+      .or(`actor_id.eq.${input.targetUserId},target_user_id.eq.${input.targetUserId}`)
+      .order("created_at", { ascending: false })
+      .limit(input.limit ?? 20);
+
+    if (error) throw new Error(error.message);
+    return (entries ?? []) as AuditEvent[];
+  });
+
+/* ── Admin: get a specific user's library with progress ────────── */
+
+/** Fetch a user's purchased books with reading progress (admin variant). */
+export const getUserLibraryAdmin = createServerFn({ method: "GET" })
+  .middleware([requireMinRole("admin")])
+  .handler(async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+    const { supabase } = context;
+    const input = data as { targetUserId: string };
+    const db = supabase as any;
+
+    const { data: purchases } = await db
+      .from("purchases")
+      .select("id, book_id, amount_paid, purchase_date, created_at")
+      .eq("user_id", input.targetUserId)
+      .order("purchase_date", { ascending: false });
+
+    if (!purchases?.length) return { books: [] };
+
+    const bookIds = purchases.map((p: any) => p.book_id) as string[];
+
+    const [{ data: books }, { data: progress }] = await Promise.all([
+      db
+        .from("books")
+        .select("id, title_en, title_bn, slug, cover_image, author_name, is_free, pages, status")
+        .in("id", bookIds),
+      db
+        .from("reading_progress")
+        .select("book_id, progress_pct, completed, last_page, total_pages, updated_at")
+        .eq("user_id", input.targetUserId)
+        .in("book_id", bookIds),
+    ]);
+
+    const bookMap = new Map((books ?? []).map((b: any) => [b.id, b]));
+    const progressMap = new Map((progress ?? []).map((p: any) => [p.book_id, p]));
+
+    const library = (purchases ?? []).map((p: any) => {
+      const book = bookMap.get(p.book_id) ?? {} as any;
+      const prog = progressMap.get(p.book_id) as any | undefined;
+      return {
+        purchaseId: p.id,
+        bookId: p.book_id,
+        titleEn: book.title_en ?? null,
+        titleBn: book.title_bn ?? null,
+        slug: book.slug ?? "",
+        coverImage: book.cover_image ?? null,
+        author: book.author_name ?? null,
+        isFree: !!book.is_free,
+        status: book.status ?? "draft",
+        amountPaid: p.amount_paid ?? 0,
+        purchaseDate: p.purchase_date ?? p.created_at,
+        progressPct: prog?.progress_pct ?? 0,
+        completed: prog?.completed ?? false,
+        lastPage: prog?.last_page ?? 0,
+        totalPages: prog?.total_pages ?? 0,
+        updatedAt: prog?.updated_at ?? null,
+      };
+    });
+
+    return { books: library };
   });

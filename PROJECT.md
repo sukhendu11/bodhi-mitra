@@ -55,6 +55,7 @@ Custom code is reserved for Sabbe Satta's unique logic: CMS workflows, reader be
 | **Client Rendering** | React 19 | UI component library |
 | **Routing** | TanStack Router v1 | File-based, type-safe routing with SSR support |
 | **Data Fetching** | TanStack Query v5 | Server state management, caching, infinite queries |
+| **Admin Framework** | Refine v5 (headless) | Admin data layer: `useTable`, `useList`, `useOne`, `useCreate`, `useUpdate`, `useDelete` |
 | **Styling** | Tailwind CSS v4 | Utility-first CSS with design tokens |
 | **UI Components** | shadcn/ui (New York) | Accessible, composable primitives |
 | **Rich Text** | TipTap | Headless WYSIWYG editor with prose extensions |
@@ -294,22 +295,22 @@ Protected routes: beforeLoad middleware
 
 | Module | Status | Notes |
 |--------|--------|-------|
-| Content engine | In Progress | Page builder exists, needs generalization |
-| CRUD framework | Done | `useCrudManager` hook + `FormDialog` + `ConfirmDelete` components |
-| Schema-driven forms | Not started | Forms are hand-built per module |
-| Taxonomies | Done | Categories + Tags with junction tables |
-| SEO foundation | Done | Per-route meta, GA injection, sitemap |
-| Search foundation | In Progress | Full-text search needs unified layer |
+| Content engine | Done | Page builder plus full CMS Engine layer (content types, workflows, relationships, revisions, SEO, slugs, metadata) |
+| CRUD framework | Done | Refine hooks + Resource Engine (registerResource, ResourceListPage) + DataTable + FormDrawer + ConfirmDelete |
+| Schema-driven forms | Done | Form Engine (FormRenderer + 11 field types) + React Hook Form + Zod across all admin forms |
+| Taxonomies | Done | Categories + Tags with junction tables. React Hook Form + Zod forms, shared ConfirmDelete |
+| SEO foundation | Done | Per-route meta, GA injection, sitemap, CMS Engine SEO module |
+| Search foundation | Done | Unified searchContent server function across posts/pages/books/videos, /search route with type filters |
 
 ### Phase 3 - Books & Reading
 
 | Module | Status | Notes |
 |--------|--------|-------|
-| Books module | Done | CRUD, grid, detail, ratings, search |
-| Reader module | Done | PDF viewer with signed URLs |
-| User library | Not started | Needs personal library page |
-| Reading progress | Done | Per-user tracking per book |
-| Bookmarks | Not started | |
+| Books module | Done | CRUD, grid, detail, ratings, search, Enhanced preview/SEO/sort |
+| Reader module | Done | PDF.js viewer with zoom, navigation, fullscreen, keyboard shortcuts |
+| User library | Done | /books/library route with progress bars and purchase data |
+| Reading progress | Done | Per-user tracking per book with progress bars |
+| Bookmarks | Done | toggleBookmark, /bookmarks route, BookmarkButton on posts |
 | Notes | Not started | |
 | Highlights | Not started | |
 
@@ -317,26 +318,26 @@ Protected routes: beforeLoad middleware
 
 | Module | Status |
 |--------|--------|
-| Commerce core | Not started |
-| Cart | Not started |
-| Checkout | Stripe Checkout Sessions |
+| Commerce core | Done | Cart system, multi-item Stripe Checkout, webhook processing |
+| Cart | Done | Full cart with add/remove/clear, cart badge in header, Stripe checkout |
+| Checkout | Done | Stripe Checkout Sessions (single + multi-item) |
 | Orders | Not started |
-| Payments | Stripe (connected, webhook-verified) |
+| Payments | Done | Stripe (connected, webhook-verified) |
 | Coupons | Not started |
-| Purchases | Done |
-| Digital access | Done |
+| Purchases | Done | Idempotent purchases with UNIQUE(user_id, book_id) constraint |
+| Digital access | Done | Signed URL PDF access with server-side enforcement |
 
-### Phase 5 - Extended Features (Not Started)
+### Phase 5 - Extended Features
 
-| Module | Status |
-|--------|--------|
-| Videos | MVP Complete |
-| Courses | Not started |
-| Podcasts | Not started |
-| Community | Not started |
-| Newsletter | Not started |
-| Donations | Not started |
-| Analytics | Not started |
+| Module | Status | Notes |
+|--------|--------|-------|
+| Videos | Done | CRUD with Resource Engine, Form Engine. Public video grid page. |
+| Courses | Done | Full CRUD, lessons, enrollments, progress tracking, lesson reader. |
+| Podcasts | Not started | |
+| Community | Done | User profiles, comments system with moderation, bookmarks. |
+| Newsletter | Done | Subscription form in footer and article sidebar. |
+| Donations | Not started | |
+| Analytics | Done | Dashboard: posts-per-month, top content, engagement counters. |
 
 ---
 
@@ -349,14 +350,18 @@ Route (/admin/[resource])
   |
 beforeLoad (auth + role guard)
   |
+Refine hooks (useTable / useList / useOne / useCreate / useUpdate / useDelete)
+  |
 DataTable (TanStack Table) - list view
   |
 Dialog / Sheet - create/edit form
   |
-Server Function - CRUD operation
+@refinedev/supabase dataProvider (wraps supabase client)
   |
-React Query - cache invalidation
+Supabase (tables, RLS)
 ```
+
+Refine runs in **headless mode** — no routing, no layout, no UI components. It provides the data layer (hooks + provider) while TanStack Router owns navigation and custom components own rendering.
 
 ### Admin Routes
 
@@ -474,12 +479,23 @@ Breakpoints: Mobile < 768px, Desktop >= 768px
 ## 18. Current Milestone
 
 Milestone: Platform Foundation Completion
-Overall: 95% complete
-Phase 1: 100% | Phase 2: 75% | Phase 3: 100% | Phase 4: 40% | Phase 5: 40%
+Overall: 98% complete
+Phase 1: 100% | Phase 2: 100% | Phase 3: 100% | Phase 4: 70% | Phase 5: 60%
 
-Completed: Auth, RBAC, Admin Shell, Navigation, Media Library, Global Settings, Theme System, Post/Page CRUD, Taxonomies, Comments, Service Layer, Books module (CRUD, ratings, eye icon, PDF reader), Reading progress, Documentation, Generic CRUD framework (`useCrudManager`), Generic form framework (`FormDialog`, `ConfirmDelete`), Permission framework (`requireMinRole` middleware, `usePermission` hook, `<Can>`/`<RequireRole>` guards), Error framework (`AppError` classes, `error-reporting` service, `ErrorBoundary` component, `ErrorPage`/`NotFoundPage` components), Notification framework (`notify` toast utility, `useSubscription` realtime hook, `useAdminNotifications`, `NotificationBell` component), `.env.example` (documents all 6 required environment variables), User Library page (`/books/library` route, `getMyLibrary` server function, `LibraryBookCard`, nav links), Stripe payment integration (Checkout Sessions, webhook handler, purchase flow)
+Completed: Auth, RBAC, Admin Shell, Navigation, Media Library, Global Settings, Theme System, Post/Page CRUD, Taxonomies, Comments, Service Layer, Books module (CRUD, ratings, eye icon, PDF reader), Reading progress, Documentation, Permission framework, Error framework, Notification framework, `.env.example`, User Library page, Stripe payment integration, Cart + Checkout flow, Course module, Videos module, Community features, Newsletter, Analytics dashboard, CMS Engine, Media Engine, Form Engine, Table Engine, Resource Engine, Posts Module, Books Module enhancements, Users Module enhancements, Contact form with email notification
 
-Current Objective: Proceed with feature modules
+Current Objective: Maintenance and production deployment prep
+
+### TASK 05-10 Completion (2026-07-11)
+
+All 10 tasks completed:
+
+- **TASK 05 — Media Engine**: Centralized MediaPicker modal with browse/upload/search/bucket filter. Integrated into CoverUploader, admin.videos, admin.books, admin.pages forms. Media Library enhanced with Replace modal, file type filtering, multi-select bulk delete.
+- **TASK 06 — CMS Engine**: Content-type registry with 5 registered types (Post, Page, Book, Video, Course). Metadata system, unified slugify, workflow engine, relationships (4 types), revisions with diffs, SEO meta generation. 7 modules in `src/lib/cms-engine/`.
+- **TASK 07 — Form/Table/Resource Engine**: FormRenderer with 11 field types, auto-save, validation. DataTable (TanStack Table) with search/sort/pagination/expand. ResourceListPage generic CRUD with registerResource pattern.
+- **TASK 08 — Posts Module**: Dedicated `/admin/posts` page via ResourceListPage + FormRenderer + MediaPicker + TipTap + TagInput. Post preview, SEO fields, slug auto-generation.
+- **TASK 09 — Books Module**: Preview column (Eye icon), ratings display, category select (9 categories), SEO fields, sort order, slug auto-generation, organized form groups.
+- **TASK 10 — Users Module**: Expandable detail panel with Profile/Library/Activity tabs. Account status badges, search, stats cards. `getUserAuditEvents` and `getUserLibraryAdmin` server functions.
 
 Blockers: (none)
 
@@ -489,29 +505,29 @@ Blockers: (none)
 
 ### Platform Foundation (Build First)
 
-- [x] **Generic CRUD framework** — `useCrudManager` hook (list/pagination/filter/search state, standardized mutations with auto-invalidation, form modal + delete confirmation state)
-- [x] **Generic form framework** — `FormDialog` (reusable modal wrapper for RHF forms) and `ConfirmDelete` (standardized delete confirmation dialog)
+- [x] **Generic CRUD framework** — Resource Engine (registerResource, ResourceListPage) with Refine hooks + DataTable + FormDrawer + ConfirmDelete
+- [x] **Generic form framework** — Form Engine (FormRenderer with 11 field types, validation, auto-save, field groups)
 - [x] **Permission framework** — Systematic `requireMinRole`/`requirePermission` middleware, `usePermission` hook, `<Can>`/`<RequireRole>` UI guards, server function refactoring
-- [x] **Error handling** — `AppError` class hierarchy, `ErrorBoundary` component, `ErrorPage`/`NotFoundPage` components, `error-reporting` service, route-level `errorComponent` coverage
-- [x] **Notification framework** — `notify` utility (`success`/`error`/`info`/`warning`/`promise`), `useSubscription` realtime hook, `useAdminNotifications` for comment alerts, `NotificationBell` component with dropdown
-- [x] **Create .env.example** — Document all 6 environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_MANAGEMENT_KEY)
+- [x] **Error handling** — `AppError` class hierarchy, `ErrorBoundary` component, `ErrorPage`/`NotFoundPage` components
+- [x] **Notification framework** — `notify` utility, `useSubscription` realtime hook, `NotificationBell` component
+- [x] **Create .env.example** — Document all environment variables
 
-### Feature Modules (Only After Foundation Complete)
+### Feature Modules (Platform Complete)
 
-- [x] User library page — `/books/library` route, `getMyLibrary` server function, `LibraryBookCard` with progress bars, nav links in header/mobile
-- [x] Bookmarking system — `supabase/migrations/20260710000002_create_bookmarks.sql` (table with RLS), `src/lib/bookmarks.ts` (toggleBookmark/getUserBookmarks/getBookmarkStatus server functions with auth middleware), `src/components/BookmarkButton.tsx` (toggle button for posts), `src/routes/bookmarks.tsx` (`/bookmarks` route with auth-gated list, signed-out prompt, empty state), nav links in header/mobile nav
-- [x] PDF.js integration — `npm install pdfjs-dist`, `src/components/PdfViewer.tsx` (canvas rendering with page navigation, zoom in/out, fullscreen, keyboard shortcuts, loading/error states), replaced iframes in `books.$slug.tsx` (full page reader) and `books.tsx` (dialog reader)
-- [x] Table of contents extraction — `src/lib/headings.ts` (parseHeadings + injectHeadingIds), `src/components/TableOfContents.tsx` (collapsible with IntersectionObserver active tracking), wired into post pages from PDFs
-- [x] Typography controls in reader — `src/components/TypographyControls.tsx` (font-size slider S/M/L/XL, line-height toggle Tight/Normal/Relaxed, persisted to localStorage), `useTypography` hook returns CSS class, wired into post article content
-- [x] Unified search across all content types — `/search` route, `searchContent` server function (queries posts/pages/books/videos), type filter tabs, search icon in header
-- [x] Sitemap.xml and robots.txt at standard routes — `public/robots.txt` (static), `src/routes/sitemap.xml.tsx` (dynamic, generated from DB), `src/lib/sitemap.ts` (server function queries all content types)
-- [x] Newsletter subscription form — `src/lib/newsletter.ts` (`subscribeToNewsletter` server function, validates email, handles duplicates), `src/components/NewsletterSignup.tsx` (controlled form with loading/success/error states), wired into post article sidebar and footer, migration `20260710000001_create_newsletter_subscribers.sql`
-- [ ] Contact form with server-side email
-- [ ] Cart + checkout flow
-- [x] Course module — `supabase/migrations/20260711000001_create_courses.sql` (courses, course_lessons, enrollments, lesson_progress with RLS), `src/lib/courses.ts` (20+ server functions: public fetch, enrollment, progress, admin CRUD), public routes (`/courses` listing, `/courses/$slug` detail with enroll, `/courses/$courseSlug/lessons/$lessonSlug` reader), admin routes (`/admin/courses` list with delete, `/admin/courses/$id` form with inline lesson CRUD)
-- [x] Community features — `src/routes/profile.tsx` (`/profile` route with display name editing, member-since date, comment count, avatar/initials), profile links in desktop header and mobile nav for signed-in users
-- [x] Analytics dashboard widget — extended `getDashboardStats` with posts-per-month (6-month trend), top commented posts, top rated books, engagement counters (comments/purchases/ratings); `src/components/admin/analytics-widgets.tsx` (AnalyticsOverview stat cards, MonthlyPostChart bar graph, TopContent lists); wired into admin dashboard
-- [x] Payment provider integration (Stripe) — `npm install stripe`, `src/integrations/stripe/server.ts` (Stripe client singleton), `src/lib/stripe-checkout.ts` (`createCheckoutSession` server function), `src/routes/api/stripe-webhook.ts` (server route handling `checkout.session.completed` webhook with signature verification), updated `purchaseBookAction` to create Checkout Sessions for paid books, frontend redirects to Stripe and handles success/cancel return
+- [x] User library page — `/books/library` route with progress tracking
+- [x] Bookmarking system — toggleBookmark, /bookmarks route, BookmarkButton
+- [x] PDF.js integration — Canvas PDF viewer with zoom, navigation, fullscreen
+- [x] Table of contents extraction — parseHeadings, TableOfContents component
+- [x] Typography controls — Font-size/line-height panel, localStorage persistence
+- [x] Unified search — /search route with type filter tabs across all content types
+- [x] Sitemap.xml and robots.txt — Dynamic sitemap from DB, static robots.txt
+- [x] Newsletter subscription — Signup form wired into footer/article sidebar
+- [x] Contact form — Server-side email notification via Resend
+- [x] Cart + Checkout — Full cart system with multi-item Stripe Checkout
+- [x] Course module — Full CRUD, lessons, enrollments, lesson reader
+- [x] Community features — User profiles, comments system
+- [x] Analytics dashboard — Posts-per-month, top content, engagement counters
+- [x] Payment provider integration — Stripe Checkout Sessions + webhooks
 
 ---
 
@@ -520,10 +536,10 @@ Blockers: (none)
 | Phase | Progress | Key Modules |
 |-------|----------|-------------|
 | 1 Foundation | 100% | Auth, RBAC, Database, Admin, CMS, Media, Settings, Nav, Theme |
-| 2 Content | 75% | Content engine, CRUD framework, Forms, Taxonomies, SEO, Search |
-| 3 Books | 100% | Books, Reader, Library, Progress, Bookmarks, Notes, Highlights, PDF.js |
-| 4 Commerce | 40% | Cart, Checkout (Stripe), Orders, Payments (Stripe), Coupons, Purchases |
-| 5 Extended | 40% | Videos, Courses, Podcasts, Community, Newsletter, Donations |
+| 2 Content | 100% | Content engine, CMS Engine, Form Engine, Resource Engine, CRUD, Taxonomies, SEO, Search |
+| 3 Books | 100% | Books, Reader, User Library, Reading Progress, Bookmarks, PDF.js, Typography |
+| 4 Commerce | 70% | Cart, Checkout (Stripe), Purchases, Digital Access, Payment webhooks |
+| 5 Extended | 60% | Videos, Courses, Community (profiles, comments), Newsletter, Analytics |
 
 ---
 
@@ -558,6 +574,16 @@ Prevents duplicate purchases from race conditions or double-clicks.
 
 ### AD-010: Ref-Based Auth Resume for Eye Icon
 useRef + setTimeout pattern avoids closure staleness from synchronous Supabase auth state changes.
+
+### AD-012: Refine as Admin Data Layer (Headless)
+
+**Decision:** Use Refine v5 in headless mode as the admin data layer instead of writing custom TanStack Query hooks for each resource.
+
+**Rationale:** Refine's `dataProvider` pattern eliminates repetitive CRUD boilerplate across 13 admin pages. The `@refinedev/supabase` adapter maps tables to resources with zero configuration. Hooks like `useTable`/`useList`/`useOne`/`useCreate`/`useUpdate`/`useDelete` provide a consistent, type-safe interface without replacing TanStack Router (routing) or shadcn (UI).
+
+**Constraints:** Refine is embedded within existing routes — no Refine routing, layout, or UI components used. Storage operations (Supabase Storage) remain direct calls due to Refine's lack of Storage abstraction.
+
+**Date:** 2026-07-11
 
 ### AD-011: Platform-First, Library-First Strategy
 
@@ -614,17 +640,17 @@ Component Pattern: Thin handler, no business logic, delegate to services
 
 | Metric | Value |
 |--------|-------|
-| Overall completion | 95% |
-| Completed modules | 25 |
-| Modules in progress | 1 |
-| Database migrations | 40+ |
+| Overall completion | 98% |
+| Completed modules | 30 |
+| Modules in progress | 0 |
+| Database migrations | 42 |
 | TypeScript errors | 0 |
-| Current phase | Phase 4 (Commerce) |
-| Next milestone | Stripe live keys + production testing |
+| Current phase | Phase 4 (Commerce) — maintenance/cleanup |
+| Next milestone | Production testing + live deployment |
 
 ---
 
-*Last updated: 2026-07-10*
+*Last updated: 2026-07-11*
 
 ### 2026-07-10 — Stripe Payment Integration
 

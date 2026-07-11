@@ -1,33 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useList, useCreate, useUpdate, useDelete } from "@refinedev/core";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import {
-  fetchAllCategories,
-  fetchAllTags,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-  createTag,
-  updateTag,
-  deleteTag,
-  slugifyTaxonomy,
-  type Category,
-  type CategoryInput,
-  type Tag,
-  type TagInput,
-} from "@/lib/taxonomy";
+import { slugifyTaxonomy, type Category, type Tag, type CategoryInput, type TagInput } from "@/lib/taxonomy";
+import { categorySchema, tagSchema, type CategoryFormValues, type TagFormValues } from "@/lib/schemas";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { ConfirmDelete } from "@/components/admin/confirm-delete";
+import { FormRenderer } from "@/components/admin/form-engine";
 import {
   Tags,
   FolderTree,
   Plus,
   Edit3,
   Trash2,
-  Check,
   X,
 } from "lucide-react";
 import { ErrorPage } from "@/components/error-page";
@@ -38,7 +28,6 @@ export const Route = createFileRoute("/admin/taxonomy")({
 });
 
 function TaxonomyPage() {
-  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("categories");
 
   return (
@@ -86,331 +75,370 @@ function TaxonomyPage() {
   );
 }
 
+/* ─── Category Form Groups ───────────────────────────────────────── */
+
+const CATEGORY_FORM_GROUPS = [
+  {
+    columns: 2 as const,
+    fields: [
+      { type: "text" as const, name: "name_en" as const, label: "Name (EN)", placeholder: "Buddhist Psychology" as const },
+      { type: "text" as const, name: "name_bn" as const, label: "Name (BN)", placeholder: "বৌদ্ধ মনোবিজ্ঞান" as const },
+    ],
+  },
+  {
+    fields: [
+      { type: "text" as const, name: "slug" as const, label: "Slug", placeholder: "buddhist-psychology" as const },
+    ],
+  },
+  {
+    columns: 2 as const,
+    fields: [
+      { type: "textarea" as const, name: "description_en" as const, label: "Description (EN)", rows: 2 },
+      { type: "textarea" as const, name: "description_bn" as const, label: "Description (BN)", rows: 2 },
+    ],
+  },
+  {
+    columns: 3 as any,
+    fields: [
+      { type: "color" as const, name: "color" as const, label: "Color" },
+      { type: "number" as const, name: "sort_order" as const, label: "Sort Order", min: 0 },
+      { type: "checkbox" as const, name: "visible" as const, label: "Visible" },
+    ],
+  },
+];
+
 /* ─── Category Manager ─────────────────────────────────────────────── */
 
+const defaultCategoryValues: CategoryFormValues = {
+  slug: "",
+  name_en: "",
+  name_bn: "",
+  description_en: "",
+  description_bn: "",
+  icon: "",
+  color: "#d35400",
+  sort_order: 0,
+  visible: true,
+};
+
 function CategoryManager() {
-  const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
-  const [form, setForm] = useState<CategoryInput>({
-    slug: "", name_en: "", name_bn: "", description_en: "",
-    description_bn: "", icon: "", color: "#d35400", sort_order: 0, visible: true,
+  const [deletingCat, setDeletingCat] = useState<Category | null>(null);
+
+  const isFormOpen = showNew || editingId !== null;
+
+  const form = useForm<CategoryFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(categorySchema) as any,
+    defaultValues: { ...defaultCategoryValues },
   });
 
-  const { data: categories, isLoading } = useQuery({
-    queryKey: ["admin-categories"],
-    queryFn: fetchAllCategories,
-    staleTime: 30_000,
-  });
+  useUnsavedChanges(isFormOpen && form.formState.isDirty);
 
-  const createMutation = useMutation({
-    mutationFn: createCategory,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
-      toast.success("Category created");
-      resetForm();
-    },
-    onError: (e: Error) => toast.error(e.message),
+  const { query: categoriesQuery, result: categoriesResult } = useList<Category>({
+    resource: "categories",
+    sorters: [{ field: "sort_order", order: "asc" }],
   });
+  const categories = categoriesResult?.data ?? [];
+  const isLoading = categoriesQuery?.isLoading ?? false;
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, input }: { id: string; input: Partial<CategoryInput> }) => updateCategory(id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
-      toast.success("Category updated");
-      setEditingId(null);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteCategory,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
-      toast.success("Category deleted");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const { mutate: createMutate, mutation: createMutation } = useCreate();
+  const { mutate: updateMutate, mutation: updateMutation } = useUpdate();
+  const { mutate: deleteMutate, mutation: deleteMutation } = useDelete();
+  const isSaving = (createMutation?.isPending || updateMutation?.isPending) ?? false;
+  const isDeleting = deleteMutation?.isPending ?? false;
 
   const resetForm = () => {
     setShowNew(false);
-    setForm({ slug: "", name_en: "", name_bn: "", description_en: "", description_bn: "", icon: "", color: "#d35400", sort_order: 0, visible: true });
+    setEditingId(null);
+    form.reset({ ...defaultCategoryValues });
   };
 
-  const handleEdit = (cat: Category) => {
-    setForm({
-      slug: cat.slug, name_en: cat.name_en, name_bn: cat.name_bn,
-      description_en: cat.description_en, description_bn: cat.description_bn,
-      icon: cat.icon, color: cat.color, sort_order: cat.sort_order, visible: cat.visible,
+  const openEdit = (cat: Category) => {
+    form.reset({
+      slug: cat.slug,
+      name_en: cat.name_en,
+      name_bn: cat.name_bn,
+      description_en: cat.description_en,
+      description_bn: cat.description_bn,
+      icon: cat.icon,
+      color: cat.color,
+      sort_order: cat.sort_order,
+      visible: cat.visible,
     });
     setEditingId(cat.id);
   };
 
   const handleSave = () => {
-    if (!form.name_en.trim()) { toast.error("Name is required"); return; }
-    if (!form.slug.trim()) form.slug = slugifyTaxonomy(form.name_en);
+    form.handleSubmit(
+      (values) => {
+        if (!values.slug.trim()) values.slug = slugifyTaxonomy(values.name_en);
 
-    if (editingId) {
-      updateMutation.mutate({ id: editingId, input: form });
-    } else {
-      createMutation.mutate(form);
-    }
+        const input: CategoryInput = values;
+
+        if (editingId) {
+          updateMutate(
+            { resource: "categories", id: editingId, values: input },
+            {
+              onSuccess: () => {
+                toast.success("Category updated");
+                resetForm();
+              },
+              onError: (e: any) => toast.error(e?.message ?? "Update failed"),
+            },
+          );
+        } else {
+          createMutate(
+            { resource: "categories", values: input },
+            {
+              onSuccess: () => {
+                toast.success("Category created");
+                resetForm();
+              },
+              onError: (e: any) => toast.error(e?.message ?? "Create failed"),
+            },
+          );
+        }
+      },
+      (errors) => {
+        const firstMsg = Object.values(errors).find((e) => e?.message);
+        toast.error(firstMsg?.message || "Please fix the form errors");
+      },
+    )();
   };
 
   if (isLoading) {
     return <div className="h-32 bg-secondary/20 animate-pulse rounded-lg" />;
   }
 
-  const cats = categories ?? [];
-
   return (
     <div className="space-y-4">
-      {/* New category button */}
-      {!showNew && !editingId && (
-        <Button size="sm" onClick={() => { resetForm(); setShowNew(true); }}>
+      {!isFormOpen && (
+        <Button size="sm" onClick={() => { setShowNew(true); }}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Add Category
         </Button>
       )}
 
-      {/* Form */}
-      {(showNew || editingId) && (
+      {isFormOpen && (
         <div className="border border-border/60 rounded-lg p-4 space-y-4 bg-secondary/10">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium">{editingId ? "Edit Category" : "New Category"}</p>
-            <button onClick={() => { setEditingId(null); setShowNew(false); }}
+            <button onClick={resetForm}
               className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60">
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Name (EN)</label>
-              <Input value={form.name_en} onChange={(e) => setForm((f) => ({ ...f, name_en: e.target.value }))} placeholder="Buddhist Psychology" />
-            </div>
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Name (BN)</label>
-              <Input value={form.name_bn} onChange={(e) => setForm((f) => ({ ...f, name_bn: e.target.value }))} placeholder="বৌদ্ধ মনোবিজ্ঞান" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Slug</label>
-            <Input value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} placeholder="buddhist-psychology" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Description (EN)</label>
-              <Textarea value={form.description_en} onChange={(e) => setForm((f) => ({ ...f, description_en: e.target.value }))} rows={2} />
-            </div>
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Description (BN)</label>
-              <Textarea value={form.description_bn} onChange={(e) => setForm((f) => ({ ...f, description_bn: e.target.value }))} rows={2} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Color</label>
-              <input type="color" value={form.color} onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
-                className="w-full h-9 rounded-lg border border-border/60 cursor-pointer bg-background" />
-            </div>
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Sort Order</label>
-              <Input type="number" min={0} value={form.sort_order} onChange={(e) => setForm((f) => ({ ...f, sort_order: parseInt(e.target.value) || 0 }))} />
-            </div>
-            <div className="flex items-end pb-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.visible} onChange={(e) => setForm((f) => ({ ...f, visible: e.target.checked }))}
-                  className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30" />
-                <span className="text-[0.6rem] font-medium">Visible</span>
-              </label>
-            </div>
-          </div>
+          <FormRenderer form={form} groups={CATEGORY_FORM_GROUPS} showValidationSummary={false} />
 
           <div className="flex items-center justify-end gap-2 pt-1">
-            <button onClick={() => { setEditingId(null); setShowNew(false); }}
+            <button onClick={resetForm}
               className="px-3 py-1.5 text-[0.6rem] font-medium text-muted-foreground hover:text-foreground transition-colors">
               Cancel
             </button>
-            <Button size="sm" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
-              {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update" : "Create"}
+            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Saving…" : editingId ? "Update" : "Create"}
             </Button>
           </div>
         </div>
       )}
 
-      {/* Category list */}
-      {cats.length === 0 ? (
+      {categories.length === 0 ? (
         <p className="text-sm text-muted-foreground py-8 text-center">No categories yet.</p>
       ) : (
         <div className="space-y-2">
-          {cats.map((cat) => {
-            const isEditing = editingId === cat.id;
-            return (
-              <div
-                key={cat.id}
-                className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg border border-border/60 bg-white dark:bg-zinc-900"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-5 h-5 rounded" style={{ backgroundColor: cat.color }} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium truncate">{cat.name_en}</p>
-                    <p className="text-[0.55rem] text-muted-foreground">
-                      /{cat.slug} · {cat.name_bn || "—"} · {cat.visible ? "Visible" : "Hidden"} · Order {cat.sort_order}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => handleEdit(cat)}
-                    className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors">
-                    <Edit3 className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => { if (confirm(`Delete "${cat.name_en}"?`)) deleteMutation.mutate(cat.id); }}
-                    className="p-1.5 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+          {categories.map((cat) => (
+            <div
+              key={cat.id}
+              className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg border border-border/60 bg-white dark:bg-zinc-900"
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-5 h-5 rounded" style={{ backgroundColor: cat.color }} />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium truncate">{cat.name_en}</p>
+                  <p className="text-[0.55rem] text-muted-foreground">
+                    /{cat.slug} · {cat.name_bn || "—"} · {cat.visible ? "Visible" : "Hidden"} · Order {cat.sort_order}
+                  </p>
                 </div>
               </div>
-            );
-          })}
+              <div className="flex items-center gap-1 shrink-0">
+                <button onClick={() => openEdit(cat)}
+                  className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors">
+                  <Edit3 className="h-3.5 w-3.5" />
+                </button>
+                <button onClick={() => setDeletingCat(cat)}
+                  className="p-1.5 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
+
+      <ConfirmDelete
+        open={!!deletingCat}
+        onConfirm={() => {
+          if (!deletingCat) return;
+          deleteMutate(
+            { resource: "categories", id: deletingCat.id },
+            {
+              onSuccess: () => { toast.success("Category deleted"); setDeletingCat(null); },
+              onError: (e: any) => { toast.error(e?.message ?? "Delete failed"); setDeletingCat(null); },
+            },
+          );
+        }}
+        onCancel={() => setDeletingCat(null)}
+        isPending={isDeleting}
+        title="Delete category"
+        description={`Delete "${deletingCat?.name_en}"? This cannot be undone.`}
+      />
     </div>
   );
 }
 
+/* ─── Tag Form Groups ────────────────────────────────────────────── */
+
+const TAG_FORM_GROUPS = [
+  {
+    columns: 2 as const,
+    fields: [
+      { type: "text" as const, name: "name_en" as const, label: "Name (EN)", placeholder: "Mindfulness" as const },
+      { type: "text" as const, name: "name_bn" as const, label: "Name (BN)", placeholder: "মাইন্ডফুলনেস" as const },
+    ],
+  },
+  {
+    columns: 2 as const,
+    fields: [
+      { type: "text" as const, name: "slug" as const, label: "Slug", placeholder: "mindfulness" as const },
+      { type: "color" as const, name: "color" as const, label: "Color" },
+    ],
+  },
+];
+
 /* ─── Tag Manager ─────────────────────────────────────────────────── */
 
+const defaultTagValues: TagFormValues = {
+  slug: "",
+  name_en: "",
+  name_bn: "",
+  color: "#666",
+};
+
 function TagManager() {
-  const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
-  const [form, setForm] = useState<TagInput>({
-    slug: "", name_en: "", name_bn: "", color: "#666",
+  const [deletingTag, setDeletingTag] = useState<Tag | null>(null);
+
+  const isFormOpen = showNew || editingId !== null;
+
+  const form = useForm<TagFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(tagSchema) as any,
+    defaultValues: { ...defaultTagValues },
   });
 
-  const { data: tags, isLoading } = useQuery({
-    queryKey: ["admin-tags"],
-    queryFn: fetchAllTags,
-    staleTime: 30_000,
-  });
+  useUnsavedChanges(isFormOpen && form.formState.isDirty);
 
-  const createMutation = useMutation({
-    mutationFn: createTag,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-tags"] });
-      toast.success("Tag created");
-      resetForm();
-    },
-    onError: (e: Error) => toast.error(e.message),
+  const { query: tagsQuery, result: tagsResult } = useList<Tag>({
+    resource: "tags",
+    sorters: [{ field: "name_en", order: "asc" }],
   });
+  const tags = tagsResult?.data ?? [];
+  const isLoading = tagsQuery?.isLoading ?? false;
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, input }: { id: string; input: Partial<TagInput> }) => updateTag(id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-tags"] });
-      toast.success("Tag updated");
-      setEditingId(null);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteTag,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-tags"] });
-      toast.success("Tag deleted");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const { mutate: createMutate, mutation: createMutation } = useCreate();
+  const { mutate: updateMutate, mutation: updateMutation } = useUpdate();
+  const { mutate: deleteMutate, mutation: deleteMutation } = useDelete();
+  const isSaving = (createMutation?.isPending || updateMutation?.isPending) ?? false;
+  const isDeleting = deleteMutation?.isPending ?? false;
 
   const resetForm = () => {
     setShowNew(false);
-    setForm({ slug: "", name_en: "", name_bn: "", color: "#666" });
+    setEditingId(null);
+    form.reset({ ...defaultTagValues });
   };
 
   const handleSave = () => {
-    if (!form.name_en.trim()) { toast.error("Name is required"); return; }
-    if (!form.slug.trim()) form.slug = slugifyTaxonomy(form.name_en);
+    form.handleSubmit(
+      (values) => {
+        if (!values.slug.trim()) values.slug = slugifyTaxonomy(values.name_en);
 
-    if (editingId) {
-      updateMutation.mutate({ id: editingId, input: form });
-    } else {
-      createMutation.mutate(form);
-    }
+        const input: TagInput = values;
+
+        if (editingId) {
+          updateMutate(
+            { resource: "tags", id: editingId, values: input },
+            {
+              onSuccess: () => {
+                toast.success("Tag updated");
+                resetForm();
+              },
+              onError: (e: any) => toast.error(e?.message ?? "Update failed"),
+            },
+          );
+        } else {
+          createMutate(
+            { resource: "tags", values: input },
+            {
+              onSuccess: () => {
+                toast.success("Tag created");
+                resetForm();
+              },
+              onError: (e: any) => toast.error(e?.message ?? "Create failed"),
+            },
+          );
+        }
+      },
+      (errors) => {
+        const firstMsg = Object.values(errors).find((e) => e?.message);
+        toast.error(firstMsg?.message || "Please fix the form errors");
+      },
+    )();
   };
 
   if (isLoading) {
     return <div className="h-32 bg-secondary/20 animate-pulse rounded-lg" />;
   }
 
-  const tagList = tags ?? [];
-
   return (
     <div className="space-y-4">
-      {/* New tag quick-add */}
-      {!showNew && !editingId && (
-        <Button size="sm" onClick={() => { resetForm(); setShowNew(true); }}>
+      {!isFormOpen && (
+        <Button size="sm" onClick={() => { setShowNew(true); }}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Add Tag
         </Button>
       )}
 
-      {/* Form */}
-      {(showNew || editingId) && (
+      {isFormOpen && (
         <div className="border border-border/60 rounded-lg p-4 space-y-3 bg-secondary/10">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium">{editingId ? "Edit Tag" : "New Tag"}</p>
-            <button onClick={() => { setEditingId(null); setShowNew(false); }}
+            <button onClick={resetForm}
               className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60">
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Name (EN)</label>
-              <Input value={form.name_en} onChange={(e) => setForm((f) => ({ ...f, name_en: e.target.value }))} placeholder="Mindfulness" />
-            </div>
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Name (BN)</label>
-              <Input value={form.name_bn} onChange={(e) => setForm((f) => ({ ...f, name_bn: e.target.value }))} placeholder="মাইন্ডফুলনেস" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Slug</label>
-              <Input value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} placeholder="mindfulness" />
-            </div>
-            <div>
-              <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase">Color</label>
-              <input type="color" value={form.color} onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
-                className="w-full h-9 rounded-lg border border-border/60 cursor-pointer bg-background" />
-            </div>
-          </div>
+          <FormRenderer form={form} groups={TAG_FORM_GROUPS} showValidationSummary={false} />
 
           <div className="flex items-center justify-end gap-2 pt-1">
-            <button onClick={() => { setEditingId(null); setShowNew(false); }}
+            <button onClick={resetForm}
               className="px-3 py-1.5 text-[0.6rem] font-medium text-muted-foreground hover:text-foreground transition-colors">
               Cancel
             </button>
-            <Button size="sm" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
-              {createMutation.isPending || updateMutation.isPending ? "Saving…" : editingId ? "Update" : "Create"}
+            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Saving…" : editingId ? "Update" : "Create"}
             </Button>
           </div>
         </div>
       )}
 
-      {/* Tag list */}
-      {tagList.length === 0 ? (
+      {tags.length === 0 ? (
         <p className="text-sm text-muted-foreground py-8 text-center">No tags yet.</p>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {tagList.map((tag) => {
-            const isEditing = editingId === tag.id;
-            if (isEditing) return null; // handled above
+          {tags.map((tag) => {
             return (
               <div
                 key={tag.id}
@@ -419,13 +447,18 @@ function TagManager() {
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
                 <span className="text-[0.6rem] font-medium">{tag.name_en}</span>
                 <button onClick={() => {
-                  setForm({ slug: tag.slug, name_en: tag.name_en, name_bn: tag.name_bn, color: tag.color });
+                  form.reset({
+                    slug: tag.slug,
+                    name_en: tag.name_en,
+                    name_bn: tag.name_bn,
+                    color: tag.color,
+                  });
                   setEditingId(tag.id);
                 }}
                   className="p-0.5 rounded text-muted-foreground/40 hover:text-foreground opacity-0 group-hover:opacity-100 transition-all">
                   <Edit3 className="h-3 w-3" />
                 </button>
-                <button onClick={() => { if (confirm(`Delete "${tag.name_en}"?`)) deleteMutation.mutate(tag.id); }}
+                <button onClick={() => setDeletingTag(tag)}
                   className="p-0.5 rounded text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all">
                   <Trash2 className="h-3 w-3" />
                 </button>
@@ -434,6 +467,24 @@ function TagManager() {
           })}
         </div>
       )}
+
+      <ConfirmDelete
+        open={!!deletingTag}
+        onConfirm={() => {
+          if (!deletingTag) return;
+          deleteMutate(
+            { resource: "tags", id: deletingTag.id },
+            {
+              onSuccess: () => { toast.success("Tag deleted"); setDeletingTag(null); },
+              onError: (e: any) => { toast.error(e?.message ?? "Delete failed"); setDeletingTag(null); },
+            },
+          );
+        }}
+        onCancel={() => setDeletingTag(null)}
+        isPending={isDeleting}
+        title="Delete tag"
+        description={`Delete "${deletingTag?.name_en}"? This cannot be undone.`}
+      />
     </div>
   );
 }

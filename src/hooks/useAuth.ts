@@ -3,6 +3,18 @@ import type { Session, User } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export type AppRole = "super_admin" | "admin" | "editor" | "author" | "moderator" | "user";
+
+/** Role hierarchy levels. */
+export const ROLE_LEVELS: Record<string, number> = {
+  super_admin: 100,
+  admin: 80,
+  editor: 60,
+  author: 40,
+  moderator: 30,
+  user: 10,
+};
+
 export function useAuthSession() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -120,6 +132,11 @@ export function useCanManageUsers(user: User | null) {
     enabled: !!user,
     staleTime: 60_000,
   });
+}
+
+/** Check if a role string has super_admin level (sync, no DB call). */
+export function canManageUsers(role: string | null | undefined): boolean {
+  return role === "super_admin";
 }
 
 export async function signOut() {

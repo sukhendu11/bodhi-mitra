@@ -1,7 +1,4 @@
-import "./lib/error-capture";
-
-import { consumeLastCapturedError } from "./lib/error-capture";
-import { renderErrorPage } from "./lib/error-page";
+import { consumeLastCapturedError, renderErrorPage } from "./lib/errors";
 import { generateSitemapXml, generateRobotsTxt, isSitemapEnabled } from "./lib/seo";
 
 type ServerEntry = {

@@ -25,10 +25,44 @@ export const Route = createFileRoute("/api/stripe-webhook")({
           const session = event.data.object as any;
           const userId = session.metadata?.user_id;
           const bookId = session.metadata?.book_id;
+          const isCartCheckout = session.metadata?.cart_checkout === "true";
           const amountPaid = (session.amount_total ?? 0) / 100;
 
-          if (userId && bookId) {
-            const db = supabaseAdmin as any;
+          const db = supabaseAdmin as any;
+
+          if (isCartCheckout && userId) {
+            // Cart checkout: purchase all books using book_ids from metadata
+            const bookIdsStr = session.metadata?.book_ids;
+            if (bookIdsStr) {
+              const bookIdList = bookIdsStr.split(",");
+              const perItemAmount = bookIdList.length > 0
+                ? Math.round((amountPaid / bookIdList.length) * 100) / 100
+                : amountPaid;
+
+              for (const bid of bookIdList) {
+                const { error } = await db.from("purchases").insert({
+                  user_id: userId,
+                  book_id: bid,
+                  amount_paid: perItemAmount,
+                  purchase_date: new Date().toISOString(),
+                });
+                if (error && error.code !== "23505") {
+                  console.error("[stripe-webhook] cart checkout item insert failed", error);
+                }
+              }
+            }
+
+            // Clear the user's cart after successful checkout
+            const { data: cart } = await db
+              .from("carts")
+              .select("id")
+              .eq("user_id", userId)
+              .maybeSingle();
+            if (cart) {
+              await db.from("cart_items").delete().eq("cart_id", cart.id);
+            }
+          } else if (userId && bookId) {
+            // Single-book checkout (backward compatible)
             const { error } = await db.from("purchases").insert({
               user_id: userId,
               book_id: bookId,

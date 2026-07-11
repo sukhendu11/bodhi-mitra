@@ -1,38 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { useList, useCreate, useUpdate, useDelete } from "@refinedev/core";
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createColumnHelper } from "@tanstack/react-table";
 import {
-  fetchAllPages,
-  createPage,
-  updatePage,
-  deletePage,
   slugifyPage,
   getEmptySection,
   type Page,
-  type PageInput,
   type PageSection,
   type SectionType,
 } from "@/lib/pages";
-import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
+
 import {
   Form,
   FormField,
 } from "@/components/ui/form";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import {
   DndContext,
   closestCenter,
@@ -55,7 +40,6 @@ import {
   Plus,
   Edit3,
   Trash2,
-  Upload,
   XCircle,
   GripVertical,
   Type,
@@ -67,12 +51,14 @@ import {
   Copy,
   Undo2,
   Redo2,
+  ImagePlus,
 } from "lucide-react";
 import { pageSchema, type PageFormValues } from "@/lib/schemas";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { DataTable, StatusBadge, DateCell } from "@/components/admin/data-table";
 import { BilingualField, FormFieldRow, FIELD_LABEL } from "@/components/admin/bilingual-field";
 import { FormActions } from "@/components/admin/form-actions";
+import { MediaPicker } from "@/components/admin/media-engine";
 import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/pages")({
@@ -254,14 +240,11 @@ const SECTION_TEMPLATES: Record<SectionType, Array<{ name: string; desc: string;
 /* ─── Admin Pages ─────────────────────────────────────────────────── */
 
 function AdminPagesPage() {
-  const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"content" | "sections">("content");
-  const pageSize = 50;
 
   const form = useForm<PageFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -281,14 +264,13 @@ function AdminPagesPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-pages", page],
-    queryFn: () => fetchAllPages(page, pageSize),
-    staleTime: 30_000,
+  const { result, query: { isLoading } } = useList<Page>({
+    resource: "pages",
+    sorters: [{ field: "sort_order", order: "asc" }],
   });
 
-  const pages = data?.data ?? [];
-  const total = data?.total ?? 0;
+  const pages = result?.data ?? [];
+  const total = result?.total ?? 0;
 
   const columnHelper = createColumnHelper<Page>();
 
@@ -363,44 +345,11 @@ function AdminPagesPage() {
     [],
   );
 
-  const createMutation = useMutation({
-    mutationFn: (input: PageInput) => createPage({ ...input, sections }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
-      queryClient.invalidateQueries({ queryKey: ["public-page"] });
-      toast.success("Page created");
-      resetForm();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const { mutate: createMutate, mutation: { isPending: isCreating } } = useCreate();
+  const { mutate: updateMutate, mutation: { isPending: isUpdating } } = useUpdate();
+  const { mutate: deleteMutate, mutation: { isPending: isDeleting } } = useDelete();
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, input }: { id: string; input: Partial<PageInput> }) =>
-      updatePage(id, { ...input, sections }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
-      queryClient.invalidateQueries({ queryKey: ["public-page"] });
-      toast.success("Page updated");
-      resetForm();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deletePage,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
-      queryClient.invalidateQueries({ queryKey: ["public-page"] });
-      toast.success("Page deleted");
-      setDeletingId(null);
-    },
-    onError: (e: Error) => {
-      toast.error(e.message);
-      setDeletingId(null);
-    },
-  });
-
-  const resetForm = () => {
+  const resetForm = (toastMsg?: string) => {
     setShowForm(false);
     setEditingId(null);
     setActiveTab("content");
@@ -411,6 +360,7 @@ function AdminPagesPage() {
       visible: true, sort_order: 0,
     });
     setSections([]);
+    if (toastMsg) toast.success(toastMsg);
   };
 
   const handleEdit = (p: Page) => {
@@ -440,9 +390,15 @@ function AdminPagesPage() {
           }));
 
         if (editingId) {
-          updateMutation.mutate({ id: editingId, input: { ...values, sections: sortedSections } });
+          updateMutate(
+            { resource: "pages", id: editingId, values: { ...values, sections: sortedSections } },
+            { onSuccess: () => resetForm("Page updated"), onError: (e) => toast.error(e.message) },
+          );
         } else {
-          createMutation.mutate({ ...values, sections: sortedSections });
+          createMutate(
+            { resource: "pages", values: { ...values, sections: sortedSections } },
+            { onSuccess: () => resetForm("Page created"), onError: (e) => toast.error(e.message) },
+          );
         }
       },
       (errors) => {
@@ -452,17 +408,7 @@ function AdminPagesPage() {
     )();
   };
 
-  const handleImageUpload = async (file: File) => {
-    const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-    const path = `pages/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error } = await supabase.storage.from("site-assets").upload(path, file, {
-      cacheControl: "3600",
-      contentType: file.type || undefined,
-    });
-    if (error) { toast.error(error.message); return; }
-    const { data: pub } = supabase.storage.from("site-assets").getPublicUrl(path);
-    form.setValue("banner_url", pub.publicUrl);
-  };
+  const [bannerPickerOpen, setBannerPickerOpen] = useState(false);
 
   /* ── Section drag handler ─────────────────────────────────────── */
 
@@ -669,15 +615,28 @@ function AdminPagesPage() {
                                 <XCircle className="h-4 w-4" />
                               </button>
                             </div>
-                          ) : (
-                            <div className="flex items-center gap-3">
-                              <Input value={bannerUrl} onChange={(e) => form.setValue("banner_url", e.target.value)} placeholder="https://…" />
-                              <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors">
-                                <Upload className="h-3 w-3" /> Upload
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }} />
-                              </label>
-                            </div>
-                          )}
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => setBannerPickerOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors"
+                          >
+                            <ImagePlus className="h-3.5 w-3.5" />
+                            {bannerUrl ? "Replace" : "Browse Media Library"}
+                          </button>
+                          <MediaPicker
+                            open={bannerPickerOpen}
+                            options={{
+                              title: "Select Banner Image",
+                              bucket: "site-assets",
+                              allowedFileTypes: ["image/*"],
+                            }}
+                            onSelect={(result) => {
+                              form.setValue("banner_url", result.url);
+                              setBannerPickerOpen(false);
+                            }}
+                            onClose={() => setBannerPickerOpen(false)}
+                          />
                         </div>
                         <BilingualField
                           control={form.control}
@@ -705,7 +664,7 @@ function AdminPagesPage() {
                       {/* Footer */}
                       <FormActions
                         onCancel={resetForm}
-                        isPending={createMutation.isPending || updateMutation.isPending}
+                        isPending={isCreating || isUpdating}
                         submitLabel={editingId ? "Update Page" : "Create Page"}
                       />
                     </form>
@@ -784,7 +743,7 @@ function AdminPagesPage() {
                   {/* Footer */}
                   <FormActions
                     onCancel={resetForm}
-                    isPending={createMutation.isPending || updateMutation.isPending}
+                    isPending={isCreating || isUpdating}
                     submitLabel={editingId ? "Update Page" : "Create Page"}
                   />
                 </>
@@ -850,27 +809,29 @@ function AdminPagesPage() {
         </div>
       )}
 
-      {/* Delete confirmation (AlertDialog) */}
-      <AlertDialog open={!!deletingId} onOpenChange={(open) => { if (!open) setDeletingId(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete page</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this page? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); if (deletingId) deleteMutation.mutate(deletingId); }}
-              disabled={deleteMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDelete
+        open={!!deletingId}
+        onConfirm={() => {
+          if (!deletingId) return;
+          deleteMutate(
+            { resource: "pages", id: deletingId },
+            {
+              onSuccess: () => {
+                toast.success("Page deleted");
+                setDeletingId(null);
+              },
+              onError: (err) => {
+                toast.error(err.message);
+                setDeletingId(null);
+              },
+            },
+          );
+        }}
+        onCancel={() => setDeletingId(null)}
+        isPending={isDeleting}
+        title="Delete page"
+        description="Are you sure you want to delete this page? This action cannot be undone."
+      />
     </div>
   );
 }

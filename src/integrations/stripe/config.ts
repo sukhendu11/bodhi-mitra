@@ -14,6 +14,13 @@ export const CHECKOUT_SUCCESS_URL = (bookSlug: string) =>
 export const CHECKOUT_CANCEL_URL = (bookSlug: string) =>
   `${getBaseUrl()}/books/${bookSlug}?purchase=cancel`;
 
+// Cart checkout redirects to /cart with status params
+export const CHECKOUT_CART_SUCCESS_URL = (bookSlug: string) =>
+  `${getBaseUrl()}/cart?checkout=success`;
+
+export const CHECKOUT_CART_CANCEL_URL = (bookSlug: string) =>
+  `${getBaseUrl()}/cart?checkout=cancel`;
+
 function getBaseUrl(): string {
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;

@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from "react";
+import { useState, useMemo, Fragment, type ReactNode } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -28,16 +28,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ChevronDown,
-  ChevronUp,
-  ChevronsUpDown,
-  Search,
-  Columns3,
-  CheckSquare,
-  X,
-  Trash2,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, ChevronsUpDown, Search, Columns3, CheckSquare, X, Trash2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface DataTableProps<TData extends { id: string }> {
@@ -66,6 +57,7 @@ export function DataTable<TData extends { id: string }>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   const selectionCol = onBulkDelete ? {
     id: "select",
@@ -89,10 +81,31 @@ export function DataTable<TData extends { id: string }>({
     enableSorting: false,
   } as ColumnDef<TData, any> : null;
 
+  const expandCol = renderSubRow ? {
+    id: "expand",
+    header: "",
+    cell: ({ row }) => (
+      <button
+        onClick={() => setExpandedRowId(expandedRowId === row.original.id ? null : row.original.id)}
+        className="p-1 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors"
+        aria-label={expandedRowId === row.original.id ? "Collapse" : "Expand"}
+      >
+        <ChevronRight className={cn(
+          "h-3.5 w-3.5 transition-transform",
+          expandedRowId === row.original.id && "rotate-90",
+        )} />
+      </button>
+    ),
+    size: 36,
+    enableSorting: false,
+  } as ColumnDef<TData, any> : null;
+
   const allColumns = useMemo(() => {
-    if (selectionCol) return [selectionCol, ...columns];
-    return columns;
-  }, [columns, !!onBulkDelete]);
+    const cols = [...columns];
+    if (expandCol) cols.unshift(expandCol);
+    if (selectionCol) cols.unshift(selectionCol);
+    return cols;
+  }, [columns, !!onBulkDelete, !!renderSubRow, expandedRowId]);
 
   const table = useReactTable({
     data,
@@ -271,24 +284,38 @@ export function DataTable<TData extends { id: string }>({
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className={cn(
-                    "border-border/40 transition-colors",
-                    row.getIsSelected() ? "bg-foreground/5" : "hover:bg-secondary/20",
-                  )}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-4 py-3 text-xs">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
+              table.getRowModel().rows.map((row) => {
+                const isExpanded = renderSubRow && expandedRowId === row.original.id;
+                return (
+                  <Fragment key={row.id}>
+                    <TableRow
+                      className={cn(
+                        "border-border/40 transition-colors",
+                        row.getIsSelected() ? "bg-foreground/5" : "hover:bg-secondary/20",
                       )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id} className="px-4 py-3 text-xs">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {isExpanded && (
+                      <TableRow key={`${row.id}-sub`} className="border-border/40">
+                        <TableCell
+                          colSpan={allColumns.length}
+                          className="px-6 py-4 bg-secondary/10 border-t border-border/30"
+                        >
+                          {renderSubRow!(row.original)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -359,7 +386,7 @@ export function DataTable<TData extends { id: string }>({
   );
 }
 
-/* ─── Status Badge Helper ─────────────────────────────────────────── */
+/* Status Badge Helper */
 
 export function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -381,7 +408,7 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
-/* ─── Date Format Helper ──────────────────────────────────────────── */
+/* Date Format Helper */
 
 export function DateCell({ date }: { date: string }) {
   if (!date) return <span className="text-muted-foreground/50">—</span>;

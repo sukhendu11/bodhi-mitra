@@ -191,13 +191,9 @@ export async function getBookStats(): Promise<{
   };
 }
 
-/** Slugify a book title. */
+import { slugifyBook as cmsSlugifyBook } from "@/lib/cms-engine";
+
+/** @deprecated Use slugifyBook from @/lib/cms-engine instead */
 export function slugifyBook(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+  return cmsSlugifyBook(title);
 }

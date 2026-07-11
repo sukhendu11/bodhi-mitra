@@ -1,6 +1,6 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { AppRole } from "@/hooks/useRole";
+import type { AppRole } from "@/hooks/useAuth";
 
 export { requireSupabaseAuth };
 

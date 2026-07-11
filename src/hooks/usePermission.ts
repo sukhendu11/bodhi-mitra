@@ -1,16 +1,6 @@
 import { useMemo } from "react";
 import type { User } from "@supabase/supabase-js";
-import { useAuthSession, isHardcodedAdmin, useUserRole } from "@/hooks/useAuth";
-import type { AppRole } from "@/hooks/useRole";
-
-const ROLE_LEVELS: Record<string, number> = {
-  super_admin: 100,
-  admin: 80,
-  editor: 60,
-  author: 40,
-  moderator: 30,
-  user: 10,
-};
+import { useAuthSession, isHardcodedAdmin, useUserRole, ROLE_LEVELS, type AppRole } from "@/hooks/useAuth";
 
 function getLevel(role: string | null | undefined): number {
   return ROLE_LEVELS[role ?? ""] ?? 0;

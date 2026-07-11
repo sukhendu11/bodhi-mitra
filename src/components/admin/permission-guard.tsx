@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { usePermission, checkPermission } from "@/hooks/usePermission";
-import type { AppRole } from "@/hooks/useRole";
+import type { AppRole } from "@/hooks/useAuth";
 
 interface CanProps {
   role?: AppRole;

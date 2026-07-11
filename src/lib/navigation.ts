@@ -22,7 +22,7 @@ export interface NavItem {
 
 export type NavLocation = "header" | "footer";
 
-export const NAV_LOCATIONS: NavLocation[] = ["header", "footer"];
+
 
 export interface NavItemInput {
   parent_id?: string | null;
@@ -76,7 +76,7 @@ const MAX_NAV_DEPTH = 3;
  * Rejects items with missing/invalid id, type, or label.
  * Broken items are SKIPPED — never break the entire menu.
  */
-export function validateNavItem(item: unknown): item is NavItem {
+function validateNavItem(item: unknown): item is NavItem {
   if (!item || typeof item !== "object") return false;
   const r = item as Record<string, unknown>;
   if (typeof r.id !== "string" || !r.id) return false;
@@ -89,7 +89,7 @@ export function validateNavItem(item: unknown): item is NavItem {
  * Filter an array of raw items to only valid NavItems.
  * Also normalizes each item through mapRow for type safety.
  */
-export function sanitizeNavItems(items: unknown[]): NavItem[] {
+function sanitizeNavItems(items: unknown[]): NavItem[] {
   return items.filter(validateNavItem).map(mapRow);
 }
 
@@ -237,33 +237,7 @@ export function clearNavCache(): void {
   }
 }
 
-/** Flatten a tree back to a flat array (for DB writes). */
-export function flattenTree(nodes: NavTreeNode[]): NavItem[] {
-  const result: NavItem[] = [];
-  const walk = (list: NavTreeNode[]) => {
-    for (const n of list) {
-      const { children, ...item } = n;
-      result.push(item);
-      walk(children);
-    }
-  };
-  walk(nodes);
-  return result;
-}
-
 /* ─── CRUD (admin — authenticated via RLS) ─────────────────── */
-
-/** Fetch all navigation items flat (for admin editing), optionally by location. */
-export async function fetchAllNavItems(location?: NavLocation): Promise<NavItem[]> {
-  let query = (supabase as any)
-    .from("navigation_items")
-    .select(NAV_SELECT)
-    .order("sort_order", { ascending: true });
-  if (location) query = query.eq("location", location);
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(mapRow);
-}
 
 /** Fetch only visible items (for public rendering), optionally by location. */
 export async function fetchPublicNavItems(location?: NavLocation): Promise<NavItem[]> {
@@ -276,38 +250,6 @@ export async function fetchPublicNavItems(location?: NavLocation): Promise<NavIt
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapRow);
-}
-
-/** Get a single item by id. */
-export async function fetchNavItem(id: string): Promise<NavItem | null> {
-  const { data, error } = await (supabase as any)
-    .from("navigation_items")
-    .select(NAV_SELECT)
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  return data ? mapRow(data) : null;
-}
-
-/** Create a new navigation item. Returns the created item. */
-export async function createNavItem(input: NavItemInput): Promise<NavItem> {
-  const { data, error } = await (supabase as any)
-    .from("navigation_items")
-    .insert({
-      parent_id: input.parent_id ?? null,
-      type: input.type,
-      label_en: input.label_en,
-      label_bn: input.label_bn ?? "",
-      url: input.url ?? "",
-      slug: input.slug ?? "",
-      icon: input.icon ?? "",
-      sort_order: input.sort_order ?? 0,
-      visible: input.visible ?? true,
-    })
-    .select(NAV_SELECT)
-    .single();
-  if (error) throw new Error(error.message);
-  return mapRow(data);
 }
 
 /** Update an existing navigation item. */
@@ -333,28 +275,4 @@ export async function updateNavItem(id: string, input: Partial<NavItemInput>): P
   return mapRow(data);
 }
 
-/** Delete a navigation item (cascades to children). */
-export async function deleteNavItem(id: string): Promise<void> {
-  const { error } = await (supabase as any)
-    .from("navigation_items")
-    .delete()
-    .eq("id", id);
-  if (error) throw new Error(error.message);
-}
 
-/**
- * Batch-update the sort_order and parent_id for many items at once.
- * Used after a drag-and-drop reorder.
- */
-export async function batchUpdateNavItems(
-  updates: { id: string; sort_order: number; parent_id: string | null }[],
-): Promise<void> {
-  // Supabase doesn't support batch update, so we do individual updates
-  for (const u of updates) {
-    const { error } = await (supabase as any)
-      .from("navigation_items")
-      .update({ sort_order: u.sort_order, parent_id: u.parent_id })
-      .eq("id", u.id);
-    if (error) throw new Error(error.message);
-  }
-}

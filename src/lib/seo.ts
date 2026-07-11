@@ -13,7 +13,7 @@ export async function isSitemapEnabled(): Promise<boolean> {
     return data?.config?.seo?.enable_sitemap !== false;
   } catch (e) {
     console.error("[sitemap] Failed to check sitemap setting:", e);
-    return true; // Default to enabled on error
+    return true;
   }
 }
 
@@ -55,7 +55,6 @@ function escapeXml(s: string): string {
 }
 
 function formatDate(iso: string | null | undefined): string {
-  // Extract YYYY-MM-DD from ISO date string
   if (!iso) return new Date().toISOString().slice(0, 10);
   return iso.slice(0, 10);
 }
@@ -65,7 +64,6 @@ function formatDate(iso: string | null | undefined): string {
 export async function generateSitemapXml(baseUrl: string): Promise<string> {
   const urls: string[] = [];
 
-  // Static routes
   for (const route of STATIC_ROUTES) {
     urls.push(
       xmlUrl({
@@ -76,7 +74,6 @@ export async function generateSitemapXml(baseUrl: string): Promise<string> {
     );
   }
 
-  // Published posts
   try {
     const { data: posts } = await (supabaseAdmin as any)
       .from("posts")
@@ -98,7 +95,6 @@ export async function generateSitemapXml(baseUrl: string): Promise<string> {
     console.error("[sitemap] Failed to fetch posts:", e);
   }
 
-  // Published books (each gets its own page on the books grid via anchor)
   try {
     const { data: books } = await (supabaseAdmin as any)
       .from("books")
@@ -120,7 +116,6 @@ export async function generateSitemapXml(baseUrl: string): Promise<string> {
     console.error("[sitemap] Failed to fetch books:", e);
   }
 
-  // Visible pages from the pages table
   try {
     const { data: pages } = await (supabaseAdmin as any)
       .from("pages")

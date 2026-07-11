@@ -1,4 +1,5 @@
 import { BarChart3, MessageSquare, Star, ShoppingCart } from "lucide-react";
+import ReactECharts from "echarts-for-react";
 import type { MonthlyPostCount, TopCommentedPost, TopRatedBook } from "@/lib/admin.functions";
 
 interface AnalyticsOverviewProps {
@@ -34,7 +35,52 @@ interface MonthlyChartProps {
 }
 
 export function MonthlyPostChart({ data }: MonthlyChartProps) {
-  const maxCount = Math.max(1, ...data.map((d) => d.count));
+  const chartData = data.map((d) => ({
+    label: `${d.year}-${String(d.month).padStart(2, "0")}`,
+    count: d.count,
+  }));
+
+  const option = {
+    grid: { top: 8, right: 4, bottom: 28, left: 32 },
+    xAxis: {
+      type: "category" as const,
+      data: chartData.map((d) => d.label),
+      axisLabel: { fontSize: 10, rotate: 45 },
+      axisLine: { lineStyle: { color: "hsl(var(--border))" } },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: "value" as const,
+      minInterval: 1,
+      axisLabel: { fontSize: 10 },
+      splitLine: { lineStyle: { color: "hsl(var(--border))", type: "dashed" as const } },
+    },
+    tooltip: {
+      trigger: "axis" as const,
+      backgroundColor: "hsl(var(--popover))",
+      borderColor: "hsl(var(--border))",
+      borderWidth: 1,
+      textStyle: { fontSize: 12 },
+      formatter: (params: any) => {
+        const p = Array.isArray(params) ? params[0] : params;
+        return `${p.name}: ${p.value} posts`;
+      },
+    },
+    series: [
+      {
+        type: "bar" as const,
+        data: chartData.map((d) => d.count),
+        itemStyle: {
+          color: "hsl(var(--foreground))",
+          opacity: 0.15,
+          borderRadius: [2, 2, 0, 0],
+        },
+        emphasis: {
+          itemStyle: { opacity: 0.35 },
+        },
+      },
+    ],
+  };
 
   return (
     <div>
@@ -42,22 +88,7 @@ export function MonthlyPostChart({ data }: MonthlyChartProps) {
         <BarChart3 className="h-4 w-4 text-muted-foreground/60" />
         <h3 className="text-sm font-semibold">Posts per Month</h3>
       </div>
-      <div className="flex items-end gap-2 h-32">
-        {data.map((d) => {
-          const height = (d.count / maxCount) * 100;
-          const label = `${d.year}-${String(d.month).padStart(2, "0")}`;
-          return (
-            <div key={label} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[0.55rem] font-medium tabular-nums text-muted-foreground">{d.count}</span>
-              <div
-                className="w-full bg-foreground/10 hover:bg-foreground/20 transition-colors rounded-t-sm"
-                style={{ height: `${Math.max(height, d.count > 0 ? 4 : 0)}%`, minHeight: d.count > 0 ? 4 : 0 }}
-              />
-              <span className="text-[0.5rem] text-muted-foreground/60 -rotate-45 origin-left whitespace-nowrap">{label}</span>
-            </div>
-          );
-        })}
-      </div>
+      <ReactECharts option={option} style={{ height: 160 }} notMerge />
     </div>
   );
 }

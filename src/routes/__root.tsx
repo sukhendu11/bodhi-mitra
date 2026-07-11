@@ -23,7 +23,10 @@ import { MobileNav } from "@/components/MobileNav";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ErrorPage, NotFoundPage } from "@/components/error-page";
-import { Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getCartCount } from "@/lib/cart";
+import { Search, ShoppingCart } from "lucide-react";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -111,6 +114,33 @@ function NavLinkItem({ node, linkCls, activeLinkCls, lang }: { node: NavTreeNode
   );
 }
 
+function CartBadge() {
+  const { user } = useAuthSession();
+  const doGetCartCount = useServerFn(getCartCount);
+
+  const { data: countData } = useQuery({
+    queryKey: ["cart-count"],
+    queryFn: () => (doGetCartCount as any)(),
+    enabled: !!user,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  const count = countData?.count ?? 0;
+
+  if (!user || count === 0) return null;
+
+  return (
+    <Link to="/cart" className="group relative inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-200">
+      <ShoppingCart className="h-4 w-4" />
+      <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-foreground text-background text-[0.45rem] font-bold flex items-center justify-center">
+        {count > 9 ? "9+" : count}
+      </span>
+      <span className="sr-only">Cart ({count})</span>
+    </Link>
+  );
+}
+
 function Header() {
   const { user } = useAuthSession();
   const { data: isAdmin } = useIsAdmin(user);
@@ -186,6 +216,7 @@ function Header() {
               <Link to="/bookmarks" className={linkCls} search={{} as any}>
                 Bookmarks
               </Link>
+              <CartBadge />
               <Link to="/profile" className={linkCls} search={{} as any}>
                 Profile
               </Link>

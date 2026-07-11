@@ -20,6 +20,7 @@ import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BuddhistPsychologyRouteImport } from './routes/buddhist-psychology'
 import { Route as BooksRouteImport } from './routes/books'
+import { Route as CartRouteImport } from './routes/cart'
 import { Route as BookmarksRouteImport } from './routes/bookmarks'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
@@ -32,6 +33,7 @@ import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as BooksLibraryRouteImport } from './routes/books.library'
 import { Route as BooksSlugRouteImport } from './routes/books.$slug'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe-webhook'
+import { Route as AdminPostsRouteImport } from './routes/admin.posts'
 import { Route as AdminVideosRouteImport } from './routes/admin.videos'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTaxonomyRouteImport } from './routes/admin.taxonomy'
@@ -103,6 +105,12 @@ const BooksRoute = BooksRouteImport.update({
   path: '/books',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
 const BookmarksRoute = BookmarksRouteImport.update({
   id: '/bookmarks',
   path: '/bookmarks',
@@ -163,6 +171,12 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPostsRoute = AdminPostsRouteImport.update({
+  id: '/posts',
+  path: '/posts',
+  getParentRoute: () => AdminRoute,
+} as any)
+
 const AdminVideosRoute = AdminVideosRouteImport.update({
   id: '/videos',
   path: '/videos',
@@ -244,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/cart': typeof CartRoute
   '/bookmarks': typeof BookmarksRoute
   '/books': typeof BooksRouteWithChildren
   '/buddhist-psychology': typeof BuddhistPsychologyRoute
@@ -278,11 +293,13 @@ export interface FileRoutesByFullPath {
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/admin/posts': typeof AdminPostsRoute
   '/courses/$courseSlug/lessons/$lessonSlug': typeof CoursesCourseSlugLessonsLessonSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/cart': typeof CartRoute
   '/bookmarks': typeof BookmarksRoute
   '/books': typeof BooksRouteWithChildren
   '/buddhist-psychology': typeof BuddhistPsychologyRoute
@@ -317,6 +334,7 @@ export interface FileRoutesByTo {
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin': typeof AdminIndexRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/admin/posts': typeof AdminPostsRoute
   '/courses/$courseSlug/lessons/$lessonSlug': typeof CoursesCourseSlugLessonsLessonSlugRoute
 }
 export interface FileRoutesById {
@@ -324,6 +342,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/cart': typeof CartRoute
   '/bookmarks': typeof BookmarksRoute
   '/books': typeof BooksRouteWithChildren
   '/buddhist-psychology': typeof BuddhistPsychologyRoute
@@ -366,6 +385,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/cart'
     | '/bookmarks'
     | '/books'
     | '/buddhist-psychology'
@@ -387,6 +407,7 @@ export interface FileRouteTypes {
     | '/admin/navigation'
     | '/admin/new'
     | '/admin/pages'
+    | '/admin/posts'
     | '/admin/settings'
     | '/admin/taxonomy'
     | '/admin/users'
@@ -405,6 +426,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/cart'
     | '/bookmarks'
     | '/books'
     | '/buddhist-psychology'
@@ -426,6 +448,7 @@ export interface FileRouteTypes {
     | '/admin/navigation'
     | '/admin/new'
     | '/admin/pages'
+    | '/admin/posts'
     | '/admin/settings'
     | '/admin/taxonomy'
     | '/admin/users'
@@ -445,6 +468,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/cart'
     | '/bookmarks'
     | '/books'
     | '/buddhist-psychology'
@@ -466,6 +490,7 @@ export interface FileRouteTypes {
     | '/admin/navigation'
     | '/admin/new'
     | '/admin/pages'
+    | '/admin/posts'
     | '/admin/settings'
     | '/admin/taxonomy'
     | '/admin/users'
@@ -486,6 +511,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
+  CartRoute: typeof CartRoute
   BookmarksRoute: typeof BookmarksRoute
   BooksRoute: typeof BooksRouteWithChildren
   BuddhistPsychologyRoute: typeof BuddhistPsychologyRoute
@@ -588,6 +614,13 @@ declare module '@tanstack/react-router' {
       path: '/bookmarks'
       fullPath: '/bookmarks'
       preLoaderRoute: typeof BookmarksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -751,6 +784,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/posts': {
+      id: '/admin/posts'
+      path: '/posts'
+      fullPath: '/admin/posts'
+      preLoaderRoute: typeof AdminPostsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/$id': {
       id: '/admin/$id'
       path: '/$id'
@@ -797,6 +837,7 @@ interface AdminRouteChildren {
   AdminNavigationRoute: typeof AdminNavigationRoute
   AdminNewRoute: typeof AdminNewRoute
   AdminPagesRoute: typeof AdminPagesRoute
+  AdminPostsRoute: typeof AdminPostsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTaxonomyRoute: typeof AdminTaxonomyRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -814,6 +855,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminNavigationRoute: AdminNavigationRoute,
   AdminNewRoute: AdminNewRoute,
   AdminPagesRoute: AdminPagesRoute,
+  AdminPostsRoute: AdminPostsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminTaxonomyRoute: AdminTaxonomyRoute,
   AdminUsersRoute: AdminUsersRoute,
@@ -853,6 +895,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
+  CartRoute: CartRoute,
   BookmarksRoute: BookmarksRoute,
   BooksRoute: BooksRouteWithChildren,
   BuddhistPsychologyRoute: BuddhistPsychologyRoute,

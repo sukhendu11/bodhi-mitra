@@ -33,30 +33,6 @@ export interface CourseLesson {
   updated_at: string;
 }
 
-export interface CourseInput {
-  slug: string;
-  title_en: string;
-  title_bn: string;
-  description_en?: string;
-  description_bn?: string;
-  cover_image?: string;
-  category?: string;
-  level?: string;
-  duration_weeks?: number;
-  published?: boolean;
-  sort_order?: number;
-}
-
-export interface LessonInput {
-  slug: string;
-  title_en: string;
-  title_bn: string;
-  content_en?: string;
-  content_bn?: string;
-  video_url?: string;
-  sort_order?: number;
-}
-
 // ─── Public ─────────────────────────────────────────────────────
 
 export const fetchPublishedCourses = createServerFn({ method: "GET" })
@@ -202,84 +178,4 @@ export const getLessonProgress = createServerFn({ method: "GET" })
     return (progress ?? []) as { lesson_id: string; completed: boolean }[];
   });
 
-// ─── Admin CRUD ─────────────────────────────────────────────────
 
-export const fetchAllCourses = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const db = supabase as any;
-    const { data, error } = await db
-      .from("courses")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return (data ?? []) as Course[];
-  });
-
-export const createCourse = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: unknown }) => {
-    const input = data as CourseInput;
-    const db = supabase as any;
-    const { data: course, error } = await db.from("courses").insert(input).select().single();
-    if (error) throw error;
-    return course as Course;
-  });
-
-export const updateCourse = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: unknown }) => {
-    const input = data as CourseInput & { id: string };
-    const { id, ...fields } = input;
-    const db = supabase as any;
-    const { data: course, error } = await db.from("courses").update({ ...fields, updated_at: new Date().toISOString() }).eq("id", id).select().single();
-    if (error) throw error;
-    return course as Course;
-  });
-
-export const deleteCourse = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: unknown }) => {
-    const input = data as { id: string };
-    const db = supabase as any;
-    const { error } = await db.from("courses").delete().eq("id", input.id);
-    if (error) throw error;
-    return { success: true };
-  });
-
-export const fetchLessonsByCourse = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: unknown }) => {
-    const input = data as { courseId: string };
-    const db = supabase as any;
-    const { data: lessons, error } = await db
-      .from("course_lessons")
-      .select("*")
-      .eq("course_id", input.courseId)
-      .order("sort_order", { ascending: true });
-    if (error) throw error;
-    return (lessons ?? []) as CourseLesson[];
-  });
-
-export const createLesson = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: unknown }) => {
-    const input = data as LessonInput & { course_id: string };
-    const db = supabase as any;
-    const { data: lesson, error } = await db.from("course_lessons").insert(input).select().single();
-    if (error) throw error;
-    return lesson as CourseLesson;
-  });
-
-export const updateLesson = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: unknown }) => {
-    const input = data as LessonInput & { id: string };
-    const { id, ...fields } = input;
-    const db = supabase as any;
-    const { data: lesson, error } = await db.from("course_lessons").update({ ...fields, updated_at: new Date().toISOString() }).eq("id", id).select().single();
-    if (error) throw error;
-    return lesson as CourseLesson;
-  });
-
-export const deleteLesson = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: unknown }) => {
-    const input = data as { id: string };
-    const db = supabase as any;
-    const { error } = await db.from("course_lessons").delete().eq("id", input.id);
-    if (error) throw error;
-    return { success: true };
-  });

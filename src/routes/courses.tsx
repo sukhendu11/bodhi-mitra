@@ -16,7 +16,8 @@ export const Route = createFileRoute("/courses")({
     return { settings, page };
   },
   head: ({ loaderData }) => {
-    const { settings, page } = loaderData;
+    const settings = loaderData?.settings;
+    const page = loaderData?.page;
     const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
     const metaDesc = page?.meta_description_en || "Explore our guided courses on Buddhist psychology and mindfulness.";
     const pageTitle = page?.title_en || "Courses";

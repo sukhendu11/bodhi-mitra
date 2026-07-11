@@ -4,8 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type SectionType = "hero" | "text" | "image" | "quote" | "video" | "cta";
 
-export const SECTION_TYPES: SectionType[] = ["hero", "text", "image", "quote", "video", "cta"];
-
 export interface PageSection {
   id: string;
   type: SectionType;
@@ -53,57 +51,6 @@ export interface Page {
   updated_at: string;
 }
 
-export interface PageInput {
-  slug: string;
-  title_en: string;
-  title_bn: string;
-  header_en?: string;
-  header_bn?: string;
-  body_en?: string;
-  body_bn?: string;
-  banner_url?: string;
-  meta_description_en?: string;
-  meta_description_bn?: string;
-  visible?: boolean;
-  sort_order?: number;
-  sections?: PageSection[];
-}
-
-/** Fetch all visible pages (for public display). */
-export async function fetchPublicPages(): Promise<Page[]> {
-  const { data, error } = await (supabase as any)
-    .from("pages")
-    .select("*")
-    .eq("visible", true)
-    .order("sort_order", { ascending: true });
-  if (error) throw error;
-  return ((data ?? []) as any[]).map(normalizePage);
-}
-
-function normalizePage(row: any): Page {
-  return {
-    ...row,
-    sections: Array.isArray(row.sections) ? row.sections : [],
-  };
-}
-
-function normalizePages(rows: any[]): Page[] {
-  return (rows ?? []).map(normalizePage);
-}
-
-/** Fetch all pages for admin (including hidden). */
-export async function fetchAllPages(page = 1, pageSize = 50): Promise<{ data: Page[]; total: number }> {
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  const { data, error, count } = await (supabase as any)
-    .from("pages")
-    .select("*", { count: "exact" })
-    .order("sort_order", { ascending: true })
-    .range(from, to);
-  if (error) throw error;
-  return { data: normalizePages(data as any[]), total: count ?? 0 };
-}
-
 /** Fetch a single page by slug. */
 export async function fetchPageBySlug(slug: string): Promise<Page | null> {
   const { data, error } = await (supabase as any)
@@ -112,60 +59,16 @@ export async function fetchPageBySlug(slug: string): Promise<Page | null> {
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw error;
-  return data ? normalizePage(data as any) : null;
+  if (!data) return null;
+  return {
+    ...data,
+    sections: Array.isArray((data as any).sections) ? (data as any).sections : [],
+  } as Page;
 }
 
-/** Fetch a single page by ID. */
-export async function fetchPageById(id: string): Promise<Page | null> {
-  const { data, error } = await (supabase as any)
-    .from("pages")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw error;
-  return data ? normalizePage(data as any) : null;
-}
+import { slugifyPage as cmsSlugifyPage } from "@/lib/cms-engine";
 
-/** Create a new page. */
-export async function createPage(input: PageInput): Promise<Page> {
-  const payload = {
-    ...input,
-    sections: input.sections ?? [],
-  };
-  const { data, error } = await (supabase as any)
-    .from("pages")
-    .insert(payload)
-    .select()
-    .single();
-  if (error) throw error;
-  return normalizePage(data as any);
-}
-
-/** Update an existing page. */
-export async function updatePage(id: string, input: Partial<PageInput>): Promise<Page> {
-  const { data, error } = await (supabase as any)
-    .from("pages")
-    .update(input)
-    .eq("id", id)
-    .select()
-    .single();
-  if (error) throw error;
-  return normalizePage(data as any);
-}
-
-/** Delete a page. */
-export async function deletePage(id: string): Promise<void> {
-  const { error } = await (supabase as any).from("pages").delete().eq("id", id);
-  if (error) throw error;
-}
-
-/** Slugify a title into a URL-friendly slug. */
+/** @deprecated Use slugifyPage from @/lib/cms-engine instead */
 export function slugifyPage(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+  return cmsSlugifyPage(title);
 }

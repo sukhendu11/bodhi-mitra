@@ -11,6 +11,7 @@ import { submitRating, getUserRating } from "@/lib/books-ratings";
 import { getReadingProgress } from "@/lib/books-progress";
 import { checkOwnership } from "@/lib/books-purchases";
 import { getPdfReaderUrl, purchaseBookAction } from "@/lib/books-reader";
+import { addToCart } from "@/lib/cart";
 import { AuthModal } from "@/components/AuthModal";
 import { StarRating } from "@/components/StarRating";
 
@@ -39,6 +40,7 @@ import {
   CheckCircle,
   ArrowLeft,
   AlertCircle,
+  ShoppingCart,
 } from "lucide-react";
 
 export const Route = createFileRoute("/books")({
@@ -50,7 +52,8 @@ export const Route = createFileRoute("/books")({
     return { settings, page };
   },
   head: ({ loaderData }) => {
-    const { settings, page } = loaderData;
+    const settings = loaderData?.settings;
+    const page = loaderData?.page;
     const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
     const metaDesc = page?.meta_description_en || "A small shelf of companions — books we return to, and the ones we recommend without hesitation.";
     const pageTitle = page?.title_en || "Books";
@@ -172,9 +175,24 @@ function BooksPage() {
     [user],
   );
 
+  /* ── Cart mutation ────────────────────────────────────────── */
+  const cartMutation = useMutation({
+    mutationFn: (bookId: string) => (doAddToCart as any)({ data: { bookId } }),
+    onSuccess: (result: any) => {
+      if (result.alreadyInCart) {
+        toast.info(result.message);
+      } else {
+        toast.success(result.message);
+      }
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   /* ── Server functions (defined before callbacks that use them) ── */
   const doGetPdfReaderUrl = useServerFn(getPdfReaderUrl);
   const doPurchase = useServerFn(purchaseBookAction);
+  const doAddToCart = useServerFn(addToCart);
 
   /* Ref-based pending book for eye icon auth resume (avoids closure collision with rating's pendingAction) */
   const pendingBookRef = useRef<Book | null>(null);
@@ -389,6 +407,8 @@ function BooksPage() {
                 onEyeClick={handleEyeClick}
                 requireAuth={requireAuth}
                 pdfLoading={pdfLoading}
+                onAddToCart={(bookId) => cartMutation.mutate(bookId)}
+                isCartAdding={cartMutation.isPending}
               />
             </Reveal>
           ))}
@@ -530,6 +550,8 @@ function BookCard({
   onEyeClick,
   requireAuth,
   pdfLoading,
+  onAddToCart,
+  isCartAdding,
 }: {
   book: Book;
   lang: Lang;
@@ -537,6 +559,8 @@ function BookCard({
   onEyeClick: (book: Book) => void;
   requireAuth: (action: () => void) => void;
   pdfLoading?: boolean;
+  onAddToCart?: (bookId: string) => void;
+  isCartAdding?: boolean;
 }) {
   const queryClient = useQueryClient();
   const title = pickLocalized(book.title_en, book.title_bn, lang, "Untitled");
@@ -712,16 +736,31 @@ function BookCard({
           </div>
         )}
 
-        {/* Metadata */}
-        <div className="flex items-center justify-between gap-2 mt-2">
-          <div className="flex items-center gap-2 text-[0.55rem] text-muted-foreground">
+        {/* Actions */}
+        <div className="flex items-center gap-1 mt-2">
+          {!isUnlocked && onAddToCart && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAddToCart(book.id);
+              }}
+              disabled={isCartAdding}
+              className="inline-flex items-center gap-1 px-2 py-1 text-[0.5rem] font-medium border border-border/60 rounded-md hover:bg-secondary/60 hover:border-foreground/30 transition-colors disabled:opacity-40"
+              title="Add to cart"
+            >
+              <ShoppingCart className="h-2.5 w-2.5" />
+              Add to Cart
+            </button>
+          )}
+          <div className="ml-auto flex items-center gap-2 text-[0.55rem] text-muted-foreground">
             {book.pages > 0 && <span>{book.pages} pages</span>}
           </div>
           <Link
             to="/books/$slug"
             params={{ slug: book.slug }}
             search={{ search: "", page: 1 }}
-            className="text-[0.5rem] text-muted-foreground/50 hover:text-foreground transition-colors"
+            className="text-[0.5rem] text-muted-foreground/50 hover:text-foreground transition-colors shrink-0"
           >
             <ChevronRight className="h-3 w-3" />
           </Link>

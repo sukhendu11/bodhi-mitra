@@ -45,18 +45,6 @@ export interface PostInput {
 }
 
 
-/** Build the row to send to Supabase. Mirrors EN into legacy `title`/`content`/`excerpt`
- *  so anything still reading the old columns keeps working. */
-function toRow(input: Partial<PostInput>) {
-  return {
-    ...input,
-    ...(input.title_en !== undefined ? { title: input.title_en } : {}),
-    ...(input.content_en !== undefined ? { content: input.content_en } : {}),
-    ...(input.excerpt_en !== undefined ? { excerpt: input.excerpt_en } : {}),
-  };
-}
-
-
 export interface PaginatedResult<T> {
   data: T[];
   total: number;
@@ -84,20 +72,6 @@ export async function fetchPosts(category?: PostCategory, page = 1, pageSize = 9
   return { data: (data ?? []) as unknown as Post[], total: count ?? 0 };
 }
 
-export async function fetchAllPostsAdmin(category?: PostCategory, page = 1, pageSize = 20): Promise<PaginatedResult<Post>> {
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  let query = supabase
-    .from("posts")
-    .select("*", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
-  if (category) query = query.eq("category", category);
-  const { data, error, count } = await query;
-  if (error) throw error;
-  return { data: (data ?? []) as unknown as Post[], total: count ?? 0 };
-}
-
 export async function fetchPostBySlug(slug: string): Promise<Post | null> {
   const { data, error } = await supabase
     .from("posts")
@@ -119,26 +93,6 @@ export async function fetchPostById(id: string): Promise<Post | null> {
   return (data as unknown as Post | null) ?? null;
 }
 
-export async function createPost(input: PostInput): Promise<Post> {
-  const row = toRow(input) as never;
-  const { data, error } = await supabase.from("posts").insert(row).select().single();
-  if (error) throw error;
-  return data as unknown as Post;
-}
-
-export async function updatePost(id: string, input: Partial<PostInput>): Promise<Post> {
-  const row = toRow(input) as never;
-  const { data, error } = await supabase.from("posts").update(row).eq("id", id).select().single();
-  if (error) throw error;
-  return data as unknown as Post;
-}
-
-
-export async function deletePost(id: string): Promise<void> {
-  const { error } = await supabase.from("posts").delete().eq("id", id);
-  if (error) throw error;
-}
-
 export async function uploadCoverImage(file: File): Promise<string> {
   const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
   const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -152,11 +106,9 @@ export async function uploadCoverImage(file: File): Promise<string> {
   return data.publicUrl;
 }
 
+import { slugifyPost as cmsSlugify } from "@/lib/cms-engine";
+
+/** @deprecated Use slugifyPost from @/lib/cms-engine instead */
 export function slugify(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+  return cmsSlugify(title);
 }

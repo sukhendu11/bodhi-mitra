@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   getUserRoles,
@@ -9,10 +9,13 @@ import {
   deleteUserFn,
   bulkDeleteUsersFn,
   bulkSetRoleFn,
+  getUserAuditEvents,
+  getUserLibraryAdmin,
   type UserRoleRow,
   type SetRoleResult,
   type DeleteUserResult,
   type BulkActionResult,
+  type AuditEvent,
 } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuthSession, isHardcodedAdmin } from "@/hooks/useAuth";
@@ -26,6 +29,14 @@ import {
   CheckCircle,
   Trash2,
   ChevronDown,
+  ChevronUp,
+  BookOpen,
+  Clock,
+  Activity,
+  Info,
+  Calendar,
+  Star,
+  Search,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -71,6 +82,99 @@ const ROLE_BADGE: Record<string, string> = {
   user: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border-neutral-300/50",
 };
 
+const ACTION_LABELS: Record<string, string> = {
+  role_changed: "Role Changed",
+  user_deleted: "User Deleted",
+  user_invited: "User Invited",
+  bulk_role_changed: "Bulk Role Change",
+  bulk_users_deleted: "Bulk Delete",
+};
+
+const ACTION_STYLES: Record<string, string> = {
+  role_changed: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 border-blue-300/50",
+  user_deleted: "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300 border-red-300/50",
+  user_invited: "bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300 border-green-300/50",
+  bulk_role_changed: "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300 border-purple-300/50",
+  bulk_users_deleted: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border-rose-300/50",
+};
+
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = now - then;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+/* ── Account Status indicator ─────────────────────────────────── */
+
+type AccountStatus = "active" | "unassigned";
+
+function getAccountStatus(role: string | null, _createdAt: string | null): AccountStatus {
+  return role ? "active" : "unassigned";
+}
+
+const STATUS_CONFIG: Record<AccountStatus, { label: string; bg: string; dot: string }> = {
+  active: { label: "Active", bg: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300 border-emerald-300/50", dot: "bg-emerald-500" },
+  unassigned: { label: "No Role", bg: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-300/50", dot: "bg-neutral-400" },
+};
+
+function StatusBadge({ status }: { status: AccountStatus }) {
+  const cfg = STATUS_CONFIG[status];
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[0.5rem] font-medium px-2 py-0.5 rounded-full border ${cfg.bg}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.label}
+    </span>
+  );
+}
+
+/* ── Tab bar component ────────────────────────────────────────── */
+
+function TabBar({ tabs, active, onChange }: { tabs: { key: string; label: string; icon: ReactNode }[]; active: string; onChange: (key: string) => void }) {
+  return (
+    <div className="flex items-center gap-1 bg-secondary/30 rounded-lg p-1 w-fit">
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          onClick={() => onChange(tab.key)}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.55rem] font-medium rounded-md transition-all ${
+            active === tab.key
+              ? "bg-foreground text-background shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+          }`}
+        >
+          {tab.icon}
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function AdminUsersPage() {
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
@@ -79,12 +183,23 @@ function AdminUsersPage() {
   const doDelete = useServerFn(deleteUserFn);
   const doBulkDelete = useServerFn(bulkDeleteUsersFn);
   const doBulkSetRole = useServerFn(bulkSetRoleFn);
+  const doGetAudit = useServerFn(getUserAuditEvents);
+  const doGetLibrary = useServerFn(getUserLibraryAdmin);
 
   const { data: users, isLoading, error } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => getUserRoles(),
     staleTime: 30_000,
   });
+
+  /* ── Enrich users with stats ──────────────────────────────────── */
+
+  const enrichedUsers = useMemo(() => {
+    return (users ?? []).map((u) => ({
+      ...u,
+      accountStatus: getAccountStatus(u.role, u.created_at),
+    }));
+  }, [users]);
 
   /* ── Single role mutation ─────────────────────────────────────── */
 
@@ -214,6 +329,11 @@ function AdminUsersPage() {
   const [showBulkRolePicker, setShowBulkRolePicker] = useState(false);
   const [bulkRoleSelected, setBulkRoleSelected] = useState("");
 
+  // Detail panel
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<string>("profile");
+  const [searchQuery, setSearchQuery] = useState("");
+
   /* ── Derived ──────────────────────────────────────────────────── */
 
   const currentUserRole = (users ?? []).find((u) => u.user_id === user?.id)?.role;
@@ -221,16 +341,28 @@ function AdminUsersPage() {
   const isOnlySuperAdmin = isSuperAdmin && (users ?? []).filter((u) => u.role === "super_admin").length <= 1;
   const selectedCount = selectedUsers.size;
 
-  // Determine which user IDs are selectable (not yourself, not last super_admin for non-super_admin users)
+  // Filtered users
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return enrichedUsers;
+    const q = searchQuery.toLowerCase();
+    return enrichedUsers.filter(
+      (u) =>
+        u.display_name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.role?.toLowerCase().includes(q),
+    );
+  }, [enrichedUsers, searchQuery]);
+
+  // Determine which user IDs are selectable
   const selectableUserIds = useMemo(() => {
-    return (users ?? [])
+    return (filteredUsers ?? [])
       .filter((u) => {
         if (u.user_id === user?.id) return false;
         if (u.role === "super_admin" && isOnlySuperAdmin) return false;
         return true;
       })
       .map((u) => u.user_id);
-  }, [users, user?.id, isOnlySuperAdmin]);
+  }, [filteredUsers, user?.id, isOnlySuperAdmin]);
 
   const allVisibleSelected = useMemo(
     () => selectableUserIds.length > 0 && selectableUserIds.every((id) => selectedUsers.has(id)),
@@ -271,6 +403,11 @@ function AdminUsersPage() {
     setSelectedUsers(new Set());
     setShowBulkRolePicker(false);
     setBulkRoleSelected("");
+  };
+
+  const toggleExpand = (userId: string) => {
+    setExpandedUserId((prev) => (prev === userId ? null : userId));
+    setDetailTab("profile");
   };
 
   /* ── Role badge component ─────────────────────────────────────── */
@@ -332,6 +469,214 @@ function AdminUsersPage() {
     </div>
   );
 
+  /* ── Detail panel sections ────────────────────────────────────── */
+
+  const DetailPanel = ({ targetUser }: { targetUser: UserRoleRow }) => {
+    const tabs = [
+      { key: "profile", label: "Profile", icon: <Info className="h-3 w-3" /> },
+      { key: "library", label: "Library", icon: <BookOpen className="h-3 w-3" /> },
+      { key: "activity", label: "Activity", icon: <Activity className="h-3 w-3" /> },
+    ];
+
+    return (
+      <div className="border-t border-border/40 bg-secondary/10 px-5 py-4 space-y-4">
+        <TabBar tabs={tabs} active={detailTab} onChange={setDetailTab} />
+
+        {detailTab === "profile" && <ProfileSection targetUser={targetUser} />}
+        {detailTab === "library" && <LibrarySection targetUserId={targetUser.user_id} />}
+        {detailTab === "activity" && <ActivitySection targetUserId={targetUser.user_id} />}
+      </div>
+    );
+  };
+
+  /* ── Profile tab ──────────────────────────────────────────────── */
+
+  const ProfileSection = ({ targetUser }: { targetUser: UserRoleRow }) => {
+    const status = getAccountStatus(targetUser.role, targetUser.created_at);
+    const roleLabel = ALL_ROLES.find((r) => r.value === targetUser.role)?.label ?? targetUser.role ?? "None";
+
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="bg-white dark:bg-zinc-900/80 rounded-lg border border-border/60 p-3 space-y-1">
+          <p className="text-[0.5rem] font-medium text-muted-foreground uppercase tracking-[0.1em]">Account Status</p>
+          <StatusBadge status={status} />
+        </div>
+        <div className="bg-white dark:bg-zinc-900/80 rounded-lg border border-border/60 p-3 space-y-1">
+          <p className="text-[0.5rem] font-medium text-muted-foreground uppercase tracking-[0.1em]">Role</p>
+          <p className="text-sm font-medium">{roleLabel}</p>
+        </div>
+        <div className="bg-white dark:bg-zinc-900/80 rounded-lg border border-border/60 p-3 space-y-1">
+          <p className="text-[0.5rem] font-medium text-muted-foreground uppercase tracking-[0.1em]">Joined</p>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-3 w-3 text-muted-foreground/50" />
+            <p className="text-sm">{targetUser.created_at ? formatDate(targetUser.created_at) : "—"}</p>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-zinc-900/80 rounded-lg border border-border/60 p-3 space-y-1">
+          <p className="text-[0.5rem] font-medium text-muted-foreground uppercase tracking-[0.1em]">User ID</p>
+          <p className="text-[0.55rem] font-mono text-muted-foreground truncate" title={targetUser.user_id}>
+            {targetUser.user_id.slice(0, 16)}…
+          </p>
+        </div>
+        <div className="bg-white dark:bg-zinc-900/80 rounded-lg border border-border/60 p-3 space-y-1">
+          <p className="text-[0.5rem] font-medium text-muted-foreground uppercase tracking-[0.1em]">Email</p>
+          <p className="text-sm truncate" title={targetUser.email ?? ""}>{targetUser.email || "—"}</p>
+        </div>
+        <div className="bg-white dark:bg-zinc-900/80 rounded-lg border border-border/60 p-3 space-y-1">
+          <p className="text-[0.5rem] font-medium text-muted-foreground uppercase tracking-[0.1em]">Display Name</p>
+          <p className="text-sm truncate">{targetUser.display_name || "—"}</p>
+        </div>
+      </div>
+    );
+  };
+
+  /* ── Library tab ──────────────────────────────────────────────── */
+
+  const LibrarySection = ({ targetUserId }: { targetUserId: string }) => {
+    const { data, isLoading, error } = useQuery({
+      queryKey: ["admin-user-library", targetUserId],
+      queryFn: () => (doGetLibrary as any)({ data: { targetUserId } }),
+      enabled: !!targetUserId,
+    });
+
+    const books = (data as any)?.books ?? [];
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center gap-3 text-sm text-muted-foreground py-4">
+          <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30 border-t-transparent animate-spin" />
+          Loading library…
+        </div>
+      );
+    }
+
+    if (error) {
+      return <p className="text-sm text-destructive py-4">Failed to load library: {error.message}</p>;
+    }
+
+    if (books.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <BookOpen className="h-6 w-6 mx-auto text-muted-foreground/30 mb-2" />
+          <p className="text-sm text-muted-foreground">No books purchased yet.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+        {books.map((b: any) => (
+          <div key={b.bookId} className="flex items-center justify-between gap-3 bg-white dark:bg-zinc-900/80 rounded-lg border border-border/60 px-3 py-2.5">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              {b.coverImage ? (
+                <img src={b.coverImage} alt="" className="w-8 h-10 rounded object-cover border border-border/60 shrink-0" />
+              ) : (
+                <div className="w-8 h-10 rounded bg-secondary/60 flex items-center justify-center shrink-0">
+                  <BookOpen className="h-4 w-4 text-muted-foreground/40" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <Link
+                  to="/books/$slug"
+                  params={{ slug: b.slug }}
+                  search={{} as any}
+                  className="text-sm font-medium truncate block hover:underline"
+                >
+                  {b.titleEn || b.titleBn || "Untitled"}
+                </Link>
+                <div className="flex items-center gap-2 text-[0.5rem] text-muted-foreground mt-0.5">
+                  <span>{b.isFree ? "Free" : formatCurrency(b.amountPaid)}</span>
+                  {b.progressPct > 0 && (
+                    <>
+                      <span>·</span>
+                      <span>{b.progressPct}% read</span>
+                    </>
+                  )}
+                  <span>·</span>
+                  <span>{formatDate(b.purchaseDate)}</span>
+                </div>
+              </div>
+            </div>
+            {b.progressPct > 0 && (
+              <div className="shrink-0 w-16">
+                <div className="h-1.5 bg-secondary/60 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      b.completed ? "bg-emerald-500" : "bg-foreground/50"
+                    }`}
+                    style={{ width: `${b.progressPct}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  /* ── Activity tab ─────────────────────────────────────────────── */
+
+  const ActivitySection = ({ targetUserId }: { targetUserId: string }) => {
+    const { data, isLoading, error } = useQuery({
+      queryKey: ["admin-user-audit", targetUserId],
+      queryFn: () => (doGetAudit as any)({ data: { targetUserId, limit: 20 } }),
+      enabled: !!targetUserId,
+    });
+
+    const events = (data as AuditEvent[]) ?? [];
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center gap-3 text-sm text-muted-foreground py-4">
+          <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30 border-t-transparent animate-spin" />
+          Loading activity…
+        </div>
+      );
+    }
+
+    if (error) {
+      return <p className="text-sm text-destructive py-4">Failed to load activity: {error.message}</p>;
+    }
+
+    if (events.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <Activity className="h-6 w-6 mx-auto text-muted-foreground/30 mb-2" />
+          <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+        {events.map((event) => (
+          <div
+            key={event.id}
+            className="flex items-center justify-between gap-2 bg-white dark:bg-zinc-900/80 rounded-lg border border-border/60 px-3 py-2"
+          >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span
+                className={`text-[0.5rem] font-medium px-1.5 py-0.5 rounded-full border shrink-0 ${
+                  ACTION_STYLES[event.action] || "bg-neutral-100 text-neutral-700 border-neutral-300/50 dark:bg-neutral-800 dark:text-neutral-300"
+                }`}
+              >
+                {ACTION_LABELS[event.action] || event.action}
+              </span>
+              <span className="text-[0.55rem] text-muted-foreground truncate">
+                {event.actor_id === targetUserId ? "Actor" : "Target"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Clock className="h-2.5 w-2.5 text-muted-foreground/40" />
+              <span className="text-[0.5rem] text-muted-foreground">{timeAgo(event.created_at)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   /* ── Loading state ────────────────────────────────────────────── */
 
   if (isLoading) {
@@ -369,95 +714,121 @@ function AdminUsersPage() {
             <h2 className="text-lg font-semibold">Users & Roles</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               {isSuperAdmin
-                ? "Manage all users and their permissions."
+                ? "Manage all users, roles, purchases, and activity."
                 : "You can assign roles below your own level."}
             </p>
           </div>
         </div>
+        <div className="text-xs text-muted-foreground bg-secondary/40 rounded-lg px-3 py-1.5 border border-border/60">
+          {(users ?? []).length} total
+        </div>
       </div>
 
-      {/* Invite user card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden">
-        {showInvite ? (
-          <div className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4 text-muted-foreground/60" />
-                <h3 className="text-sm font-medium">Invite a new user</h3>
-              </div>
-              <button
-                onClick={() => { setShowInvite(false); setInviteEmail(""); }}
-                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      {/* Stats summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Total Users", value: (users ?? []).length, icon: <Users className="h-3.5 w-3.5" />, color: "text-blue-600 dark:text-blue-400" },
+          { label: "Active", value: enrichedUsers.filter((u) => u.accountStatus === "active").length, icon: <CheckCircle className="h-3.5 w-3.5" />, color: "text-emerald-600 dark:text-emerald-400" },
+          { label: "No Role", value: enrichedUsers.filter((u) => u.accountStatus === "unassigned").length, icon: <Shield className="h-3.5 w-3.5" />, color: "text-amber-600 dark:text-amber-400" },
+          { label: "Super Admins", value: enrichedUsers.filter((u) => u.role === "super_admin").length, icon: <Star className="h-3.5 w-3.5" />, color: "text-purple-600 dark:text-purple-400" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 px-4 py-3 flex items-center gap-3">
+            <div className={`${stat.color}`}>{stat.icon}</div>
+            <div>
+              <p className="text-lg font-semibold leading-tight">{stat.value}</p>
+              <p className="text-[0.55rem] text-muted-foreground uppercase tracking-[0.05em]">{stat.label}</p>
             </div>
+          </div>
+        ))}
+      </div>
 
-            <div className="space-y-4">
-              {/* Email input */}
-              <div>
-                <label className="block text-[0.6rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">
-                  Email address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-                  <input
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="colleague@example.com"
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40 transition-colors"
-                  />
+      {/* Invite & Search bar */}
+      <div className="flex items-center gap-3">
+        {/* Invite user card */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden flex-1">
+          {showInvite ? (
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4 text-muted-foreground/60" />
+                  <h3 className="text-sm font-medium">Invite a new user</h3>
                 </div>
-              </div>
-
-              {/* Role selector */}
-              <div>
-                <label className="block text-[0.6rem] font-medium text-muted-foreground mb-2 uppercase tracking-[0.05em]">
-                  Assign role
-                </label>
-                <RoleSelector selected={inviteRole} onChange={setInviteRole} />
-              </div>
-
-              {/* Action */}
-              <div className="flex items-center justify-end gap-2 pt-1">
                 <button
                   onClick={() => { setShowInvite(false); setInviteEmail(""); }}
-                  className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (!inviteEmail.trim()) { toast.error("Enter an email address"); return; }
-                    invite.mutate({ email: inviteEmail.trim(), role: inviteRole });
-                  }}
-                  disabled={invite.isPending || !inviteEmail.trim()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
-                >
-                  {invite.isPending ? (
-                    <>Sending…</>
-                  ) : (
-                    <><UserPlus className="h-3.5 w-3.5" /> Send Invitation</>
-                  )}
+                  <X className="h-4 w-4" />
                 </button>
               </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1 uppercase tracking-[0.05em]">Email address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="colleague@example.com"
+                      className="w-full pl-9 pr-3 py-2 text-sm border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40 transition-colors"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Assign role</label>
+                  <RoleSelector selected={inviteRole} onChange={setInviteRole} />
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => { setShowInvite(false); setInviteEmail(""); }}
+                    className="px-3 py-1.5 text-[0.55rem] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!inviteEmail.trim()) { toast.error("Enter an email address"); return; }
+                      invite.mutate({ email: inviteEmail.trim(), role: inviteRole });
+                    }}
+                    disabled={invite.isPending || !inviteEmail.trim()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.55rem] font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
+                  >
+                    {invite.isPending ? (
+                      <>Sending…</>
+                    ) : (
+                      <><UserPlus className="h-3 w-3" /> Send Invitation</>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between px-5 py-3.5">
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground/40" />
-              <span className="text-sm text-muted-foreground">Invite a new user by email</span>
+          ) : (
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground/40" />
+                <span className="text-sm text-muted-foreground">Invite a new user by email</span>
+              </div>
+              <button
+                onClick={() => setShowInvite(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.55rem] font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors"
+              >
+                <UserPlus className="h-3 w-3" /> Invite
+              </button>
             </div>
-            <button
-              onClick={() => setShowInvite(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.6rem] font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors"
-            >
-              <UserPlus className="h-3 w-3" /> Invite
-            </button>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Search */}
+        <div className="relative w-64 shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search users…"
+            className="w-full pl-9 pr-3 py-2.5 text-sm border border-border/60 rounded-xl bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
+          />
+        </div>
       </div>
 
       {/* ── Bulk actions toolbar ──────────────────────────────────── */}
@@ -470,7 +841,7 @@ function AdminUsersPage() {
               </span>
               <button
                 onClick={clearSelection}
-                className="text-[0.6rem] text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                className="text-[0.55rem] text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
               >
                 Clear
               </button>
@@ -481,7 +852,7 @@ function AdminUsersPage() {
               <button
                 onClick={() => setShowBulkRolePicker(!showBulkRolePicker)}
                 disabled={bulkSetRole.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.6rem] font-medium border border-border/60 rounded-lg hover:bg-secondary/60 hover:border-border disabled:opacity-40 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.55rem] font-medium border border-border/60 rounded-lg hover:bg-secondary/60 hover:border-border disabled:opacity-40 transition-colors"
               >
                 <CheckCircle className="h-3 w-3" />
                 Change Role
@@ -492,7 +863,7 @@ function AdminUsersPage() {
               <button
                 onClick={() => setBulkDeleteOpen(true)}
                 disabled={bulkDelete.isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.6rem] font-medium text-destructive/80 hover:text-destructive border border-destructive/20 rounded-lg hover:border-destructive/40 disabled:opacity-40 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.55rem] font-medium text-destructive/80 hover:text-destructive border border-destructive/20 rounded-lg hover:border-destructive/40 disabled:opacity-40 transition-colors"
               >
                 <Trash2 className="h-3 w-3" />
                 Delete
@@ -503,14 +874,14 @@ function AdminUsersPage() {
           {/* Inline bulk role picker */}
           {showBulkRolePicker && (
             <div className="bg-white dark:bg-zinc-900 border-x border-b border-border/60 rounded-b-xl px-5 py-4 space-y-3">
-              <p className="text-[0.6rem] font-medium text-muted-foreground uppercase tracking-[0.05em]">
+              <p className="text-[0.55rem] font-medium text-muted-foreground uppercase tracking-[0.05em]">
                 Assign role to {selectedCount} user{selectedCount > 1 ? "s" : ""}
               </p>
               <RoleSelector selected={bulkRoleSelected} onChange={setBulkRoleSelected} />
               <div className="flex items-center justify-end gap-2 pt-1">
                 <button
                   onClick={() => { setShowBulkRolePicker(false); setBulkRoleSelected(""); }}
-                  className="px-3 py-1.5 text-[0.6rem] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="px-3 py-1.5 text-[0.55rem] font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Cancel
                 </button>
@@ -523,7 +894,7 @@ function AdminUsersPage() {
                     });
                   }}
                   disabled={bulkSetRole.isPending || !bulkRoleSelected}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-[0.6rem] font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-[0.55rem] font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
                 >
                   {bulkSetRole.isPending
                     ? "Updating…"
@@ -537,10 +908,12 @@ function AdminUsersPage() {
 
       {/* Users list */}
       <div className="space-y-2">
-        {(users ?? []).length === 0 ? (
+        {filteredUsers.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-xl border border-border/60">
             <Users className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">No users found.</p>
+            <p className="text-sm text-muted-foreground">
+              {searchQuery ? "No users matching your search." : "No users found."}
+            </p>
           </div>
         ) : (
           <>
@@ -554,113 +927,132 @@ function AdminUsersPage() {
                   disabled={selectableUserIds.length === 0}
                   className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30 disabled:opacity-30"
                 />
-                <span className="text-[0.55rem] font-medium text-muted-foreground/60 uppercase tracking-[0.1em]">
+                <span className="text-[0.5rem] font-medium text-muted-foreground/60 uppercase tracking-[0.1em]">
                   {allVisibleSelected ? "Deselect all" : "Select all"} ({selectableUserIds.length} selectable)
                 </span>
               </label>
             </div>
 
-            {(users ?? []).map((u) => {
+            {filteredUsers.map((u) => {
               const isSelectable = selectableUserIds.includes(u.user_id);
               const isSelected = selectedUsers.has(u.user_id);
+              const isExpanded = expandedUserId === u.user_id;
 
               return (
-                <div
-                  key={u.user_id}
-                  className={`bg-white dark:bg-zinc-900 rounded-xl border overflow-hidden transition-all ${
-                    isSelected
-                      ? "border-foreground/30 ring-1 ring-foreground/10 shadow-sm"
-                      : "border-border/60"
-                  }`}
-                >
-                  {/* User row (collapsed) */}
-                  <div className="flex items-center justify-between gap-3 px-5 py-4">
-                    {/* Checkbox + info */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelect(u.user_id)}
-                        disabled={!isSelectable || editingUser === u.user_id}
-                        className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30 disabled:opacity-30 shrink-0"
-                      />
+                <div key={u.user_id}>
+                  <div
+                    className={`bg-white dark:bg-zinc-900 rounded-xl border overflow-hidden transition-all ${
+                      isSelected
+                        ? "border-foreground/30 ring-1 ring-foreground/10 shadow-sm"
+                        : isExpanded
+                          ? "border-foreground/20 shadow-sm"
+                          : "border-border/60 hover:border-border/80"
+                    }`}
+                  >
+                    {/* User row */}
+                    <div className="flex items-center justify-between gap-3 px-4 py-3">
+                      {/* Checkbox + avatar + info */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(u.user_id)}
+                          disabled={!isSelectable || editingUser === u.user_id}
+                          className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30 disabled:opacity-30 shrink-0"
+                        />
 
-                      {u.avatar_url ? (
-                        <img src={u.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border border-border/60 shrink-0" />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-foreground/60 to-foreground/30 flex items-center justify-center text-[0.6rem] font-semibold text-background shrink-0">
-                          {(u.display_name || u.email || "?")[0]?.toUpperCase() || "?"}
+                        {u.avatar_url ? (
+                          <img src={u.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border border-border/60 shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-foreground/60 to-foreground/30 flex items-center justify-center text-[0.55rem] font-semibold text-background shrink-0">
+                            {(u.display_name || u.email || "?")[0]?.toUpperCase() || "?"}
+                          </div>
+                        )}
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium truncate">{u.display_name || "Unknown"}</p>
+                            <StatusBadge status={u.accountStatus} />
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">{u.email || "—"}</p>
                         </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{u.display_name || "Unknown"}</p>
-                        <p className="text-xs text-muted-foreground truncate">{u.email || "—"}</p>
+                      </div>
+
+                      {/* Role badge */}
+                      <div className="shrink-0">
+                        {editingUser === u.user_id ? null : <RoleBadge role={u.role} />}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="shrink-0">
+                        {editingUser === u.user_id ? null : (
+                          <div className="flex items-center gap-1">
+                            {/* Expand button */}
+                            <button
+                              onClick={() => toggleExpand(u.user_id)}
+                              className="px-2 py-1.5 text-[0.55rem] font-medium text-muted-foreground hover:text-foreground border border-border/60 rounded-lg hover:border-border transition-colors"
+                              title="View details"
+                            >
+                              {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                            </button>
+                            <button
+                              onClick={() => handleStartEdit(u)}
+                              disabled={!isSuperAdmin && currentUserRole === u.role}
+                              className="px-3 py-1.5 text-[0.55rem] font-medium text-muted-foreground hover:text-foreground border border-border/60 rounded-lg hover:border-border disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => setDeletingUser(u.user_id)}
+                              disabled={
+                                u.user_id === user?.id ||
+                                (u.role === "super_admin" && isOnlySuperAdmin) ||
+                                !isSuperAdmin
+                              }
+                              title={
+                                u.user_id === user?.id
+                                  ? "Cannot delete yourself"
+                                  : u.role === "super_admin" && isOnlySuperAdmin
+                                    ? "Cannot delete the last super_admin"
+                                    : "Delete user"
+                              }
+                              className="px-2 py-1.5 text-[0.55rem] font-medium text-destructive/70 hover:text-destructive border border-destructive/20 rounded-lg hover:border-destructive/40 disabled:opacity-25 disabled:pointer-events-none transition-colors"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Role badge */}
-                    <div className="shrink-0">
-                      {editingUser === u.user_id ? null : <RoleBadge role={u.role} />}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="shrink-0">
-                      {editingUser === u.user_id ? null : (
-                        <div className="flex items-center gap-1">
+                    {/* Expanded role editor */}
+                    {editingUser === u.user_id && (
+                      <div className="border-t border-border/40 bg-secondary/20 px-5 py-4 space-y-3">
+                        <p className="text-[0.55rem] font-medium text-muted-foreground uppercase tracking-[0.05em]">
+                          Select role for <span className="text-foreground">{u.display_name || u.email}</span>
+                        </p>
+                        <RoleSelector selected={pendingRole} onChange={setPendingRole} />
+                        <div className="flex items-center justify-end gap-2 pt-1">
                           <button
-                            onClick={() => handleStartEdit(u)}
-                            disabled={!isSuperAdmin && currentUserRole === u.role}
-                            className="px-3 py-1.5 text-[0.6rem] font-medium text-muted-foreground hover:text-foreground border border-border/60 rounded-lg hover:border-border disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                            onClick={() => setEditingUser(null)}
+                            className="px-3 py-1.5 text-[0.55rem] font-medium text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            Edit
+                            Cancel
                           </button>
                           <button
-                            onClick={() => setDeletingUser(u.user_id)}
-                            disabled={
-                              u.user_id === user?.id ||
-                              (u.role === "super_admin" && isOnlySuperAdmin) ||
-                              !isSuperAdmin
-                            }
-                            title={
-                              u.user_id === user?.id
-                                ? "Cannot delete yourself"
-                                : u.role === "super_admin" && isOnlySuperAdmin
-                                  ? "Cannot delete the last super_admin"
-                                  : "Delete user"
-                            }
-                            className="px-2 py-1.5 text-[0.6rem] font-medium text-destructive/70 hover:text-destructive border border-destructive/20 rounded-lg hover:border-destructive/40 disabled:opacity-25 disabled:pointer-events-none transition-colors"
+                            onClick={handleSaveRole}
+                            disabled={setRole.isPending}
+                            className="inline-flex items-center gap-1.5 px-4 py-1.5 text-[0.55rem] font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            {setRole.isPending ? "Saving…" : <><CheckCircle className="h-3 w-3" /> Save Role</>}
                           </button>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
+
+                    {/* Detail panel */}
+                    {isExpanded && editingUser !== u.user_id && <DetailPanel targetUser={u} />}
                   </div>
-
-                  {/* Expanded role editor */}
-                  {editingUser === u.user_id && (
-                    <div className="border-t border-border/40 bg-secondary/20 px-5 py-4 space-y-3">
-                      <p className="text-[0.6rem] font-medium text-muted-foreground uppercase tracking-[0.05em]">
-                        Select role for <span className="text-foreground">{u.display_name || u.email}</span>
-                      </p>
-                      <RoleSelector selected={pendingRole} onChange={setPendingRole} />
-                      <div className="flex items-center justify-end gap-2 pt-1">
-                        <button
-                          onClick={() => setEditingUser(null)}
-                          className="px-3 py-1.5 text-[0.6rem] font-medium text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleSaveRole}
-                          disabled={setRole.isPending}
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 text-[0.6rem] font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
-                        >
-                          {setRole.isPending ? "Saving…" : <><CheckCircle className="h-3 w-3" /> Save Role</>}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}

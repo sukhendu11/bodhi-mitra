@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useOne, useUpdate } from "@refinedev/core";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   DEFAULT_CONFIG,
-  fetchSiteSettings,
-  saveSiteSettingsAction,
+  mergeConfig,
   type SiteConfig,
 } from "@/lib/siteSettings";
 import { createSiteAssetUpload } from "@/lib/siteAssets.functions";
@@ -27,7 +26,6 @@ import { Settings } from "lucide-react";
 import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/settings")({
-  loader: () => fetchSiteSettings(),
   component: SettingsPage,
   errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
@@ -45,22 +43,42 @@ const TABS = [
 ] as const;
 
 function SettingsPage() {
-  const initial = Route.useLoaderData();
-  const qc = useQueryClient();
   const createAssetUpload = useServerFn(createSiteAssetUpload);
-  const [cfg, setCfg] = useState<SiteConfig>(initial ?? DEFAULT_CONFIG);
+  const [cfg, setCfg] = useState<SiteConfig>(DEFAULT_CONFIG);
+  const [ready, setReady] = useState(false);
   const [activeTab, setActiveTab] = useState("branding");
   const [hasChanges, setHasChanges] = useState(false);
 
-  const save = useMutation({
-    mutationFn: (next: SiteConfig) => saveSiteSettingsAction({ data: next }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["site-settings"] });
-      setHasChanges(false);
-      toast.success("Settings saved — UI updated.");
-    },
-    onError: (e: Error) => toast.error(e.message),
+  /* ── Fetch via Refine useOne ──────────────────────────────────── */
+
+  const { query: settingsQuery, result: settingsResult } = useOne({
+    resource: "site_settings",
+    id: "1",
   });
+
+  useEffect(() => {
+    if (settingsResult && !ready) {
+      setCfg(mergeConfig((settingsResult as any)?.config));
+      setReady(true);
+    }
+  }, [settingsResult, ready]);
+
+  /* ── Save via Refine useUpdate ────────────────────────────────── */
+
+  const { mutate: updateMutate, mutation: updateMutation } = useUpdate();
+
+  const handleSave = () => {
+    updateMutate(
+      { resource: "site_settings", id: "1", values: { config: cfg } },
+      {
+        onSuccess: () => {
+          setHasChanges(false);
+          toast.success("Settings saved — UI updated.");
+        },
+        onError: (e: any) => toast.error(e?.message ?? "Save failed"),
+      },
+    );
+  };
 
   const update = <K extends keyof SiteConfig>(group: K, patch: Partial<SiteConfig[K]>) => {
     setCfg((c) => ({ ...c, [group]: { ...c[group], ...patch } as SiteConfig[K] }));
@@ -77,10 +95,10 @@ function SettingsPage() {
   }
 
   const tabProps = { cfg, update, uploadAsset, setCfg };
+  const isPending = updateMutation?.isPending ?? false;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Settings className="h-5 w-5 text-muted-foreground/60" />
@@ -97,16 +115,15 @@ function SettingsPage() {
               Unsaved changes
             </span>
           )}
-          <Button variant="outline" size="sm" onClick={() => setCfg(initial ?? DEFAULT_CONFIG)} disabled={save.isPending}>
+          <Button variant="outline" size="sm" onClick={() => setCfg(DEFAULT_CONFIG)} disabled={isPending}>
             Reset
           </Button>
-          <Button size="sm" onClick={() => save.mutate(cfg)} disabled={save.isPending || !hasChanges}>
-            {save.isPending ? "Saving…" : "Save"}
+          <Button size="sm" onClick={handleSave} disabled={isPending || !hasChanges}>
+            {isPending ? "Saving…" : "Save"}
           </Button>
         </div>
       </div>
 
-      {/* Settings tabs */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="border-b border-border/60 px-1 pt-1">
@@ -141,18 +158,17 @@ function SettingsPage() {
         </Tabs>
       </div>
 
-      {/* Bottom save bar */}
       <div className="flex items-center justify-end gap-2 pt-2">
         {hasChanges && (
           <span className="text-[0.55rem] text-amber-600 dark:text-amber-400 mr-2">
             You have unsaved changes
           </span>
         )}
-        <Button variant="outline" size="sm" onClick={() => setCfg(initial ?? DEFAULT_CONFIG)} disabled={save.isPending}>
+        <Button variant="outline" size="sm" onClick={() => setCfg(DEFAULT_CONFIG)} disabled={isPending}>
           Reset
         </Button>
-        <Button size="sm" onClick={() => save.mutate(cfg)} disabled={save.isPending || !hasChanges}>
-          {save.isPending ? "Saving…" : "Save Changes"}
+        <Button size="sm" onClick={handleSave} disabled={isPending || !hasChanges}>
+          {isPending ? "Saving…" : "Save Changes"}
         </Button>
       </div>
     </div>
