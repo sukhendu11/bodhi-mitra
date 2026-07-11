@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { fetchPublishedBooks, type Book } from "@/lib/books";
 import { fetchPageBySlug } from "@/lib/pages";
@@ -12,8 +12,9 @@ import { getReadingProgress } from "@/lib/books-progress";
 import { checkOwnership } from "@/lib/books-purchases";
 import { getPdfReaderUrl, purchaseBookAction } from "@/lib/books-reader";
 import { AuthModal } from "@/components/AuthModal";
-import { PdfViewer } from "@/components/PdfViewer";
 import { StarRating } from "@/components/StarRating";
+
+const PdfViewer = lazy(() => import("@/components/PdfViewer").then((m) => ({ default: m.PdfViewer })));
 import { BookSkeleton } from "@/components/BookSkeleton";
 import { Reveal } from "@/components/Reveal";
 import { SearchBar } from "@/components/SearchBar";
@@ -484,11 +485,13 @@ function BooksPage() {
       <Dialog open={!!pdfReaderUrl} onOpenChange={(open) => { if (!open) { setPdfReaderUrl(null); setReaderBook(null); setPdfExpired(false); } }}>
         <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col p-0 gap-0">
           {pdfReaderUrl && (
-            <PdfViewer
-              url={pdfReaderUrl}
-              title={readerBook ? pickLocalized(readerBook.title_en, readerBook.title_bn, lang, "Untitled") : undefined}
-              onClose={() => { setPdfReaderUrl(null); setReaderBook(null); setPdfExpired(false); }}
-            />
+            <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh] text-muted-foreground text-sm">Loading reader…</div>}>
+              <PdfViewer
+                url={pdfReaderUrl}
+                title={readerBook ? pickLocalized(readerBook.title_en, readerBook.title_bn, lang, "Untitled") : undefined}
+                onClose={() => { setPdfReaderUrl(null); setReaderBook(null); setPdfExpired(false); }}
+              />
+            </Suspense>
           )}
         </DialogContent>
       </Dialog>

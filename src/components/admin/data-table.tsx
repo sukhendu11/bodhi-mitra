@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -10,6 +10,7 @@ import {
   type SortingState,
   type ColumnFiltersState,
   type VisibilityState,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -33,45 +34,87 @@ import {
   ChevronsUpDown,
   Search,
   Columns3,
+  CheckSquare,
+  X,
+  Trash2,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export interface DataTableProps<TData> {
+export interface DataTableProps<TData extends { id: string }> {
   columns: ColumnDef<TData, any>[];
   data: TData[];
   searchPlaceholder?: string;
-  searchColumn?: string;
   pageSize?: number;
+  filters?: ReactNode;
+  onBulkDelete?: (ids: string[]) => void;
+  isBulkDeleting?: boolean;
+  renderSubRow?: (row: TData) => ReactNode;
 }
 
-export function DataTable<TData>({
+export function DataTable<TData extends { id: string }>({
   columns,
   data,
   searchPlaceholder = "Search…",
-  searchColumn,
   pageSize = 15,
+  filters,
+  onBulkDelete,
+  isBulkDeleting,
+  renderSubRow,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = useState("");
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  const selectionCol = onBulkDelete ? {
+    id: "select",
+    header: ({ table: t }) => (
+      <input
+        type="checkbox"
+        checked={t.getIsAllRowsSelected()}
+        onChange={t.getToggleAllRowsSelectedHandler()}
+        className="h-3.5 w-3.5 rounded border-border/60 accent-foreground cursor-pointer"
+      />
+    ),
+    cell: ({ row }) => (
+      <input
+        type="checkbox"
+        checked={row.getIsSelected()}
+        onChange={row.getToggleSelectedHandler()}
+        className="h-3.5 w-3.5 rounded border-border/60 accent-foreground cursor-pointer"
+      />
+    ),
+    size: 36,
+    enableSorting: false,
+  } as ColumnDef<TData, any> : null;
+
+  const allColumns = useMemo(() => {
+    if (selectionCol) return [selectionCol, ...columns];
+    return columns;
+  }, [columns, !!onBulkDelete]);
 
   const table = useReactTable({
     data,
-    columns,
+    columns: allColumns,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       globalFilter,
+      rowSelection,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => row.id,
+    enableRowSelection: !!onBulkDelete,
     initialState: {
       pagination: { pageSize },
     },
@@ -80,20 +123,35 @@ export function DataTable<TData>({
   const totalRows = table.getFilteredRowModel().rows.length;
   const pageIndex = table.getState().pagination.pageIndex;
   const pageCount = table.getPageCount();
+  const selectedCount = Object.keys(rowSelection).length;
+
+  const selectedIds = useMemo(() => {
+    return Object.keys(rowSelection);
+  }, [rowSelection]);
+
+  const handleBulkDelete = () => {
+    if (onBulkDelete && selectedIds.length > 0) {
+      onBulkDelete(selectedIds);
+      setRowSelection({});
+    }
+  };
 
   return (
     <div className="space-y-3">
-      {/* Toolbar: search + column visibility */}
+      {/* Toolbar: search + filters + column visibility */}
       <div className="flex items-center justify-between gap-3">
-        <div className="relative max-w-xs flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-          <input
-            type="text"
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="w-full pl-9 pr-3 py-2 text-xs border border-border/60 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
-          />
+        <div className="flex items-center gap-3 flex-1">
+          <div className="relative max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+            <input
+              type="text"
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="w-full pl-9 pr-3 py-2 text-xs border border-border/60 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
+            />
+          </div>
+          {filters}
         </div>
 
         <DropdownMenu>
@@ -129,6 +187,37 @@ export function DataTable<TData>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Bulk action bar */}
+      {selectedCount > 0 && onBulkDelete && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-foreground/5 rounded-lg border border-border/60">
+          <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs font-medium text-muted-foreground">
+            {selectedCount} selected
+          </span>
+          <div className="flex items-center gap-1.5 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={() => setRowSelection({})}
+            >
+              <X className="h-3 w-3" />
+              Clear
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5 text-destructive hover:text-destructive"
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+            >
+              <Trash2 className="h-3 w-3" />
+              {isBulkDeleting ? "Deleting…" : `Delete (${selectedCount})`}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="rounded-xl border border-border/60 overflow-hidden bg-white dark:bg-zinc-900">
@@ -175,7 +264,7 @@ export function DataTable<TData>({
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={allColumns.length}
                   className="h-32 text-center text-sm text-muted-foreground"
                 >
                   No results found.
@@ -185,7 +274,10 @@ export function DataTable<TData>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="border-border/40 hover:bg-secondary/20 transition-colors"
+                  className={cn(
+                    "border-border/40 transition-colors",
+                    row.getIsSelected() ? "bg-foreground/5" : "hover:bg-secondary/20",
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="px-4 py-3 text-xs">

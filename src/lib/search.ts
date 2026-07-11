@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 
-export type ContentType = "post" | "page" | "book" | "video";
+export type ContentType = "post" | "page" | "book" | "video" | "course";
 
 export interface SearchResult {
   type: ContentType;
@@ -123,6 +123,30 @@ export const searchContent = createServerFn({ method: "GET" })
             url: `/videos/${v.slug}`,
             thumbnail: v.thumbnail_url,
             created_at: v.created_at,
+          });
+        }
+      }
+    }
+
+    if (!type || type === "course") {
+      const { data: courses, error } = await db
+        .from("courses")
+        .select("id, slug, title_en, title_bn, description_en, description_bn, cover_image, created_at")
+        .eq("published", true)
+        .or(`title_en.ilike.*${term}*,title_bn.ilike.*${term}*,description_en.ilike.*${term}*,description_bn.ilike.*${term}*`)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (!error && courses) {
+        for (const c of courses) {
+          results.push({
+            type: "course",
+            id: c.id,
+            slug: c.slug,
+            title: c.title_en || c.title_bn || "",
+            excerpt: c.description_en || c.description_bn || "",
+            url: `/courses/${c.slug}`,
+            thumbnail: c.cover_image,
+            created_at: c.created_at,
           });
         }
       }

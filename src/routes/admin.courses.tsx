@@ -50,7 +50,7 @@ function AdminCoursesPage() {
           <h2 className="text-xl font-semibold tracking-tight">Courses</h2>
           <p className="text-xs text-muted-foreground mt-1">Manage your course catalog.</p>
         </div>
-        <Link to="/admin/courses/new"
+        <Link to="/admin/courses/$id" params={{ id: "new" }}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.6rem] font-medium bg-foreground text-background hover:opacity-90 transition-opacity">
           <Plus className="h-3 w-3" /> New Course
         </Link>

@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 const colorMap: Record<string, string> = {
   blue: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400",
@@ -19,7 +20,7 @@ interface StatCardProps {
 
 export function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
   return (
-    <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 px-4 py-3">
+    <Card className="flex items-center gap-3 px-4 py-3">
       <div
         className={`w-9 h-9 rounded-lg flex items-center justify-center ${colorMap[color] || colorMap.blue}`}
       >
@@ -29,6 +30,6 @@ export function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
         <p className="text-lg font-semibold tracking-tight">{value}</p>
         <p className="text-[0.55rem] text-muted-foreground">{label}</p>
       </div>
-    </div>
+    </Card>
   );
 }

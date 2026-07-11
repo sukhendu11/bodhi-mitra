@@ -393,27 +393,54 @@ Update shared components instead of creating duplicates.
 
 ---
 
-## 15. CMS & Admin Standards
+## 15. Admin Development Policy
 
-Treat the CMS as a platform, not a collection of forms.
+The Admin Panel is an independent application, not a copy of the public website.
 
-Everything manageable by administrators must be configurable through the CMS.
+Do not follow the public website's layout, design flow, or UI patterns if they limit usability, scalability, or development.
 
-Avoid hardcoded content.
+Design the Admin Panel as a professional CMS focused on productivity, efficiency, and maintainability.
 
-Keep the admin interface clean, intuitive, and consistent.
+Always prioritize:
 
-Provide validation for all editable fields.
+* Functionality
+* Workflow efficiency
+* Information density
+* Consistency
+* Accessibility
+* Scalability
+* Reusability
+* Developer Experience
 
-Provide sensible defaults.
+Use modern admin dashboard patterns inspired by platforms such as:
 
-Support draft and published states where appropriate.
+* Payload CMS
+* Directus
+* Strapi
+* Sanity Studio
+* Shopify Admin
+* GitHub
+* Linear
+* Vercel Dashboard
+* Notion
 
-Use structured content instead of free-form layouts whenever possible.
+The Admin Panel should have its own:
 
-Prefer reusable content blocks over page-specific implementations.
+* Layout
+* Navigation
+* Dashboard
+* Components
+* Design System
+* Workflow
+* State Management
 
-Keep all administrative actions predictable and reversible whenever practical.
+while sharing the same backend, services, APIs, authentication, permissions, database, and business logic as the public website.
+
+Do not force the public website's visual design into the CMS.
+
+The Admin Panel should be optimized for administrators, not visitors.
+
+Always build the Admin Panel as a standalone application within the same project, following the project's architecture, README.md, RULES.md, PROJECT.md, and START/END commands.
 
 ---
 

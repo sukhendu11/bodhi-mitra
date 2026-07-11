@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getSignedPdfUrl, canAccessPdf, checkOwnership, purchaseBook } from "@/lib/books-purchases";
+import { canAccessPdf, checkOwnership, purchaseBook } from "@/lib/books-purchases";
 
 /* ─── Server function: get signed PDF URL ──────────────────────── */
 
@@ -23,10 +23,14 @@ export const getPdfReaderUrl = createServerFn({ method: "GET" })
       throw new Error("Access denied. You need to purchase this book to read it.");
     }
 
-    // Generate signed URL
+    // Generate signed URL using admin client (bypasses RLS — access already verified)
     try {
-      const signedUrl = await getSignedPdfUrl(input.bucketPath, 300);
-      return { signedUrl, expiresIn: 300 };
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data, error } = await supabaseAdmin.storage
+        .from("book-pdfs")
+        .createSignedUrl(input.bucketPath, 300);
+      if (error) throw error;
+      return { signedUrl: data.signedUrl, expiresIn: 300 };
     } catch (error) {
       throw new Error("Failed to generate PDF reader URL. Please try again.");
     }

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { fetchBookBySlug, type Book } from "@/lib/books";
 import { getSiteName } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
@@ -11,8 +11,9 @@ import { getPdfReaderUrl, purchaseBookAction } from "@/lib/books-reader";
 import { AuthModal } from "@/components/AuthModal";
 import { StarRating, RatingBreakdown } from "@/components/StarRating";
 import { BookDetailSkeleton } from "@/components/BookSkeleton";
-import { PdfViewer } from "@/components/PdfViewer";
 import { useServerFn } from "@tanstack/react-start";
+
+const PdfViewer = lazy(() => import("@/components/PdfViewer").then((m) => ({ default: m.PdfViewer })));
 import { toast } from "sonner";
 import {
   BookOpen,
@@ -258,11 +259,13 @@ function BookDetailPage() {
 
       {pdfReaderUrl ? (
         /* ── PDF Reader View ────────────────────────────────── */
-        <PdfViewer
-          url={pdfReaderUrl}
-          title={title}
-          onClose={() => { setPdfReaderUrl(null); setPdfExpired(false); }}
-        />
+        <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh] text-muted-foreground text-sm">Loading reader…</div>}>
+          <PdfViewer
+            url={pdfReaderUrl}
+            title={title}
+            onClose={() => { setPdfReaderUrl(null); setPdfExpired(false); }}
+          />
+        </Suspense>
       ) : (
         /* ── Book Detail View ────────────────────────────────── */
         <div className="grid md:grid-cols-[320px_1fr] gap-10 md:gap-14">

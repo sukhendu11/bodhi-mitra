@@ -4,11 +4,22 @@ import { canManageUsers } from "@/hooks/useRole";
 import { checkAdminAccess } from "@/lib/admin.functions";
 import { ErrorPage } from "@/components/error-page";
 import { NotificationBell } from "@/components/notification-bell";
+import { CommandPalette } from "@/components/admin/command-palette";
+import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
+import { useAdminKeyboardShortcuts, KeyboardShortcutsHelp } from "@/components/admin/keyboard-shortcuts";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, FileText, PlusCircle, BookOpen, ImageIcon, Video, Menu, Palette, Users, Settings, MessageSquare, FolderTree, Activity, Globe, Search, LogOut, PanelLeftClose, PanelLeft, ChevronDown, type LucideIcon,
+  LayoutDashboard, FileText, PlusCircle, BookOpen, ImageIcon, Video, Menu, Palette, Users, Settings, MessageSquare, FolderTree, Activity, Globe, Search as SearchIcon, LogOut, PanelLeftClose, PanelLeft, ChevronDown, Command, type LucideIcon,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, createContext, useContext, type ReactNode } from "react";
+
+/* ─── Command palette context ────────────────────────────────────── */
+
+const CommandContext = createContext<{ open: () => void }>({ open: () => {} });
+
+export function useCommandPalette() {
+  return useContext(CommandContext);
+}
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Dashboard — Bodhi Mitra CMS" }] }),
@@ -49,6 +60,7 @@ function AdminLayout() {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Close user menu on click outside
@@ -61,6 +73,10 @@ function AdminLayout() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  const openCommandPalette = () => setCommandOpen(true);
+
+  const { showHelp, setShowHelp } = useAdminKeyboardShortcuts(openCommandPalette);
 
   const isSuperAdmin = isHardcodedAdmin(user) || userRole === "super_admin";
   const showUsers = canManageUsers(userRole) || isSuperAdmin;
@@ -111,13 +127,6 @@ function AdminLayout() {
         { to: "/admin/navigation", label: "Menu Builder", icon: Menu, exact: false },
       ],
     },
-    {
-      label: "Appearance",
-      icon: Palette,
-      items: [
-        { to: "/admin/settings", label: "Theme Settings", icon: Palette, exact: false },
-      ],
-    },
     ...(showUsers
       ? [
           {
@@ -153,17 +162,20 @@ function AdminLayout() {
   const userInitial = user?.email?.[0]?.toUpperCase() ?? "?";
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-zinc-950">
-      {/* Demo banner */}
-      <div className="border-b border-amber-400/20 bg-amber-50/90 dark:bg-amber-950/15 px-4 py-1.5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[0.55rem] uppercase tracking-[0.2em] font-semibold text-amber-700 dark:text-amber-400 shrink-0">⚠ Demo</span>
-            <p className="text-[0.6rem] text-amber-700/70 dark:text-amber-300/60 truncate">Data may be reset at any time.</p>
+    <CommandContext.Provider value={{ open: openCommandPalette }}>
+      <CommandPalette />
+      <KeyboardShortcutsHelp open={showHelp} onClose={() => setShowHelp(false)} />
+      <div className="min-h-screen bg-[#f8f9fa] dark:bg-zinc-950">
+        {/* Demo banner */}
+        <div className="border-b border-amber-400/20 bg-amber-50/90 dark:bg-amber-950/15 px-4 py-1.5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[0.55rem] uppercase tracking-[0.2em] font-semibold text-amber-700 dark:text-amber-400 shrink-0">⚠ Demo</span>
+              <p className="text-[0.6rem] text-amber-700/70 dark:text-amber-300/60 truncate">Data may be reset at any time.</p>
+            </div>
+            <p className="text-[0.5rem] text-amber-600/50 dark:text-amber-400/40 font-mono shrink-0 hidden sm:block">admin@bodhimitra.test</p>
           </div>
-          <p className="text-[0.5rem] text-amber-600/50 dark:text-amber-400/40 font-mono shrink-0 hidden sm:block">admin@bodhimitra.test</p>
         </div>
-      </div>
 
       <div className="flex">
         {/* ── Sidebar ──────────────────────────────────────────────── */}
@@ -257,13 +269,18 @@ function AdminLayout() {
           </nav>
 
           {/* Collapse toggle */}
-          <div className="border-t border-border/60 px-3 py-2">
+          <div className="border-t border-border/60 px-3 py-2 space-y-1">
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
             >
               {sidebarCollapsed ? <PanelLeft className="h-3.5 w-3.5 mx-auto" /> : <><PanelLeftClose className="h-3.5 w-3.5" /> Collapse</>}
             </button>
+            {!sidebarCollapsed && (
+              <p className="text-[0.45rem] text-muted-foreground/40 text-center tracking-wide">
+                ⌘K Search &bull; ? Shortcuts
+              </p>
+            )}
           </div>
         </aside>
 
@@ -272,24 +289,28 @@ function AdminLayout() {
           {/* ── Top Bar ─────────────────────────────────────────────── */}
           <header className="sticky top-0 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-border/60">
             <div className="flex items-center justify-between px-4 md:px-6 h-14">
-              {/* Left: Mobile menu + page title */}
-              <div className="flex items-center gap-3">
-                {/* Mobile nav toggle */}
-
-                {/* Page title */}
-                <CurrentPageLabel currentPath={currentPath} />
+              {/* Left: Mobile menu + page title + breadcrumbs */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* Page title + breadcrumbs */}
+                <div className="flex flex-col min-w-0">
+                  <h1 className="text-sm font-semibold tracking-tight truncate max-w-[240px]">
+                    <CurrentPageLabel currentPath={currentPath} />
+                  </h1>
+                  <AdminBreadcrumbs />
+                </div>
               </div>
 
               {/* Center: Search (desktop) */}
               <div className="hidden md:flex relative max-w-xs flex-1 mx-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
                 <input
                   type="text"
                   readOnly
-                  placeholder="Search anything…"
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-border/50 rounded-lg bg-secondary/30 cursor-not-allowed opacity-70"
-                  title="Global search coming soon"
+                  placeholder="Search… (⌘K)"
+                  onClick={openCommandPalette}
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-border/50 rounded-lg bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors"
                 />
+                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.5rem] text-muted-foreground/40 font-mono border border-border/40 rounded px-1 py-0.5 hidden sm:inline">⌘K</kbd>
               </div>
 
               {/* Right: Actions + User */}
@@ -367,13 +388,13 @@ function AdminLayout() {
             {/* Mobile search (below top bar) */}
             <div className="md:hidden px-4 pb-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
                 <input
                   type="text"
                   readOnly
-                  placeholder="Search anything…"
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-border/50 rounded-lg bg-secondary/30 cursor-not-allowed opacity-70"
-                  title="Global search coming soon"
+                  placeholder="Search…"
+                  onClick={openCommandPalette}
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-border/50 rounded-lg bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors"
                 />
               </div>
             </div>
@@ -404,6 +425,7 @@ function AdminLayout() {
         </div>
       </div>
     </div>
+    </CommandContext.Provider>
   );
 }
 

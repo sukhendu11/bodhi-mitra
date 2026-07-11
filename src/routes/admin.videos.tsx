@@ -43,7 +43,7 @@ import {
   DateCell,
 } from "@/components/admin/data-table";
 import { StatCard } from "@/components/admin/stat-card";
-import { FormDialog } from "@/components/admin/form-dialog";
+import { FormDrawer } from "@/components/admin/form-drawer";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { ErrorPage } from "@/components/error-page";
 
@@ -354,17 +354,29 @@ function AdminVideosPage() {
           data={videos}
           searchPlaceholder="Search videos…"
           pageSize={15}
+          onBulkDelete={async (ids) => {
+            for (const id of ids) {
+              try {
+                await deleteVideo(id);
+              } catch {
+                // continue with remaining
+              }
+            }
+            crud.invalidate();
+            toast.success(`${ids.length} video(s) deleted`);
+          }}
         />
       )}
 
-      {/* Form dialog */}
-      <FormDialog
+      {/* Form drawer */}
+      <FormDrawer
         open={crud.showForm}
         onClose={() => {
           resetForm();
           crud.closeForm();
         }}
         title={crud.mode === "edit" ? "Edit Video" : "Add New Video"}
+        description={crud.mode === "edit" ? "Update video details." : "Add a new video to the library."}
         isPending={
           (crud.createMutation?.isPending ?? false) ||
           (crud.updateMutation?.isPending ?? false)
@@ -513,7 +525,7 @@ function AdminVideosPage() {
             />
           </div>
         </Form>
-      </FormDialog>
+      </FormDrawer>
 
       {/* Delete confirmation */}
       <ConfirmDelete

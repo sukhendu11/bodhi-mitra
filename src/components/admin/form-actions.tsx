@@ -1,18 +1,10 @@
-/**
- * Reusable form footer with Cancel and Submit buttons.
- * Used across admin modals (pages, books, videos, etc.).
- */
+import { Button } from "@/components/ui/button";
 
 interface FormActionsProps {
-  /** Cancel / reset handler */
   onCancel: () => void;
-  /** Whether the submit action is pending */
   isPending: boolean;
-  /** Label for the submit button — e.g. "Create Book", "Update Page" */
   submitLabel: string;
-  /** Override for the submitting state label (defaults to "Saving…") */
   submittingLabel?: string;
-  /** If true, the submit button shows its loading/saving state */
   isSubmitting?: boolean;
 }
 
@@ -27,20 +19,12 @@ export function FormActions({
 
   return (
     <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-      >
+      <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
         Cancel
-      </button>
-      <button
-        type="submit"
-        disabled={isPending}
-        className="px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
-      >
+      </Button>
+      <Button type="submit" disabled={isPending} size="sm">
         {saving ? submittingLabel : submitLabel}
-      </button>
+      </Button>
     </div>
   );
 }

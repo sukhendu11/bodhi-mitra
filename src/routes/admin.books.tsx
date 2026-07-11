@@ -51,7 +51,7 @@ import {
   BilingualField,
   FormFieldRow,
 } from "@/components/admin/bilingual-field";
-import { FormDialog } from "@/components/admin/form-dialog";
+import { FormDrawer } from "@/components/admin/form-drawer";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { ErrorPage } from "@/components/error-page";
 
@@ -430,23 +430,35 @@ function AdminBooksPage() {
           data={books}
           searchPlaceholder="Search books…"
           pageSize={15}
+          onBulkDelete={async (ids) => {
+            for (const id of ids) {
+              try {
+                await deleteBook(id);
+              } catch {
+                // continue with remaining
+              }
+            }
+            crud.invalidate();
+            toast.success(`${ids.length} book(s) deleted`);
+          }}
         />
       )}
 
-      {/* Book form dialog */}
-      <FormDialog
+      {/* Book form drawer */}
+      <FormDrawer
         open={crud.showForm}
         onClose={() => {
           resetForm();
           crud.closeForm();
         }}
         title={crud.mode === "edit" ? "Edit Book" : "Add New Book"}
+        description={crud.mode === "edit" ? "Update book details and metadata." : "Add a new book to the library."}
         isPending={
           (crud.createMutation?.isPending ?? false) ||
           (crud.updateMutation?.isPending ?? false)
         }
         submitLabel={crud.mode === "edit" ? "Update Book" : "Create Book"}
-        size="2xl"
+        size="full"
         onSubmit={handleSubmit}
       >
         <Form {...form}>
@@ -722,7 +734,7 @@ function AdminBooksPage() {
             )}
           />
         </Form>
-      </FormDialog>
+      </FormDrawer>
 
       {/* Delete confirmation */}
       <ConfirmDelete

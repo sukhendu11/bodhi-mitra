@@ -391,10 +391,12 @@ function RootComponent() {
   if (isAdminRoute) {
     return (
       <QueryClientProvider client={queryClient}>
-        <ErrorBoundary>
-          <Outlet />
-          <Toaster position="bottom-center" />
-        </ErrorBoundary>
+        <LanguageProvider>
+          <ErrorBoundary>
+            <Outlet />
+            <Toaster position="bottom-center" />
+          </ErrorBoundary>
+        </LanguageProvider>
       </QueryClientProvider>
     );
   }

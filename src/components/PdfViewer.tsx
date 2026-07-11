@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import * as pdfjsLib from "pdfjs-dist";
 import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Minimize2 } from "lucide-react";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url,
-).toString();
+import type * as PdfJs from "pdfjs-dist";
 
 interface PdfViewerProps {
   url: string;
@@ -16,21 +11,30 @@ interface PdfViewerProps {
 export function PdfViewer({ url, title, onClose }: PdfViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [pdf, setPdf] = useState<PdfJs.PDFDocumentProxy | null>(null);
+  const [pdfjs, setPdfjs] = useState<typeof PdfJs | null>(null);
   const [pageNum, setPageNum] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [scale, setScale] = useState(1.2);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fullscreen, setFullscreen] = useState(false);
-  const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
+  const renderTaskRef = useRef<PdfJs.RenderTask | null>(null);
 
   useEffect(() => {
+    import("pdfjs-dist").then((mod) => {
+      mod.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+      setPdfjs(mod);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!pdfjs) return;
     let cancelled = false;
     setLoading(true);
     setError("");
 
-    pdfjsLib.getDocument({ url }).promise.then((doc) => {
+    pdfjs.getDocument({ url }).promise.then((doc) => {
       if (cancelled) return;
       setPdf(doc);
       setTotalPages(doc.numPages);
@@ -44,7 +48,7 @@ export function PdfViewer({ url, title, onClose }: PdfViewerProps) {
     });
 
     return () => { cancelled = true; };
-  }, [url]);
+  }, [url, pdfjs]);
 
   const renderPage = useCallback(async (num: number) => {
     if (!pdf || !canvasRef.current) return;
