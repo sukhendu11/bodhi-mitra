@@ -24,6 +24,7 @@ function NewPostPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-posts"] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post"] });
       toast.success("Post created");
       navigate({ to: "/admin" });
     },

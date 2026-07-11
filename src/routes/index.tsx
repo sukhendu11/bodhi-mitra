@@ -5,19 +5,25 @@ import { PostGrid } from "@/components/PostGrid";
 import { SearchBar } from "@/components/SearchBar";
 import type { PostCategory } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
-import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
+import { fetchSiteSettings, useSiteSettings } from "@/lib/siteSettings";
 import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/")({
-  loader: () => getSiteName(),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData} — Where Ancient Wisdom Meets Modern Psychology` },
-      { name: "description", content: "Reflections on Buddhist psychology, mindfulness, and mental health by practicing psychiatrists." },
-      { property: "og:title", content: loaderData },
-      { property: "og:description", content: "Where ancient wisdom meets modern psychology." },
-    ],
-  }),
+  loader: () => fetchSiteSettings(),
+  head: ({ loaderData }) => {
+    const seo = loaderData?.seo;
+    const tagline = loaderData?.hero?.title_en?.replace(/\n/g, " ") || "Where Ancient Wisdom Meets Modern Psychology";
+    const metaDesc = seo?.meta_desc_en || "Reflections on Buddhist psychology, mindfulness, and mental health by practicing psychiatrists.";
+    const siteName = loaderData?.branding?.site_name_en || "Bodhi Mitra";
+    return {
+      meta: [
+        { title: `${siteName} — ${tagline}` },
+        { name: "description", content: metaDesc },
+        { property: "og:title", content: siteName },
+        { property: "og:description", content: tagline },
+      ],
+    };
+  },
   component: Home,
 });
 

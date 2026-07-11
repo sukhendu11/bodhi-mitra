@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { createServerFn } from "@tanstack/react-start";
+import { requireMinRole } from "@/lib/permissions";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export interface SiteConfig {
   branding: {
@@ -199,6 +202,18 @@ export async function saveSiteSettings(config: SiteConfig): Promise<void> {
     .upsert({ id: true, config }, { onConflict: "id" });
   if (error) throw new Error(error.message);
 }
+
+/** Server function for saving site settings. Uses admin middleware + service-role client to bypass RLS. */
+export const saveSiteSettingsAction = createServerFn({ method: "POST" })
+  .middleware([requireMinRole("admin")])
+  .handler(async ({ data }) => {
+    const config = data as SiteConfig;
+    const { error } = await (supabaseAdmin as any)
+      .from("site_settings")
+      .upsert({ id: true, config }, { onConflict: "id" });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
 
 const SiteSettingsContext = createContext<SiteConfig>(DEFAULT_CONFIG);
 

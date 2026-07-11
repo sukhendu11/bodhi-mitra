@@ -2,18 +2,31 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { fetchPublishedCourses, type Course } from "@/lib/courses";
-import { getSiteName } from "@/lib/siteSettings";
+import { fetchSiteSettings } from "@/lib/siteSettings";
+import { fetchPageBySlug } from "@/lib/pages";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { BookOpen, Clock, BarChart3, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/courses")({
-  loader: () => getSiteName(),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `Courses — ${loaderData}` },
-      { name: "description", content: "Explore our guided courses on Buddhist psychology and mindfulness." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, page] = await Promise.all([
+      fetchSiteSettings(),
+      fetchPageBySlug("courses"),
+    ]);
+    return { settings, page };
+  },
+  head: ({ loaderData }) => {
+    const { settings, page } = loaderData;
+    const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
+    const metaDesc = page?.meta_description_en || "Explore our guided courses on Buddhist psychology and mindfulness.";
+    const pageTitle = page?.title_en || "Courses";
+    return {
+      meta: [
+        { title: `${pageTitle} — ${siteName}` },
+        { name: "description", content: metaDesc },
+      ],
+    };
+  },
   component: CoursesPage,
 });
 
@@ -21,19 +34,49 @@ function CoursesPage() {
   const { lang } = useLang();
   const doFetch = useServerFn(fetchPublishedCourses);
 
+  const { data: pageData } = useQuery({
+    queryKey: ["public-page", "courses"],
+    queryFn: () => fetchPageBySlug("courses"),
+    staleTime: 60_000,
+  });
+
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["published-courses"],
     queryFn: () => (doFetch as any)(),
     staleTime: 60_000,
   });
 
+  const header = pickLocalized(
+    pageData?.header_en || "Courses",
+    pageData?.header_bn || "কোর্স",
+    lang,
+    "Courses",
+  );
+  const description = pickLocalized(
+    pageData?.body_en || "Guided journeys through Buddhist psychology, mindfulness, and the examined life.",
+    pageData?.body_bn || "বৌদ্ধ মনোবিজ্ঞান, মননশীলতা এবং পরীক্ষিত জীবনের মধ্য দিয়ে নির্দেশিত যাত্রা।",
+    lang,
+    "",
+  );
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14 md:py-20">
       <div className="mb-12 text-center">
-        <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight">Courses</h1>
-        <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-          Guided journeys through Buddhist psychology, mindfulness, and the examined life.
-        </p>
+        {!pageData ? (
+          <>
+            <div className="h-8 w-48 bg-secondary/60 animate-pulse rounded mx-auto mb-3" />
+            <div className="h-4 w-96 max-w-full bg-secondary/30 animate-pulse rounded mx-auto" />
+          </>
+        ) : (
+          <>
+            <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight">{header}</h1>
+            {description && (
+              <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                {description}
+              </p>
+            )}
+          </>
+        )}
       </div>
 
       {isLoading ? (

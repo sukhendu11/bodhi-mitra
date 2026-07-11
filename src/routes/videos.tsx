@@ -1,24 +1,47 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPublishedVideos, getYoutubeId, type Video } from "@/lib/videos";
+import { fetchPageBySlug } from "@/lib/pages";
 import { useState } from "react";
 import { Video as VideoIcon } from "lucide-react";
+import { useLang, pickLocalized } from "@/lib/i18n";
+import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/videos")({
-  head: () => ({
-    meta: [
-      { title: "Videos — Bodhi Mitra" },
-      { name: "description", content: "Curated video collection on Buddhist psychology, mindfulness, and the examined life." },
-      { property: "og:title", content: "Videos — Bodhi Mitra" },
-      { property: "og:description", content: "Curated video collection on Buddhist psychology, mindfulness, and the examined life." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, page] = await Promise.all([
+      fetchSiteSettings(),
+      fetchPageBySlug("videos"),
+    ]);
+    return { settings, page };
+  },
+  head: ({ loaderData }) => {
+    const { settings, page } = loaderData;
+    const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
+    const metaDesc = page?.meta_description_en || "Curated video collection on Buddhist psychology, mindfulness, and the examined life.";
+    const pageTitle = page?.title_en || "Videos";
+    return {
+      meta: [
+        { title: `${pageTitle} — ${siteName}` },
+        { name: "description", content: metaDesc },
+        { property: "og:title", content: `${pageTitle} — ${siteName}` },
+        { property: "og:description", content: metaDesc },
+      ],
+    };
+  },
   component: VideosPage,
 });
 
 function VideosPage() {
+  const { lang } = useLang();
   const [page, setPage] = useState(1);
   const pageSize = 12;
+
+  const { data: pageData, isLoading: pageLoading } = useQuery({
+    queryKey: ["public-page", "videos"],
+    queryFn: () => fetchPageBySlug("videos"),
+    staleTime: 60_000,
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["public-videos", page],
@@ -30,16 +53,40 @@ function VideosPage() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  const header = pickLocalized(
+    pageData?.header_en || "Videos",
+    pageData?.header_bn || "ভিডিও",
+    lang,
+    "Videos",
+  );
+  const description = pickLocalized(
+    pageData?.body_en || "Curated talks, guided meditations, and reflections on the dharma path.",
+    pageData?.body_bn || "নির্বাচিত আলোচনা, নির্দেশিত ধ্যান, এবং ধর্ম পথের প্রতিফলন।",
+    lang,
+    "",
+  );
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-14 md:py-20">
       {/* Page header */}
       <div className="mb-12 text-center">
-        <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight">
-          Videos
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-          Curated talks, guided meditations, and reflections on the dharma path.
-        </p>
+        {pageLoading ? (
+          <>
+            <div className="h-8 w-48 bg-secondary/60 animate-pulse rounded mx-auto mb-3" />
+            <div className="h-4 w-96 max-w-full bg-secondary/30 animate-pulse rounded mx-auto" />
+          </>
+        ) : (
+          <>
+            <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight">
+              {header}
+            </h1>
+            {description && (
+              <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                {description}
+              </p>
+            )}
+          </>
+        )}
       </div>
 
       {/* Video grid */}
@@ -99,7 +146,6 @@ function VideosPage() {
                       </div>
                     </div>
 
-                    {/* Duration placeholder badge */}
                     <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/60 text-[0.5rem] text-white/90 font-medium">
                       YouTube
                     </div>

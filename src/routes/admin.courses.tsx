@@ -38,6 +38,9 @@ function AdminCoursesPage() {
     mutationFn: (id: string) => (doDelete as any)({ data: { id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["published-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["course"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
       toast.success("Course deleted");
     },
     onError: (e: Error) => toast.error(e.message),

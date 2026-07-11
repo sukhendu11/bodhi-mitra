@@ -84,6 +84,9 @@ function AdminCourseForm() {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["published-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["course"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
       toast.success(isNew ? "Course created" : "Course saved");
       if (isNew && result?.id) navigate({ to: `/admin/courses/${result.id}` as any });
     },
@@ -94,6 +97,8 @@ function AdminCourseForm() {
     mutationFn: () => (doCreateLesson as any)({ data: { ...newLesson, course_id: id, sort_order: lessons.length } }),
     onSuccess: () => {
       refetchLessons();
+      queryClient.invalidateQueries({ queryKey: ["course"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
       setNewLesson({ slug: "", title_en: "", title_bn: "" });
       toast.success("Lesson added");
     },
@@ -104,6 +109,8 @@ function AdminCourseForm() {
     mutationFn: () => (doUpdateLesson as any)({ data: { ...editLessonForm, id: editingLesson } }),
     onSuccess: () => {
       refetchLessons();
+      queryClient.invalidateQueries({ queryKey: ["course"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
       setEditingLesson(null);
       toast.success("Lesson saved");
     },
@@ -114,6 +121,8 @@ function AdminCourseForm() {
     mutationFn: (lessonId: string) => (doDeleteLesson as any)({ data: { id: lessonId } }),
     onSuccess: () => {
       refetchLessons();
+      queryClient.invalidateQueries({ queryKey: ["course"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
       toast.success("Lesson deleted");
     },
     onError: (e: Error) => toast.error(e.message),

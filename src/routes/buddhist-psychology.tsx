@@ -1,17 +1,30 @@
-import { getSiteName } from "@/lib/siteSettings";
+import { fetchSiteSettings } from "@/lib/siteSettings";
+import { fetchPageBySlug } from "@/lib/pages";
 import { createFileRoute } from "@tanstack/react-router";
 import { CategoryPage } from "@/components/CategoryPage";
 
 export const Route = createFileRoute("/buddhist-psychology")({
-  loader: () => getSiteName(),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `Buddhist Psychology — ${loaderData}` },
-      { name: "description", content: "Essays bridging the Buddha's wisdom with the science of mental health." },
-      { property: "og:title", content: `Buddhist Psychology — ${loaderData}` },
-      { property: "og:description", content: "Essays bridging the Buddha's wisdom with the science of mental health." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, page] = await Promise.all([
+      fetchSiteSettings(),
+      fetchPageBySlug("buddhist-psychology"),
+    ]);
+    return { settings, page };
+  },
+  head: ({ loaderData }) => {
+    const { settings, page } = loaderData;
+    const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
+    const metaDesc = page?.meta_description_en || "Essays bridging the Buddha's wisdom with the science of mental health.";
+    const pageTitle = page?.title_en || "Buddhist Psychology";
+    return {
+      meta: [
+        { title: `${pageTitle} — ${siteName}` },
+        { name: "description", content: metaDesc },
+        { property: "og:title", content: `${pageTitle} — ${siteName}` },
+        { property: "og:description", content: metaDesc },
+      ],
+    };
+  },
   component: () => (
     <CategoryPage
       category="Buddhist Psychology"

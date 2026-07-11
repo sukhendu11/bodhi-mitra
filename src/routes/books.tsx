@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react"
 import { useServerFn } from "@tanstack/react-start";
 import { fetchPublishedBooks, type Book } from "@/lib/books";
 import { fetchPageBySlug } from "@/lib/pages";
-import { getSiteName } from "@/lib/siteSettings";
+import { fetchSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized, type Lang } from "@/lib/i18n";
 import { useAuthSession } from "@/hooks/useAuth";
 import { submitRating, getUserRating } from "@/lib/books-ratings";
@@ -42,15 +42,27 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/books")({
-  loader: () => getSiteName(),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `Books — ${loaderData}` },
-      { name: "description", content: "A small shelf of companions — books we return to, and the ones we recommend without hesitation." },
-      { property: "og:title", content: `Books — ${loaderData}` },
-      { property: "og:description", content: "A small shelf of companions — books we return to, and the ones we recommend without hesitation." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, page] = await Promise.all([
+      fetchSiteSettings(),
+      fetchPageBySlug("books"),
+    ]);
+    return { settings, page };
+  },
+  head: ({ loaderData }) => {
+    const { settings, page } = loaderData;
+    const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
+    const metaDesc = page?.meta_description_en || "A small shelf of companions — books we return to, and the ones we recommend without hesitation.";
+    const pageTitle = page?.title_en || "Books";
+    return {
+      meta: [
+        { title: `${pageTitle} — ${siteName}` },
+        { name: "description", content: metaDesc },
+        { property: "og:title", content: `${pageTitle} — ${siteName}` },
+        { property: "og:description", content: metaDesc },
+      ],
+    };
+  },
   component: BooksPage,
   validateSearch: (search: Record<string, unknown>) => ({
     search: (search.search as string) ?? "",

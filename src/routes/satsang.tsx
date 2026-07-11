@@ -1,20 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getSiteName } from "@/lib/siteSettings";
+import { fetchSiteSettings } from "@/lib/siteSettings";
 import { fetchPageBySlug } from "@/lib/pages";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/satsang")({
-  loader: () => getSiteName(),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `Satsang — ${loaderData}` },
-      { name: "description", content: "Gatherings in good company." },
-      { property: "og:title", content: `Satsang — ${loaderData}` },
-      { property: "og:description", content: "Gatherings in good company." },
-    ],
-  }),
+  loader: async () => {
+    const [settings, page] = await Promise.all([
+      fetchSiteSettings(),
+      fetchPageBySlug("satsang"),
+    ]);
+    return { settings, page };
+  },
+  head: ({ loaderData }) => {
+    const { settings, page } = loaderData;
+    const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
+    const metaDesc = page?.meta_description_en || "Gatherings in good company.";
+    const pageTitle = page?.title_en || "Satsang";
+    return {
+      meta: [
+        { title: `${pageTitle} — ${siteName}` },
+        { name: "description", content: metaDesc },
+        { property: "og:title", content: `${pageTitle} — ${siteName}` },
+        { property: "og:description", content: metaDesc },
+      ],
+    };
+  },
   component: SatsangPage,
 });
 

@@ -93,7 +93,7 @@ function AdminBooksPage() {
       }),
     pageSize: 20,
     initialFilter: "all",
-    additionalInvalidateKeys: [["book-stats"], ["public-books"]],
+    additionalInvalidateKeys: [["book-stats"], ["public-books-infinite"], ["book"]],
     create: {
       mutationFn: (input: BookInput) => createBook(input),
       successMessage: "Book created",

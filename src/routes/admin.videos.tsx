@@ -64,7 +64,7 @@ function AdminVideosPage() {
       }),
     pageSize: 20,
     initialFilter: "all",
-    additionalInvalidateKeys: [["video-stats"]],
+    additionalInvalidateKeys: [["video-stats"], ["public-videos"]],
     create: {
       mutationFn: createVideo,
       successMessage: "Video created",

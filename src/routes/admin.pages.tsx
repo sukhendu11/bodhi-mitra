@@ -367,6 +367,7 @@ function AdminPagesPage() {
     mutationFn: (input: PageInput) => createPage({ ...input, sections }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["public-page"] });
       toast.success("Page created");
       resetForm();
     },
@@ -378,6 +379,7 @@ function AdminPagesPage() {
       updatePage(id, { ...input, sections }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["public-page"] });
       toast.success("Page updated");
       resetForm();
     },
@@ -388,6 +390,7 @@ function AdminPagesPage() {
     mutationFn: deletePage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["public-page"] });
       toast.success("Page deleted");
       setDeletingId(null);
     },

@@ -32,6 +32,7 @@ function EditPostPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-posts"] });
       queryClient.invalidateQueries({ queryKey: ["admin-post", id] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post"] });
       toast.success("Post updated");
       navigate({ to: "/admin" });
     },

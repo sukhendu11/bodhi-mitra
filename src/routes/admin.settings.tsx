@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   DEFAULT_CONFIG,
   fetchSiteSettings,
-  saveSiteSettings,
+  saveSiteSettingsAction,
   type SiteConfig,
 } from "@/lib/siteSettings";
 import { createSiteAssetUpload } from "@/lib/siteAssets.functions";
@@ -22,6 +22,7 @@ import { ContactTab } from "@/components/SettingsContactTab";
 import { ThemeTab } from "@/components/SettingsThemeTab";
 import { SocialTab } from "@/components/SettingsSocialTab";
 import { SeoTab } from "@/components/SettingsSeoTab";
+import { FooterTab } from "@/components/SettingsFooterTab";
 import { Settings } from "lucide-react";
 import { ErrorPage } from "@/components/error-page";
 
@@ -37,6 +38,7 @@ const TABS = [
   { id: "article", label: "Article" },
   { id: "about", label: "About" },
   { id: "contact", label: "Contact" },
+  { id: "footer", label: "Footer" },
   { id: "theme", label: "Theme" },
   { id: "social", label: "Social" },
   { id: "seo", label: "SEO" },
@@ -51,7 +53,7 @@ function SettingsPage() {
   const [hasChanges, setHasChanges] = useState(false);
 
   const save = useMutation({
-    mutationFn: (next: SiteConfig) => saveSiteSettings(next),
+    mutationFn: (next: SiteConfig) => saveSiteSettingsAction({ data: next }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["site-settings"] });
       setHasChanges(false);
@@ -129,6 +131,7 @@ function SettingsPage() {
                 {tab.id === "article" && <ArticleTab {...tabProps} />}
                 {tab.id === "about" && <AboutTab {...tabProps} />}
                 {tab.id === "contact" && <ContactTab {...tabProps} />}
+                {tab.id === "footer" && <FooterTab {...tabProps} />}
                 {tab.id === "theme" && <ThemeTab {...tabProps} />}
                 {tab.id === "social" && <SocialTab {...tabProps} />}
                 {tab.id === "seo" && <SeoTab {...tabProps} />}
