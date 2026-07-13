@@ -29,7 +29,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const Route = createFileRoute("/admin/security" as any)({
+export const Route = createFileRoute("/admin/security")({
   component: AdminSecurityPage,
   errorComponent: ({ error }) => <ErrorPage error={error} />,
 });

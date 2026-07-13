@@ -13,9 +13,11 @@ import { Route as WisdomRouteImport } from './routes/wisdom'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SatsangRouteImport } from './routes/satsang'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CartRouteImport } from './routes/cart'
@@ -24,8 +26,6 @@ import { Route as BooksRouteImport } from './routes/books'
 import { Route as BookmarksRouteImport } from './routes/bookmarks'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
@@ -41,26 +41,26 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTokensRouteImport } from './routes/admin.tokens'
 import { Route as AdminTaxonomyRouteImport } from './routes/admin.taxonomy'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminPostsRouteImport } from './routes/admin.posts'
+import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminPagesRouteImport } from './routes/admin.pages'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminNewRouteImport } from './routes/admin.new'
 import { Route as AdminNavigationRouteImport } from './routes/admin.navigation'
-import { Route as AdminSecurityRouteImport } from './routes/admin.security'
-import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminMediaRouteImport } from './routes/admin.media'
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
+import { Route as AdminContentTypesRouteImport } from './routes/admin.content-types'
 import { Route as AdminCommentsRouteImport } from './routes/admin.comments'
 import { Route as AdminBooksRouteImport } from './routes/admin.books'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminIdRouteImport } from './routes/admin.$id'
-import { Route as AdminContentTypesRouteImport } from './routes/admin.content-types'
-import { Route as AdminContentTypesIdRouteImport } from './routes/admin.content-types.$id'
-import { Route as AdminContentTypesNewRouteImport } from './routes/admin.content-types.new'
-import { Route as AdminCollectionsTypeRouteImport } from './routes/admin.collections.$type'
-import { Route as AdminCollectionsTypeIdRouteImport } from './routes/admin.collections.$type.$id'
 import { Route as AdminCoursesIdRouteImport } from './routes/admin.courses.$id'
+import { Route as AdminContentTypesNewRouteImport } from './routes/admin.content-types.new'
+import { Route as AdminContentTypesIdRouteImport } from './routes/admin.content-types.$id'
+import { Route as AdminCollectionsTypeRouteImport } from './routes/admin.collections.$type'
 import { Route as CoursesCourseSlugLessonsLessonSlugRouteImport } from './routes/courses.$courseSlug.lessons.$lessonSlug'
+import { Route as AdminCollectionsTypeIdRouteImport } from './routes/admin.collections.$type.$id'
 
 const WisdomRoute = WisdomRouteImport.update({
   id: '/wisdom',
@@ -82,6 +82,11 @@ const SatsangRoute = SatsangRouteImport.update({
   path: '/satsang',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -92,19 +97,14 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesRoute = CoursesRouteImport.update({
@@ -222,9 +222,19 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSecurityRoute = AdminSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPostsRoute = AdminPostsRouteImport.update({
   id: '/posts',
   path: '/posts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
+  id: '/permissions',
+  path: '/permissions',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminPagesRoute = AdminPagesRouteImport.update({
@@ -247,16 +257,6 @@ const AdminNavigationRoute = AdminNavigationRouteImport.update({
   path: '/navigation',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSecurityRoute = AdminSecurityRouteImport.update({
-  id: '/security',
-  path: '/security',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
-  id: '/permissions',
-  path: '/permissions',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminMediaRoute = AdminMediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -265,6 +265,11 @@ const AdminMediaRoute = AdminMediaRouteImport.update({
 const AdminCoursesRoute = AdminCoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentTypesRoute = AdminContentTypesRouteImport.update({
+  id: '/content-types',
+  path: '/content-types',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCommentsRoute = AdminCommentsRouteImport.update({
@@ -287,19 +292,19 @@ const AdminIdRoute = AdminIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminContentTypesRoute = AdminContentTypesRouteImport.update({
-  id: '/content-types',
-  path: '/content-types',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminContentTypesIdRoute = AdminContentTypesIdRouteImport.update({
+const AdminCoursesIdRoute = AdminCoursesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => AdminContentTypesRoute,
+  getParentRoute: () => AdminCoursesRoute,
 } as any)
 const AdminContentTypesNewRoute = AdminContentTypesNewRouteImport.update({
   id: '/new',
   path: '/new',
+  getParentRoute: () => AdminContentTypesRoute,
+} as any)
+const AdminContentTypesIdRoute = AdminContentTypesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
   getParentRoute: () => AdminContentTypesRoute,
 } as any)
 const AdminCollectionsTypeRoute = AdminCollectionsTypeRouteImport.update({
@@ -307,22 +312,17 @@ const AdminCollectionsTypeRoute = AdminCollectionsTypeRouteImport.update({
   path: '/collections/$type',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminCollectionsTypeIdRoute = AdminCollectionsTypeIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminCollectionsTypeRoute,
-} as any)
-const AdminCoursesIdRoute = AdminCoursesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminCoursesRoute,
-} as any)
 const CoursesCourseSlugLessonsLessonSlugRoute =
   CoursesCourseSlugLessonsLessonSlugRouteImport.update({
     id: '/$courseSlug/lessons/$lessonSlug',
     path: '/$courseSlug/lessons/$lessonSlug',
     getParentRoute: () => CoursesRoute,
   } as any)
+const AdminCollectionsTypeIdRoute = AdminCollectionsTypeIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminCollectionsTypeRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -334,9 +334,11 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/contact': typeof ContactRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/satsang': typeof SatsangRoute
   '/search': typeof SearchRoute
   '/videos': typeof VideosRoute
@@ -345,13 +347,16 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/content-types': typeof AdminContentTypesRouteWithChildren
   '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/media': typeof AdminMediaRoute
   '/admin/navigation': typeof AdminNavigationRoute
   '/admin/new': typeof AdminNewRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/pages': typeof AdminPagesRoute
+  '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/posts': typeof AdminPostsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/tokens': typeof AdminTokensRoute
@@ -366,12 +371,11 @@ export interface FileRoutesByFullPath {
   '/reader/$bookId': typeof ReaderBookIdRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin/': typeof AdminIndexRoute
-  '/admin/content-types': typeof AdminContentTypesRouteWithChildren
+  '/admin/collections/$type': typeof AdminCollectionsTypeRouteWithChildren
   '/admin/content-types/$id': typeof AdminContentTypesIdRoute
   '/admin/content-types/new': typeof AdminContentTypesNewRoute
-  '/admin/collections/$type': typeof AdminCollectionsTypeRouteWithChildren
-  '/admin/collections/$type/$id': typeof AdminCollectionsTypeIdRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/admin/collections/$type/$id': typeof AdminCollectionsTypeIdRoute
   '/courses/$courseSlug/lessons/$lessonSlug': typeof CoursesCourseSlugLessonsLessonSlugRoute
 }
 export interface FileRoutesByTo {
@@ -383,9 +387,11 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/contact': typeof ContactRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/satsang': typeof SatsangRoute
   '/search': typeof SearchRoute
   '/videos': typeof VideosRoute
@@ -394,13 +400,16 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/content-types': typeof AdminContentTypesRouteWithChildren
   '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/media': typeof AdminMediaRoute
   '/admin/navigation': typeof AdminNavigationRoute
   '/admin/new': typeof AdminNewRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/pages': typeof AdminPagesRoute
+  '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/posts': typeof AdminPostsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/tokens': typeof AdminTokensRoute
@@ -415,12 +424,11 @@ export interface FileRoutesByTo {
   '/reader/$bookId': typeof ReaderBookIdRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin': typeof AdminIndexRoute
-  '/admin/content-types': typeof AdminContentTypesRouteWithChildren
+  '/admin/collections/$type': typeof AdminCollectionsTypeRouteWithChildren
   '/admin/content-types/$id': typeof AdminContentTypesIdRoute
   '/admin/content-types/new': typeof AdminContentTypesNewRoute
-  '/admin/collections/$type': typeof AdminCollectionsTypeRouteWithChildren
-  '/admin/collections/$type/$id': typeof AdminCollectionsTypeIdRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/admin/collections/$type/$id': typeof AdminCollectionsTypeIdRoute
   '/courses/$courseSlug/lessons/$lessonSlug': typeof CoursesCourseSlugLessonsLessonSlugRoute
 }
 export interface FileRoutesById {
@@ -434,9 +442,11 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/contact': typeof ContactRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/satsang': typeof SatsangRoute
   '/search': typeof SearchRoute
   '/videos': typeof VideosRoute
@@ -445,13 +455,16 @@ export interface FileRoutesById {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/content-types': typeof AdminContentTypesRouteWithChildren
   '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/media': typeof AdminMediaRoute
   '/admin/navigation': typeof AdminNavigationRoute
   '/admin/new': typeof AdminNewRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/pages': typeof AdminPagesRoute
+  '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/posts': typeof AdminPostsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/taxonomy': typeof AdminTaxonomyRoute
   '/admin/tokens': typeof AdminTokensRoute
@@ -466,12 +479,11 @@ export interface FileRoutesById {
   '/reader/$bookId': typeof ReaderBookIdRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin/': typeof AdminIndexRoute
-  '/admin/content-types': typeof AdminContentTypesRouteWithChildren
+  '/admin/collections/$type': typeof AdminCollectionsTypeRouteWithChildren
   '/admin/content-types/$id': typeof AdminContentTypesIdRoute
   '/admin/content-types/new': typeof AdminContentTypesNewRoute
-  '/admin/collections/$type': typeof AdminCollectionsTypeRouteWithChildren
-  '/admin/collections/$type/$id': typeof AdminCollectionsTypeIdRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/admin/collections/$type/$id': typeof AdminCollectionsTypeIdRoute
   '/courses/$courseSlug/lessons/$lessonSlug': typeof CoursesCourseSlugLessonsLessonSlugRoute
 }
 export interface FileRouteTypes {
@@ -480,17 +492,17 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
-  | '/bookmarks'
-  | '/books'
-  | '/buddhist-psychology'
-  | '/cart'
-  | '/contact'
-  | '/courses'
-  | '/forgot-password'
-  | '/login'
-  | '/reset-password'
+    | '/bookmarks'
+    | '/books'
+    | '/buddhist-psychology'
+    | '/cart'
+    | '/contact'
+    | '/courses'
+    | '/forgot-password'
+    | '/login'
     | '/onboarding'
     | '/profile'
+    | '/reset-password'
     | '/satsang'
     | '/search'
     | '/videos'
@@ -499,110 +511,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/books'
     | '/admin/comments'
-    | '/admin/courses'
-    | '/admin/media'
-    | '/admin/navigation'
-    | '/admin/new'
-    | '/admin/orders'  | '/admin/pages'
-  | '/admin/permissions'
-  | '/admin/posts'
-  | '/admin/settings'
-  | '/admin/taxonomy'
-  | '/admin/tokens'
-  | '/admin/users'
-  | '/admin/videos'
-  | '/api/stripe-webhook'
-  | '/books/$slug'
-  | '/books/library'
-  | '/courses/$slug'
-  | '/pages/$slug'
-  | '/posts/$slug'
-  | '/reader/$bookId'
-  | '/sitemap/xml'
-  | '/admin/'
-  | '/admin/content-types'
-  | '/admin/content-types/$id'
-  | '/admin/content-types/new'
-  | '/admin/collections/$type'
-  | '/admin/collections/$type/$id'
-  | '/admin/courses/$id'
-  | '/courses/$courseSlug/lessons/$lessonSlug'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/about'
-  | '/bookmarks'
-  | '/books'
-  | '/buddhist-psychology'
-  | '/cart'
-  | '/contact'
-  | '/courses'
-  | '/forgot-password'
-  | '/login'
-  | '/reset-password'
-    | '/onboarding'
-    | '/profile'
-    | '/satsang'
-    | '/search'
-    | '/videos'
-    | '/wisdom'
-    | '/admin/$id'
-    | '/admin/audit'
-    | '/admin/books'
-    | '/admin/comments'
-    | '/admin/courses'
-    | '/admin/media'
-    | '/admin/navigation'
-    | '/admin/new'
-    | '/admin/orders'
-    | '/admin/pages'
-    | '/admin/permissions'
-    | '/admin/posts'
-    | '/admin/settings'
-    | '/admin/taxonomy'
-    | '/admin/tokens'
-    | '/admin/users'
-    | '/admin/videos'
-    | '/api/stripe-webhook'
-    | '/books/$slug'
-    | '/books/library'
-    | '/courses/$slug'
-    | '/pages/$slug'
-    | '/posts/$slug'
-    | '/reader/$bookId'
-    | '/sitemap/xml'
-    | '/admin'
     | '/admin/content-types'
-    | '/admin/content-types/$id'
-    | '/admin/content-types/new'
-    | '/admin/collections/$type'
-    | '/admin/collections/$type/$id'
-    | '/admin/courses/$id'
-    | '/courses/$courseSlug/lessons/$lessonSlug'
-  id:
-    | '__root__'
-    | '/'
-    | '/about'
-    | '/admin'
-  | '/bookmarks'
-  | '/books'
-  | '/buddhist-psychology'
-  | '/cart'
-  | '/contact'
-  | '/courses'
-  | '/forgot-password'
-  | '/login'
-  | '/reset-password'
-    | '/onboarding'
-    | '/profile'
-    | '/satsang'
-    | '/search'
-    | '/videos'
-    | '/wisdom'
-    | '/admin/$id'
-    | '/admin/audit'
-    | '/admin/books'
-    | '/admin/comments'
     | '/admin/courses'
     | '/admin/media'
     | '/admin/navigation'
@@ -611,6 +520,7 @@ export interface FileRouteTypes {
     | '/admin/pages'
     | '/admin/permissions'
     | '/admin/posts'
+    | '/admin/security'
     | '/admin/settings'
     | '/admin/taxonomy'
     | '/admin/tokens'
@@ -625,12 +535,118 @@ export interface FileRouteTypes {
     | '/reader/$bookId'
     | '/sitemap/xml'
     | '/admin/'
-    | '/admin/content-types'
+    | '/admin/collections/$type'
     | '/admin/content-types/$id'
     | '/admin/content-types/new'
-    | '/admin/collections/$type'
-    | '/admin/collections/$type/$id'
     | '/admin/courses/$id'
+    | '/admin/collections/$type/$id'
+    | '/courses/$courseSlug/lessons/$lessonSlug'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/about'
+    | '/bookmarks'
+    | '/books'
+    | '/buddhist-psychology'
+    | '/cart'
+    | '/contact'
+    | '/courses'
+    | '/forgot-password'
+    | '/login'
+    | '/onboarding'
+    | '/profile'
+    | '/reset-password'
+    | '/satsang'
+    | '/search'
+    | '/videos'
+    | '/wisdom'
+    | '/admin/$id'
+    | '/admin/audit'
+    | '/admin/books'
+    | '/admin/comments'
+    | '/admin/content-types'
+    | '/admin/courses'
+    | '/admin/media'
+    | '/admin/navigation'
+    | '/admin/new'
+    | '/admin/orders'
+    | '/admin/pages'
+    | '/admin/permissions'
+    | '/admin/posts'
+    | '/admin/security'
+    | '/admin/settings'
+    | '/admin/taxonomy'
+    | '/admin/tokens'
+    | '/admin/users'
+    | '/admin/videos'
+    | '/api/stripe-webhook'
+    | '/books/$slug'
+    | '/books/library'
+    | '/courses/$slug'
+    | '/pages/$slug'
+    | '/posts/$slug'
+    | '/reader/$bookId'
+    | '/sitemap/xml'
+    | '/admin'
+    | '/admin/collections/$type'
+    | '/admin/content-types/$id'
+    | '/admin/content-types/new'
+    | '/admin/courses/$id'
+    | '/admin/collections/$type/$id'
+    | '/courses/$courseSlug/lessons/$lessonSlug'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/bookmarks'
+    | '/books'
+    | '/buddhist-psychology'
+    | '/cart'
+    | '/contact'
+    | '/courses'
+    | '/forgot-password'
+    | '/login'
+    | '/onboarding'
+    | '/profile'
+    | '/reset-password'
+    | '/satsang'
+    | '/search'
+    | '/videos'
+    | '/wisdom'
+    | '/admin/$id'
+    | '/admin/audit'
+    | '/admin/books'
+    | '/admin/comments'
+    | '/admin/content-types'
+    | '/admin/courses'
+    | '/admin/media'
+    | '/admin/navigation'
+    | '/admin/new'
+    | '/admin/orders'
+    | '/admin/pages'
+    | '/admin/permissions'
+    | '/admin/posts'
+    | '/admin/security'
+    | '/admin/settings'
+    | '/admin/taxonomy'
+    | '/admin/tokens'
+    | '/admin/users'
+    | '/admin/videos'
+    | '/api/stripe-webhook'
+    | '/books/$slug'
+    | '/books/library'
+    | '/courses/$slug'
+    | '/pages/$slug'
+    | '/posts/$slug'
+    | '/reader/$bookId'
+    | '/sitemap/xml'
+    | '/admin/'
+    | '/admin/collections/$type'
+    | '/admin/content-types/$id'
+    | '/admin/content-types/new'
+    | '/admin/courses/$id'
+    | '/admin/collections/$type/$id'
     | '/courses/$courseSlug/lessons/$lessonSlug'
   fileRoutesById: FileRoutesById
 }
@@ -646,9 +662,9 @@ export interface RootRouteChildren {
   CoursesRoute: typeof CoursesRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SatsangRoute: typeof SatsangRoute
   SearchRoute: typeof SearchRoute
   VideosRoute: typeof VideosRoute
@@ -690,6 +706,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SatsangRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -704,13 +727,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -718,11 +734,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses': {
@@ -886,11 +902,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/security': {
+      id: '/admin/security'
+      path: '/security'
+      fullPath: '/admin/security'
+      preLoaderRoute: typeof AdminSecurityRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/posts': {
       id: '/admin/posts'
       path: '/posts'
       fullPath: '/admin/posts'
       preLoaderRoute: typeof AdminPostsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/permissions': {
+      id: '/admin/permissions'
+      path: '/permissions'
+      fullPath: '/admin/permissions'
+      preLoaderRoute: typeof AdminPermissionsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/pages': {
@@ -935,6 +965,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCoursesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/content-types': {
+      id: '/admin/content-types'
+      path: '/content-types'
+      fullPath: '/admin/content-types'
+      preLoaderRoute: typeof AdminContentTypesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/comments': {
       id: '/admin/comments'
       path: '/comments'
@@ -963,25 +1000,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIdRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/content-types': {
-      id: '/admin/content-types'
-      path: '/content-types'
-      fullPath: '/admin/content-types'
-      preLoaderRoute: typeof AdminContentTypesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/content-types/$id': {
-      id: '/admin/content-types/$id'
+    '/admin/courses/$id': {
+      id: '/admin/courses/$id'
       path: '/$id'
-      fullPath: '/admin/content-types/$id'
-      preLoaderRoute: typeof AdminContentTypesIdRouteImport
-      parentRoute: typeof AdminContentTypesRoute
+      fullPath: '/admin/courses/$id'
+      preLoaderRoute: typeof AdminCoursesIdRouteImport
+      parentRoute: typeof AdminCoursesRoute
     }
     '/admin/content-types/new': {
       id: '/admin/content-types/new'
       path: '/new'
       fullPath: '/admin/content-types/new'
       preLoaderRoute: typeof AdminContentTypesNewRouteImport
+      parentRoute: typeof AdminContentTypesRoute
+    }
+    '/admin/content-types/$id': {
+      id: '/admin/content-types/$id'
+      path: '/$id'
+      fullPath: '/admin/content-types/$id'
+      preLoaderRoute: typeof AdminContentTypesIdRouteImport
       parentRoute: typeof AdminContentTypesRoute
     }
     '/admin/collections/$type': {
@@ -991,20 +1028,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCollectionsTypeRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/collections/$type/$id': {
-      id: '/admin/collections/$type/$id'
-      path: '/$id'
-      fullPath: '/admin/collections/$type/$id'
-      preLoaderRoute: typeof AdminCollectionsTypeIdRouteImport
-      parentRoute: typeof AdminCollectionsTypeRoute
-    }
-    '/admin/courses/$id': {
-      id: '/admin/courses/$id'
-      path: '/$id'
-      fullPath: '/admin/courses/$id'
-      preLoaderRoute: typeof AdminCoursesIdRouteImport
-      parentRoute: typeof AdminCoursesRoute
-    }
     '/courses/$courseSlug/lessons/$lessonSlug': {
       id: '/courses/$courseSlug/lessons/$lessonSlug'
       path: '/$courseSlug/lessons/$lessonSlug'
@@ -1012,8 +1035,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseSlugLessonsLessonSlugRouteImport
       parentRoute: typeof CoursesRoute
     }
+    '/admin/collections/$type/$id': {
+      id: '/admin/collections/$type/$id'
+      path: '/$id'
+      fullPath: '/admin/collections/$type/$id'
+      preLoaderRoute: typeof AdminCollectionsTypeIdRouteImport
+      parentRoute: typeof AdminCollectionsTypeRoute
+    }
   }
 }
+
+interface AdminContentTypesRouteChildren {
+  AdminContentTypesIdRoute: typeof AdminContentTypesIdRoute
+  AdminContentTypesNewRoute: typeof AdminContentTypesNewRoute
+}
+
+const AdminContentTypesRouteChildren: AdminContentTypesRouteChildren = {
+  AdminContentTypesIdRoute: AdminContentTypesIdRoute,
+  AdminContentTypesNewRoute: AdminContentTypesNewRoute,
+}
+
+const AdminContentTypesRouteWithChildren =
+  AdminContentTypesRoute._addFileChildren(AdminContentTypesRouteChildren)
 
 interface AdminCoursesRouteChildren {
   AdminCoursesIdRoute: typeof AdminCoursesIdRoute
@@ -1027,20 +1070,6 @@ const AdminCoursesRouteWithChildren = AdminCoursesRoute._addFileChildren(
   AdminCoursesRouteChildren,
 )
 
-interface AdminContentTypesRouteChildren {
-  AdminContentTypesIdRoute: typeof AdminContentTypesIdRoute
-  AdminContentTypesNewRoute: typeof AdminContentTypesNewRoute
-}
-
-const AdminContentTypesRouteChildren: AdminContentTypesRouteChildren = {
-  AdminContentTypesIdRoute: AdminContentTypesIdRoute,
-  AdminContentTypesNewRoute: AdminContentTypesNewRoute,
-}
-
-const AdminContentTypesRouteWithChildren = AdminContentTypesRoute._addFileChildren(
-  AdminContentTypesRouteChildren,
-)
-
 interface AdminCollectionsTypeRouteChildren {
   AdminCollectionsTypeIdRoute: typeof AdminCollectionsTypeIdRoute
 }
@@ -1049,16 +1078,14 @@ const AdminCollectionsTypeRouteChildren: AdminCollectionsTypeRouteChildren = {
   AdminCollectionsTypeIdRoute: AdminCollectionsTypeIdRoute,
 }
 
-const AdminCollectionsTypeRouteWithChildren = AdminCollectionsTypeRoute._addFileChildren(
-  AdminCollectionsTypeRouteChildren,
-)
+const AdminCollectionsTypeRouteWithChildren =
+  AdminCollectionsTypeRoute._addFileChildren(AdminCollectionsTypeRouteChildren)
 
 interface AdminRouteChildren {
   AdminIdRoute: typeof AdminIdRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBooksRoute: typeof AdminBooksRoute
   AdminCommentsRoute: typeof AdminCommentsRoute
-  AdminCollectionsTypeRoute: typeof AdminCollectionsTypeRouteWithChildren
   AdminContentTypesRoute: typeof AdminContentTypesRouteWithChildren
   AdminCoursesRoute: typeof AdminCoursesRouteWithChildren
   AdminMediaRoute: typeof AdminMediaRoute
@@ -1075,15 +1102,15 @@ interface AdminRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   AdminVideosRoute: typeof AdminVideosRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminCollectionsTypeRoute: typeof AdminCollectionsTypeRouteWithChildren
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminIdRoute: AdminIdRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminBooksRoute: AdminBooksRoute,
-  AdminCollectionsTypeRoute: AdminCollectionsTypeRouteWithChildren,
-  AdminContentTypesRoute: AdminContentTypesRouteWithChildren,
   AdminCommentsRoute: AdminCommentsRoute,
+  AdminContentTypesRoute: AdminContentTypesRouteWithChildren,
   AdminCoursesRoute: AdminCoursesRouteWithChildren,
   AdminMediaRoute: AdminMediaRoute,
   AdminNavigationRoute: AdminNavigationRoute,
@@ -1099,6 +1126,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   AdminVideosRoute: AdminVideosRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminCollectionsTypeRoute: AdminCollectionsTypeRouteWithChildren,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -1142,8 +1170,8 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
   ProfileRoute: ProfileRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SatsangRoute: SatsangRoute,
   SearchRoute: SearchRoute,
   VideosRoute: VideosRoute,

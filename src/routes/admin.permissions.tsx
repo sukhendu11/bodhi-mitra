@@ -43,7 +43,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const Route = createFileRoute("/admin/permissions" as any)({
+export const Route = createFileRoute("/admin/permissions")({
   component: AdminPermissionsPage,
   errorComponent: ({ error }) => <ErrorPage error={error} />,
 });
