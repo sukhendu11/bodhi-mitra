@@ -1,15 +1,18 @@
 import { useMemo } from "react";
 import type { User } from "@supabase/supabase-js";
-import { useAuthSession, isHardcodedAdmin, useUserRole, ROLE_LEVELS, type AppRole } from "@/hooks/useAuth";
+import {
+  useAuthSession,
+  isHardcodedAdmin,
+  useUserRole,
+  ROLE_LEVELS,
+  type AppRole,
+} from "@/hooks/useAuth";
 
 function getLevel(role: string | null | undefined): number {
   return ROLE_LEVELS[role ?? ""] ?? 0;
 }
 
-export function checkPermission(
-  role: string | null | undefined,
-  minRole: AppRole,
-): boolean {
+export function checkPermission(role: string | null | undefined, minRole: AppRole): boolean {
   return getLevel(role) >= getLevel(minRole);
 }
 

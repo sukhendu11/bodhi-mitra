@@ -48,9 +48,7 @@ export function slugify(input: string, options?: SlugOptions): string {
   slug = slug.replace(/[\s_]+/g, opts.separator!);
 
   // Remove everything that isn't alphanumeric, the separator, or preserved chars
-  const preserve = opts.preserve?.length
-    ? opts.preserve.map((c) => `\\${c}`).join("")
-    : "";
+  const preserve = opts.preserve?.length ? opts.preserve.map((c) => `\\${c}`).join("") : "";
   const safePattern = new RegExp(`[^a-z0-9${preserve}${opts.separator}]`, "g");
   slug = slug.replace(safePattern, "");
 
@@ -63,7 +61,9 @@ export function slugify(input: string, options?: SlugOptions): string {
 
   // Truncate
   if (opts.maxLength && slug.length > opts.maxLength) {
-    slug = slug.slice(0, opts.maxLength).replace(new RegExp(`${opts.separator}[^${opts.separator}]*$`), "");
+    slug = slug
+      .slice(0, opts.maxLength)
+      .replace(new RegExp(`${opts.separator}[^${opts.separator}]*$`), "");
   }
 
   return slug;
@@ -83,10 +83,7 @@ const DEFAULT_SLUG_MESSAGE = "Slug must be lowercase alphanumeric with hyphens";
  * Validate a slug against a content type's definition.
  * Returns the slug if valid, or throws with a descriptive message.
  */
-export function validateSlug(
-  slug: string,
-  def?: ContentTypeDefinition,
-): SlugValidation {
+export function validateSlug(slug: string, def?: ContentTypeDefinition): SlugValidation {
   if (!slug || !slug.trim()) {
     return { valid: false, message: "Slug is required" };
   }

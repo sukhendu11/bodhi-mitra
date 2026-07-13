@@ -7,10 +7,7 @@ import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/satsang")({
   loader: async () => {
-    const [settings, page] = await Promise.all([
-      fetchSiteSettings(),
-      fetchPageBySlug("satsang"),
-    ]);
+    const [settings, page] = await Promise.all([fetchSiteSettings(), fetchPageBySlug("satsang")]);
     return { settings, page };
   },
   head: ({ loaderData }) => {
@@ -70,7 +67,11 @@ function SatsangPage() {
       {page.banner_url && (
         <Reveal delay={0}>
           <div className="mb-12 -mx-6 md:mx-0 overflow-hidden rounded-md">
-            <img src={page.banner_url} alt={heading} className="w-full aspect-[21/9] object-cover" />
+            <img
+              src={page.banner_url}
+              alt={heading}
+              className="w-full aspect-[21/9] object-cover"
+            />
           </div>
         </Reveal>
       )}

@@ -47,7 +47,9 @@ export function NotificationBell() {
             <h3 className="text-xs font-semibold">Notifications</h3>
             {unreadCount > 0 && (
               <button
-                onClick={() => { markAllRead(); }}
+                onClick={() => {
+                  markAllRead();
+                }}
                 className="flex items-center gap-1 text-[0.55rem] text-muted-foreground hover:text-foreground transition-colors"
               >
                 <CheckCheck className="h-3 w-3" />
@@ -73,13 +75,19 @@ export function NotificationBell() {
                       n.read ? "opacity-60" : "bg-amber-50/30 dark:bg-amber-950/10",
                     )}
                   >
-                    <Icon className={cn(
-                      "h-4 w-4 mt-0.5 shrink-0",
-                      n.read ? "text-muted-foreground/40" : "text-amber-600 dark:text-amber-400",
-                    )} />
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 mt-0.5 shrink-0",
+                        n.read ? "text-muted-foreground/40" : "text-amber-600 dark:text-amber-400",
+                      )}
+                    />
                     <div className="min-w-0 flex-1">
                       {n.link ? (
-                        <Link to={n.link as any} className="text-xs hover:underline" onClick={() => setOpen(false)}>
+                        <Link
+                          to={n.link as any}
+                          className="text-xs hover:underline"
+                          onClick={() => setOpen(false)}
+                        >
                           {n.message}
                         </Link>
                       ) : (

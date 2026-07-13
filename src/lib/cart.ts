@@ -49,70 +49,72 @@ async function getOrCreateCart(supabase: any, userId: string): Promise<string> {
 
 export const addToCart = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }: { context: { userId: string; supabase: any }; data: unknown }) => {
-    const { supabase, userId } = context;
-    const input = data as { bookId: string };
+  .handler(
+    async ({ context, data }: { context: { userId: string; supabase: any }; data: unknown }) => {
+      const { supabase, userId } = context;
+      const input = data as { bookId: string };
 
-    // Verify book exists
-    const { data: book } = await supabase
-      .from("books")
-      .select("id, is_free, price")
-      .eq("id", input.bookId)
-      .maybeSingle();
+      // Verify book exists
+      const { data: book } = await supabase
+        .from("books")
+        .select("id, is_free, price")
+        .eq("id", input.bookId)
+        .maybeSingle();
 
-    if (!book) throw new Error("Book not found.");
-    if (book.is_free) throw new Error("Free books are automatically accessible. Use the Read button instead.");
+      if (!book) throw new Error("Book not found.");
+      if (book.is_free)
+        throw new Error("Free books are automatically accessible. Use the Read button instead.");
 
-    const cartId = await getOrCreateCart(supabase, userId);
+      const cartId = await getOrCreateCart(supabase, userId);
 
-    // Insert cart item (unique constraint handles duplicates)
-    const { error } = await supabase
-      .from("cart_items")
-      .insert({ cart_id: cartId, book_id: input.bookId });
+      // Insert cart item (unique constraint handles duplicates)
+      const { error } = await supabase
+        .from("cart_items")
+        .insert({ cart_id: cartId, book_id: input.bookId });
 
-    if (error) {
-      if (error.code === "23505") {
-        return { message: "Book is already in your cart.", alreadyInCart: true };
+      if (error) {
+        if (error.code === "23505") {
+          return { message: "Book is already in your cart.", alreadyInCart: true };
+        }
+        throw new Error(error.message);
       }
-      throw new Error(error.message);
-    }
 
-    return { message: "Added to cart.", alreadyInCart: false };
-  });
+      return { message: "Added to cart.", alreadyInCart: false };
+    },
+  );
 
 /* ─── Remove from cart ─────────────────────────────────────────── */
 
 export const removeFromCart = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }: { context: { userId: string; supabase: any }; data: unknown }) => {
-    const { supabase, userId } = context;
-    const input = data as { cartItemId: string };
+  .handler(
+    async ({ context, data }: { context: { userId: string; supabase: any }; data: unknown }) => {
+      const { supabase, userId } = context;
+      const input = data as { cartItemId: string };
 
-    // Verify the cart item belongs to this user
-    const { data: item } = await supabase
-      .from("cart_items")
-      .select("id, cart_id")
-      .eq("id", input.cartItemId)
-      .maybeSingle();
+      // Verify the cart item belongs to this user
+      const { data: item } = await supabase
+        .from("cart_items")
+        .select("id, cart_id")
+        .eq("id", input.cartItemId)
+        .maybeSingle();
 
-    if (!item) throw new Error("Cart item not found.");
+      if (!item) throw new Error("Cart item not found.");
 
-    const { data: cart } = await supabase
-      .from("carts")
-      .select("user_id")
-      .eq("id", item.cart_id)
-      .single();
+      const { data: cart } = await supabase
+        .from("carts")
+        .select("user_id")
+        .eq("id", item.cart_id)
+        .single();
 
-    if (cart?.user_id !== userId) throw new Error("Not authorized.");
+      if (cart?.user_id !== userId) throw new Error("Not authorized.");
 
-    const { error } = await supabase
-      .from("cart_items")
-      .delete()
-      .eq("id", input.cartItemId);
+      const { error } = await supabase.from("cart_items").delete().eq("id", input.cartItemId);
 
-    if (error) throw new Error(error.message);
-    return { message: "Removed from cart." };
-  });
+      if (error) throw new Error(error.message);
+      return { message: "Removed from cart." };
+    },
+  );
 
 /* ─── Clear cart ───────────────────────────────────────────────── */
 
@@ -129,10 +131,7 @@ export const clearCart = createServerFn({ method: "POST" })
 
     if (!cart) return { message: "Cart is already empty." };
 
-    const { error } = await supabase
-      .from("cart_items")
-      .delete()
-      .eq("cart_id", cart.id);
+    const { error } = await supabase.from("cart_items").delete().eq("cart_id", cart.id);
 
     if (error) throw new Error(error.message);
     return { message: "Cart cleared." };
@@ -259,12 +258,20 @@ export const checkoutCart = createServerFn({ method: "POST" })
 
     // Filter out free books (they should be purchased directly, not via checkout)
     const paidBooks = books.filter((b: any) => !b.is_free);
-    if (paidBooks.length === 0) throw new Error("All items in your cart are free. Use the Read button instead.");
+    if (paidBooks.length === 0)
+      throw new Error("All items in your cart are free. Use the Read button instead.");
 
     // Create Stripe Checkout Session with all items
     const { createCheckoutSession } = await import("@/lib/stripe-checkout");
     const result = await (createCheckoutSession as any)({
-      data: { items: paidBooks.map((b: any) => ({ bookId: b.id, bookSlug: b.slug, title: b.title_en || b.title_bn || "Book", price: b.price })) },
+      data: {
+        items: paidBooks.map((b: any) => ({
+          bookId: b.id,
+          bookSlug: b.slug,
+          title: b.title_en || b.title_bn || "Book",
+          price: b.price,
+        })),
+      },
     });
 
     return { url: result.url };

@@ -127,7 +127,8 @@ function CommentModerator() {
   });
 
   const editMutation = useMutation({
-    mutationFn: ({ id, text }: { id: string; text: string }) => (doEdit as any)({ data: { id, comment_text: text } }),
+    mutationFn: ({ id, text }: { id: string; text: string }) =>
+      (doEdit as any)({ data: { id, comment_text: text } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-comments"] });
       invalidatePublicComments();
@@ -143,7 +144,10 @@ function CommentModerator() {
   };
 
   const handleSaveEdit = (id: string) => {
-    if (!editText.trim()) { toast.error("Comment text is required"); return; }
+    if (!editText.trim()) {
+      toast.error("Comment text is required");
+      return;
+    }
     editMutation.mutate({ id, text: editText });
   };
 
@@ -179,7 +183,10 @@ function CommentModerator() {
         <input
           type="text"
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           placeholder="Search comments…"
           className="w-full pl-9 pr-3 py-2 text-xs border border-border/60 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
         />
@@ -189,7 +196,10 @@ function CommentModerator() {
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-20 bg-secondary/20 animate-pulse rounded-xl border border-border/60" />
+            <div
+              key={i}
+              className="h-20 bg-secondary/20 animate-pulse rounded-xl border border-border/60"
+            />
           ))}
         </div>
       ) : comments.length === 0 ? (
@@ -217,15 +227,20 @@ function CommentModerator() {
                       <p className="text-xs font-medium truncate">{c.user_name}</p>
                       <p className="text-[0.55rem] text-muted-foreground">
                         {c.post_slug ? (
-                          <Link to="/posts/$slug" params={{ slug: c.post_slug }}
+                          <Link
+                            to="/posts/$slug"
+                            params={{ slug: c.post_slug }}
                             className="hover:text-foreground underline truncate inline-block max-w-[200px] align-bottom"
-                            title={c.post_title || "Unknown post"}>
+                            title={c.post_title || "Unknown post"}
+                          >
                             {c.post_title || "Unknown post"}
                           </Link>
                         ) : (
-                          <span className="text-muted-foreground/50 italic">{c.post_title || "Deleted post"}</span>
+                          <span className="text-muted-foreground/50 italic">
+                            {c.post_title || "Deleted post"}
+                          </span>
                         )}
-                        {' · '}
+                        {" · "}
                         <span title={new Date(c.created_at).toLocaleString()}>
                           {formatDate(c.created_at)}
                         </span>
@@ -242,7 +257,9 @@ function CommentModerator() {
                       <Edit3 className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => { if (confirm("Delete this comment?")) deleteMutation.mutate(c.id); }}
+                      onClick={() => {
+                        if (confirm("Delete this comment?")) deleteMutation.mutate(c.id);
+                      }}
                       className="p-1.5 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
                       title="Delete"
                     >
@@ -289,12 +306,24 @@ function CommentModerator() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-3">
-              <p className="text-xs text-muted-foreground">Page {page} of {totalPages}</p>
+              <p className="text-xs text-muted-foreground">
+                Page {page} of {totalPages}
+              </p>
               <div className="flex items-center gap-2">
-                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-                  className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors">← Previous</button>
-                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                  className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors">Next →</button>
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors"
+                >
+                  ← Previous
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors"
+                >
+                  Next →
+                </button>
               </div>
             </div>
           )}
@@ -316,7 +345,11 @@ function ContactMessageInbox() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-contact-messages", page, search, unreadOnly],
-    queryFn: () => fetchContactMessages(page, pageSize, { unreadOnly: unreadOnly || undefined, search: search || undefined }),
+    queryFn: () =>
+      fetchContactMessages(page, pageSize, {
+        unreadOnly: unreadOnly || undefined,
+        search: search || undefined,
+      }),
     staleTime: 15_000,
   });
 
@@ -376,7 +409,10 @@ function ContactMessageInbox() {
           <input
             type="text"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search messages…"
             className="w-full pl-9 pr-3 py-2 text-xs border border-border/60 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:border-foreground/40 transition-colors"
           />
@@ -385,7 +421,10 @@ function ContactMessageInbox() {
           <input
             type="checkbox"
             checked={unreadOnly}
-            onChange={(e) => { setUnreadOnly(e.target.checked); setPage(1); }}
+            onChange={(e) => {
+              setUnreadOnly(e.target.checked);
+              setPage(1);
+            }}
             className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30"
           />
           <span className="text-[0.55rem] font-medium text-muted-foreground">Unread only</span>
@@ -399,7 +438,10 @@ function ContactMessageInbox() {
           {isLoading ? (
             <div className="space-y-2">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-16 bg-secondary/20 animate-pulse rounded-xl border border-border/60" />
+                <div
+                  key={i}
+                  className="h-16 bg-secondary/20 animate-pulse rounded-xl border border-border/60"
+                />
               ))}
             </div>
           ) : messages.length === 0 ? (
@@ -416,35 +458,58 @@ function ContactMessageInbox() {
                   key={msg.id}
                   onClick={() => handleSelect(msg)}
                   className={`bg-white dark:bg-zinc-900 rounded-xl border overflow-hidden cursor-pointer transition-all hover:border-foreground/30 ${
-                    selectedId === msg.id ? "border-foreground/30 ring-1 ring-foreground/10" : "border-border/60"
+                    selectedId === msg.id
+                      ? "border-foreground/30 ring-1 ring-foreground/10"
+                      : "border-border/60"
                   } ${!msg.read ? "border-l-2 border-l-amber-500" : ""}`}
                 >
                   <div className="px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${msg.read ? "bg-muted-foreground/30" : "bg-amber-500"}`} />
+                        <div
+                          className={`w-2 h-2 rounded-full shrink-0 ${msg.read ? "bg-muted-foreground/30" : "bg-amber-500"}`}
+                        />
                         <div className="min-w-0">
                           <p className="text-xs font-medium truncate">{msg.name}</p>
-                          <p className="text-[0.55rem] text-muted-foreground truncate">{msg.email}</p>
+                          <p className="text-[0.55rem] text-muted-foreground truncate">
+                            {msg.email}
+                          </p>
                         </div>
                       </div>
                       <span className="text-[0.5rem] text-muted-foreground shrink-0">
-                        {new Date(msg.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        {new Date(msg.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </span>
                     </div>
-                    <p className="text-[0.6rem] text-muted-foreground mt-1.5 line-clamp-1">{msg.message}</p>
+                    <p className="text-[0.6rem] text-muted-foreground mt-1.5 line-clamp-1">
+                      {msg.message}
+                    </p>
                   </div>
                 </div>
               ))}
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-3">
-                  <p className="text-xs text-muted-foreground">Page {page} of {totalPages}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Page {page} of {totalPages}
+                  </p>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-                      className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors">←</button>
-                    <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                      className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors">→</button>
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                      className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors"
+                    >
+                      ←
+                    </button>
+                    <button
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages}
+                      className="px-3 py-1.5 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 transition-colors"
+                    >
+                      →
+                    </button>
                   </div>
                 </div>
               )}
@@ -459,23 +524,31 @@ function ContactMessageInbox() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">{selectedMsg.name}</p>
-                  <a href={`mailto:${selectedMsg.email}`} className="text-[0.6rem] text-foreground hover:underline">
+                  <a
+                    href={`mailto:${selectedMsg.email}`}
+                    className="text-[0.6rem] text-foreground hover:underline"
+                  >
                     {selectedMsg.email}
                   </a>
                 </div>
-                <span className={`text-[0.5rem] font-medium px-2 py-0.5 rounded-full border ${
-                  selectedMsg.read
-                    ? "bg-green-50 text-green-700 border-green-300/50 dark:bg-green-950/30 dark:text-green-400"
-                    : "bg-amber-50 text-amber-700 border-amber-300/50 dark:bg-amber-950/30 dark:text-amber-400"
-                }`}>
+                <span
+                  className={`text-[0.5rem] font-medium px-2 py-0.5 rounded-full border ${
+                    selectedMsg.read
+                      ? "bg-green-50 text-green-700 border-green-300/50 dark:bg-green-950/30 dark:text-green-400"
+                      : "bg-amber-50 text-amber-700 border-amber-300/50 dark:bg-amber-950/30 dark:text-amber-400"
+                  }`}
+                >
                   {selectedMsg.read ? "Read" : "New"}
                 </span>
               </div>
 
               <p className="text-[0.55rem] text-muted-foreground">
                 {new Date(selectedMsg.created_at).toLocaleString("en-US", {
-                  month: "long", day: "numeric", year: "numeric",
-                  hour: "numeric", minute: "2-digit",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
                 })}
               </p>
 
@@ -491,7 +564,9 @@ function ContactMessageInbox() {
                   <Mail className="h-3 w-3" /> Reply via Email
                 </a>
                 <button
-                  onClick={() => { if (confirm("Delete this message?")) deleteMutation.mutate(selectedMsg.id); }}
+                  onClick={() => {
+                    if (confirm("Delete this message?")) deleteMutation.mutate(selectedMsg.id);
+                  }}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.55rem] font-medium text-destructive border border-destructive/30 rounded-lg hover:bg-destructive/10 transition-colors ml-auto"
                 >
                   <Trash2 className="h-3 w-3" /> Delete
@@ -509,4 +584,3 @@ function ContactMessageInbox() {
     </div>
   );
 }
-

@@ -31,7 +31,12 @@ const STATIC_ROUTES = [
 
 /* ─── XML helpers ───────────────────────────────────────────────── */
 
-function xmlUrl({ loc, lastmod, changefreq, priority }: {
+function xmlUrl({
+  loc,
+  lastmod,
+  changefreq,
+  priority,
+}: {
   loc: string;
   lastmod?: string;
   changefreq?: string;

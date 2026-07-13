@@ -42,11 +42,7 @@ export function NavDropdown({ triggerLabel, items }: NavDropdownProps) {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <div
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="inline-flex"
-      >
+      <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="inline-flex">
         <DropdownMenuTrigger asChild>
           <button className="group relative inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-200 cursor-pointer">
             {triggerLabel}

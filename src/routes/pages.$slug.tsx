@@ -8,18 +8,23 @@ import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/pages/$slug")({
   loader: async ({ params }) => {
-    const [page, siteName] = await Promise.all([
-      fetchPageBySlug(params.slug),
-      getSiteName(),
-    ]);
+    const [page, siteName] = await Promise.all([fetchPageBySlug(params.slug), getSiteName()]);
     if (!page) throw notFound();
     return { page, siteName };
   },
   head: ({ loaderData }: Record<string, unknown>) => {
-    const ld = loaderData as {
-      page: { title_en?: string | null; title_bn?: string | null; meta_description_en?: string | null; meta_description_bn?: string | null; banner_url?: string | null };
-      siteName: string;
-    } | undefined;
+    const ld = loaderData as
+      | {
+          page: {
+            title_en?: string | null;
+            title_bn?: string | null;
+            meta_description_en?: string | null;
+            meta_description_bn?: string | null;
+            banner_url?: string | null;
+          };
+          siteName: string;
+        }
+      | undefined;
     const p = ld?.page;
     const name = ld?.siteName ?? "Bodhi Mitra";
     const pageTitle = p?.title_en || p?.title_bn || "Page";
@@ -38,7 +43,10 @@ export const Route = createFileRoute("/pages/$slug")({
   notFoundComponent: () => (
     <div className="mx-auto max-w-2xl px-6 py-32 text-center">
       <h1 className="font-serif text-3xl">Page not found</h1>
-      <Link to="/" className="mt-6 inline-block border-b border-foreground/40 pb-0.5 text-sm hover:border-foreground">
+      <Link
+        to="/"
+        className="mt-6 inline-block border-b border-foreground/40 pb-0.5 text-sm hover:border-foreground"
+      >
         Return home
       </Link>
     </div>

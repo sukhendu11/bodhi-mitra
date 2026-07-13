@@ -51,10 +51,7 @@ export function getYoutubeId(url: string): string | null {
 }
 
 /** Fetch published videos for public display, ordered by sort_order. */
-export async function fetchPublishedVideos(
-  page = 1,
-  pageSize = 12,
-): Promise<PaginatedVideos> {
+export async function fetchPublishedVideos(page = 1, pageSize = 12): Promise<PaginatedVideos> {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -111,11 +108,7 @@ export async function fetchVideoById(id: string): Promise<Video | null> {
 
 /** Create a new video. */
 export async function createVideo(input: VideoInput): Promise<Video> {
-  const { data, error } = await (supabase as any)
-    .from("videos")
-    .insert(input)
-    .select()
-    .single();
+  const { data, error } = await (supabase as any).from("videos").insert(input).select().single();
   if (error) throw error;
   return data as Video;
 }
@@ -147,8 +140,14 @@ export async function getVideoStats(): Promise<{
   const db = supabase as any;
 
   const { count: total } = await db.from("videos").select("*", { count: "exact", head: true });
-  const { count: published } = await db.from("videos").select("*", { count: "exact", head: true }).eq("status", "published");
-  const { count: draft } = await db.from("videos").select("*", { count: "exact", head: true }).eq("status", "draft");
+  const { count: published } = await db
+    .from("videos")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "published");
+  const { count: draft } = await db
+    .from("videos")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "draft");
 
   return {
     total: total ?? 0,

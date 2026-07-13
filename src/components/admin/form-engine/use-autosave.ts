@@ -7,8 +7,8 @@ import { toast } from "sonner";
 
 interface AutoSaveOptions<TForm extends FieldValues> {
   form: UseFormReturn<TForm>;
-  /** Refine resource name */
-  resource: string;
+  /** Refine resource name (required when saveFn is not provided) */
+  resource?: string;
   /** Resource ID for updates (omit for creates) */
   id?: string;
   /** Debounce delay in ms (default 2000) */
@@ -23,6 +23,11 @@ interface AutoSaveOptions<TForm extends FieldValues> {
   onError?: (error: any) => void;
   /** Whether autosave is enabled (default: when form is dirty) */
   enabled?: boolean;
+  /**
+   * Custom save function. When provided, bypasses Refine hooks (resource/id are not needed).
+   * Useful for dynamic content that uses server functions instead of Refine data provider.
+   */
+  saveFn?: (values: TForm) => Promise<void>;
 }
 
 /* ─── Hook ───────────────────────────────────────────────────────── */
@@ -37,6 +42,7 @@ export function useAutoSave<TForm extends FieldValues>({
   onSuccess,
   onError,
   enabled,
+  saveFn,
 }: AutoSaveOptions<TForm>) {
   const { mutate: createMutate } = useCreate();
   const { mutate: updateMutate } = useUpdate();
@@ -46,7 +52,7 @@ export function useAutoSave<TForm extends FieldValues>({
 
   const isEnabled = enabled !== undefined ? enabled : form.formState.isDirty;
 
-  const save = useCallback(() => {
+  const save = useCallback(async () => {
     const values = form.getValues();
     const serialized = JSON.stringify(values);
 
@@ -57,9 +63,26 @@ export function useAutoSave<TForm extends FieldValues>({
     const input = transform ? transform(values) : (values as any);
     setIsSaving(true);
 
+    // Custom save function path (bypasses Refine hooks)
+    if (saveFn) {
+      try {
+        await saveFn(values);
+        setIsSaving(false);
+        toast.success(`${label} saved`);
+        onSuccess?.();
+      } catch (e: any) {
+        setIsSaving(false);
+        toast.error(`Save failed: ${e?.message ?? "Error"}`);
+        onError?.(e);
+      }
+      return;
+    }
+
+    // Default Refine hooks path (only reached when saveFn is not provided, so resource is always defined)
+    const refResource = resource as string;
     if (id) {
       updateMutate(
-        { resource, id, values: input },
+        { resource: refResource, id, values: input },
         {
           onSuccess: () => {
             setIsSaving(false);
@@ -75,7 +98,7 @@ export function useAutoSave<TForm extends FieldValues>({
       );
     } else {
       createMutate(
-        { resource, values: input },
+        { resource: refResource, values: input },
         {
           onSuccess: (result: any) => {
             setIsSaving(false);
@@ -91,7 +114,7 @@ export function useAutoSave<TForm extends FieldValues>({
         },
       );
     }
-  }, [form, resource, id, transform, label, createMutate, updateMutate, onSuccess, onError]);
+  }, [form, resource, id, transform, label, createMutate, updateMutate, onSuccess, onError, saveFn]);
 
   // Debounce save on form changes
   useEffect(() => {

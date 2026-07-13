@@ -79,7 +79,8 @@ export async function fetchPublishedBooks(
   if (options?.featured) query = query.eq("featured", true);
   if (options?.search?.trim()) {
     const q = options.search.trim().replace(/[%_]/g, "");
-    if (q) query = query.or(`title_en.ilike.*${q}*,title_bn.ilike.*${q}*,description_en.ilike.*${q}*`);
+    if (q)
+      query = query.or(`title_en.ilike.*${q}*,title_bn.ilike.*${q}*,description_en.ilike.*${q}*`);
   }
 
   const { data, error, count } = await query;
@@ -139,11 +140,7 @@ export async function fetchBookById(id: string): Promise<Book | null> {
 
 /** Create a new book. */
 export async function createBook(input: BookInput): Promise<Book> {
-  const { data, error } = await (supabase as any)
-    .from("books")
-    .insert(input)
-    .select()
-    .single();
+  const { data, error } = await (supabase as any).from("books").insert(input).select().single();
   if (error) throw error;
   return data as Book;
 }
@@ -166,21 +163,42 @@ export async function deleteBook(id: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Get books stats for admin dashboard. */
+/** Get books stats for admin dashboard — includes purchase stats. */
 export async function getBookStats(): Promise<{
   total: number;
   published: number;
   draft: number;
   archived: number;
   free: number;
+  totalPurchases: number;
+  totalRevenue: number;
 }> {
   const db = supabase as any;
 
-  const { count: total } = await db.from("books").select("*", { count: "exact", head: true });
-  const { count: published } = await db.from("books").select("*", { count: "exact", head: true }).eq("status", "published");
-  const { count: draft } = await db.from("books").select("*", { count: "exact", head: true }).eq("status", "draft");
-  const { count: archived } = await db.from("books").select("*", { count: "exact", head: true }).eq("status", "archived");
-  const { count: free } = await db.from("books").select("*", { count: "exact", head: true }).eq("is_free", true);
+  const [
+    { count: total },
+    { count: published },
+    { count: draft },
+    { count: archived },
+    { count: free },
+  ] = await Promise.all([
+    db.from("books").select("*", { count: "exact", head: true }),
+    db.from("books").select("*", { count: "exact", head: true }).eq("status", "published"),
+    db.from("books").select("*", { count: "exact", head: true }).eq("status", "draft"),
+    db.from("books").select("*", { count: "exact", head: true }).eq("status", "archived"),
+    db.from("books").select("*", { count: "exact", head: true }).eq("is_free", true),
+  ]);
+
+  // Purchase stats
+  const [{ count: totalPurchases }, { data: revenueData }] = await Promise.all([
+    db.from("purchases").select("*", { count: "exact", head: true }),
+    db.from("purchases").select("amount_paid"),
+  ]);
+
+  const totalRevenue = (revenueData ?? []).reduce(
+    (sum: number, p: { amount_paid: number }) => sum + Number(p.amount_paid ?? 0),
+    0,
+  );
 
   return {
     total: total ?? 0,
@@ -188,6 +206,8 @@ export async function getBookStats(): Promise<{
     draft: draft ?? 0,
     archived: archived ?? 0,
     free: free ?? 0,
+    totalPurchases: totalPurchases ?? 0,
+    totalRevenue,
   };
 }
 

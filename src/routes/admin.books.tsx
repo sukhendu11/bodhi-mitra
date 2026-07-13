@@ -4,7 +4,17 @@ import { useForm } from "react-hook-form";
 import { createColumnHelper } from "@tanstack/react-table";
 import { toast } from "sonner";
 import {
-  BookOpen, Edit3, CheckCircle, XCircle, DollarSign, ImagePlus, FileUp, Eye, Star,
+  BookOpen,
+  Edit3,
+  CheckCircle,
+  XCircle,
+  DollarSign,
+  ImagePlus,
+  FileUp,
+  Eye,
+  Star,
+  ShoppingCart,
+  TrendingUp,
 } from "lucide-react";
 import { bookSchema, type BookFormValues } from "@/lib/schemas";
 import { deleteBook, getBookStats, slugifyBook, type Book } from "@/lib/books";
@@ -17,8 +27,15 @@ import { ErrorPage } from "@/components/error-page";
 /* ─── Book Categories ────────────────────────────────────────────── */
 
 const BOOK_CATEGORIES = [
-  "general", "buddhist-psychology", "wisdom", "meditation",
-  "philosophy", "sutra", "commentary", "biography", "reference",
+  "general",
+  "buddhist-psychology",
+  "wisdom",
+  "meditation",
+  "philosophy",
+  "sutra",
+  "commentary",
+  "biography",
+  "reference",
 ];
 
 /* ─── Column Definitions ─────────────────────────────────────────── */
@@ -32,7 +49,11 @@ const columns = [
     cell: ({ row }) => (
       <div className="flex items-center gap-3 min-w-0">
         {row.original.cover_image ? (
-          <img src={row.original.cover_image} alt="" className="w-8 h-10 rounded object-cover border border-border/40 shrink-0" />
+          <img
+            src={row.original.cover_image}
+            alt={row.original.title_en || "Book cover"}
+            className="w-8 h-10 rounded object-cover border border-border/40 shrink-0"
+          />
         ) : (
           <div className="w-8 h-10 rounded bg-secondary/60 border border-border/40 flex items-center justify-center shrink-0">
             <BookOpen className="h-4 w-4 text-muted-foreground/40" />
@@ -41,7 +62,9 @@ const columns = [
         <div className="min-w-0">
           <span className="text-sm font-medium line-clamp-1">{row.original.title_en}</span>
           {row.original.title_bn && (
-            <span className="text-[0.6rem] text-muted-foreground block">{row.original.title_bn}</span>
+            <span className="text-[0.6rem] text-muted-foreground block">
+              {row.original.title_bn}
+            </span>
           )}
         </div>
       </div>
@@ -50,7 +73,9 @@ const columns = [
   columnHelper.accessor("author_name", {
     header: "Author",
     enableSorting: true,
-    cell: ({ getValue }) => <span className="text-muted-foreground text-xs">{getValue() || "—"}</span>,
+    cell: ({ getValue }) => (
+      <span className="text-muted-foreground text-xs">{getValue() || "—"}</span>
+    ),
   }),
   columnHelper.accessor("status", {
     header: "Status",
@@ -61,9 +86,11 @@ const columns = [
     header: "Price",
     enableSorting: true,
     cell: ({ row }) =>
-      row.original.is_free
-        ? <span className="text-green-600 dark:text-green-400 text-xs font-medium">Free</span>
-        : <span className="text-xs font-medium">${row.original.price.toFixed(2)}</span>,
+      row.original.is_free ? (
+        <span className="text-green-600 dark:text-green-400 text-xs font-medium">Free</span>
+      ) : (
+        <span className="text-xs font-medium">${row.original.price.toFixed(2)}</span>
+      ),
   }),
   columnHelper.accessor("avg_rating", {
     header: "Rating",
@@ -84,7 +111,9 @@ const columns = [
   columnHelper.accessor("pages", {
     header: "Pages",
     enableSorting: true,
-    cell: ({ getValue }) => <span className="text-muted-foreground text-xs">{getValue() || "—"}</span>,
+    cell: ({ getValue }) => (
+      <span className="text-muted-foreground text-xs">{getValue() || "—"}</span>
+    ),
   }),
   columnHelper.accessor("created_at", {
     header: "Created",
@@ -120,24 +149,41 @@ const BOOK_FORM_GROUPS = [
     title: "Basic Info",
     columns: 2 as const,
     fields: [
-      { type: "bilingual" as const, nameEn: "title_en" as const, nameBn: "title_bn" as const,
-        labelEn: "Title (English)", labelBn: "Title (বাংলা)",
-        placeholderEn: "Book title", placeholderBn: "বইয়ের শিরোনাম" },
+      {
+        type: "bilingual" as const,
+        nameEn: "title_en" as const,
+        nameBn: "title_bn" as const,
+        labelEn: "Title (English)",
+        labelBn: "Title (বাংলা)",
+        placeholderEn: "Book title",
+        placeholderBn: "বইয়ের শিরোনাম",
+      },
     ],
   },
   {
     columns: 2 as const,
     fields: [
       { type: "text" as const, name: "slug" as const, label: "Slug", placeholder: "book-slug" },
-      { type: "text" as const, name: "author_name" as const, label: "Author", placeholder: "Author name" },
+      {
+        type: "text" as const,
+        name: "author_name" as const,
+        label: "Author",
+        placeholder: "Author name",
+      },
     ],
   },
   {
     title: "Description",
     columns: 2 as const,
     fields: [
-      { type: "bilingual-textarea" as const, nameEn: "description_en" as const, nameBn: "description_bn" as const,
-        labelEn: "Description (EN)", labelBn: "Description (BN)", rows: 3 },
+      {
+        type: "bilingual-textarea" as const,
+        nameEn: "description_en" as const,
+        nameBn: "description_bn" as const,
+        labelEn: "Description (EN)",
+        labelBn: "Description (BN)",
+        rows: 3,
+      },
     ],
   },
   {
@@ -155,8 +201,13 @@ const BOOK_FORM_GROUPS = [
       { type: "checkbox" as const, name: "is_free" as const, label: "Free" },
       { type: "checkbox" as const, name: "featured" as const, label: "Featured" },
       {
-        type: "select" as const, name: "category" as const, label: "Category",
-        options: BOOK_CATEGORIES.map((c) => ({ label: c.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()), value: c })),
+        type: "select" as const,
+        name: "category" as const,
+        label: "Category",
+        options: BOOK_CATEGORIES.map((c) => ({
+          label: c.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+          value: c,
+        })),
       },
     ],
   },
@@ -165,7 +216,9 @@ const BOOK_FORM_GROUPS = [
     columns: 3 as const,
     fields: [
       {
-        type: "select" as const, name: "status" as const, label: "Status",
+        type: "select" as const,
+        name: "status" as const,
+        label: "Status",
         options: [
           { label: "Draft", value: "draft" },
           { label: "Published", value: "published" },
@@ -179,8 +232,18 @@ const BOOK_FORM_GROUPS = [
     title: "SEO",
     columns: 2 as const,
     fields: [
-      { type: "textarea" as const, name: "meta_description_en" as const, label: "Meta Description (EN)", rows: 2 },
-      { type: "textarea" as const, name: "meta_description_bn" as const, label: "Meta Description (BN)", rows: 2 },
+      {
+        type: "textarea" as const,
+        name: "meta_description_en" as const,
+        label: "Meta Description (EN)",
+        rows: 2,
+      },
+      {
+        type: "textarea" as const,
+        name: "meta_description_bn" as const,
+        label: "Meta Description (BN)",
+        rows: 2,
+      },
     ],
   },
 ];
@@ -212,12 +275,24 @@ function BookFormContent({ form }: { form: ReturnType<typeof useForm<BookFormVal
 
       {/* Cover Image — using MediaPicker */}
       <div>
-        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">Cover Image</label>
+        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">
+          Cover Image
+        </label>
         {coverImage ? (
           <div className="relative w-32 h-44 rounded-lg overflow-hidden border border-border/60 mb-2">
             <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
-            <button onClick={() => form.setValue("cover_image", "")} className="absolute top-1 right-1 p-1 rounded-full bg-background/80 text-muted-foreground hover:text-destructive">
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <button
+              onClick={() => form.setValue("cover_image", "")}
+              className="absolute top-1 right-1 p-1 rounded-full bg-background/80 text-muted-foreground hover:text-destructive"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
         ) : null}
@@ -233,11 +308,15 @@ function BookFormContent({ form }: { form: ReturnType<typeof useForm<BookFormVal
 
       {/* PDF Upload — using MediaPicker */}
       <div>
-        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">PDF File</label>
+        <label className="block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]">
+          PDF File
+        </label>
         {pdfUrl ? (
           <div className="flex items-center gap-2 p-3 rounded-lg border border-border/60 bg-secondary/20">
             <FileUp className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-foreground flex-1 truncate">{pdfUrl.split("/").pop()}</span>
+            <span className="text-xs text-foreground flex-1 truncate">
+              {pdfUrl.split("/").pop()}
+            </span>
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -247,9 +326,22 @@ function BookFormContent({ form }: { form: ReturnType<typeof useForm<BookFormVal
               >
                 <FileUp className="h-3.5 w-3.5" />
               </button>
-              <button onClick={() => { form.setValue("pdf_url", ""); form.setValue("pdf_file_size", 0); }}
-                className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors" title="Remove PDF">
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <button
+                onClick={() => {
+                  form.setValue("pdf_url", "");
+                  form.setValue("pdf_file_size", 0);
+                }}
+                className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors"
+                title="Remove PDF"
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               </button>
             </div>
           </div>
@@ -267,15 +359,26 @@ function BookFormContent({ form }: { form: ReturnType<typeof useForm<BookFormVal
 
       <MediaPicker
         open={coverPickerOpen}
-        options={{ title: "Select Cover Image", bucket: "book-covers", allowedFileTypes: ["image/*"] }}
-        onSelect={(result) => { form.setValue("cover_image", result.url); setCoverPickerOpen(false); }}
+        options={{
+          title: "Select Cover Image",
+          bucket: "book-covers",
+          allowedFileTypes: ["image/*"],
+        }}
+        onSelect={(result) => {
+          form.setValue("cover_image", result.url);
+          setCoverPickerOpen(false);
+        }}
         onClose={() => setCoverPickerOpen(false)}
       />
 
       <MediaPicker
         open={pdfPickerOpen}
         options={{ title: "Select PDF", bucket: "site-assets", allowedFileTypes: [".pdf"] }}
-        onSelect={(result) => { form.setValue("pdf_url", result.path); form.setValue("pdf_file_size", result.size); setPdfPickerOpen(false); }}
+        onSelect={(result) => {
+          form.setValue("pdf_url", result.path);
+          form.setValue("pdf_file_size", result.size);
+          setPdfPickerOpen(false);
+        }}
         onClose={() => setPdfPickerOpen(false)}
       />
     </FormRenderer>
@@ -294,11 +397,26 @@ const bookResource = registerResource<Book, BookFormValues>({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: bookSchema as any,
   defaultValues: {
-    slug: "", title_en: "", title_bn: "", author_name: "",
-    description_en: "", description_bn: "", cover_image: "", pdf_url: "",
-    pdf_file_size: 0, price: 0, is_free: true, pages: 0, isbn: "",
-    status: "draft", featured: false, tags: [], category: "general",
-    meta_description_en: "", meta_description_bn: "", sort_order: 0,
+    slug: "",
+    title_en: "",
+    title_bn: "",
+    author_name: "",
+    description_en: "",
+    description_bn: "",
+    cover_image: "",
+    pdf_url: "",
+    pdf_file_size: 0,
+    price: 0,
+    is_free: true,
+    pages: 0,
+    isbn: "",
+    status: "draft",
+    featured: false,
+    tags: [],
+    category: "general",
+    meta_description_en: "",
+    meta_description_bn: "",
+    sort_order: 0,
   },
   FormContent: BookFormContent as any,
   filterField: "status",
@@ -314,6 +432,8 @@ const bookResource = registerResource<Book, BookFormValues>({
       { icon: Edit3, label: "Drafts", value: data.draft, color: "amber" },
       { icon: XCircle, label: "Archived", value: data.archived, color: "slate" },
       { icon: DollarSign, label: "Free", value: data.free, color: "purple" },
+      { icon: ShoppingCart, label: "Purchases", value: data.totalPurchases, color: "blue" },
+      { icon: TrendingUp, label: "Revenue", value: data.totalRevenue, color: "green" },
     ],
   },
   filters: [
@@ -324,7 +444,11 @@ const bookResource = registerResource<Book, BookFormValues>({
   ],
   onBulkDelete: async (ids) => {
     for (const id of ids) {
-      try { await deleteBook(id); } catch { /* continue */ }
+      try {
+        await deleteBook(id);
+      } catch {
+        /* continue */
+      }
     }
     toast.success(`${ids.length} book(s) deleted`);
   },

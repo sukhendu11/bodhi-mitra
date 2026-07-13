@@ -9,7 +9,10 @@ export function BookSkeleton({ count = 8 }: BookSkeletonProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-white dark:bg-zinc-900 rounded-xl border border-border/50 overflow-hidden">
+        <div
+          key={i}
+          className="bg-white dark:bg-zinc-900 rounded-xl border border-border/50 overflow-hidden"
+        >
           {/* Cover placeholder */}
           <Skeleton className="aspect-[3/4] skeleton-shimmer rounded-none" />
           {/* Info */}

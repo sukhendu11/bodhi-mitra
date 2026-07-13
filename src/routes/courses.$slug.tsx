@@ -1,18 +1,32 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { fetchCourseBySlug, fetchLessons, enrollInCourse, getEnrollmentStatus, getLessonProgress, type CourseLesson } from "@/lib/courses";
+import {
+  fetchCourseBySlug,
+  fetchLessons,
+  enrollInCourse,
+  getEnrollmentStatus,
+  getLessonProgress,
+  type CourseLesson,
+} from "@/lib/courses";
 import { getSiteName } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { useAuthSession } from "@/hooks/useAuth";
-import { BookOpen, Clock, BarChart3, CheckCircle, Circle, Play, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  BookOpen,
+  Clock,
+  BarChart3,
+  CheckCircle,
+  Circle,
+  Play,
+  ArrowLeft,
+  Loader2,
+} from "lucide-react";
 
 export const Route = createFileRoute("/courses/$slug")({
   loader: () => getSiteName(),
   head: ({ loaderData }) => ({
-    meta: [
-      { title: `Course — ${loaderData}` },
-    ],
+    meta: [{ title: `Course — ${loaderData}` }],
   }),
   component: CourseDetailPage,
 });
@@ -56,7 +70,9 @@ function CourseDetailPage() {
     staleTime: 30_000,
   });
 
-  const completedLessonIds = new Set(progress.filter((p: any) => p.completed).map((p: any) => p.lesson_id));
+  const completedLessonIds = new Set(
+    progress.filter((p: any) => p.completed).map((p: any) => p.lesson_id),
+  );
   const completedCount = completedLessonIds.size;
 
   const handleEnroll = async () => {
@@ -65,7 +81,12 @@ function CourseDetailPage() {
     refetchEnrollment();
   };
 
-  if (isLoading) return <div className="mx-auto max-w-4xl px-6 py-20"><div className="h-64 bg-secondary/20 animate-pulse" /></div>;
+  if (isLoading)
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-20">
+        <div className="h-64 bg-secondary/20 animate-pulse" />
+      </div>
+    );
   if (!course) throw notFound();
 
   const title = pickLocalized(course.title_en, course.title_bn, lang, "Untitled");
@@ -73,7 +94,10 @@ function CourseDetailPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-14 md:py-20">
-      <Link to="/courses" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors mb-8">
+      <Link
+        to="/courses"
+        className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors mb-8"
+      >
         <ArrowLeft className="h-3 w-3" /> All Courses
       </Link>
 
@@ -84,16 +108,26 @@ function CourseDetailPage() {
           {desc && <p className="mt-4 text-muted-foreground leading-relaxed">{desc}</p>}
           <div className="flex flex-wrap gap-4 mt-5 text-xs text-muted-foreground">
             {course.level && (
-              <span className="flex items-center gap-1.5"><BarChart3 className="h-3.5 w-3.5" /> {course.level}</span>
+              <span className="flex items-center gap-1.5">
+                <BarChart3 className="h-3.5 w-3.5" /> {course.level}
+              </span>
             )}
-            <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {course.duration_weeks} weeks</span>
-            <span className="flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5" /> {lessons.length} lessons</span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" /> {course.duration_weeks} weeks
+            </span>
+            <span className="flex items-center gap-1.5">
+              <BookOpen className="h-3.5 w-3.5" /> {lessons.length} lessons
+            </span>
           </div>
         </div>
 
         <div className="flex flex-col items-center justify-center border border-border/60 p-6">
           {course.cover_image && (
-            <img src={course.cover_image} alt={title} className="w-full aspect-video object-cover mb-4" />
+            <img
+              src={course.cover_image}
+              alt={title}
+              className="w-full aspect-video object-cover mb-4"
+            />
           )}
           {user ? (
             enrollment?.enrolled ? (
@@ -101,17 +135,26 @@ function CourseDetailPage() {
                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium mb-2">
                   <CheckCircle className="h-4 w-4" /> Enrolled
                 </div>
-                <p className="text-xs text-muted-foreground">{completedCount}/{lessons.length} lessons completed</p>
+                <p className="text-xs text-muted-foreground">
+                  {completedCount}/{lessons.length} lessons completed
+                </p>
               </div>
             ) : (
-              <button onClick={handleEnroll}
-                className="w-full px-6 py-2.5 text-xs uppercase tracking-[0.2em] font-medium bg-foreground text-background hover:opacity-90 transition-opacity">
+              <button
+                onClick={handleEnroll}
+                className="w-full px-6 py-2.5 text-xs uppercase tracking-[0.2em] font-medium bg-foreground text-background hover:opacity-90 transition-opacity"
+              >
                 Enroll Free
               </button>
             )
           ) : (
-            <Link to="/login" search={{ message: "Sign in to enroll in this course", redirect: `/courses/${slug}` } as any}
-              className="w-full px-6 py-2.5 text-xs uppercase tracking-[0.2em] font-medium bg-foreground text-background hover:opacity-90 transition-opacity text-center block">
+            <Link
+              to="/login"
+              search={
+                { message: "Sign in to enroll in this course", redirect: `/courses/${slug}` } as any
+              }
+              className="w-full px-6 py-2.5 text-xs uppercase tracking-[0.2em] font-medium bg-foreground text-background hover:opacity-90 transition-opacity text-center block"
+            >
               Sign in to Enroll
             </Link>
           )}
@@ -126,8 +169,10 @@ function CourseDetailPage() {
             <span>{Math.round((completedCount / lessons.length) * 100)}%</span>
           </div>
           <div className="h-1.5 bg-secondary/30 rounded-full overflow-hidden">
-            <div className="h-full bg-green-500 rounded-full transition-all duration-500"
-              style={{ width: `${(completedCount / lessons.length) * 100}%` }} />
+            <div
+              className="h-full bg-green-500 rounded-full transition-all duration-500"
+              style={{ width: `${(completedCount / lessons.length) * 100}%` }}
+            />
           </div>
         </div>
       )}
@@ -156,7 +201,9 @@ function CourseDetailPage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate group-hover:text-foreground/80 transition-colors">{lessonTitle}</p>
+                  <p className="text-sm font-medium truncate group-hover:text-foreground/80 transition-colors">
+                    {lessonTitle}
+                  </p>
                 </div>
                 <Play className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
               </Link>

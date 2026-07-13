@@ -44,13 +44,17 @@ export interface PostInput {
   tags: string[];
 }
 
-
 export interface PaginatedResult<T> {
   data: T[];
   total: number;
 }
 
-export async function fetchPosts(category?: PostCategory, page = 1, pageSize = 9, searchQuery?: string): Promise<PaginatedResult<Post>> {
+export async function fetchPosts(
+  category?: PostCategory,
+  page = 1,
+  pageSize = 9,
+  searchQuery?: string,
+): Promise<PaginatedResult<Post>> {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
   let query = supabase
@@ -64,7 +68,9 @@ export async function fetchPosts(category?: PostCategory, page = 1, pageSize = 9
     const q = searchQuery.trim().replace(/[%_]/g, "");
     if (q) {
       // Use `*` wildcard (PostgREST-native) instead of `%` to avoid URL-encoding issues
-      query = query.or(`title_en.ilike.*${q}*,title_bn.ilike.*${q}*,category.ilike.*${q}*,excerpt_en.ilike.*${q}*,excerpt_bn.ilike.*${q}*`);
+      query = query.or(
+        `title_en.ilike.*${q}*,title_bn.ilike.*${q}*,category.ilike.*${q}*,excerpt_en.ilike.*${q}*,excerpt_bn.ilike.*${q}*`,
+      );
     }
   }
   const { data, error, count } = await query;
@@ -84,11 +90,7 @@ export async function fetchPostBySlug(slug: string): Promise<Post | null> {
 }
 
 export async function fetchPostById(id: string): Promise<Post | null> {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data, error } = await supabase.from("posts").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   return (data as unknown as Post | null) ?? null;
 }

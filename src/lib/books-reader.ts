@@ -1,36 +1,28 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { canAccessPdf, checkOwnership, purchaseBook } from "@/lib/books-purchases";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ─── Server function: get signed PDF URL ──────────────────────── */
 
-/**
- * Server function to get a signed PDF URL for a book.
- * Enforces access control on the server side before returning the URL.
- *
- * The signed URL expires after 5 minutes (300 seconds).
- * If the session expires, the caller should show "Session expired—refresh".
- */
 export const getPdfReaderUrl = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }: { context: { userId: string }; data: unknown }) => {
     const { userId } = context;
     const input = data as { bookId: string; bucketPath: string };
 
-    // Verify access on the server side
     const access = await canAccessPdf(userId, input.bookId);
     if (!access.canAccess) {
       throw new Error("Access denied. You need to purchase this book to read it.");
     }
 
-    // Generate signed URL using admin client (bypasses RLS — access already verified)
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data, error } = await supabaseAdmin.storage
+      const { data: result, error } = await supabaseAdmin.storage
         .from("book-pdfs")
         .createSignedUrl(input.bucketPath, 300);
       if (error) throw error;
-      return { signedUrl: data.signedUrl, expiresIn: 300 };
+      return { signedUrl: result.signedUrl, expiresIn: 300 };
     } catch (error) {
       throw new Error("Failed to generate PDF reader URL. Please try again.");
     }
@@ -38,10 +30,6 @@ export const getPdfReaderUrl = createServerFn({ method: "GET" })
 
 /* ─── Server function: check purchase ownership ────────────────── */
 
-/**
- * Server-side ownership check. Returns { owned: boolean }.
- * Used to gate "Read Now" / purchase buttons.
- */
 export const checkBookOwnership = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }: { context: { userId: string }; data: unknown }) => {
@@ -53,43 +41,165 @@ export const checkBookOwnership = createServerFn({ method: "GET" })
 
 /* ─── Server function: purchase a book ─────────────────────────── */
 
-/**
- * Purchase a book (idempotent). Returns:
- *   - For free books: `{ alreadyOwned, purchase }`
- *   - For paid books: `{ url: string }` — redirect to Stripe Checkout
- */
 export const purchaseBookAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+  .handler(
+    async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+      const { userId } = context;
+      const input = data as { bookId: string; amountPaid?: number; bookSlug?: string };
+
+      const { data: book } = await context.supabase
+        .from("books")
+        .select("is_free, price, slug")
+        .eq("id", input.bookId)
+        .maybeSingle();
+
+      if (!book) throw new Error("Book not found.");
+
+      if (!book.is_free) {
+        const { createCheckoutSession } = await import("@/lib/stripe-checkout");
+        const result = await (createCheckoutSession as any)({
+          data: { bookId: input.bookId, bookSlug: input.bookSlug ?? book.slug },
+        });
+        return { url: result.url };
+      }
+
+      const result = await purchaseBook(userId, input.bookId, 0);
+      if (result.error) throw new Error(result.error);
+      return result;
+    },
+  );
+
+/* ════════════════════════════════════════════════════════════════════
+   Reader Page Bookmarks
+   ════════════════════════════════════════════════════════════════════ */
+
+export interface ReaderBookmark {
+  id: string;
+  user_id: string;
+  book_id: string;
+  page_number: number;
+  label: string;
+  created_at: string;
+}
+
+export const getReaderBookmarks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }: { context: { userId: string }; data: unknown }) => {
     const { userId } = context;
-    const input = data as { bookId: string; amountPaid?: number; bookSlug?: string };
+    const input = data as { bookId: string };
+    const db = supabase as any;
+    const { data: rows, error } = await db
+      .from("reader_bookmarks")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("book_id", input.bookId)
+      .order("page_number", { ascending: true });
+    if (error) throw error;
+    return (rows ?? []) as ReaderBookmark[];
+  });
 
-    // Server-side check: verify the book exists and get its price
-    const { data: book } = await context.supabase
-      .from("books")
-      .select("is_free, price, slug")
-      .eq("id", input.bookId)
-      .maybeSingle();
-
-    if (!book) {
-      throw new Error("Book not found.");
+export const addReaderBookmark = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }: { context: { userId: string }; data: unknown }) => {
+    const { userId } = context;
+    const input = data as { bookId: string; pageNumber: number; label?: string };
+    const db = supabase as any;
+    const { data: row, error } = await db
+      .from("reader_bookmarks")
+      .insert({
+        user_id: userId,
+        book_id: input.bookId,
+        page_number: input.pageNumber,
+        label: input.label ?? "",
+      })
+      .select()
+      .single();
+    if (error) {
+      if (error.code === "23505") return { alreadyExists: true };
+      throw error;
     }
+    return row as ReaderBookmark;
+  });
 
-    // Paid books: create Stripe Checkout Session
-    if (!book.is_free) {
-      const { createCheckoutSession } = await import("@/lib/stripe-checkout");
-      const result = await (createCheckoutSession as any)({
-        data: { bookId: input.bookId, bookSlug: input.bookSlug ?? book.slug },
-      });
-      return { url: result.url };
-    }
+export const removeReaderBookmark = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }: { context: { userId: string }; data: unknown }) => {
+    const { userId } = context;
+    const input = data as { id: string };
+    const db = supabase as any;
+    const { error } = await db
+      .from("reader_bookmarks")
+      .delete()
+      .eq("id", input.id)
+      .eq("user_id", userId);
+    if (error) throw error;
+    return { success: true };
+  });
 
-    // Free books can be purchased directly
-    const result = await purchaseBook(userId, input.bookId, 0);
+/* ════════════════════════════════════════════════════════════════════
+   Reader Notes
+   ════════════════════════════════════════════════════════════════════ */
 
-    if (result.error) {
-      throw new Error(result.error);
-    }
+export interface ReaderNote {
+  id: string;
+  user_id: string;
+  book_id: string;
+  page_number: number;
+  text: string;
+  color: string;
+  created_at: string;
+  updated_at: string;
+}
 
-    return result;
+export const getReaderNotes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }: { context: { userId: string }; data: unknown }) => {
+    const { userId } = context;
+    const input = data as { bookId: string };
+    const db = supabase as any;
+    const { data: rows, error } = await db
+      .from("reader_notes")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("book_id", input.bookId)
+      .order("page_number", { ascending: true });
+    if (error) throw error;
+    return (rows ?? []) as ReaderNote[];
+  });
+
+export const addReaderNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }: { context: { userId: string }; data: unknown }) => {
+    const { userId } = context;
+    const input = data as { bookId: string; pageNumber: number; text: string; color?: string };
+    const db = supabase as any;
+    const { data: row, error } = await db
+      .from("reader_notes")
+      .insert({
+        user_id: userId,
+        book_id: input.bookId,
+        page_number: input.pageNumber,
+        text: input.text,
+        color: input.color ?? "#fef08a",
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as ReaderNote;
+  });
+
+export const deleteReaderNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }: { context: { userId: string }; data: unknown }) => {
+    const { userId } = context;
+    const input = data as { id: string };
+    const db = supabase as any;
+    const { error } = await db
+      .from("reader_notes")
+      .delete()
+      .eq("id", input.id)
+      .eq("user_id", userId);
+    if (error) throw error;
+    return { success: true };
   });

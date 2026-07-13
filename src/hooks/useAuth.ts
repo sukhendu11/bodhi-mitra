@@ -30,14 +30,17 @@ export function useAuthSession() {
       queryClient.invalidateQueries({ queryKey: ["user-role"] });
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === "SIGNED_OUT") signedOut = true;
       setSession(event === "SIGNED_OUT" ? null : s);
       setLoading(false);
       invalidateUserData();
     });
 
-    supabase.auth.getUser()
+    supabase.auth
+      .getUser()
       .then(async ({ data, error }) => {
         if (cancelled) return;
         if (signedOut || error || !data.user) {

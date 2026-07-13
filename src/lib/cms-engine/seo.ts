@@ -51,20 +51,29 @@ export function extractSeoData(
     }
 
     // Extract standard fields used for SEO
-    const title = (contentData.title_en ?? contentData.title ?? contentData.name_en ?? "") as string;
+    const title = (contentData.title_en ??
+      contentData.title ??
+      contentData.name_en ??
+      "") as string;
     if (title) {
       seo.title = title;
       seo.ogTitle = title;
     }
 
     // Extract cover/image for OG
-    const image = (contentData.cover_image ?? contentData.banner_url ?? contentData.thumbnail_url ?? "") as string;
+    const image = (contentData.cover_image ??
+      contentData.banner_url ??
+      contentData.thumbnail_url ??
+      "") as string;
     if (image) {
       seo.ogImage = image;
     }
 
     // Extract description fallback
-    const desc = (contentData.description_en ?? contentData.excerpt_en ?? contentData.body_en ?? "") as string;
+    const desc = (contentData.description_en ??
+      contentData.excerpt_en ??
+      contentData.body_en ??
+      "") as string;
     if (desc && !seo.description) {
       seo.description = desc.substring(0, 160);
       seo.ogDescription = seo.description;
@@ -150,14 +159,9 @@ export interface RouteMeta {
  * Build a TanStack Router-compatible `head` meta configuration
  * from content data and SEO fields.
  */
-export function buildRouteMeta(
-  seo: SeoData,
-  siteName?: string,
-): RouteMeta {
+export function buildRouteMeta(seo: SeoData, siteName?: string): RouteMeta {
   return {
-    title: seo.title
-      ? `${seo.title}${siteName ? ` — ${siteName}` : ""}`
-      : siteName ?? "",
+    title: seo.title ? `${seo.title}${siteName ? ` — ${siteName}` : ""}` : (siteName ?? ""),
     description: seo.description?.substring(0, 160),
     image: seo.ogImage,
   };
@@ -173,19 +177,19 @@ export interface BilingualSeoData {
 /**
  * Extract bilingual SEO data from content with English/Bengali fields.
  */
-export function extractBilingualSeoData(
-  contentData: Record<string, unknown>,
-): BilingualSeoData {
+export function extractBilingualSeoData(contentData: Record<string, unknown>): BilingualSeoData {
   return {
     en: {
       title: contentData.title_en as string,
-      description: (contentData.meta_description_en as string) || (contentData.excerpt_en as string),
+      description:
+        (contentData.meta_description_en as string) || (contentData.excerpt_en as string),
       ogImage: (contentData.cover_image as string) || (contentData.banner_url as string),
       canonical: contentData.slug as string,
     },
     bn: {
       title: contentData.title_bn as string,
-      description: (contentData.meta_description_bn as string) || (contentData.excerpt_bn as string),
+      description:
+        (contentData.meta_description_bn as string) || (contentData.excerpt_bn as string),
       ogImage: (contentData.cover_image as string) || (contentData.banner_url as string),
       canonical: contentData.slug as string,
     },

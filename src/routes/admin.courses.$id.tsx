@@ -71,6 +71,7 @@ function AdminCourseForm() {
   const lessons = lessonsResult?.data ?? [];
 
   const form = useForm<CourseFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(courseSchema) as any,
     defaultValues: {
       slug: "",
@@ -148,7 +149,10 @@ function AdminCourseForm() {
 
   const handleAddLesson = () => {
     createLessonMutate(
-      { resource: "course_lessons", values: { ...newLesson, course_id: id, sort_order: lessons.length } },
+      {
+        resource: "course_lessons",
+        values: { ...newLesson, course_id: id, sort_order: lessons.length },
+      },
       {
         onSuccess: () => {
           setNewLesson({ slug: "", title_en: "", title_bn: "" });
@@ -187,16 +191,26 @@ function AdminCourseForm() {
 
   return (
     <div className="space-y-8 max-w-3xl">
-      <Link to="/admin/courses" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors">
+      <Link
+        to="/admin/courses"
+        className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+      >
         <ArrowLeft className="h-3 w-3" /> Back to Courses
       </Link>
 
-      <h2 className="text-xl font-semibold tracking-tight">{isNew ? "New Course" : "Edit Course"}</h2>
+      <h2 className="text-xl font-semibold tracking-tight">
+        {isNew ? "New Course" : "Edit Course"}
+      </h2>
 
       <Form {...form}>
         <form onSubmit={handleSave} className="space-y-6">
           <div className="space-y-5 border border-border/60 p-6">
-            <FormFieldRow control={form.control} name="slug" label="Slug" placeholder="course-slug" />
+            <FormFieldRow
+              control={form.control}
+              name="slug"
+              label="Slug"
+              placeholder="course-slug"
+            />
 
             <BilingualField
               control={form.control}
@@ -218,8 +232,18 @@ function AdminCourseForm() {
               textareaRows={3}
             />
 
-            <FormFieldRow control={form.control} name="cover_image" label="Cover Image URL" placeholder="https://..." />
-            <FormFieldRow control={form.control} name="category" label="Category" placeholder="buddhist-psychology" />
+            <FormFieldRow
+              control={form.control}
+              name="cover_image"
+              label="Cover Image URL"
+              placeholder="https://..."
+            />
+            <FormFieldRow
+              control={form.control}
+              name="category"
+              label="Category"
+              placeholder="buddhist-psychology"
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -244,7 +268,12 @@ function AdminCourseForm() {
                   </FormItem>
                 )}
               />
-              <FormFieldRow control={form.control} name="duration_weeks" label="Duration (weeks)" placeholder="4" />
+              <FormFieldRow
+                control={form.control}
+                name="duration_weeks"
+                label="Duration (weeks)"
+                placeholder="4"
+              />
             </div>
 
             <FormField
@@ -255,13 +284,18 @@ function AdminCourseForm() {
                   <FormControl>
                     <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <FormLabel className="text-xs font-medium text-muted-foreground cursor-pointer">Published</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground cursor-pointer">
+                    Published
+                  </FormLabel>
                 </FormItem>
               )}
             />
 
-            <button type="submit" disabled={isSaving}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-40">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-40"
+            >
               {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
               <Save className="h-3 w-3" /> {isNew ? "Create Course" : "Save Changes"}
             </button>
@@ -275,27 +309,69 @@ function AdminCourseForm() {
 
           <div className="space-y-2 mb-6">
             {lessons.map((lesson) => (
-              <div key={lesson.id} className="flex items-center gap-3 border border-border/40 px-4 py-3">
+              <div
+                key={lesson.id}
+                className="flex items-center gap-3 border border-border/40 px-4 py-3"
+              >
                 <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
                 {editingLesson === lesson.id ? (
                   <div className="flex-1 flex items-center gap-2">
-                    <input value={editLessonForm.title_en} onChange={(e) => setEditLessonForm({ ...editLessonForm, title_en: e.target.value })}
-                      className="flex-1 border border-border bg-background px-2 py-1 text-xs" placeholder="Title (EN)" />
-                    <input value={editLessonForm.title_bn} onChange={(e) => setEditLessonForm({ ...editLessonForm, title_bn: e.target.value })}
-                      className="flex-1 border border-border bg-background px-2 py-1 text-xs" placeholder="Title (BN)" />
-                    <button onClick={handleUpdateLesson}
-                      className="px-2 py-1 text-xs font-medium bg-foreground text-background">Save</button>
-                    <button onClick={() => setEditingLesson(null)}
-                      className="px-2 py-1 text-xs border border-border text-muted-foreground">Cancel</button>
+                    <input
+                      value={editLessonForm.title_en}
+                      onChange={(e) =>
+                        setEditLessonForm({ ...editLessonForm, title_en: e.target.value })
+                      }
+                      className="flex-1 border border-border bg-background px-2 py-1 text-xs"
+                      placeholder="Title (EN)"
+                    />
+                    <input
+                      value={editLessonForm.title_bn}
+                      onChange={(e) =>
+                        setEditLessonForm({ ...editLessonForm, title_bn: e.target.value })
+                      }
+                      className="flex-1 border border-border bg-background px-2 py-1 text-xs"
+                      placeholder="Title (BN)"
+                    />
+                    <button
+                      onClick={handleUpdateLesson}
+                      className="px-2 py-1 text-xs font-medium bg-foreground text-background"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingLesson(null)}
+                      className="px-2 py-1 text-xs border border-border text-muted-foreground"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 ) : (
                   <>
-                    <span className="text-xs text-muted-foreground w-5">{lesson.sort_order + 1}.</span>
-                    <span className="text-sm flex-1 truncate">{lesson.title_en || lesson.title_bn || "Untitled"}</span>
-                    <button onClick={() => { setEditingLesson(lesson.id); setEditLessonForm({ slug: lesson.slug, title_en: lesson.title_en, title_bn: lesson.title_bn }); }}
-                      className="text-[0.55rem] uppercase tracking-wider text-muted-foreground hover:text-foreground">Edit</button>
-                    <button onClick={() => handleDeleteLesson(lesson.id)}
-                      className="text-[0.55rem] uppercase tracking-wider text-destructive hover:text-destructive/80">Delete</button>
+                    <span className="text-xs text-muted-foreground w-5">
+                      {lesson.sort_order + 1}.
+                    </span>
+                    <span className="text-sm flex-1 truncate">
+                      {lesson.title_en || lesson.title_bn || "Untitled"}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setEditingLesson(lesson.id);
+                        setEditLessonForm({
+                          slug: lesson.slug,
+                          title_en: lesson.title_en,
+                          title_bn: lesson.title_bn,
+                        });
+                      }}
+                      className="text-[0.55rem] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteLesson(lesson.id)}
+                      className="text-[0.55rem] uppercase tracking-wider text-destructive hover:text-destructive/80"
+                    >
+                      Delete
+                    </button>
                   </>
                 )}
               </div>
@@ -303,16 +379,33 @@ function AdminCourseForm() {
           </div>
 
           <div className="border-t border-border/40 pt-4">
-            <p className="text-[0.6rem] uppercase tracking-wider text-muted-foreground font-medium mb-2">Add Lesson</p>
+            <p className="text-[0.6rem] uppercase tracking-wider text-muted-foreground font-medium mb-2">
+              Add Lesson
+            </p>
             <div className="flex items-center gap-2">
-              <input value={newLesson.slug} onChange={(e) => setNewLesson({ ...newLesson, slug: e.target.value })}
-                placeholder="slug" className="w-24 border border-border bg-background px-2 py-1.5 text-xs" />
-              <input value={newLesson.title_en} onChange={(e) => setNewLesson({ ...newLesson, title_en: e.target.value })}
-                placeholder="Title (EN)" className="flex-1 border border-border bg-background px-2 py-1.5 text-xs" />
-              <input value={newLesson.title_bn} onChange={(e) => setNewLesson({ ...newLesson, title_bn: e.target.value })}
-                placeholder="Title (BN)" className="flex-1 border border-border bg-background px-2 py-1.5 text-xs" />
-              <button onClick={handleAddLesson} disabled={!newLesson.slug || (createLessonMutation?.isPending ?? false)}
-                className="px-3 py-1.5 text-xs font-medium bg-foreground text-background hover:opacity-90 disabled:opacity-40">
+              <input
+                value={newLesson.slug}
+                onChange={(e) => setNewLesson({ ...newLesson, slug: e.target.value })}
+                placeholder="slug"
+                className="w-24 border border-border bg-background px-2 py-1.5 text-xs"
+              />
+              <input
+                value={newLesson.title_en}
+                onChange={(e) => setNewLesson({ ...newLesson, title_en: e.target.value })}
+                placeholder="Title (EN)"
+                className="flex-1 border border-border bg-background px-2 py-1.5 text-xs"
+              />
+              <input
+                value={newLesson.title_bn}
+                onChange={(e) => setNewLesson({ ...newLesson, title_bn: e.target.value })}
+                placeholder="Title (BN)"
+                className="flex-1 border border-border bg-background px-2 py-1.5 text-xs"
+              />
+              <button
+                onClick={handleAddLesson}
+                disabled={!newLesson.slug || (createLessonMutation?.isPending ?? false)}
+                className="px-3 py-1.5 text-xs font-medium bg-foreground text-background hover:opacity-90 disabled:opacity-40"
+              >
                 <Plus className="h-3 w-3" />
               </button>
             </div>

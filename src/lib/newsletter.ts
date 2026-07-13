@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 
-export const subscribeToNewsletter = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: unknown }) => {
+export const subscribeToNewsletter = createServerFn({ method: "POST" }).handler(
+  async ({ data }: { data: unknown }) => {
     const input = data as { email: string };
     const email = input.email?.trim().toLowerCase();
 
@@ -24,4 +24,5 @@ export const subscribeToNewsletter = createServerFn({ method: "POST" })
     }
 
     return { subscribed: true, alreadySubscribed: false };
-  });
+  },
+);

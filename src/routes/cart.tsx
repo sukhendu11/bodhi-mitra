@@ -56,7 +56,12 @@ function CartPage() {
   }, [checkoutToastShown, queryClient]);
 
   /* ── Fetch cart ──────────────────────────────────────────────── */
-  const { data: cart, isLoading, isError, refetch } = useQuery<Cart>({
+  const {
+    data: cart,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<Cart>({
     queryKey: ["cart"],
     queryFn: () => (doGetCart as any)(),
     enabled: !!user,
@@ -121,7 +126,9 @@ function CartPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-20 md:py-28">
       {/* Back link */}
-      <Link to="/books" search={{ search: "", page: 1 }}
+      <Link
+        to="/books"
+        search={{ search: "", page: 1 }}
         className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-10"
       >
         <ArrowLeft className="h-3 w-3" /> Back to books
@@ -154,7 +161,10 @@ function CartPage() {
       {isLoading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-secondary/20 animate-pulse rounded-xl border border-border/60" />
+            <div
+              key={i}
+              className="h-20 bg-secondary/20 animate-pulse rounded-xl border border-border/60"
+            />
           ))}
         </div>
       )}
@@ -164,7 +174,10 @@ function CartPage() {
         <div className="text-center py-16">
           <AlertCircle className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
           <p className="text-sm text-muted-foreground">Could not load your cart.</p>
-          <button onClick={() => refetch()} className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4">
+          <button
+            onClick={() => refetch()}
+            className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+          >
             Try again
           </button>
         </div>
@@ -175,7 +188,9 @@ function CartPage() {
         <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-xl border border-border/60">
           <ShoppingBag className="h-10 w-10 mx-auto text-muted-foreground/20 mb-4" />
           <p className="text-sm text-muted-foreground mb-2">Your cart is empty.</p>
-          <Link to="/books" search={{ search: "", page: 1 }}
+          <Link
+            to="/books"
+            search={{ search: "", page: 1 }}
             className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
           >
             Browse books
@@ -195,11 +210,18 @@ function CartPage() {
                   className="flex items-center gap-4 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 hover:border-foreground/20 transition-colors"
                 >
                   {/* Cover thumbnail */}
-                  <Link to="/books/$slug" params={{ slug: item.book_slug }} search={{ search: "", page: 1 }}
+                  <Link
+                    to="/books/$slug"
+                    params={{ slug: item.book_slug }}
+                    search={{ search: "", page: 1 }}
                     className="shrink-0 w-12 h-16 rounded-lg overflow-hidden border border-border/40 bg-secondary/30 flex items-center justify-center"
                   >
                     {item.book_cover ? (
-                      <img src={item.book_cover} alt={title} className="w-full h-full object-cover" />
+                      <img
+                        src={item.book_cover}
+                        alt={title}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <BookOpen className="h-5 w-5 text-muted-foreground/30" />
                     )}
@@ -207,7 +229,10 @@ function CartPage() {
 
                   {/* Details */}
                   <div className="min-w-0 flex-1">
-                    <Link to="/books/$slug" params={{ slug: item.book_slug }} search={{ search: "", page: 1 }}
+                    <Link
+                      to="/books/$slug"
+                      params={{ slug: item.book_slug }}
+                      search={{ search: "", page: 1 }}
                       className="text-sm font-medium line-clamp-1 hover:text-foreground/80 transition-colors"
                     >
                       {title}
@@ -248,9 +273,13 @@ function CartPage() {
               className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               {checkoutMutation.isPending ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Processing…
+                </>
               ) : (
-                <><CreditCard className="h-4 w-4" /> Proceed to Checkout</>
+                <>
+                  <CreditCard className="h-4 w-4" /> Proceed to Checkout
+                </>
               )}
             </button>
 

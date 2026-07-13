@@ -6,15 +6,30 @@ import type { ZodSchema } from "zod";
 export type FormFieldType =
   | "text"
   | "textarea"
+  | "richtext"
   | "number"
   | "select"
+  | "multi_select"
   | "checkbox"
   | "switch"
   | "color"
+  | "icon"
+  | "date"
+  | "time"
+  | "datetime"
   | "bilingual"
   | "bilingual-textarea"
   | "url"
-  | "email";
+  | "email"
+  | "media"
+  | "file"
+  | "json"
+  | "code"
+  | "relation"
+  | "group"
+  | "repeater"
+  | "block"
+  | "tab";
 
 export interface FormFieldDef<TForm extends FieldValues = any> {
   /** Field name for single-value fields (text, textarea, number, select, etc.) */

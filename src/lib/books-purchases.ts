@@ -90,10 +90,7 @@ export async function canAccessPdf(
  * @param bucketPath - The storage path of the PDF (e.g., "books/pdfs/123-abc.pdf")
  * @param expiresIn - Seconds until the URL expires (default 300 = 5 min)
  */
-export async function getSignedPdfUrl(
-  bucketPath: string,
-  expiresIn = 300,
-): Promise<string> {
+export async function getSignedPdfUrl(bucketPath: string, expiresIn = 300): Promise<string> {
   const { data, error } = await supabase.storage
     .from("book-pdfs")
     .createSignedUrl(bucketPath, expiresIn);
@@ -209,10 +206,7 @@ export async function getBookPurchaseStats(bookId: string): Promise<{
     .select("*", { count: "exact", head: true })
     .eq("book_id", bookId);
 
-  const { data } = await db
-    .from("purchases")
-    .select("amount_paid")
-    .eq("book_id", bookId);
+  const { data } = await db.from("purchases").select("amount_paid").eq("book_id", bookId);
 
   const totalRevenue = (data ?? []).reduce(
     (sum: number, p: { amount_paid: number }) => sum + Number(p.amount_paid),

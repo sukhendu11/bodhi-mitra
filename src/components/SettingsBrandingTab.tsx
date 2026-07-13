@@ -16,7 +16,10 @@ export function BrandingTab({ cfg, update, uploadAsset }: TabProps): ReactNode {
           <FileUploadField
             label="Website Logo"
             value={cfg.branding.logo_url}
-            onUpload={async (f) => { const url = await uploadAsset(f, "logo"); if (url) update("branding", { logo_url: url }); }}
+            onUpload={async (f) => {
+              const url = await uploadAsset(f, "logo");
+              if (url) update("branding", { logo_url: url });
+            }}
             onClear={() => update("branding", { logo_url: "" })}
             onUrl={(url) => update("branding", { logo_url: url })}
             previewClass="h-12"
@@ -24,7 +27,10 @@ export function BrandingTab({ cfg, update, uploadAsset }: TabProps): ReactNode {
           <FileUploadField
             label="Favicon (32×32 .ico/.png)"
             value={cfg.branding.favicon_url}
-            onUpload={async (f) => { const url = await uploadAsset(f, "favicon"); if (url) update("branding", { favicon_url: url }); }}
+            onUpload={async (f) => {
+              const url = await uploadAsset(f, "favicon");
+              if (url) update("branding", { favicon_url: url });
+            }}
             onClear={() => update("branding", { favicon_url: "" })}
             onUrl={(url) => update("branding", { favicon_url: url })}
             previewClass="h-8 w-8"
@@ -33,10 +39,16 @@ export function BrandingTab({ cfg, update, uploadAsset }: TabProps): ReactNode {
       </Section>
       <Section title="Brand Name">
         <FieldRow>
-          <Field label="Site Name (English)" value={cfg.branding.site_name_en}
-            onChange={(v) => update("branding", { site_name_en: v })} />
-          <Field label="Site Name (বাংলা)" value={cfg.branding.site_name_bn}
-            onChange={(v) => update("branding", { site_name_bn: v })} />
+          <Field
+            label="Site Name (English)"
+            value={cfg.branding.site_name_en}
+            onChange={(v) => update("branding", { site_name_en: v })}
+          />
+          <Field
+            label="Site Name (বাংলা)"
+            value={cfg.branding.site_name_bn}
+            onChange={(v) => update("branding", { site_name_bn: v })}
+          />
         </FieldRow>
       </Section>
     </>

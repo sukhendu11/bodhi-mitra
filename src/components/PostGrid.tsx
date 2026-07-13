@@ -7,7 +7,15 @@ import { useLang } from "@/lib/i18n";
 
 const PAGE_SIZE = 9;
 
-export function PostGrid({ category, searchQuery, pageSize = PAGE_SIZE }: { category?: PostCategory; searchQuery?: string; pageSize?: number }) {
+export function PostGrid({
+  category,
+  searchQuery,
+  pageSize = PAGE_SIZE,
+}: {
+  category?: PostCategory;
+  searchQuery?: string;
+  pageSize?: number;
+}) {
   const { t } = useLang();
   const [page, setPage] = useState(1);
 
@@ -55,7 +63,10 @@ export function PostGrid({ category, searchQuery, pageSize = PAGE_SIZE }: { cate
       )}
 
       {totalPages > 1 && (
-        <nav className="mt-16 flex items-center justify-center gap-6 text-sm" aria-label="Pagination">
+        <nav
+          className="mt-16 flex items-center justify-center gap-6 text-sm"
+          aria-label="Pagination"
+        >
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}

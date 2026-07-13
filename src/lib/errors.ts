@@ -4,7 +4,14 @@ import { toast } from "sonner";
  * ║  Error Types & Classes                                        ║
  * ═══════════════════════════════════════════════════════════════════ */
 
-export type ErrorCategory = "auth" | "permission" | "validation" | "not_found" | "server" | "network" | "unknown";
+export type ErrorCategory =
+  | "auth"
+  | "permission"
+  | "validation"
+  | "not_found"
+  | "server"
+  | "network"
+  | "unknown";
 
 export interface AppErrorOptions {
   message: string;
@@ -37,11 +44,25 @@ export class AppError extends Error {
   }
 
   static auth(message: string, details?: Record<string, unknown>): AppError {
-    return new AppError({ message, code: "AUTH_ERROR", statusCode: 401, category: "auth", userMessage: "Please sign in to continue.", details });
+    return new AppError({
+      message,
+      code: "AUTH_ERROR",
+      statusCode: 401,
+      category: "auth",
+      userMessage: "Please sign in to continue.",
+      details,
+    });
   }
 
   static permission(message: string, details?: Record<string, unknown>): AppError {
-    return new AppError({ message, code: "PERMISSION_DENIED", statusCode: 403, category: "permission", userMessage: "You don't have permission to perform this action.", details });
+    return new AppError({
+      message,
+      code: "PERMISSION_DENIED",
+      statusCode: 403,
+      category: "permission",
+      userMessage: "You don't have permission to perform this action.",
+      details,
+    });
   }
 
   static notFound(entity?: string, details?: Record<string, unknown>): AppError {
@@ -50,17 +71,33 @@ export class AppError extends Error {
       code: "NOT_FOUND",
       statusCode: 404,
       category: "not_found",
-      userMessage: entity ? `The requested ${entity} could not be found.` : "The requested resource could not be found.",
+      userMessage: entity
+        ? `The requested ${entity} could not be found.`
+        : "The requested resource could not be found.",
       details,
     });
   }
 
   static validation(message: string, details?: Record<string, unknown>): AppError {
-    return new AppError({ message, code: "VALIDATION_ERROR", statusCode: 400, category: "validation", userMessage: message, details });
+    return new AppError({
+      message,
+      code: "VALIDATION_ERROR",
+      statusCode: 400,
+      category: "validation",
+      userMessage: message,
+      details,
+    });
   }
 
   static server(message: string, details?: Record<string, unknown>): AppError {
-    return new AppError({ message, code: "SERVER_ERROR", statusCode: 500, category: "server", userMessage: "Something went wrong on our end. Please try again.", details });
+    return new AppError({
+      message,
+      code: "SERVER_ERROR",
+      statusCode: 500,
+      category: "server",
+      userMessage: "Something went wrong on our end. Please try again.",
+      details,
+    });
   }
 }
 
@@ -156,7 +193,9 @@ function recordError(error: unknown) {
 }
 
 if (typeof globalThis.addEventListener === "function") {
-  globalThis.addEventListener("error", (event) => recordError((event as ErrorEvent).error ?? event));
+  globalThis.addEventListener("error", (event) =>
+    recordError((event as ErrorEvent).error ?? event),
+  );
   globalThis.addEventListener("unhandledrejection", (event) =>
     recordError((event as PromiseRejectionEvent).reason),
   );

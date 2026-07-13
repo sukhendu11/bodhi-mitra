@@ -41,7 +41,11 @@ function About() {
       {a.image_url && (
         <Reveal delay={0.2}>
           <div className="mt-12 -mx-6 md:mx-0">
-            <img src={a.image_url} alt={imageAlt} className="w-full aspect-[16/9] object-cover rounded-md" />
+            <img
+              src={a.image_url}
+              alt={imageAlt}
+              className="w-full aspect-[16/9] object-cover rounded-md"
+            />
           </div>
         </Reveal>
       )}

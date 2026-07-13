@@ -43,17 +43,26 @@ export function FormDrawer({
   size = "md",
 }: FormDrawerProps) {
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <SheetContent className={sizeMap[size] ?? sizeMap.md}>
         <SheetHeader className="mb-6">
           <SheetTitle>{title}</SheetTitle>
           {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="flex flex-col h-[calc(100vh-8rem)]">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit();
+          }}
+          className="flex flex-col h-[calc(100vh-8rem)]"
+        >
           <ScrollArea className="flex-1 -mx-6 px-6">
-            <div className="space-y-5 pb-6">
-              {children}
-            </div>
+            <div className="space-y-5 pb-6">{children}</div>
           </ScrollArea>
           <div className="border-t border-border/60 -mx-6 px-6 pt-4 mt-auto">
             <FormActions

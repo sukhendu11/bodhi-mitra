@@ -9,23 +9,19 @@ import { BookOpen, Clock, BarChart3, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/courses")({
   loader: async () => {
-    const [settings, page] = await Promise.all([
-      fetchSiteSettings(),
-      fetchPageBySlug("courses"),
-    ]);
+    const [settings, page] = await Promise.all([fetchSiteSettings(), fetchPageBySlug("courses")]);
     return { settings, page };
   },
   head: ({ loaderData }) => {
     const settings = loaderData?.settings;
     const page = loaderData?.page;
     const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
-    const metaDesc = page?.meta_description_en || "Explore our guided courses on Buddhist psychology and mindfulness.";
+    const metaDesc =
+      page?.meta_description_en ||
+      "Explore our guided courses on Buddhist psychology and mindfulness.";
     const pageTitle = page?.title_en || "Courses";
     return {
-      meta: [
-        { title: `${pageTitle} — ${siteName}` },
-        { name: "description", content: metaDesc },
-      ],
+      meta: [{ title: `${pageTitle} — ${siteName}` }, { name: "description", content: metaDesc }],
     };
   },
   component: CoursesPage,
@@ -54,8 +50,10 @@ function CoursesPage() {
     "Courses",
   );
   const description = pickLocalized(
-    pageData?.body_en || "Guided journeys through Buddhist psychology, mindfulness, and the examined life.",
-    pageData?.body_bn || "বৌদ্ধ মনোবিজ্ঞান, মননশীলতা এবং পরীক্ষিত জীবনের মধ্য দিয়ে নির্দেশিত যাত্রা।",
+    pageData?.body_en ||
+      "Guided journeys through Buddhist psychology, mindfulness, and the examined life.",
+    pageData?.body_bn ||
+      "বৌদ্ধ মনোবিজ্ঞান, মননশীলতা এবং পরীক্ষিত জীবনের মধ্য দিয়ে নির্দেশিত যাত্রা।",
     lang,
     "",
   );
@@ -70,7 +68,9 @@ function CoursesPage() {
           </>
         ) : (
           <>
-            <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight">{header}</h1>
+            <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight">
+              {header}
+            </h1>
             {description && (
               <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
                 {description}
@@ -111,14 +111,24 @@ function CoursesPage() {
               >
                 <div className="aspect-video bg-gradient-to-br from-secondary/40 to-secondary/10 flex items-center justify-center overflow-hidden">
                   {course.cover_image ? (
-                    <img src={course.cover_image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img
+                      src={course.cover_image}
+                      alt={title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   ) : (
                     <BookOpen className="h-12 w-12 text-muted-foreground/20" />
                   )}
                 </div>
                 <div className="p-5">
-                  <h3 className="text-base font-medium text-foreground group-hover:text-foreground/80 transition-colors line-clamp-2">{title}</h3>
-                  {desc && <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">{desc}</p>}
+                  <h3 className="text-base font-medium text-foreground group-hover:text-foreground/80 transition-colors line-clamp-2">
+                    {title}
+                  </h3>
+                  {desc && (
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                      {desc}
+                    </p>
+                  )}
                   <div className="flex items-center gap-3 mt-4 text-[0.6rem] text-muted-foreground">
                     {course.level && (
                       <span className="flex items-center gap-1">

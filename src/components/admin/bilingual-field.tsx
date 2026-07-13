@@ -1,11 +1,5 @@
 import type { Control, FieldPath, FieldValues, FieldPathValue } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -16,9 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 export const FIELD_LABEL =
   "block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]";
 
-interface BilingualFieldProps<
-  TFieldValues extends FieldValues = FieldValues,
-> {
+interface BilingualFieldProps<TFieldValues extends FieldValues = FieldValues> {
   control: Control<TFieldValues>;
   nameEn: FieldPath<TFieldValues>;
   nameBn: FieldPath<TFieldValues>;
@@ -38,9 +30,7 @@ interface BilingualFieldProps<
  * Each field shows a styled label, an Input/Textarea, and an optional
  * validation error message.
  */
-export function BilingualField<
-  TFieldValues extends FieldValues = FieldValues,
->({
+export function BilingualField<TFieldValues extends FieldValues = FieldValues>({
   control,
   nameEn,
   nameBn,
@@ -70,9 +60,7 @@ export function BilingualField<
                 placeholder={placeholderEn}
               />
             </FormControl>
-            {fieldState.error && (
-              <FormMessage className="text-[0.65rem]" />
-            )}
+            {fieldState.error && <FormMessage className="text-[0.65rem]" />}
           </FormItem>
         )}
       />
@@ -90,9 +78,7 @@ export function BilingualField<
                 placeholder={placeholderBn}
               />
             </FormControl>
-            {fieldState.error && (
-              <FormMessage className="text-[0.65rem]" />
-            )}
+            {fieldState.error && <FormMessage className="text-[0.65rem]" />}
           </FormItem>
         )}
       />
@@ -115,9 +101,7 @@ interface FormFieldRowProps<TFieldValues extends FieldValues = FieldValues> {
  * A single field row for the admin form style — label above, field below,
  * with validation message support.
  */
-export function FormFieldRow<
-  TFieldValues extends FieldValues = FieldValues,
->({
+export function FormFieldRow<TFieldValues extends FieldValues = FieldValues>({
   control,
   name,
   label,
@@ -145,9 +129,7 @@ export function FormFieldRow<
               disabled={disabled}
             />
           </FormControl>
-          {fieldState.error && (
-            <FormMessage className="text-[0.65rem]" />
-          )}
+          {fieldState.error && <FormMessage className="text-[0.65rem]" />}
         </FormItem>
       )}
     />

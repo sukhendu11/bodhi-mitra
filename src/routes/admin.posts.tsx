@@ -4,9 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { createColumnHelper } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import {
-  FileText, Eye, ImagePlus,
-} from "lucide-react";
+import { FileText, Eye, ImagePlus } from "lucide-react";
 import { postSchema, type PostFormValues } from "@/lib/schemas";
 import { type Post, POST_CATEGORIES, slugify } from "@/lib/posts";
 import { ResourceListPage, registerResource } from "@/components/admin/resource-engine";
@@ -14,11 +12,13 @@ import { StatusBadge, DateCell } from "@/components/admin/data-table";
 import { FormRenderer } from "@/components/admin/form-engine";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { MediaPicker } from "@/components/admin/media-engine";
+import { BlockEditor } from "@/components/admin/block-editor";
 import { supabase } from "@/integrations/supabase/client";
 import { ErrorPage } from "@/components/error-page";
-const Editor = lazy(() => import("@/components/Editor").then((m) => ({ default: m.Editor })));
 const TagInput = lazy(() => import("@/components/TagInput").then((m) => ({ default: m.TagInput })));
-const PostPreview = lazy(() => import("@/components/PostPreview").then((m) => ({ default: m.PostPreview })));
+const PostPreview = lazy(() =>
+  import("@/components/PostPreview").then((m) => ({ default: m.PostPreview })),
+);
 
 /* ─── Column Definitions ─────────────────────────────────────────── */
 
@@ -33,14 +33,20 @@ const columns = [
       return (
         <div className="flex items-start gap-3 min-w-0">
           {p.cover_image ? (
-            <img src={p.cover_image} alt="" className="w-9 h-9 rounded-lg object-cover border border-border/40 shrink-0 mt-0.5" />
+            <img
+            src={p.cover_image}
+            alt={p.title_en || p.title || "Post cover"}
+              className="w-9 h-9 rounded-lg object-cover border border-border/40 shrink-0 mt-0.5"
+            />
           ) : (
             <div className="w-9 h-9 rounded-lg bg-secondary/60 border border-border/40 flex items-center justify-center shrink-0 mt-0.5">
               <FileText className="h-4 w-4 text-muted-foreground/50" />
             </div>
           )}
           <div className="min-w-0">
-            <span className="text-sm font-medium line-clamp-1">{p.title_en || p.title || p.title_bn || "Untitled"}</span>
+            <span className="text-sm font-medium line-clamp-1">
+              {p.title_en || p.title || p.title_bn || "Untitled"}
+            </span>
             <p className="text-[0.6rem] text-muted-foreground mt-0.5">
               {p.category} · {p.title_bn ? `বাংলা: ${p.title_bn}` : "—"}
               {p.tags?.length ? ` · ${p.tags.slice(0, 2).join(", ")}` : ""}
@@ -53,7 +59,9 @@ const columns = [
   columnHelper.accessor("author_name", {
     header: "Author",
     enableSorting: true,
-    cell: ({ getValue }) => <span className="text-muted-foreground text-xs">{getValue() || "—"}</span>,
+    cell: ({ getValue }) => (
+      <span className="text-muted-foreground text-xs">{getValue() || "—"}</span>
+    ),
   }),
   columnHelper.accessor("status", {
     header: "Status",
@@ -93,9 +101,15 @@ const POST_FORM_GROUPS = [
     title: "Content",
     columns: 2 as const,
     fields: [
-      { type: "bilingual" as const, nameEn: "title_en" as const, nameBn: "title_bn" as const,
-        labelEn: "Title (English)", labelBn: "Title (বাংলা)",
-        placeholderEn: "Post title", placeholderBn: "পোস্ট শিরোনাম" },
+      {
+        type: "bilingual" as const,
+        nameEn: "title_en" as const,
+        nameBn: "title_bn" as const,
+        labelEn: "Title (English)",
+        labelBn: "Title (বাংলা)",
+        placeholderEn: "Post title",
+        placeholderBn: "পোস্ট শিরোনাম",
+      },
     ],
   },
   {
@@ -104,7 +118,9 @@ const POST_FORM_GROUPS = [
     fields: [
       { type: "text" as const, name: "slug" as const, label: "Slug", placeholder: "post-slug" },
       {
-        type: "select" as const, name: "category" as const, label: "Category",
+        type: "select" as const,
+        name: "category" as const,
+        label: "Category",
         options: POST_CATEGORIES.map((c) => ({ label: c, value: c })),
       },
     ],
@@ -112,25 +128,48 @@ const POST_FORM_GROUPS = [
   {
     columns: 2 as const,
     fields: [
-      { type: "bilingual-textarea" as const, nameEn: "excerpt_en" as const, nameBn: "excerpt_bn" as const,
-        labelEn: "Excerpt (EN)", labelBn: "Excerpt (BN)", rows: 2 },
+      {
+        type: "bilingual-textarea" as const,
+        nameEn: "excerpt_en" as const,
+        nameBn: "excerpt_bn" as const,
+        labelEn: "Excerpt (EN)",
+        labelBn: "Excerpt (BN)",
+        rows: 2,
+      },
     ],
   },
   {
     title: "SEO",
     columns: 2 as const,
     fields: [
-      { type: "textarea" as const, name: "meta_description_en" as const, label: "Meta Description (EN)", rows: 2 },
-      { type: "textarea" as const, name: "meta_description_bn" as const, label: "Meta Description (BN)", rows: 2 },
+      {
+        type: "textarea" as const,
+        name: "meta_description_en" as const,
+        label: "Meta Description (EN)",
+        rows: 2,
+      },
+      {
+        type: "textarea" as const,
+        name: "meta_description_bn" as const,
+        label: "Meta Description (BN)",
+        rows: 2,
+      },
     ],
   },
   {
     title: "Publishing",
     columns: 2 as const,
     fields: [
-      { type: "text" as const, name: "author_name" as const, label: "Author Name", placeholder: "Author" },
       {
-        type: "select" as const, name: "status" as const, label: "Status",
+        type: "text" as const,
+        name: "author_name" as const,
+        label: "Author Name",
+        placeholder: "Author",
+      },
+      {
+        type: "select" as const,
+        name: "status" as const,
+        label: "Status",
         options: [
           { label: "Draft", value: "draft" },
           { label: "Published", value: "published" },
@@ -140,7 +179,13 @@ const POST_FORM_GROUPS = [
   },
 ];
 
-function PostFormContent({ form, resource }: { form: ReturnType<typeof useForm<PostFormValues>>; resource: any }) {
+function PostFormContent({
+  form,
+  resource,
+}: {
+  form: ReturnType<typeof useForm<PostFormValues>>;
+  resource: any;
+}) {
   const [contentLang, setContentLang] = useState<"en" | "bn">("en");
   const [preview, setPreview] = useState(false);
   const [coverPickerOpen, setCoverPickerOpen] = useState(false);
@@ -164,7 +209,9 @@ function PostFormContent({ form, resource }: { form: ReturnType<typeof useForm<P
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user || cancelled) return;
       const { data: profile } = await supabase
         .from("profiles")
@@ -182,13 +229,17 @@ function PostFormContent({ form, resource }: { form: ReturnType<typeof useForm<P
         form.setValue("author_name", name);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Preview mode — render PostPreview instead
   if (preview) {
     return (
-      <Suspense fallback={<div className="text-center py-12 text-muted-foreground">Loading preview…</div>}>
+      <Suspense
+        fallback={<div className="text-center py-12 text-muted-foreground">Loading preview…</div>}
+      >
         <PostPreview
           tab={contentLang}
           onTabChange={setContentLang}
@@ -206,7 +257,8 @@ function PostFormContent({ form, resource }: { form: ReturnType<typeof useForm<P
     );
   }
 
-  const labelCls = "block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]";
+  const labelCls =
+    "block text-[0.55rem] font-medium text-muted-foreground mb-1.5 uppercase tracking-[0.05em]";
   const bnStyle = { fontFamily: "var(--font-bn)", letterSpacing: 0 };
 
   return (
@@ -255,9 +307,7 @@ function PostFormContent({ form, resource }: { form: ReturnType<typeof useForm<P
                       name="content_en"
                       control={form.control}
                       render={({ field: ef }) => (
-                        <Suspense fallback={<div className="h-[400px] bg-secondary/40 animate-pulse rounded-lg border border-border/60" />}>
-                          <Editor value={ef.value ?? ""} onChange={ef.onChange} />
-                        </Suspense>
+                        <BlockEditor value={ef.value ?? ""} onChange={ef.onChange} />
                       )}
                     />
                   </FormControl>
@@ -280,9 +330,7 @@ function PostFormContent({ form, resource }: { form: ReturnType<typeof useForm<P
                         name="content_bn"
                         control={form.control}
                         render={({ field: ef }) => (
-                          <Suspense fallback={<div className="h-[400px] bg-secondary/40 animate-pulse rounded-lg border border-border/60" />}>
-                            <Editor value={ef.value ?? ""} onChange={ef.onChange} />
-                          </Suspense>
+                          <BlockEditor value={ef.value ?? ""} onChange={ef.onChange} />
                         )}
                       />
                     </div>
@@ -297,11 +345,12 @@ function PostFormContent({ form, resource }: { form: ReturnType<typeof useForm<P
 
       {/* Tags */}
       <div>
-        <Suspense fallback={<div className="h-12 bg-secondary/40 animate-pulse rounded-lg border border-border/60" />}>
-          <TagInput
-            tags={tags || []}
-            onTagsChange={(newTags) => form.setValue("tags", newTags)}
-          />
+        <Suspense
+          fallback={
+            <div className="h-12 bg-secondary/40 animate-pulse rounded-lg border border-border/60" />
+          }
+        >
+          <TagInput tags={tags || []} onTagsChange={(newTags) => form.setValue("tags", newTags)} />
         </Suspense>
       </div>
 
@@ -316,7 +365,12 @@ function PostFormContent({ form, resource }: { form: ReturnType<typeof useForm<P
               className="absolute top-2 right-2 p-1 rounded-full bg-background/80 text-muted-foreground hover:text-destructive"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -365,15 +419,21 @@ const postResource = registerResource<Post, PostFormValues>({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: postSchema as any,
   defaultValues: {
-    title_en: "", title_bn: "",
-    content_en: "", content_bn: "",
-    excerpt_en: "", excerpt_bn: "",
-    slug: "", cover_image: "",
+    title_en: "",
+    title_bn: "",
+    content_en: "",
+    content_bn: "",
+    excerpt_en: "",
+    excerpt_bn: "",
+    slug: "",
+    cover_image: "",
     category: "Buddhist Psychology",
-    author_name: "", author_image: "",
+    author_name: "",
+    author_image: "",
     status: "draft",
     tags: [],
-    meta_description_en: "", meta_description_bn: "",
+    meta_description_en: "",
+    meta_description_bn: "",
   },
   FormContent: PostFormContent as any,
   filterField: "status",
@@ -386,7 +446,6 @@ const postResource = registerResource<Post, PostFormValues>({
     { value: "published", label: "Published" },
     { value: "draft", label: "Draft" },
   ],
-
 });
 
 /* ─── Route ──────────────────────────────────────────────────────── */

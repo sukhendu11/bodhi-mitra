@@ -4,22 +4,26 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { slugifyTaxonomy, type Category, type Tag, type CategoryInput, type TagInput } from "@/lib/taxonomy";
-import { categorySchema, tagSchema, type CategoryFormValues, type TagFormValues } from "@/lib/schemas";
+import {
+  slugifyTaxonomy,
+  type Category,
+  type Tag,
+  type CategoryInput,
+  type TagInput,
+} from "@/lib/taxonomy";
+import {
+  categorySchema,
+  tagSchema,
+  type CategoryFormValues,
+  type TagFormValues,
+} from "@/lib/schemas";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { FormRenderer } from "@/components/admin/form-engine";
-import {
-  Tags,
-  FolderTree,
-  Plus,
-  Edit3,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Tags, FolderTree, Plus, Edit3, Trash2, X } from "lucide-react";
 import { ErrorPage } from "@/components/error-page";
 
 export const Route = createFileRoute("/admin/taxonomy")({
@@ -81,20 +85,45 @@ const CATEGORY_FORM_GROUPS = [
   {
     columns: 2 as const,
     fields: [
-      { type: "text" as const, name: "name_en" as const, label: "Name (EN)", placeholder: "Buddhist Psychology" as const },
-      { type: "text" as const, name: "name_bn" as const, label: "Name (BN)", placeholder: "বৌদ্ধ মনোবিজ্ঞান" as const },
+      {
+        type: "text" as const,
+        name: "name_en" as const,
+        label: "Name (EN)",
+        placeholder: "Buddhist Psychology" as const,
+      },
+      {
+        type: "text" as const,
+        name: "name_bn" as const,
+        label: "Name (BN)",
+        placeholder: "বৌদ্ধ মনোবিজ্ঞান" as const,
+      },
     ],
   },
   {
     fields: [
-      { type: "text" as const, name: "slug" as const, label: "Slug", placeholder: "buddhist-psychology" as const },
+      {
+        type: "text" as const,
+        name: "slug" as const,
+        label: "Slug",
+        placeholder: "buddhist-psychology" as const,
+      },
     ],
   },
   {
     columns: 2 as const,
     fields: [
-      { type: "textarea" as const, name: "description_en" as const, label: "Description (EN)", rows: 2 },
-      { type: "textarea" as const, name: "description_bn" as const, label: "Description (BN)", rows: 2 },
+      {
+        type: "textarea" as const,
+        name: "description_en" as const,
+        label: "Description (EN)",
+        rows: 2,
+      },
+      {
+        type: "textarea" as const,
+        name: "description_bn" as const,
+        label: "Description (BN)",
+        rows: 2,
+      },
     ],
   },
   {
@@ -129,6 +158,7 @@ function CategoryManager() {
   const isFormOpen = showNew || editingId !== null;
 
   const form = useForm<CategoryFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(categorySchema) as any,
     defaultValues: { ...defaultCategoryValues },
@@ -215,7 +245,12 @@ function CategoryManager() {
   return (
     <div className="space-y-4">
       {!isFormOpen && (
-        <Button size="sm" onClick={() => { setShowNew(true); }}>
+        <Button
+          size="sm"
+          onClick={() => {
+            setShowNew(true);
+          }}
+        >
           <Plus className="h-3.5 w-3.5 mr-1" /> Add Category
         </Button>
       )}
@@ -224,8 +259,10 @@ function CategoryManager() {
         <div className="border border-border/60 rounded-lg p-4 space-y-4 bg-secondary/10">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium">{editingId ? "Edit Category" : "New Category"}</p>
-            <button onClick={resetForm}
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60">
+            <button
+              onClick={resetForm}
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+            >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -233,8 +270,10 @@ function CategoryManager() {
           <FormRenderer form={form} groups={CATEGORY_FORM_GROUPS} showValidationSummary={false} />
 
           <div className="flex items-center justify-end gap-2 pt-1">
-            <button onClick={resetForm}
-              className="px-3 py-1.5 text-[0.6rem] font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              onClick={resetForm}
+              className="px-3 py-1.5 text-[0.6rem] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
               Cancel
             </button>
             <Button size="sm" onClick={handleSave} disabled={isSaving}>
@@ -258,17 +297,22 @@ function CategoryManager() {
                 <div className="min-w-0">
                   <p className="text-xs font-medium truncate">{cat.name_en}</p>
                   <p className="text-[0.55rem] text-muted-foreground">
-                    /{cat.slug} · {cat.name_bn || "—"} · {cat.visible ? "Visible" : "Hidden"} · Order {cat.sort_order}
+                    /{cat.slug} · {cat.name_bn || "—"} · {cat.visible ? "Visible" : "Hidden"} ·
+                    Order {cat.sort_order}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <button onClick={() => openEdit(cat)}
-                  className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors">
+                <button
+                  onClick={() => openEdit(cat)}
+                  className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-colors"
+                >
                   <Edit3 className="h-3.5 w-3.5" />
                 </button>
-                <button onClick={() => setDeletingCat(cat)}
-                  className="p-1.5 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors">
+                <button
+                  onClick={() => setDeletingCat(cat)}
+                  className="p-1.5 rounded-md text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -284,8 +328,14 @@ function CategoryManager() {
           deleteMutate(
             { resource: "categories", id: deletingCat.id },
             {
-              onSuccess: () => { toast.success("Category deleted"); setDeletingCat(null); },
-              onError: (e: any) => { toast.error(e?.message ?? "Delete failed"); setDeletingCat(null); },
+              onSuccess: () => {
+                toast.success("Category deleted");
+                setDeletingCat(null);
+              },
+              onError: (e: any) => {
+                toast.error(e?.message ?? "Delete failed");
+                setDeletingCat(null);
+              },
             },
           );
         }}
@@ -304,14 +354,29 @@ const TAG_FORM_GROUPS = [
   {
     columns: 2 as const,
     fields: [
-      { type: "text" as const, name: "name_en" as const, label: "Name (EN)", placeholder: "Mindfulness" as const },
-      { type: "text" as const, name: "name_bn" as const, label: "Name (BN)", placeholder: "মাইন্ডফুলনেস" as const },
+      {
+        type: "text" as const,
+        name: "name_en" as const,
+        label: "Name (EN)",
+        placeholder: "Mindfulness" as const,
+      },
+      {
+        type: "text" as const,
+        name: "name_bn" as const,
+        label: "Name (BN)",
+        placeholder: "মাইন্ডফুলনেস" as const,
+      },
     ],
   },
   {
     columns: 2 as const,
     fields: [
-      { type: "text" as const, name: "slug" as const, label: "Slug", placeholder: "mindfulness" as const },
+      {
+        type: "text" as const,
+        name: "slug" as const,
+        label: "Slug",
+        placeholder: "mindfulness" as const,
+      },
       { type: "color" as const, name: "color" as const, label: "Color" },
     ],
   },
@@ -334,6 +399,7 @@ function TagManager() {
   const isFormOpen = showNew || editingId !== null;
 
   const form = useForm<TagFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(tagSchema) as any,
     defaultValues: { ...defaultTagValues },
@@ -405,7 +471,12 @@ function TagManager() {
   return (
     <div className="space-y-4">
       {!isFormOpen && (
-        <Button size="sm" onClick={() => { setShowNew(true); }}>
+        <Button
+          size="sm"
+          onClick={() => {
+            setShowNew(true);
+          }}
+        >
           <Plus className="h-3.5 w-3.5 mr-1" /> Add Tag
         </Button>
       )}
@@ -414,8 +485,10 @@ function TagManager() {
         <div className="border border-border/60 rounded-lg p-4 space-y-3 bg-secondary/10">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium">{editingId ? "Edit Tag" : "New Tag"}</p>
-            <button onClick={resetForm}
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60">
+            <button
+              onClick={resetForm}
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+            >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -423,8 +496,10 @@ function TagManager() {
           <FormRenderer form={form} groups={TAG_FORM_GROUPS} showValidationSummary={false} />
 
           <div className="flex items-center justify-end gap-2 pt-1">
-            <button onClick={resetForm}
-              className="px-3 py-1.5 text-[0.6rem] font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              onClick={resetForm}
+              className="px-3 py-1.5 text-[0.6rem] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
               Cancel
             </button>
             <Button size="sm" onClick={handleSave} disabled={isSaving}>
@@ -444,22 +519,29 @@ function TagManager() {
                 key={tag.id}
                 className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/60 bg-white dark:bg-zinc-900 hover:border-foreground/30 transition-colors"
               >
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: tag.color }}
+                />
                 <span className="text-[0.6rem] font-medium">{tag.name_en}</span>
-                <button onClick={() => {
-                  form.reset({
-                    slug: tag.slug,
-                    name_en: tag.name_en,
-                    name_bn: tag.name_bn,
-                    color: tag.color,
-                  });
-                  setEditingId(tag.id);
-                }}
-                  className="p-0.5 rounded text-muted-foreground/40 hover:text-foreground opacity-0 group-hover:opacity-100 transition-all">
+                <button
+                  onClick={() => {
+                    form.reset({
+                      slug: tag.slug,
+                      name_en: tag.name_en,
+                      name_bn: tag.name_bn,
+                      color: tag.color,
+                    });
+                    setEditingId(tag.id);
+                  }}
+                  className="p-0.5 rounded text-muted-foreground/40 hover:text-foreground opacity-0 group-hover:opacity-100 transition-all"
+                >
                   <Edit3 className="h-3 w-3" />
                 </button>
-                <button onClick={() => setDeletingTag(tag)}
-                  className="p-0.5 rounded text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all">
+                <button
+                  onClick={() => setDeletingTag(tag)}
+                  className="p-0.5 rounded text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
+                >
                   <Trash2 className="h-3 w-3" />
                 </button>
               </div>
@@ -475,8 +557,14 @@ function TagManager() {
           deleteMutate(
             { resource: "tags", id: deletingTag.id },
             {
-              onSuccess: () => { toast.success("Tag deleted"); setDeletingTag(null); },
-              onError: (e: any) => { toast.error(e?.message ?? "Delete failed"); setDeletingTag(null); },
+              onSuccess: () => {
+                toast.success("Tag deleted");
+                setDeletingTag(null);
+              },
+              onError: (e: any) => {
+                toast.error(e?.message ?? "Delete failed");
+                setDeletingTag(null);
+              },
             },
           );
         }}

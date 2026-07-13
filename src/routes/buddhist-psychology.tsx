@@ -15,7 +15,9 @@ export const Route = createFileRoute("/buddhist-psychology")({
     const settings = loaderData?.settings;
     const page = loaderData?.page;
     const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
-    const metaDesc = page?.meta_description_en || "Essays bridging the Buddha's wisdom with the science of mental health.";
+    const metaDesc =
+      page?.meta_description_en ||
+      "Essays bridging the Buddha's wisdom with the science of mental health.";
     const pageTitle = page?.title_en || "Buddhist Psychology";
     return {
       meta: [

@@ -3,15 +3,30 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const SiteAssetUploadInput = z.object({
-  kind: z.string().min(1).max(40).regex(/^[a-z0-9-]+$/),
+  kind: z
+    .string()
+    .min(1)
+    .max(40)
+    .regex(/^[a-z0-9-]+$/),
   filename: z.string().min(1).max(180),
-  contentType: z.string().min(1).max(120).regex(/^image\//),
+  contentType: z
+    .string()
+    .min(1)
+    .max(120)
+    .regex(/^image\//),
 });
 
 const extensionFrom = (filename: string, contentType: string) => {
-  const fromName = filename.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const fromName = filename
+    .split(".")
+    .pop()
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
   if (fromName && fromName.length <= 8) return fromName;
-  const subtype = contentType.split("/")[1]?.split(";")[0]?.replace(/[^a-z0-9]/g, "");
+  const subtype = contentType
+    .split("/")[1]
+    ?.split(";")[0]
+    ?.replace(/[^a-z0-9]/g, "");
   return subtype || "png";
 };
 

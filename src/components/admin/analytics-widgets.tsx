@@ -8,11 +8,30 @@ interface AnalyticsOverviewProps {
   totalRatings: number;
 }
 
-export function AnalyticsOverview({ totalComments, totalPurchases, totalRatings }: AnalyticsOverviewProps) {
+export function AnalyticsOverview({
+  totalComments,
+  totalPurchases,
+  totalRatings,
+}: AnalyticsOverviewProps) {
   const items = [
-    { icon: MessageSquare, label: "Comments", value: totalComments, color: "text-cyan-600 dark:text-cyan-400" },
-    { icon: ShoppingCart, label: "Purchases", value: totalPurchases, color: "text-green-600 dark:text-green-400" },
-    { icon: Star, label: "Ratings", value: totalRatings, color: "text-amber-600 dark:text-amber-400" },
+    {
+      icon: MessageSquare,
+      label: "Comments",
+      value: totalComments,
+      color: "text-cyan-600 dark:text-cyan-400",
+    },
+    {
+      icon: ShoppingCart,
+      label: "Purchases",
+      value: totalPurchases,
+      color: "text-green-600 dark:text-green-400",
+    },
+    {
+      icon: Star,
+      label: "Ratings",
+      value: totalRatings,
+      color: "text-amber-600 dark:text-amber-400",
+    },
   ];
 
   return (
@@ -21,7 +40,9 @@ export function AnalyticsOverview({ totalComments, totalPurchases, totalRatings 
         <div key={item.label} className="border border-border/60 p-4">
           <div className="flex items-center gap-2 mb-2">
             <item.icon className={`h-4 w-4 ${item.color}`} />
-            <span className="text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground font-medium">{item.label}</span>
+            <span className="text-[0.6rem] uppercase tracking-[0.15em] text-muted-foreground font-medium">
+              {item.label}
+            </span>
           </div>
           <p className="text-2xl font-semibold tabular-nums">{item.value.toLocaleString()}</p>
         </div>

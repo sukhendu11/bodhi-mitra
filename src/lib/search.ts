@@ -19,8 +19,8 @@ export interface SearchResponse {
   total: number;
 }
 
-export const searchContent = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: unknown }) => {
+export const searchContent = createServerFn({ method: "GET" }).handler(
+  async ({ data }: { data: unknown }) => {
     const input = data as { q: string; type?: ContentType; page?: number };
     const q = input.q || "";
     const type = input.type;
@@ -38,7 +38,9 @@ export const searchContent = createServerFn({ method: "GET" })
         .from("posts")
         .select("id, slug, title_en, title_bn, excerpt_en, excerpt_bn, cover_image, created_at")
         .eq("status", "published")
-        .or(`title_en.ilike.*${term}*,title_bn.ilike.*${term}*,excerpt_en.ilike.*${term}*,excerpt_bn.ilike.*${term}*`)
+        .or(
+          `title_en.ilike.*${term}*,title_bn.ilike.*${term}*,excerpt_en.ilike.*${term}*,excerpt_bn.ilike.*${term}*`,
+        )
         .order("created_at", { ascending: false })
         .limit(limit);
       if (!error && posts) {
@@ -60,9 +62,13 @@ export const searchContent = createServerFn({ method: "GET" })
     if (!type || type === "page") {
       const { data: pages, error } = await db
         .from("pages")
-        .select("id, slug, title_en, title_bn, header_en, header_bn, body_en, body_bn, banner_url, created_at")
+        .select(
+          "id, slug, title_en, title_bn, header_en, header_bn, body_en, body_bn, banner_url, created_at",
+        )
         .eq("visible", true)
-        .or(`title_en.ilike.*${term}*,title_bn.ilike.*${term}*,header_en.ilike.*${term}*,header_bn.ilike.*${term}*`)
+        .or(
+          `title_en.ilike.*${term}*,title_bn.ilike.*${term}*,header_en.ilike.*${term}*,header_bn.ilike.*${term}*`,
+        )
         .order("created_at", { ascending: false })
         .limit(limit);
       if (!error && pages) {
@@ -72,7 +78,12 @@ export const searchContent = createServerFn({ method: "GET" })
             id: p.id,
             slug: p.slug,
             title: p.title_en || p.title_bn || "",
-            excerpt: p.header_en || p.header_bn || p.body_en?.substring(0, 200) || p.body_bn?.substring(0, 200) || "",
+            excerpt:
+              p.header_en ||
+              p.header_bn ||
+              p.body_en?.substring(0, 200) ||
+              p.body_bn?.substring(0, 200) ||
+              "",
             url: p.slug === "home" ? "/" : `/${p.slug}`,
             thumbnail: p.banner_url,
             created_at: p.created_at,
@@ -84,9 +95,13 @@ export const searchContent = createServerFn({ method: "GET" })
     if (!type || type === "book") {
       const { data: books, error } = await db
         .from("books")
-        .select("id, slug, title_en, title_bn, description_en, description_bn, cover_image, author_name, created_at")
+        .select(
+          "id, slug, title_en, title_bn, description_en, description_bn, cover_image, author_name, created_at",
+        )
         .eq("status", "published")
-        .or(`title_en.ilike.*${term}*,title_bn.ilike.*${term}*,description_en.ilike.*${term}*,description_bn.ilike.*${term}*,author_name.ilike.*${term}*`)
+        .or(
+          `title_en.ilike.*${term}*,title_bn.ilike.*${term}*,description_en.ilike.*${term}*,description_bn.ilike.*${term}*,author_name.ilike.*${term}*`,
+        )
         .order("created_at", { ascending: false })
         .limit(limit);
       if (!error && books) {
@@ -131,9 +146,13 @@ export const searchContent = createServerFn({ method: "GET" })
     if (!type || type === "course") {
       const { data: courses, error } = await db
         .from("courses")
-        .select("id, slug, title_en, title_bn, description_en, description_bn, cover_image, created_at")
+        .select(
+          "id, slug, title_en, title_bn, description_en, description_bn, cover_image, created_at",
+        )
         .eq("published", true)
-        .or(`title_en.ilike.*${term}*,title_bn.ilike.*${term}*,description_en.ilike.*${term}*,description_bn.ilike.*${term}*`)
+        .or(
+          `title_en.ilike.*${term}*,title_bn.ilike.*${term}*,description_en.ilike.*${term}*,description_bn.ilike.*${term}*`,
+        )
         .order("created_at", { ascending: false })
         .limit(limit);
       if (!error && courses) {
@@ -158,4 +177,5 @@ export const searchContent = createServerFn({ method: "GET" })
       results: results.slice(offset, offset + limit),
       total: results.length,
     };
-  });
+  },
+);

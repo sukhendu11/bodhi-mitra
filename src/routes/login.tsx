@@ -1,9 +1,27 @@
 import { getSiteName } from "@/lib/siteSettings";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { MailCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuth";
+import { logLoginEvent } from "@/lib/admin.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Clear Supabase auth tokens from localStorage synchronously (no DOM needed).
+// Defined at module level so the function reference is stable across renders,
+// making window.removeEventListener reliable.
+const clearSupabaseSession = () => {
+  const keys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith("sb-")) keys.push(key);
+  }
+  keys.forEach((k) => localStorage.removeItem(k));
+};
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -25,7 +43,30 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const doLogLogin = useServerFn(logLoginEvent);
+
+  const recordLogin = (email: string, method: string) => {
+    (doLogLogin as any)({
+      data: {
+        email,
+        user_agent: navigator.userAgent,
+        sign_in_method: method,
+      },
+    }).catch(() => {});
+  };
+
+
+
+  // Register beforeunload handler directly on window so it survives LoginPage unmount.
+  // Always remove first to clean up any listener from a previous sign-in (preference toggle).
+  const ensureSessionGuard = () => {
+    window.removeEventListener("beforeunload", clearSupabaseSession);
+    if (!rememberMe) {
+      window.addEventListener("beforeunload", clearSupabaseSession);
+    }
+  };
 
   // Surface OAuth errors returned by Supabase via URL hash/query
   useEffect(() => {
@@ -39,7 +80,12 @@ function LoginPage() {
     const code = hash.get("error_code") || query.get("error_code");
     if (err) {
       const msg = `${err}${code ? ` (${code})` : ""}${desc ? `: ${decodeURIComponent(desc.replace(/\+/g, " "))}` : ""}`;
-      console.error("[OAuth] redirect returned error", { error: err, code, description: desc, url: window.location.href });
+      console.error("[OAuth] redirect returned error", {
+        error: err,
+        code,
+        description: desc,
+        url: window.location.href,
+      });
       setOauthError(msg);
       toast.error(msg);
     }
@@ -72,6 +118,8 @@ function LoginPage() {
         return;
       }
       toast.success("Welcome back");
+      ensureSessionGuard();
+      recordLogin(trimmedEmail, "email");
       return;
     }
 
@@ -89,6 +137,8 @@ function LoginPage() {
     }
     if (data.session) {
       toast.success("Account created");
+      ensureSessionGuard();
+      recordLogin(trimmedEmail, "email");
       return;
     }
     toast.success("Check your email to confirm your account");
@@ -121,6 +171,21 @@ function LoginPage() {
     }
   };
 
+  // Wire up OAuth redirect to capture login — check URL hash for session after redirect
+  useEffect(() => {
+    const checkOAuthLogin = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        // OAuth redirect just completed — record the login
+        recordLogin(session.user.email, "google");
+      }
+    };
+    // Only check if there's no error (meaning we just came back from OAuth redirect)
+    if (!oauthError && window.location.hash) {
+      checkOAuthLogin();
+    }
+  }, []);
+
   return (
     <div className="mx-auto max-w-md px-6 py-32">
       <h1 className="font-serif text-4xl mb-4 text-center">Welcome</h1>
@@ -131,8 +196,44 @@ function LoginPage() {
       </p>
 
       {message && (
-        <div className="border border-border/60 bg-secondary/20 py-6 px-6 mb-8">
-          <p className="text-sm text-foreground leading-relaxed">{message}</p>
+        <div className="border border-border/60 bg-secondary/20 py-6 px-6 mb-8 text-center">
+          {message.includes("Check your email") || message.includes("confirm") ? (
+            <>
+              <MailCheck className="h-6 w-6 mx-auto text-emerald-500 mb-3" />
+              <p className="text-sm text-foreground leading-relaxed">{message}</p>
+              <button
+                type="button"
+                onClick={async () => {
+                  const hash = window.location.hash;
+                  if (hash) {
+                    toast.success("Email confirmed! You can now sign in.");
+                  }
+                }}
+                className="mt-3 text-[0.55rem] text-muted-foreground hover:text-foreground underline underline-offset-2"
+              >
+                Need another confirmation email?{" "}
+                <span
+                  className="text-foreground"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const email = prompt("Enter your email address to resend the confirmation");
+                    if (email) {
+                      const { error } = await supabase.auth.resend({
+                        type: "signup",
+                        email: email.trim(),
+                      });
+                      if (error) toast.error(error.message);
+                      else toast.success("Confirmation email sent");
+                    }
+                  }}
+                >
+                  Resend
+                </span>
+              </button>
+            </>
+          ) : (
+            <p className="text-sm text-foreground leading-relaxed">{message}</p>
+          )}
         </div>
       )}
 
@@ -166,15 +267,12 @@ function LoginPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-destructive mb-2">
             Google sign-in failed
           </p>
-          <p className="text-sm text-foreground leading-relaxed break-words">
-            {oauthError}
-          </p>
+          <p className="text-sm text-foreground leading-relaxed break-words">{oauthError}</p>
           <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
             Open the browser console for the full error payload and request URL.
           </p>
         </div>
       )}
-
 
       <button
         type="button"
@@ -183,10 +281,22 @@ function LoginPage() {
         className="w-full mb-6 px-6 py-3 text-sm tracking-wide border border-border hover:bg-secondary transition-colors disabled:opacity-40 flex items-center justify-center gap-3"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-          <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>
-          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>
+          <path
+            fill="#4285F4"
+            d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+          />
+          <path
+            fill="#34A853"
+            d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
+          />
+          <path
+            fill="#FBBC05"
+            d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"
+          />
+          <path
+            fill="#EA4335"
+            d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"
+          />
         </svg>
         Continue with Google
       </button>
@@ -199,24 +309,20 @@ function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block">
-          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Email
-          </span>
-          <input
+          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Email</span>
+          <Input
             type="email"
             required
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="mt-2 w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground/60"
+            className="mt-2"
           />
         </label>
         <label className="block">
-          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Password
-          </span>
-          <input
+          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Password</span>
+          <Input
             type="password"
             required
             minLength={6}
@@ -224,25 +330,61 @@ function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={mode === "signup" ? "At least 6 characters" : "••••••••"}
-            className="mt-2 w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground/60"
+            className="mt-2"
           />
         </label>
-        <button
+
+        {mode === "signin" && (
+          <label className="flex items-start gap-3 select-none cursor-pointer">
+            <Checkbox
+              checked={rememberMe}
+              onCheckedChange={(v) => setRememberMe(v === true)}
+              className="mt-0.5"
+            />
+            <span className="text-xs leading-relaxed text-muted-foreground">
+              <span className="text-foreground">Remember me</span>
+              <br />
+              Stay signed in on this device
+            </span>
+          </label>
+        )}
+
+        <Button
           type="submit"
           disabled={submitting}
-          className="w-full px-6 py-3 text-sm tracking-wide border border-foreground hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
+          variant="outline"
+          className="w-full px-6 py-3 text-sm tracking-wide border-foreground hover:bg-foreground hover:text-background"
         >
           {submitting
             ? mode === "signin"
               ? "Signing in…"
               : "Creating account…"
             : mode === "signin"
-            ? "Sign in"
-            : "Create account"}
-        </button>
+              ? "Sign in"
+              : "Create account"}
+        </Button>
       </form>
 
-      <p className="mt-10 text-xs text-muted-foreground leading-relaxed text-center">
+      {mode === "signin" && (
+        <p className="mt-6 text-xs text-center">
+          <Link
+            to="/forgot-password"
+            search={{} as any}
+            params={{} as any}
+            className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </p>
+      )}
+
+      {mode === "signup" && (
+        <p className="mt-6 text-[0.55rem] text-muted-foreground/60 leading-relaxed text-center">
+          We'll send you a confirmation email to verify your account.
+        </p>
+      )}
+
+      <p className="mt-6 text-xs text-muted-foreground leading-relaxed text-center">
         {mode === "signin" ? (
           <>
             New here?{" "}

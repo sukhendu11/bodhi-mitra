@@ -22,8 +22,6 @@ export interface NavItem {
 
 export type NavLocation = "header" | "footer";
 
-
-
 export interface NavItemInput {
   parent_id?: string | null;
   type: NavItemType;
@@ -44,7 +42,8 @@ export interface NavTreeNode extends NavItem {
 
 /* ─── Query helpers ─────────────────────────────────────────────── */
 
-const NAV_SELECT = "id, parent_id, type, label_en, label_bn, url, slug, icon, sort_order, visible, location, created_at, updated_at";
+const NAV_SELECT =
+  "id, parent_id, type, label_en, label_bn, url, slug, icon, sort_order, visible, location, created_at, updated_at";
 
 function mapRow(r: any): NavItem {
   return {
@@ -274,5 +273,3 @@ export async function updateNavItem(id: string, input: Partial<NavItemInput>): P
   if (error) throw new Error(error.message);
   return mapRow(data);
 }
-
-

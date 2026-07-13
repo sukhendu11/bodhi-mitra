@@ -1,8 +1,16 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Search as SearchIcon, ExternalLink, LogOut, User, Settings, ChevronDown } from "lucide-react";
+import {
+  Search as SearchIcon,
+  ExternalLink,
+  LogOut,
+  User,
+  Settings,
+  ChevronDown,
+} from "lucide-react";
 import { signOut } from "@/hooks/useAuth";
 import { NotificationBell } from "@/components/notification-bell";
 import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
+import { AdminThemeToggle } from "@/components/admin/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -51,11 +59,15 @@ export function AdminTopBar({ user, userRole, isSuperAdmin, openCommandPalette }
             onClick={openCommandPalette}
             className="w-full pl-9 pr-3 py-2 text-xs border border-border/50 rounded-lg bg-muted/30 cursor-pointer hover:bg-muted/60 transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.5rem] text-muted-foreground/40 font-mono border border-border/40 rounded px-1 py-0.5 hidden sm:inline">⌘K</kbd>
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.5rem] text-muted-foreground/40 font-mono border border-border/40 rounded px-1 py-0.5 hidden sm:inline">
+            ⌘K
+          </kbd>
         </div>
 
         {/* Right: Actions + User */}
         <div className="flex items-center gap-1.5">
+          {/* Theme */}
+          <AdminThemeToggle />
           <NotificationBell />
 
           {/* View site */}
@@ -77,7 +89,9 @@ export function AdminTopBar({ user, userRole, isSuperAdmin, openCommandPalette }
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block text-left">
-                  <p className="text-xs font-medium leading-tight truncate max-w-[120px]">{displayName}</p>
+                  <p className="text-xs font-medium leading-tight truncate max-w-[120px]">
+                    {displayName}
+                  </p>
                   <p className="text-[0.5rem] text-muted-foreground leading-tight mt-0.5">
                     {isSuperAdmin ? "Super Admin" : userRole || "User"}
                   </p>
@@ -104,11 +118,17 @@ export function AdminTopBar({ user, userRole, isSuperAdmin, openCommandPalette }
                 <ExternalLink className="h-3.5 w-3.5 mr-2" />
                 View Site
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: "/profile" })} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => navigate({ to: "/profile" })}
+                className="cursor-pointer"
+              >
                 <User className="h-3.5 w-3.5 mr-2" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: "/admin/settings" })} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => navigate({ to: "/admin/settings" })}
+                className="cursor-pointer"
+              >
                 <Settings className="h-3.5 w-3.5 mr-2" />
                 Settings
               </DropdownMenuItem>

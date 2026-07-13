@@ -2,12 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useOne, useUpdate } from "@refinedev/core";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  DEFAULT_CONFIG,
-  mergeConfig,
-  type SiteConfig,
-} from "@/lib/siteSettings";
+import { DEFAULT_CONFIG, mergeConfig, type SiteConfig } from "@/lib/siteSettings";
 import { createSiteAssetUpload } from "@/lib/siteAssets.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -43,6 +40,7 @@ const TABS = [
 ] as const;
 
 function SettingsPage() {
+  const queryClient = useQueryClient();
   const createAssetUpload = useServerFn(createSiteAssetUpload);
   const [cfg, setCfg] = useState<SiteConfig>(DEFAULT_CONFIG);
   const [ready, setReady] = useState(false);
@@ -73,7 +71,8 @@ function SettingsPage() {
       {
         onSuccess: () => {
           setHasChanges(false);
-          toast.success("Settings saved — UI updated.");
+          queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+          toast.success("Settings saved — frontend updated.");
         },
         onError: (e: any) => toast.error(e?.message ?? "Save failed"),
       },
@@ -86,11 +85,18 @@ function SettingsPage() {
   };
 
   async function uploadAsset(file: File, kind: string): Promise<string | null> {
-    const signed = await createAssetUpload({ data: { kind, filename: file.name, contentType: file.type || "image/png" } });
+    const signed = await createAssetUpload({
+      data: { kind, filename: file.name, contentType: file.type || "image/png" },
+    });
     const { error } = await supabase.storage
       .from("site-assets")
-      .uploadToSignedUrl(signed.path, signed.token, file, { contentType: file.type || "image/png" });
-    if (error) { toast.error(`Upload failed: ${error.message}`); return null; }
+      .uploadToSignedUrl(signed.path, signed.token, file, {
+        contentType: file.type || "image/png",
+      });
+    if (error) {
+      toast.error(`Upload failed: ${error.message}`);
+      return null;
+    }
     return signed.publicUrl;
   }
 
@@ -115,7 +121,12 @@ function SettingsPage() {
               Unsaved changes
             </span>
           )}
-          <Button variant="outline" size="sm" onClick={() => setCfg(DEFAULT_CONFIG)} disabled={isPending}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCfg(DEFAULT_CONFIG)}
+            disabled={isPending}
+          >
             Reset
           </Button>
           <Button size="sm" onClick={handleSave} disabled={isPending || !hasChanges}>
@@ -164,7 +175,12 @@ function SettingsPage() {
             You have unsaved changes
           </span>
         )}
-        <Button variant="outline" size="sm" onClick={() => setCfg(DEFAULT_CONFIG)} disabled={isPending}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCfg(DEFAULT_CONFIG)}
+          disabled={isPending}
+        >
           Reset
         </Button>
         <Button size="sm" onClick={handleSave} disabled={isPending || !hasChanges}>

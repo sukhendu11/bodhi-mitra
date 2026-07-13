@@ -9,7 +9,10 @@ export const postSchema = z.object({
   content_bn: z.string().min(1, "Bangla content is required"),
   excerpt_en: z.string().default(""),
   excerpt_bn: z.string().default(""),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
   cover_image: z.string().default(""),
   category: z.enum(["Buddhist Psychology", "Wisdom", "Books"]),
   author_name: z.string().default(""),
@@ -25,7 +28,10 @@ export type PostFormValues = z.infer<typeof postSchema>;
 /* ─── Page Schemas ────────────────────────────────────────────────── */
 
 export const pageSchema = z.object({
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
   title_en: z.string().min(1, "English title is required"),
   title_bn: z.string().min(1, "Bangla title is required"),
   header_en: z.string().default(""),
@@ -44,7 +50,10 @@ export type PageFormValues = z.infer<typeof pageSchema>;
 /* ─── Book Schemas ────────────────────────────────────────────────── */
 
 export const bookSchema = z.object({
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
   title_en: z.string().min(1, "English title is required"),
   title_bn: z.string().min(1, "Bangla title is required"),
   author_name: z.string().default(""),
@@ -83,22 +92,32 @@ export type VideoFormValues = z.infer<typeof videoSchema>;
 
 /* ─── Navigation Item Schema ─────────────────────────────────────── */
 
-export const navItemSchema = z.object({
-  type: z.enum(["internal", "external", "dropdown"]),
-  label_en: z.string().min(1, "English label is required"),
-  label_bn: z.string().default(""),
-  slug: z.string().default("/"),
-  url: z.string().default(""),
-  visible: z.boolean().default(true),
-  location: z.enum(["header", "footer"]).default("header"),
-}).superRefine((data, ctx) => {
-  if (data.type === "internal" && !data.slug?.trim()) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Path is required for internal links", path: ["slug"] });
-  }
-  if (data.type === "external" && !data.url?.trim()) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "URL is required for external links", path: ["url"] });
-  }
-});
+export const navItemSchema = z
+  .object({
+    type: z.enum(["internal", "external", "dropdown"]),
+    label_en: z.string().min(1, "English label is required"),
+    label_bn: z.string().default(""),
+    slug: z.string().default("/"),
+    url: z.string().default(""),
+    visible: z.boolean().default(true),
+    location: z.enum(["header", "footer"]).default("header"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "internal" && !data.slug?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Path is required for internal links",
+        path: ["slug"],
+      });
+    }
+    if (data.type === "external" && !data.url?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "URL is required for external links",
+        path: ["url"],
+      });
+    }
+  });
 
 export type NavItemFormValues = z.infer<typeof navItemSchema>;
 

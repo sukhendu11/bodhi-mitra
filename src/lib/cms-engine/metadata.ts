@@ -71,9 +71,7 @@ export function groupFields(
   const result: FieldGroup[] = [];
 
   for (const group of groups) {
-    const groupFields = fields.filter(
-      (f) => group.fieldNames.includes(f.name),
-    );
+    const groupFields = fields.filter((f) => group.fieldNames.includes(f.name));
     for (const f of groupFields) assigned.add(f.name);
     result.push({ title: group.title, fields: groupFields });
   }
@@ -86,8 +84,6 @@ export function groupFields(
 
   return result;
 }
-
-
 
 /* ─── Default Values ──────────────────────────────────────────────── */
 

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useLang } from "@/lib/i18n";
@@ -51,7 +51,9 @@ function LibraryPage() {
         <div className="text-center py-24">
           <Library className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
           <h1 className="text-xl font-semibold mb-2">Sign in to view your library</h1>
-          <p className="text-sm text-muted-foreground mb-6">Your purchased books and reading progress will appear here.</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Your purchased books and reading progress will appear here.
+          </p>
           <Link
             to="/login"
             search={{ message: "", redirect: "/books/library" }}
@@ -68,7 +70,9 @@ function LibraryPage() {
 
   const totalBooks = books.length;
   const completedBooks = books.filter((b: LibraryBook) => b.completed).length;
-  const inProgressBooks = books.filter((b: LibraryBook) => b.progressPct > 0 && !b.completed).length;
+  const inProgressBooks = books.filter(
+    (b: LibraryBook) => b.progressPct > 0 && !b.completed,
+  ).length;
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
@@ -82,8 +86,7 @@ function LibraryPage() {
           <p className="text-sm text-muted-foreground mt-1">
             {totalBooks === 0
               ? "Your library is empty. Explore books to get started."
-              : `${totalBooks} book${totalBooks !== 1 ? "s" : ""} · ${completedBooks} completed · ${inProgressBooks} in progress`
-            }
+              : `${totalBooks} book${totalBooks !== 1 ? "s" : ""} · ${completedBooks} completed · ${inProgressBooks} in progress`}
           </p>
         </div>
         <Link
@@ -99,7 +102,9 @@ function LibraryPage() {
         <div className="text-center py-24">
           <BookOpen className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
           <h2 className="text-lg font-medium mb-2">No books yet</h2>
-          <p className="text-sm text-muted-foreground mb-6">Explore our collection and add books to your library.</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Explore our collection and add books to your library.
+          </p>
           <Link
             to="/books"
             search={{ search: "", page: 1 }}
@@ -120,7 +125,6 @@ function LibraryPage() {
 }
 
 function LibraryBookCard({ book, lang }: { book: LibraryBook; lang: string }) {
-  const navigate = useNavigate();
   const title = lang === "bn" ? (book.titleBn ?? book.titleEn) : (book.titleEn ?? book.titleBn);
   const progressLabel = book.completed
     ? "Completed"
@@ -129,8 +133,10 @@ function LibraryBookCard({ book, lang }: { book: LibraryBook; lang: string }) {
       : "Not started";
 
   return (
-    <button
-      onClick={() => (navigate as any)({ to: "/books/$slug", params: { slug: book.slug }, search: {} })}
+    <Link
+      to="/books/$slug"
+      params={{ slug: book.slug }}
+      search={{ search: "", page: 1 }}
       className="group block text-left w-full"
     >
       {/* Cover */}
@@ -194,6 +200,6 @@ function LibraryBookCard({ book, lang }: { book: LibraryBook; lang: string }) {
           {progressLabel}
         </span>
       </div>
-    </button>
+    </Link>
   );
 }

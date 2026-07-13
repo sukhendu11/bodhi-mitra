@@ -35,18 +35,32 @@ export interface SiteConfig {
     text_bn: string;
   };
   social: {
-    facebook: string; twitter: string; instagram: string; linkedin: string; youtube: string;
+    facebook: string;
+    twitter: string;
+    instagram: string;
+    linkedin: string;
+    youtube: string;
   };
   contact: {
-    email: string; phone: string; location: string;
-    title_en: string; title_bn: string;
-    intro_en: string; intro_bn: string;
-    form_name_label_en: string; form_name_label_bn: string;
-    form_email_label_en: string; form_email_label_bn: string;
-    form_message_label_en: string; form_message_label_bn: string;
-    submit_label_en: string; submit_label_bn: string;
-    success_text_en: string; success_text_bn: string;
-    address_en: string; address_bn: string;
+    email: string;
+    phone: string;
+    location: string;
+    title_en: string;
+    title_bn: string;
+    intro_en: string;
+    intro_bn: string;
+    form_name_label_en: string;
+    form_name_label_bn: string;
+    form_email_label_en: string;
+    form_email_label_bn: string;
+    form_message_label_en: string;
+    form_message_label_bn: string;
+    submit_label_en: string;
+    submit_label_bn: string;
+    success_text_en: string;
+    success_text_bn: string;
+    address_en: string;
+    address_bn: string;
     map_embed_url: string;
   };
   seo: {
@@ -69,14 +83,21 @@ export interface SiteConfig {
     newsletter_text_bn: string;
   };
   about: {
-    title_en: string; title_bn: string;
-    eyebrow_en: string; eyebrow_bn: string;
-    body_en: string; body_bn: string;
-    mission_en: string; mission_bn: string;
+    title_en: string;
+    title_bn: string;
+    eyebrow_en: string;
+    eyebrow_bn: string;
+    body_en: string;
+    body_bn: string;
+    mission_en: string;
+    mission_bn: string;
     image_url: string;
-    image_alt_en: string; image_alt_bn: string;
-    note_title_en: string; note_title_bn: string;
-    note_text_en: string; note_text_bn: string;
+    image_alt_en: string;
+    image_alt_bn: string;
+    note_title_en: string;
+    note_title_bn: string;
+    note_text_en: string;
+    note_text_bn: string;
   };
 }
 
@@ -95,7 +116,8 @@ export const DEFAULT_CONFIG: SiteConfig = {
     eyebrow_bn: "❖ বোধি মিত্র",
     title_en: "Where ancient wisdom\nmeets modern psychology.",
     title_bn: "যেখানে প্রাচীন প্রজ্ঞা\nআধুনিক মনোবিজ্ঞানের সাথে মিলে।",
-    desc_en: "Quiet essays on the Buddha's teachings, the science of the mind, and the slow art of becoming well.",
+    desc_en:
+      "Quiet essays on the Buddha's teachings, the science of the mind, and the slow art of becoming well.",
     desc_bn: "বুদ্ধের শিক্ষা, মনের বিজ্ঞান, এবং সুস্থ হয়ে ওঠার ধীর শিল্প নিয়ে শান্ত প্রবন্ধ।",
     cta_label: "Begin reading",
     cta_url: "/buddhist-psychology",
@@ -114,22 +136,32 @@ export const DEFAULT_CONFIG: SiteConfig = {
   },
   social: { facebook: "", twitter: "", instagram: "", linkedin: "", youtube: "" },
   contact: {
-    email: "", phone: "", location: "",
-    title_en: "Get in touch", title_bn: "যোগাযোগ করুন",
+    email: "",
+    phone: "",
+    location: "",
+    title_en: "Get in touch",
+    title_bn: "যোগাযোগ করুন",
     intro_en: "Send a quiet note. We read everything, and reply when we can.",
     intro_bn: "একটি শান্ত বার্তা পাঠান। আমরা সব পড়ি, এবং যখন পারি উত্তর দিই।",
-    form_name_label_en: "Your name", form_name_label_bn: "আপনার নাম",
-    form_email_label_en: "Email", form_email_label_bn: "ইমেইল",
-    form_message_label_en: "Message", form_message_label_bn: "বার্তা",
-    submit_label_en: "Send", submit_label_bn: "Send",
+    form_name_label_en: "Your name",
+    form_name_label_bn: "আপনার নাম",
+    form_email_label_en: "Email",
+    form_email_label_bn: "ইমেইল",
+    form_message_label_en: "Message",
+    form_message_label_bn: "বার্তা",
+    submit_label_en: "Send",
+    submit_label_bn: "Send",
     success_text_en: "Thank you — your note has arrived.",
     success_text_bn: "ধন্যবাদ — আপনার বার্তাটি পৌঁছেছে।",
-    address_en: "", address_bn: "",
+    address_en: "",
+    address_bn: "",
     map_embed_url: "",
   },
   seo: {
-    meta_desc_en: "A serene blog blending Buddhist teachings with modern mental health, by practicing psychiatrists.",
-    meta_desc_bn: "অনুশীলনরত মনোরোগ বিশেষজ্ঞদের দ্বারা বৌদ্ধ শিক্ষা ও আধুনিক মানসিক স্বাস্থ্যের সংমিশ্রণে একটি শান্ত ব্লগ।",
+    meta_desc_en:
+      "A serene blog blending Buddhist teachings with modern mental health, by practicing psychiatrists.",
+    meta_desc_bn:
+      "অনুশীলনরত মনোরোগ বিশেষজ্ঞদের দ্বারা বৌদ্ধ শিক্ষা ও আধুনিক মানসিক স্বাস্থ্যের সংমিশ্রণে একটি শান্ত ব্লগ।",
     og_image_url: "",
     google_analytics_id: "",
     enable_sitemap: true,
@@ -147,20 +179,25 @@ export const DEFAULT_CONFIG: SiteConfig = {
     newsletter_text_bn: "ইমেলে নতুন প্রতিফলন পান — ধীর, কখনও কখনও, কখনও শব্দময় নয়।",
   },
   about: {
-    eyebrow_en: "About", eyebrow_bn: "পরিচিতি",
+    eyebrow_en: "About",
+    eyebrow_bn: "পরিচিতি",
     title_en: "A quiet conversation between two traditions.",
     title_bn: "দুই ঐতিহ্যের মধ্যে একটি শান্ত কথোপকথন।",
     body_en:
-      "Bodhi Mitra — \"a friend on the path of awakening\" — is a small journal maintained by practicing psychiatrists who have spent many years sitting with patients in clinic, and many mornings sitting in silence on the cushion.\n\nWe write at the seam where two great traditions of mind meet: the contemplative inheritance of the Buddha, refined across twenty-five centuries, and the empirical science of modern psychiatry and psychology. Neither replaces the other. Each, at its best, illuminates the other.\n\nOur essays are not prescriptions. They are notes from the road — offered gently, in the hope that some sentence here might meet you where you are.",
+      'Bodhi Mitra — "a friend on the path of awakening" — is a small journal maintained by practicing psychiatrists who have spent many years sitting with patients in clinic, and many mornings sitting in silence on the cushion.\n\nWe write at the seam where two great traditions of mind meet: the contemplative inheritance of the Buddha, refined across twenty-five centuries, and the empirical science of modern psychiatry and psychology. Neither replaces the other. Each, at its best, illuminates the other.\n\nOur essays are not prescriptions. They are notes from the road — offered gently, in the hope that some sentence here might meet you where you are.',
     body_bn:
-      "বোধি মিত্র — \"জাগরণের পথে এক বন্ধু\" — একটি ছোট জার্নাল, যা অনুশীলনরত মনোরোগ বিশেষজ্ঞদের দ্বারা পরিচালিত।\n\nআমরা সেখানে লিখি যেখানে মনের দুটি মহান ঐতিহ্য মিলিত হয়: বুদ্ধের ধ্যানময় উত্তরাধিকার এবং আধুনিক মনোরোগবিদ্যার অভিজ্ঞ বিজ্ঞান।\n\nআমাদের প্রবন্ধ চিকিৎসার নির্দেশনা নয়। এগুলি পথের নোট — মৃদুভাবে দেওয়া।",
+      'বোধি মিত্র — "জাগরণের পথে এক বন্ধু" — একটি ছোট জার্নাল, যা অনুশীলনরত মনোরোগ বিশেষজ্ঞদের দ্বারা পরিচালিত।\n\nআমরা সেখানে লিখি যেখানে মনের দুটি মহান ঐতিহ্য মিলিত হয়: বুদ্ধের ধ্যানময় উত্তরাধিকার এবং আধুনিক মনোরোগবিদ্যার অভিজ্ঞ বিজ্ঞান।\n\nআমাদের প্রবন্ধ চিকিৎসার নির্দেশনা নয়। এগুলি পথের নোট — মৃদুভাবে দেওয়া।',
     mission_en: "",
     mission_bn: "",
     image_url: "",
-    image_alt_en: "", image_alt_bn: "",
-    note_title_en: "Editorial note", note_title_bn: "সম্পাদকীয় নোট",
-    note_text_en: "Nothing on this site constitutes medical advice. If you are suffering, please reach out to a qualified clinician in your community.",
-    note_text_bn: "এই সাইটের কিছুই চিকিৎসা পরামর্শ নয়। যদি আপনি কষ্টে থাকেন, অনুগ্রহ করে আপনার কমিউনিটিতে একজন যোগ্য চিকিৎসকের কাছে যান।",
+    image_alt_en: "",
+    image_alt_bn: "",
+    note_title_en: "Editorial note",
+    note_title_bn: "সম্পাদকীয় নোট",
+    note_text_en:
+      "Nothing on this site constitutes medical advice. If you are suffering, please reach out to a qualified clinician in your community.",
+    note_text_bn:
+      "এই সাইটের কিছুই চিকিৎসা পরামর্শ নয়। যদি আপনি কষ্টে থাকেন, অনুগ্রহ করে আপনার কমিউনিটিতে একজন যোগ্য চিকিৎসকের কাছে যান।",
   },
 };
 
@@ -261,9 +298,5 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     document.head.appendChild(s2);
   }, [config.seo.google_analytics_id]);
 
-  return (
-    <SiteSettingsContext.Provider value={config}>
-      {children}
-    </SiteSettingsContext.Provider>
-  );
+  return <SiteSettingsContext.Provider value={config}>{children}</SiteSettingsContext.Provider>;
 }

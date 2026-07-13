@@ -28,7 +28,17 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, ChevronUp, ChevronsUpDown, Search, Columns3, CheckSquare, X, Trash2, ChevronRight } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  ChevronsUpDown,
+  Search,
+  Columns3,
+  CheckSquare,
+  X,
+  Trash2,
+  ChevronRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface DataTableProps<TData extends { id: string }> {
@@ -59,46 +69,54 @@ export function DataTable<TData extends { id: string }>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
-  const selectionCol = onBulkDelete ? {
-    id: "select",
-    header: ({ table: t }) => (
-      <input
-        type="checkbox"
-        checked={t.getIsAllRowsSelected()}
-        onChange={t.getToggleAllRowsSelectedHandler()}
-        className="h-3.5 w-3.5 rounded border-border/60 accent-foreground cursor-pointer"
-      />
-    ),
-    cell: ({ row }) => (
-      <input
-        type="checkbox"
-        checked={row.getIsSelected()}
-        onChange={row.getToggleSelectedHandler()}
-        className="h-3.5 w-3.5 rounded border-border/60 accent-foreground cursor-pointer"
-      />
-    ),
-    size: 36,
-    enableSorting: false,
-  } as ColumnDef<TData, any> : null;
+  const selectionCol = onBulkDelete
+    ? ({
+        id: "select",
+        header: ({ table: t }) => (
+          <input
+            type="checkbox"
+            checked={t.getIsAllRowsSelected()}
+            onChange={t.getToggleAllRowsSelectedHandler()}
+            className="h-3.5 w-3.5 rounded border-border/60 accent-foreground cursor-pointer"
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            onChange={row.getToggleSelectedHandler()}
+            className="h-3.5 w-3.5 rounded border-border/60 accent-foreground cursor-pointer"
+          />
+        ),
+        size: 36,
+        enableSorting: false,
+      } as ColumnDef<TData, any>)
+    : null;
 
-  const expandCol = renderSubRow ? {
-    id: "expand",
-    header: "",
-    cell: ({ row }) => (
-      <button
-        onClick={() => setExpandedRowId(expandedRowId === row.original.id ? null : row.original.id)}
-        className="p-1 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors"
-        aria-label={expandedRowId === row.original.id ? "Collapse" : "Expand"}
-      >
-        <ChevronRight className={cn(
-          "h-3.5 w-3.5 transition-transform",
-          expandedRowId === row.original.id && "rotate-90",
-        )} />
-      </button>
-    ),
-    size: 36,
-    enableSorting: false,
-  } as ColumnDef<TData, any> : null;
+  const expandCol = renderSubRow
+    ? ({
+        id: "expand",
+        header: "",
+        cell: ({ row }) => (
+          <button
+            onClick={() =>
+              setExpandedRowId(expandedRowId === row.original.id ? null : row.original.id)
+            }
+            className="p-1 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors"
+            aria-label={expandedRowId === row.original.id ? "Collapse" : "Expand"}
+          >
+            <ChevronRight
+              className={cn(
+                "h-3.5 w-3.5 transition-transform",
+                expandedRowId === row.original.id && "rotate-90",
+              )}
+            />
+          </button>
+        ),
+        size: 36,
+        enableSorting: false,
+      } as ColumnDef<TData, any>)
+    : null;
 
   const allColumns = useMemo(() => {
     const cols = [...columns];
@@ -183,9 +201,8 @@ export function DataTable<TData extends { id: string }>({
               .getAllColumns()
               .filter((col) => col.getCanHide())
               .map((col) => {
-                const header = typeof col.columnDef.header === "string"
-                  ? col.columnDef.header
-                  : col.id;
+                const header =
+                  typeof col.columnDef.header === "string" ? col.columnDef.header : col.id;
                 return (
                   <DropdownMenuCheckboxItem
                     key={col.id}
@@ -254,18 +271,14 @@ export function DataTable<TData extends { id: string }>({
                         }`}
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                        {flexRender(header.column.columnDef.header, header.getContext())}
                         {{
                           asc: <ChevronUp className="h-3 w-3" />,
                           desc: <ChevronDown className="h-3 w-3" />,
-                        }[header.column.getIsSorted() as string] ?? (
-                          header.column.getCanSort() ? (
+                        }[header.column.getIsSorted() as string] ??
+                          (header.column.getCanSort() ? (
                             <ChevronsUpDown className="h-3 w-3 opacity-30" />
-                          ) : null
-                        )}
+                          ) : null)}
                       </button>
                     )}
                   </TableHead>
@@ -296,10 +309,7 @@ export function DataTable<TData extends { id: string }>({
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id} className="px-4 py-3 text-xs">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -325,8 +335,8 @@ export function DataTable<TData extends { id: string }>({
       {pageCount > 1 && (
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            {pageIndex * pageSize + 1}–
-            {Math.min((pageIndex + 1) * pageSize, totalRows)} of {totalRows}
+            {pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, totalRows)} of{" "}
+            {totalRows}
           </p>
           <div className="flex items-center gap-1">
             <button

@@ -26,9 +26,17 @@ const columns = [
       return (
         <div className="flex items-center gap-3 min-w-0">
           {v.thumbnail_url ? (
-            <img src={v.thumbnail_url} alt="" className="w-16 h-9 rounded object-cover border border-border/40 shrink-0" />
+            <img
+            src={v.thumbnail_url}
+            alt={v.title || "Video thumbnail"}
+              className="w-16 h-9 rounded object-cover border border-border/40 shrink-0"
+            />
           ) : ytId ? (
-            <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt="" className="w-16 h-9 rounded object-cover border border-border/40 shrink-0" />
+            <img
+            src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+            alt={v.title || "Video thumbnail"}
+              className="w-16 h-9 rounded object-cover border border-border/40 shrink-0"
+            />
           ) : (
             <div className="w-16 h-9 rounded bg-secondary/60 border border-border/40 flex items-center justify-center shrink-0">
               <VideoIcon className="h-4 w-4 text-muted-foreground/40" />
@@ -37,7 +45,9 @@ const columns = [
           <div className="min-w-0">
             <span className="text-sm font-medium line-clamp-1">{v.title}</span>
             {v.description && (
-              <span className="text-[0.6rem] text-muted-foreground line-clamp-1 block">{v.description}</span>
+              <span className="text-[0.6rem] text-muted-foreground line-clamp-1 block">
+                {v.description}
+              </span>
             )}
           </div>
         </div>
@@ -77,7 +87,6 @@ const columns = [
     enableSorting: true,
     cell: ({ getValue }) => <DateCell date={getValue()} />,
   }),
-
 ];
 
 /* ─── Video Form (using Form Engine) ──────────────────────────────── */
@@ -116,7 +125,13 @@ const VIDEO_FIELDS = [
 const VIDEO_FORM_GROUPS = [
   { fields: VIDEO_FIELDS.slice(0, 2) },
   { fields: [VIDEO_FIELDS[2]] },
-  { columns: 2 as const, fields: [VIDEO_FIELDS[3], { type: "number" as const, name: "sort_order" as const, label: "Sort Order", min: 0 }] },
+  {
+    columns: 2 as const,
+    fields: [
+      VIDEO_FIELDS[3],
+      { type: "number" as const, name: "sort_order" as const, label: "Sort Order", min: 0 },
+    ],
+  },
 ];
 
 function VideoFormContent({ form }: { form: ReturnType<typeof useForm<VideoFormValues>> }) {
@@ -128,7 +143,9 @@ function VideoFormContent({ form }: { form: ReturnType<typeof useForm<VideoFormV
     <FormRenderer form={form} groups={VIDEO_FORM_GROUPS}>
       {/* YouTube URL validation indicator */}
       {youtubeUrl && getYoutubeId(youtubeUrl) && (
-        <p className="text-[0.55rem] text-green-600 dark:text-green-400 mt-1 -mt-4">✓ Valid YouTube URL</p>
+        <p className="text-[0.55rem] text-green-600 dark:text-green-400 mt-1 -mt-4">
+          ✓ Valid YouTube URL
+        </p>
       )}
 
       {/* Thumbnail — using MediaPicker */}
@@ -143,7 +160,14 @@ function VideoFormContent({ form }: { form: ReturnType<typeof useForm<VideoFormV
               onClick={() => form.setValue("thumbnail_url", "")}
               className="absolute top-1 right-1 p-1 rounded-full bg-background/80 text-muted-foreground hover:text-destructive"
             >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
         ) : null}
@@ -185,7 +209,14 @@ const videoResource = registerResource<Video, VideoFormValues>({
   columns,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: videoSchema as any,
-  defaultValues: { title: "", description: "", thumbnail_url: "", youtube_url: "", sort_order: 0, status: "draft" },
+  defaultValues: {
+    title: "",
+    description: "",
+    thumbnail_url: "",
+    youtube_url: "",
+    sort_order: 0,
+    status: "draft",
+  },
   FormContent: VideoFormContent as any,
   filterField: "status",
   searchField: "title",
@@ -207,7 +238,11 @@ const videoResource = registerResource<Video, VideoFormValues>({
   ],
   onBulkDelete: async (ids) => {
     for (const id of ids) {
-      try { await deleteVideo(id); } catch { /* continue */ }
+      try {
+        await deleteVideo(id);
+      } catch {
+        /* continue */
+      }
     }
     toast.success(`${ids.length} video(s) deleted`);
   },

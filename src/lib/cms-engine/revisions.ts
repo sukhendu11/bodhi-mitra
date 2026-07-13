@@ -57,10 +57,7 @@ export function computeDiff(
   cmsDef?: ContentTypeDefinition,
 ): ContentDiff {
   const fields: FieldDiff[] = [];
-  const allKeys = new Set([
-    ...Object.keys(oldData),
-    ...Object.keys(newData),
-  ]);
+  const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
 
   // If we have a content type definition, only diff its fields
   const relevantKeys = cmsDef?.fields
@@ -70,8 +67,7 @@ export function computeDiff(
   for (const key of relevantKeys) {
     const oldVal = oldData[key];
     const newVal = newData[key];
-    const changed =
-      JSON.stringify(oldVal) !== JSON.stringify(newVal);
+    const changed = JSON.stringify(oldVal) !== JSON.stringify(newVal);
 
     fields.push({
       field: key,
@@ -157,9 +153,7 @@ export function buildRevision(
     data: snapshot.data,
     changes: changedFields ?? snapshot.changedFields,
     changed_by: changedBy,
-    summary: changedFields
-      ? `Updated ${changedFields.length} field(s)`
-      : "Initial revision",
+    summary: changedFields ? `Updated ${changedFields.length} field(s)` : "Initial revision",
     version: previousVersion + 1,
   };
 }

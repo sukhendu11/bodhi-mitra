@@ -126,6 +126,7 @@ function AdminNavPage() {
 
   // Add form state
   const addForm = useForm<NavItemFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(navItemSchema) as any,
     defaultValues: {
       type: "internal",
@@ -139,7 +140,10 @@ function AdminNavPage() {
   });
   const [addParentId, setAddParentId] = useState<string | null>(null);
 
-  const { result, query: { isLoading } } = useList<NavItem>({
+  const {
+    result,
+    query: { isLoading },
+  } = useList<NavItem>({
     resource: "navigation_items",
     filters: [{ field: "location", operator: "eq", value: location }],
     sorters: [{ field: "sort_order", order: "asc" }],
@@ -168,9 +172,18 @@ function AdminNavPage() {
     clearNavCache();
   };
 
-  const { mutate: createMutate, mutation: { isPending: isCreating } } = useCreate();
-  const { mutate: updateMutate, mutation: { isPending: isUpdating } } = useUpdate();
-  const { mutate: deleteMutate, mutation: { isPending: isDeleting } } = useDelete();
+  const {
+    mutate: createMutate,
+    mutation: { isPending: isCreating },
+  } = useCreate();
+  const {
+    mutate: updateMutate,
+    mutation: { isPending: isUpdating },
+  } = useUpdate();
+  const {
+    mutate: deleteMutate,
+    mutation: { isPending: isDeleting },
+  } = useDelete();
 
   const batchUpdateMutation = useMutation({
     mutationFn: async (updates: { id: string; sort_order: number; parent_id: string | null }[]) => {
@@ -189,7 +202,15 @@ function AdminNavPage() {
   const resetAddForm = () => {
     setShowAddForm(false);
     setAddParentId(null);
-    addForm.reset({ type: "internal", label_en: "", label_bn: "", slug: "/", url: "", visible: true, location });
+    addForm.reset({
+      type: "internal",
+      label_en: "",
+      label_bn: "",
+      slug: "/",
+      url: "",
+      visible: true,
+      location,
+    });
   };
 
   /* ── Drop zone computation ──────────────────────────────────────── */
@@ -264,11 +285,12 @@ function AdminNavPage() {
         const newIndex = siblings.findIndex((i) => i.id === targetId);
 
         if (oldIndex !== -1 && newIndex !== -1) {
-          const adjustedIndex = zone.position === "after" && newIndex > oldIndex
-            ? Math.min(newIndex + 1, siblings.length - 1)
-            : zone.position === "before" && newIndex < oldIndex
-              ? Math.max(newIndex, 0)
-              : newIndex;
+          const adjustedIndex =
+            zone.position === "after" && newIndex > oldIndex
+              ? Math.min(newIndex + 1, siblings.length - 1)
+              : zone.position === "before" && newIndex < oldIndex
+                ? Math.max(newIndex, 0)
+                : newIndex;
 
           const reordered = arrayMove(siblings, oldIndex, adjustedIndex);
           const updates = reordered.map((item, idx) => ({
@@ -300,9 +322,8 @@ function AdminNavPage() {
         }
 
         const siblings = items.filter((i) => i.parent_id === targetId);
-        const nextOrder = siblings.length > 0
-          ? Math.max(...siblings.map((i) => i.sort_order)) + 1
-          : 0;
+        const nextOrder =
+          siblings.length > 0 ? Math.max(...siblings.map((i) => i.sort_order)) + 1 : 0;
 
         // Update the dragged item's parent + reorder siblings at old level
         const oldSiblings = items
@@ -341,19 +362,21 @@ function AdminNavPage() {
         .filter((i) => i.parent_id === newParentId && i.id !== draggedId)
         .sort((a, b) => a.sort_order - b.sort_order);
 
-      const targetIndex = zone.position === "before"
-        ? siblingsAtTarget.findIndex((i) => i.id === targetId)
-        : siblingsAtTarget.findIndex((i) => i.id === targetId) + 1;
+      const targetIndex =
+        zone.position === "before"
+          ? siblingsAtTarget.findIndex((i) => i.id === targetId)
+          : siblingsAtTarget.findIndex((i) => i.id === targetId) + 1;
 
       const adjustedIndex = targetIndex < 0 ? siblingsAtTarget.length : targetIndex;
       siblingsAtTarget.splice(adjustedIndex, 0, { ...dragged, parent_id: newParentId } as NavItem);
 
       // Also reorder the old siblings if parent changed
-      const oldSiblings2 = dragged.parent_id !== newParentId
-        ? items
-            .filter((i) => i.parent_id === dragged.parent_id && i.id !== draggedId)
-            .sort((a, b) => a.sort_order - b.sort_order)
-        : [];
+      const oldSiblings2 =
+        dragged.parent_id !== newParentId
+          ? items
+              .filter((i) => i.parent_id === dragged.parent_id && i.id !== draggedId)
+              .sort((a, b) => a.sort_order - b.sort_order)
+          : [];
 
       const updates2: { id: string; sort_order: number; parent_id: string | null }[] = [
         ...siblingsAtTarget.map((s, i) => ({
@@ -383,7 +406,15 @@ function AdminNavPage() {
 
   const handleAddChild = (parentId: string) => {
     setAddParentId(parentId);
-    addForm.reset({ type: "internal", label_en: "", label_bn: "", slug: "/", url: "", visible: true, location });
+    addForm.reset({
+      type: "internal",
+      label_en: "",
+      label_bn: "",
+      slug: "/",
+      url: "",
+      visible: true,
+      location,
+    });
     setShowAddForm(true);
   };
 
@@ -391,30 +422,32 @@ function AdminNavPage() {
     addForm.handleSubmit(
       (values) => {
         const parentItems = items.filter((i) => i.parent_id === addParentId);
-        const nextOrder = parentItems.length > 0
-          ? Math.max(...parentItems.map((i) => i.sort_order)) + 1
-          : 0;
-        createMutate({
-          resource: "navigation_items",
-          values: {
-            type: values.type,
-            label_en: values.label_en,
-            label_bn: values.label_bn || "",
-            slug: values.type === "internal" ? values.slug || "/" : "",
-            url: values.type === "external" ? values.url || "" : "",
-            visible: values.visible,
-            location,
-            parent_id: addParentId,
-            sort_order: nextOrder,
+        const nextOrder =
+          parentItems.length > 0 ? Math.max(...parentItems.map((i) => i.sort_order)) + 1 : 0;
+        createMutate(
+          {
+            resource: "navigation_items",
+            values: {
+              type: values.type,
+              label_en: values.label_en,
+              label_bn: values.label_bn || "",
+              slug: values.type === "internal" ? values.slug || "/" : "",
+              url: values.type === "external" ? values.url || "" : "",
+              visible: values.visible,
+              location,
+              parent_id: addParentId,
+              sort_order: nextOrder,
+            },
           },
-        }, {
-          onSuccess: () => {
-            invalidateLayoutNav();
-            toast.success("Item created");
-            resetAddForm();
+          {
+            onSuccess: () => {
+              invalidateLayoutNav();
+              toast.success("Item created");
+              resetAddForm();
+            },
+            onError: (e: any) => toast.error(e.message),
           },
-          onError: (e: any) => toast.error(e.message),
-        });
+        );
       },
       (errors) => {
         const firstMsg = Object.values(errors).find((e) => e?.message);
@@ -435,9 +468,8 @@ function AdminNavPage() {
       const item = items.find((i) => i.id === id);
       if (!item) return;
       const rootItems = items.filter((i) => i.parent_id === null);
-      const nextOrder = rootItems.length > 0
-        ? Math.max(...rootItems.map((i) => i.sort_order)) + 1
-        : 0;
+      const nextOrder =
+        rootItems.length > 0 ? Math.max(...rootItems.map((i) => i.sort_order)) + 1 : 0;
 
       // Reorder old siblings
       const oldSiblings = items
@@ -461,12 +493,14 @@ function AdminNavPage() {
   const handleConfirmNest = useCallback(
     (targetId: string, newParentId: string) => {
       const siblings = items.filter((i) => i.parent_id === newParentId);
-      const nextOrder = siblings.length > 0
-        ? Math.max(...siblings.map((i) => i.sort_order)) + 1
-        : 0;
+      const nextOrder =
+        siblings.length > 0 ? Math.max(...siblings.map((i) => i.sort_order)) + 1 : 0;
 
       const oldSiblings = items
-        .filter((i) => i.parent_id === items.find((x) => x.id === targetId)?.parent_id && i.id !== targetId)
+        .filter(
+          (i) =>
+            i.parent_id === items.find((x) => x.id === targetId)?.parent_id && i.id !== targetId,
+        )
         .sort((a, b) => a.sort_order - b.sort_order);
 
       const updates: { id: string; sort_order: number; parent_id: string | null }[] = [
@@ -498,9 +532,7 @@ function AdminNavPage() {
       <div className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-zinc-900 rounded-lg border-2 border-sky-500 shadow-xl opacity-90">
         <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
         <TypeIcon type={activeNode.type} />
-        <span className="text-sm font-medium truncate max-w-[200px]">
-          {activeNode.label_en}
-        </span>
+        <span className="text-sm font-medium truncate max-w-[200px]">{activeNode.label_en}</span>
       </div>
     );
   };
@@ -519,12 +551,25 @@ function AdminNavPage() {
           <div>
             <h2 className="text-lg font-semibold">Navigation</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Drag items to reorder. Drop on dropdown items to nest. Drop zones appear while dragging.
+              Drag items to reorder. Drop on dropdown items to nest. Drop zones appear while
+              dragging.
             </p>
           </div>
         </div>
         <button
-          onClick={() => { setAddParentId(null); addForm.reset({ type: "internal", label_en: "", label_bn: "", slug: "/", url: "", visible: true, location }); setShowAddForm(true); }}
+          onClick={() => {
+            setAddParentId(null);
+            addForm.reset({
+              type: "internal",
+              label_en: "",
+              label_bn: "",
+              slug: "/",
+              url: "",
+              visible: true,
+              location,
+            });
+            setShowAddForm(true);
+          }}
           className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
         >
           <Plus className="h-3.5 w-3.5" /> Add Item
@@ -552,15 +597,16 @@ function AdminNavPage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-12 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse" />
+            <div
+              key={i}
+              className="h-12 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse"
+            />
           ))}
         </div>
       ) : tree.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-xl border border-border/60">
           <Menu className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
-          <p className="text-sm text-muted-foreground">
-            No {location} menu items yet.
-          </p>
+          <p className="text-sm text-muted-foreground">No {location} menu items yet.</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden">
@@ -571,10 +617,7 @@ function AdminNavPage() {
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext
-              items={items.map((i) => i.id)}
-              strategy={verticalListSortingStrategy}
-            >
+            <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
               <div className="divide-y divide-border/40">
                 {tree.map((node) => (
                   <NavTreeNodeItem
@@ -586,18 +629,23 @@ function AdminNavPage() {
                     isActive={activeId === node.id}
                     activeDropZone={activeDropZone}
                     onStartEdit={setEditingId}
-                    onSaveEdit={(id, input) => updateMutate({
-                      resource: "navigation_items",
-                      id,
-                      values: input,
-                    }, {
-                      onSuccess: () => {
-                        invalidateLayoutNav();
-                        toast.success("Item updated");
-                        setEditingId(null);
-                      },
-                      onError: (e: any) => toast.error(e.message),
-                    })}
+                    onSaveEdit={(id, input) =>
+                      updateMutate(
+                        {
+                          resource: "navigation_items",
+                          id,
+                          values: input,
+                        },
+                        {
+                          onSuccess: () => {
+                            invalidateLayoutNav();
+                            toast.success("Item updated");
+                            setEditingId(null);
+                          },
+                          onError: (e: any) => toast.error(e.message),
+                        },
+                      )
+                    }
                     onDelete={setDeletingId}
                     onAddChild={handleAddChild}
                     onExpandToggle={handleExpandToggle}
@@ -634,81 +682,151 @@ function AdminNavPage() {
 
       {/* Add form modal */}
       {showAddForm && (
-        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center" onClick={resetAddForm}>
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 shadow-xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center"
+          onClick={resetAddForm}
+        >
+          <div
+            className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 shadow-xl p-6 w-full max-w-lg mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-sm font-semibold mb-4">
               {addParentId ? "Add child item" : `Add ${location} menu item`}
             </h3>
             <Form {...addForm}>
               <div className="space-y-4">
-                <FormField control={addForm.control} name="type" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={FIELD_LABEL}>Type</FormLabel>
-                    <FormControl>
-                      <div className="flex items-center gap-2">
-                        {(["internal", "external", "dropdown"] as NavItemType[]).map((t) => (
-                          <button key={t} type="button"
-                            onClick={() => { field.onChange(t); if (t === "internal") addForm.setValue("slug", "/"); if (t === "external") addForm.setValue("url", "https://"); }}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                              field.value === t
-                                ? "bg-foreground text-background border-foreground"
-                                : "border-border/60 text-muted-foreground hover:text-foreground"
-                            }`}
-                          >
-                            {t === "internal" ? "Internal" : t === "external" ? "External" : "Dropdown"}
-                          </button>
-                        ))}
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-[0.65rem]" />
-                  </FormItem>
-                )} />
-                <FormField control={addForm.control} name="label_en" render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel className={FIELD_LABEL}>Label (English)</FormLabel>
-                    <FormControl><Input {...field} placeholder="Navigation label" /></FormControl>
-                    {fieldState.error && <FormMessage className="text-[0.65rem]" />}
-                  </FormItem>
-                )} />
-                <FormField control={addForm.control} name="label_bn" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={FIELD_LABEL}>Label (বাংলা)</FormLabel>
-                    <FormControl><Input {...field} value={field.value ?? ""} placeholder="ন্যাভিগেশন লেবেল" /></FormControl>
-                  </FormItem>
-                )} />
-                {addForm.watch("type") === "internal" && (
-                  <FormField control={addForm.control} name="slug" render={({ field, fieldState }) => (
+                <FormField
+                  control={addForm.control}
+                  name="type"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel className={FIELD_LABEL}>Route path</FormLabel>
-                      <FormControl><Input {...field} value={field.value ?? ""} placeholder="/books" /></FormControl>
+                      <FormLabel className={FIELD_LABEL}>Type</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          {(["internal", "external", "dropdown"] as NavItemType[]).map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => {
+                                field.onChange(t);
+                                if (t === "internal") addForm.setValue("slug", "/");
+                                if (t === "external") addForm.setValue("url", "https://");
+                              }}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                                field.value === t
+                                  ? "bg-foreground text-background border-foreground"
+                                  : "border-border/60 text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {t === "internal"
+                                ? "Internal"
+                                : t === "external"
+                                  ? "External"
+                                  : "Dropdown"}
+                            </button>
+                          ))}
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-[0.65rem]" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={addForm.control}
+                  name="label_en"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel className={FIELD_LABEL}>Label (English)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Navigation label" />
+                      </FormControl>
                       {fieldState.error && <FormMessage className="text-[0.65rem]" />}
                     </FormItem>
-                  )} />
+                  )}
+                />
+                <FormField
+                  control={addForm.control}
+                  name="label_bn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={FIELD_LABEL}>Label (বাংলা)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="ন্যাভিগেশন লেবেল"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                {addForm.watch("type") === "internal" && (
+                  <FormField
+                    control={addForm.control}
+                    name="slug"
+                    render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel className={FIELD_LABEL}>Route path</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ""} placeholder="/books" />
+                        </FormControl>
+                        {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                      </FormItem>
+                    )}
+                  />
                 )}
                 {addForm.watch("type") === "external" && (
-                  <FormField control={addForm.control} name="url" render={({ field, fieldState }) => (
-                    <FormItem>
-                      <FormLabel className={FIELD_LABEL}>URL</FormLabel>
-                      <FormControl><Input {...field} value={field.value ?? ""} placeholder="https://example.com" /></FormControl>
-                      {fieldState.error && <FormMessage className="text-[0.65rem]" />}
-                    </FormItem>
-                  )} />
+                  <FormField
+                    control={addForm.control}
+                    name="url"
+                    render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel className={FIELD_LABEL}>URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="https://example.com"
+                          />
+                        </FormControl>
+                        {fieldState.error && <FormMessage className="text-[0.65rem]" />}
+                      </FormItem>
+                    )}
+                  />
                 )}
-                <FormField control={addForm.control} name="visible" render={({ field }) => (
-                  <FormItem>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={field.value} onChange={(e) => field.onChange(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30" />
-                      <span className="text-[0.6rem] font-medium">Visible</span>
-                    </label>
-                  </FormItem>
-                )} />
+                <FormField
+                  control={addForm.control}
+                  name="visible"
+                  render={({ field }) => (
+                    <FormItem>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          className="w-3.5 h-3.5 rounded border-border/60 text-foreground focus:ring-foreground/30"
+                        />
+                        <span className="text-[0.6rem] font-medium">Visible</span>
+                      </label>
+                    </FormItem>
+                  )}
+                />
               </div>
             </Form>
             <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-border/60">
-              <button type="button" onClick={resetAddForm} className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
-              <button type="button" onClick={handleSubmitNew} disabled={isCreating}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
+              <button
+                type="button"
+                onClick={resetAddForm}
+                className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitNew}
+                disabled={isCreating}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
+              >
                 {isCreating ? "Adding…" : "Add Item"}
               </button>
             </div>
@@ -718,26 +836,48 @@ function AdminNavPage() {
 
       {/* Nest picker modal */}
       {showNestPicker && nestTargetId && (
-        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center"
-          onClick={() => { setShowNestPicker(false); setNestTargetId(null); }}>
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 shadow-xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center"
+          onClick={() => {
+            setShowNestPicker(false);
+            setNestTargetId(null);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 shadow-xl p-6 w-full max-w-sm mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-sm font-semibold mb-2">Nest under dropdown</h3>
-            <p className="text-xs text-muted-foreground mb-4">Select a dropdown item to move this item under:</p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Select a dropdown item to move this item under:
+            </p>
             {dropdownItems.length === 0 ? (
               <p className="text-xs text-muted-foreground italic">No dropdown items available.</p>
             ) : (
               <div className="space-y-1 max-h-48 overflow-y-auto">
-                {dropdownItems.filter((d) => d.id !== nestTargetId).map((d) => (
-                  <button key={d.id} onClick={() => handleConfirmNest(nestTargetId, d.id)}
-                    className="w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-secondary/60 transition-colors border border-border/40 hover:border-border">
-                    {d.label}
-                  </button>
-                ))}
+                {dropdownItems
+                  .filter((d) => d.id !== nestTargetId)
+                  .map((d) => (
+                    <button
+                      key={d.id}
+                      onClick={() => handleConfirmNest(nestTargetId, d.id)}
+                      className="w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-secondary/60 transition-colors border border-border/40 hover:border-border"
+                    >
+                      {d.label}
+                    </button>
+                  ))}
               </div>
             )}
             <div className="flex justify-end mt-4">
-              <button onClick={() => { setShowNestPicker(false); setNestTargetId(null); }}
-                className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+              <button
+                onClick={() => {
+                  setShowNestPicker(false);
+                  setNestTargetId(null);
+                }}
+                className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -745,26 +885,48 @@ function AdminNavPage() {
 
       {/* Delete confirmation */}
       {deletingId && (
-        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center" onClick={() => setDeletingId(null)}>
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 shadow-xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center"
+          onClick={() => setDeletingId(null)}
+        >
+          <div
+            className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 shadow-xl p-6 w-full max-w-sm mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-sm font-semibold mb-2">Delete navigation item</h3>
             <p className="text-xs text-muted-foreground mb-4">
               Are you sure? This will also delete all nested children. This action cannot be undone.
             </p>
             <div className="flex items-center justify-end gap-2">
-              <button onClick={() => setDeletingId(null)} className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
-              <button onClick={() => deleteMutate({
-                resource: "navigation_items",
-                id: deletingId!,
-              }, {
-                onSuccess: () => {
-                  invalidateLayoutNav();
-                  toast.success("Item deleted");
-                  setDeletingId(null);
-                },
-                onError: (e: any) => { toast.error(e.message); setDeletingId(null); },
-              })} disabled={isDeleting}
-                className="px-3 py-1.5 text-xs font-medium bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
+              <button
+                onClick={() => setDeletingId(null)}
+                className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  deleteMutate(
+                    {
+                      resource: "navigation_items",
+                      id: deletingId!,
+                    },
+                    {
+                      onSuccess: () => {
+                        invalidateLayoutNav();
+                        toast.success("Item deleted");
+                        setDeletingId(null);
+                      },
+                      onError: (e: any) => {
+                        toast.error(e.message);
+                        setDeletingId(null);
+                      },
+                    },
+                  )
+                }
+                disabled={isDeleting}
+                className="px-3 py-1.5 text-xs font-medium bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity"
+              >
                 {isDeleting ? "Deleting…" : "Delete"}
               </button>
             </div>
@@ -812,14 +974,9 @@ function NavTreeNodeItem({
   isRootLevel,
   allDropdownItems,
 }: TreeNodeItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: node.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: node.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -904,8 +1061,15 @@ function NavTreeNodeItem({
 
         {/* Expand/collapse for dropdowns */}
         {hasChildren && (
-          <button onClick={() => onExpandToggle(node.id)} className="shrink-0 text-muted-foreground hover:text-foreground transition-colors">
-            {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          <button
+            onClick={() => onExpandToggle(node.id)}
+            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {expanded ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
           </button>
         )}
         {!hasChildren && <span className="w-3.5 shrink-0" />}
@@ -926,28 +1090,58 @@ function NavTreeNodeItem({
                   className="h-7 text-xs px-2 py-0"
                   placeholder="Label (EN)"
                   autoFocus
-                  onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSave();
+                    if (e.key === "Escape") onStartEdit(null);
+                  }}
                 />
                 <Input
                   value={editLabelBn}
                   onChange={(e) => setEditLabelBn(e.target.value)}
                   className="h-7 text-xs px-2 py-0 w-32"
                   placeholder="Label (BN)"
-                  onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSave();
+                    if (e.key === "Escape") onStartEdit(null);
+                  }}
                 />
-                <button onClick={handleSave} className="px-2 py-1 text-[0.55rem] font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity">Save</button>
-                <button onClick={() => onStartEdit(null)} className="px-2 py-1 text-[0.55rem] font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+                <button
+                  onClick={handleSave}
+                  className="px-2 py-1 text-[0.55rem] font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => onStartEdit(null)}
+                  className="px-2 py-1 text-[0.55rem] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
               </div>
               <div className="flex items-center gap-2">
                 {node.type === "internal" && (
-                  <Input value={editSlug} onChange={(e) => setEditSlug(e.target.value)}
-                    className="h-7 text-xs px-2 py-0 w-48" placeholder="/route-path"
-                    onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }} />
+                  <Input
+                    value={editSlug}
+                    onChange={(e) => setEditSlug(e.target.value)}
+                    className="h-7 text-xs px-2 py-0 w-48"
+                    placeholder="/route-path"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSave();
+                      if (e.key === "Escape") onStartEdit(null);
+                    }}
+                  />
                 )}
                 {node.type === "external" && (
-                  <Input value={editUrl} onChange={(e) => setEditUrl(e.target.value)}
-                    className="h-7 text-xs px-2 py-0 w-64" placeholder="https://example.com"
-                    onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onStartEdit(null); }} />
+                  <Input
+                    value={editUrl}
+                    onChange={(e) => setEditUrl(e.target.value)}
+                    className="h-7 text-xs px-2 py-0 w-64"
+                    placeholder="https://example.com"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSave();
+                      if (e.key === "Escape") onStartEdit(null);
+                    }}
+                  />
                 )}
               </div>
             </div>
@@ -955,17 +1149,25 @@ function NavTreeNodeItem({
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-sm font-medium truncate">{node.label_en}</span>
               {node.label_bn && (
-                <span className="text-[0.55rem] text-muted-foreground/60 truncate hidden sm:inline">{node.label_bn}</span>
+                <span className="text-[0.55rem] text-muted-foreground/60 truncate hidden sm:inline">
+                  {node.label_bn}
+                </span>
               )}
               {node.location === "footer" && (
-                <span className="text-[0.5rem] uppercase tracking-wider text-muted-foreground/40 px-1.5 py-0.5 rounded-full border border-border/40">Footer</span>
+                <span className="text-[0.5rem] uppercase tracking-wider text-muted-foreground/40 px-1.5 py-0.5 rounded-full border border-border/40">
+                  Footer
+                </span>
               )}
               {!node.visible && (
-                <span className="text-[0.5rem] uppercase tracking-wider text-muted-foreground/40 px-1.5 py-0.5 rounded-full border border-border/40">Hidden</span>
+                <span className="text-[0.5rem] uppercase tracking-wider text-muted-foreground/40 px-1.5 py-0.5 rounded-full border border-border/40">
+                  Hidden
+                </span>
               )}
               {/* Nesting hint */}
               {canAcceptChildren && (
-                <span className="text-[0.45rem] text-muted-foreground/30 italic hidden lg:inline">drop inside</span>
+                <span className="text-[0.45rem] text-muted-foreground/30 italic hidden lg:inline">
+                  drop inside
+                </span>
               )}
             </div>
           )}
@@ -974,7 +1176,11 @@ function NavTreeNodeItem({
         {/* URL / slug hint */}
         {!isEditing && (
           <span className="hidden md:inline text-[0.55rem] text-muted-foreground/40 font-mono truncate max-w-[120px]">
-            {node.type === "external" ? node.url : node.type === "dropdown" ? "▾ dropdown" : node.slug}
+            {node.type === "external"
+              ? node.url
+              : node.type === "dropdown"
+                ? "▾ dropdown"
+                : node.slug}
           </span>
         )}
 
@@ -982,31 +1188,60 @@ function NavTreeNodeItem({
         {!isEditing && (
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             {canAcceptChildren && (
-              <button onClick={() => onAddChild(node.id)}
-                className="p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors" title="Add child item">
+              <button
+                onClick={() => onAddChild(node.id)}
+                className="p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors"
+                title="Add child item"
+              >
                 <PlusCircle className="h-3.5 w-3.5" />
               </button>
             )}
             {!isRootLevel && onMoveToRoot && (
-              <button onClick={() => onMoveToRoot(node.id)}
-                className="p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors" title="Move to root level">
+              <button
+                onClick={() => onMoveToRoot(node.id)}
+                className="p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors"
+                title="Move to root level"
+              >
                 <ArrowUp className="h-3.5 w-3.5" />
               </button>
             )}
-            {isRootLevel && node.type !== "dropdown" && onNestUnder && allDropdownItems && allDropdownItems.length > 0 && (
-              <button onClick={() => onNestUnder(node.id)}
-                className="p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors" title="Nest under a dropdown">
-                <CornerDownRight className="h-3.5 w-3.5" />
-              </button>
-            )}
-            <button onClick={handleStartEdit}
-              className="p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors" title="Edit">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            {isRootLevel &&
+              node.type !== "dropdown" &&
+              onNestUnder &&
+              allDropdownItems &&
+              allDropdownItems.length > 0 && (
+                <button
+                  onClick={() => onNestUnder(node.id)}
+                  className="p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors"
+                  title="Nest under a dropdown"
+                >
+                  <CornerDownRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+            <button
+              onClick={handleStartEdit}
+              className="p-1 rounded text-muted-foreground/40 hover:text-foreground hover:bg-secondary/60 transition-colors"
+              title="Edit"
+            >
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
               </svg>
             </button>
-            <button onClick={() => onDelete(node.id)}
-              className="p-1 rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors" title="Delete">
+            <button
+              onClick={() => onDelete(node.id)}
+              className="p-1 rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors"
+              title="Delete"
+            >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>

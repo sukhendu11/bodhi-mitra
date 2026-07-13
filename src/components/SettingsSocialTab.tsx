@@ -12,24 +12,34 @@ export function SocialTab({ cfg, update }: TabProps): ReactNode {
     <>
       <Section title="Social Media Links">
         <FieldRow>
-          <Field label="Facebook URL" value={cfg.social.facebook}
-            onChange={(v) => update("social", { facebook: v })} />
-          <Field label="Twitter / X URL" value={cfg.social.twitter}
-            onChange={(v) => update("social", { twitter: v })} />
+          <Field
+            label="Facebook URL"
+            value={cfg.social.facebook}
+            onChange={(v) => update("social", { facebook: v })}
+          />
+          <Field
+            label="Twitter / X URL"
+            value={cfg.social.twitter}
+            onChange={(v) => update("social", { twitter: v })}
+          />
         </FieldRow>
         <FieldRow>
-          <Field label="Instagram URL" value={cfg.social.instagram}
-            onChange={(v) => update("social", { instagram: v })} />
-          <Field label="LinkedIn URL" value={cfg.social.linkedin}
-            onChange={(v) => update("social", { linkedin: v })} />
+          <Field
+            label="Instagram URL"
+            value={cfg.social.instagram}
+            onChange={(v) => update("social", { instagram: v })}
+          />
+          <Field
+            label="LinkedIn URL"
+            value={cfg.social.linkedin}
+            onChange={(v) => update("social", { linkedin: v })}
+          />
         </FieldRow>
-        <Field label="YouTube URL" value={cfg.social.youtube}
-          onChange={(v) => update("social", { youtube: v })} />
-      </Section>
-      <Section title="Footer Contact (legacy)">
-        <TextareaField label="Quick footer location line" value={cfg.contact.location}
-          onChange={(v) => update("contact", { location: v })}
-          hint="Short single-line location shown in the footer. For full address, use the Contact Page tab." />
+        <Field
+          label="YouTube URL"
+          value={cfg.social.youtube}
+          onChange={(v) => update("social", { youtube: v })}
+        />
       </Section>
     </>
   );

@@ -5,10 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useAuthSession } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  getAdminClaimStatus,
-  claimAdminRole,
-} from "@/lib/onboarding.functions";
+import { getAdminClaimStatus, claimAdminRole } from "@/lib/onboarding.functions";
 
 export const Route = createFileRoute("/onboarding")({
   loader: () => getSiteName(),
@@ -45,9 +42,7 @@ function OnboardingPage() {
           isAdmin: r.isAdmin,
         }),
       )
-      .catch((e) =>
-        setStatus({ state: "error", message: e.message ?? "Failed to load" }),
-      );
+      .catch((e) => setStatus({ state: "error", message: e.message ?? "Failed to load" }));
   }, [user, loading, fetchStatus]);
 
   const handleSignOut = async () => {
@@ -89,9 +84,7 @@ function OnboardingPage() {
     setSubmitting(true);
     try {
       const r = await claim();
-      toast.success(
-        r.alreadyAdmin ? "You're already an admin" : "Admin access granted",
-      );
+      toast.success(r.alreadyAdmin ? "You're already an admin" : "Admin access granted");
       navigate({ to: "/admin" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to claim admin");
@@ -104,15 +97,12 @@ function OnboardingPage() {
     <div className="mx-auto max-w-md px-6 py-24">
       <h1 className="font-serif text-4xl mb-3 text-center">Welcome</h1>
       <p className="text-sm text-muted-foreground mb-10 leading-relaxed text-center">
-        Get started in two steps: sign in with your email, then claim admin
-        access for this journal.
+        Get started in two steps: sign in with your email, then claim admin access for this journal.
       </p>
 
       {/* Step 1: sign in */}
       <section className="border border-border/60 p-6 mb-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
-          Step 1
-        </p>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">Step 1</p>
         <h2 className="font-serif text-lg mb-4">
           {authMode === "signin" ? "Sign in" : "Create account"}
         </h2>
@@ -121,8 +111,7 @@ function OnboardingPage() {
         ) : user ? (
           <div className="space-y-3">
             <p className="text-sm text-foreground">
-              Signed in as{" "}
-              <span className="font-medium">{user.email}</span>
+              Signed in as <span className="font-medium">{user.email}</span>
             </p>
             <button
               onClick={handleSignOut}
@@ -157,11 +146,7 @@ function OnboardingPage() {
               disabled={authBusy}
               className="w-full px-6 py-3 text-sm tracking-wide border border-foreground hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
             >
-              {authBusy
-                ? "Please wait…"
-                : authMode === "signin"
-                ? "Sign in"
-                : "Create account"}
+              {authBusy ? "Please wait…" : authMode === "signin" ? "Sign in" : "Create account"}
             </button>
             <button
               type="button"
@@ -178,24 +163,18 @@ function OnboardingPage() {
 
       {/* Step 2: claim admin */}
       <section className="border border-border/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
-          Step 2
-        </p>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">Step 2</p>
         <h2 className="font-serif text-lg mb-4">Claim admin access</h2>
 
         {!user ? (
-          <p className="text-sm text-muted-foreground">
-            Sign in first to continue.
-          </p>
+          <p className="text-sm text-muted-foreground">Sign in first to continue.</p>
         ) : status.state === "loading" || status.state === "idle" ? (
           <p className="text-sm text-muted-foreground">Checking status…</p>
         ) : status.state === "error" ? (
           <p className="text-sm text-destructive">{status.message}</p>
         ) : status.isAdmin ? (
           <div className="space-y-4">
-            <p className="text-sm text-foreground">
-              You already have admin access.
-            </p>
+            <p className="text-sm text-foreground">You already have admin access.</p>
             <Link
               to="/admin"
               className="inline-block w-full text-center px-6 py-3 text-sm tracking-wide border border-foreground hover:bg-foreground hover:text-background transition-colors"
@@ -205,14 +184,13 @@ function OnboardingPage() {
           </div>
         ) : status.adminExists ? (
           <p className="text-sm text-muted-foreground leading-relaxed">
-            An admin has already been assigned for this site. Ask the
-            existing admin to grant you access from the dashboard.
+            An admin has already been assigned for this site. Ask the existing admin to grant you
+            access from the dashboard.
           </p>
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              No admin exists yet. Claim admin access now to manage posts
-              and site settings.
+              No admin exists yet. Claim admin access now to manage posts and site settings.
             </p>
             <button
               onClick={handleClaim}

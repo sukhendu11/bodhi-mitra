@@ -195,25 +195,18 @@ export function getContentTypesByTable(table: string): ContentTypeDefinition | u
 }
 
 export function getContentTypesWithWorkflow(status: string): ContentTypeDefinition[] {
-  return Array.from(contentTypeRegistry.values()).filter(
-    (ct) => ct.workflow?.statuses.includes(status),
+  return Array.from(contentTypeRegistry.values()).filter((ct) =>
+    ct.workflow?.statuses.includes(status),
   );
 }
 
 /* ─── Content Type Status Helpers ──────────────────────────────────── */
 
-export function isValidTransition(
-  def: ContentTypeDefinition,
-  from: string,
-  to: string,
-): boolean {
+export function isValidTransition(def: ContentTypeDefinition, from: string, to: string): boolean {
   return def.workflow?.transitions[from]?.includes(to) ?? false;
 }
 
-export function getValidNextStatuses(
-  def: ContentTypeDefinition,
-  currentStatus: string,
-): string[] {
+export function getValidNextStatuses(def: ContentTypeDefinition, currentStatus: string): string[] {
   return def.workflow?.transitions[currentStatus] ?? [];
 }
 

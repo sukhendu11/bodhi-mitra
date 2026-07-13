@@ -64,7 +64,10 @@ export function AdminBreadcrumbs() {
             {i > 0 && <BreadcrumbSeparator />}
             <BreadcrumbItem>
               {crumb.to && i < crumbs.length - 1 ? (
-                <Link to={crumb.to as any} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <Link
+                  to={crumb.to as any}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
                   <BreadcrumbLink>{crumb.label}</BreadcrumbLink>
                 </Link>
               ) : (

@@ -47,13 +47,11 @@ export function UppyUploader({
       const ext = file.name?.split(".").pop() || "bin";
       const path = `${pathPrefix}/${generateId()}.${ext}`;
       try {
-        const { error: uploadError } = await supabase.storage
-          .from(bucket)
-          .upload(path, file.data, {
-            cacheControl: "3600",
-            upsert: false,
-            contentType: file.type || undefined,
-          });
+        const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file.data, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || undefined,
+        });
         if (uploadError) throw uploadError;
         const { data: pubData } = supabase.storage.from(bucket).getPublicUrl(path);
         uploadCountRef.current++;
@@ -106,7 +104,13 @@ export function UppyUploader({
       files.forEach((f) => {
         const size = f.size ?? 0;
         uppy.setFileState(f.id, {
-          progress: { uploadStarted: Date.now(), uploadComplete: false, percentage: 0, bytesTotal: size, bytesUploaded: 0 },
+          progress: {
+            uploadStarted: Date.now(),
+            uploadComplete: false,
+            percentage: 0,
+            bytesTotal: size,
+            bytesUploaded: 0,
+          },
         });
       });
 
@@ -115,13 +119,21 @@ export function UppyUploader({
           const success = await uploadFile(file);
           const size = file.size ?? 0;
           uppy.setFileState(file.id, {
-            progress: { uploadStarted: Date.now(), uploadComplete: success, percentage: success ? 100 : 0, bytesTotal: size, bytesUploaded: success ? size : 0 },
+            progress: {
+              uploadStarted: Date.now(),
+              uploadComplete: success,
+              percentage: success ? 100 : 0,
+              bytesTotal: size,
+              bytesUploaded: success ? size : 0,
+            },
           });
         }),
       ).then(() => {
         onUploadEnd?.();
         if (uploadCountRef.current > 0) {
-          toast.success(`${uploadCountRef.current} file${uploadCountRef.current > 1 ? "s" : ""} uploaded`);
+          toast.success(
+            `${uploadCountRef.current} file${uploadCountRef.current > 1 ? "s" : ""} uploaded`,
+          );
         }
       });
     });

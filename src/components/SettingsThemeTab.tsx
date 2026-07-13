@@ -15,31 +15,50 @@ export function ThemeTab({ cfg, update }: TabProps): ReactNode {
     <>
       <Section title="Accent Color" desc="Used for Sign In button and accent highlights site-wide.">
         <FieldRow>
-          <ColorField label="Primary Accent" value={cfg.theme.accent_color}
-            onChange={(v) => update("theme", { accent_color: v })} />
-          <ColorField label="Accent Hover" value={cfg.theme.accent_hover}
-            onChange={(v) => update("theme", { accent_hover: v })} />
+          <ColorField
+            label="Primary Accent"
+            value={cfg.theme.accent_color}
+            onChange={(v) => update("theme", { accent_color: v })}
+          />
+          <ColorField
+            label="Accent Hover"
+            value={cfg.theme.accent_hover}
+            onChange={(v) => update("theme", { accent_hover: v })}
+          />
         </FieldRow>
       </Section>
       <Section title="Header Visibility">
         <div className="flex items-center gap-3">
-          <Switch checked={cfg.theme.header_visible}
-            onCheckedChange={(v) => update("theme", { header_visible: v })} />
+          <Switch
+            checked={cfg.theme.header_visible}
+            onCheckedChange={(v) => update("theme", { header_visible: v })}
+          />
           <Label>{cfg.theme.header_visible ? "Header visible on site" : "Header hidden"}</Label>
         </div>
       </Section>
       <Section title="Background Mode">
         <div className="flex items-center gap-3">
-          <Switch checked={cfg.theme.mode === "dark"}
-            onCheckedChange={(v) => update("theme", { mode: v ? "dark" : "light" })} />
-          <Label>{cfg.theme.mode === "dark" ? "Dark mode (default)" : "Light mode (default)"}</Label>
+          <Switch
+            checked={cfg.theme.mode === "dark"}
+            onCheckedChange={(v) => update("theme", { mode: v ? "dark" : "light" })}
+          />
+          <Label>
+            {cfg.theme.mode === "dark" ? "Dark mode (default)" : "Light mode (default)"}
+          </Label>
         </div>
       </Section>
       <Section title="Logo Scaling">
         <div className="space-y-3">
-          <Label>Logo max-width: <span className="font-mono">{cfg.branding.logo_max_width}px</span></Label>
-          <Slider min={60} max={320} step={4} value={[cfg.branding.logo_max_width]}
-            onValueChange={([v]) => update("branding", { logo_max_width: v })} />
+          <Label>
+            Logo max-width: <span className="font-mono">{cfg.branding.logo_max_width}px</span>
+          </Label>
+          <Slider
+            min={60}
+            max={320}
+            step={4}
+            value={[cfg.branding.logo_max_width]}
+            onValueChange={([v]) => update("branding", { logo_max_width: v })}
+          />
         </div>
       </Section>
     </>

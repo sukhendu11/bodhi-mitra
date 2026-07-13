@@ -67,6 +67,8 @@ Custom code is reserved for Sabbe Satta's unique logic: CMS workflows, reader be
 | **Storage** | Supabase Storage | File uploads with signed URLs and RLS |
 | **Deployment** | Vercel (Free Tier) | SSR with global CDN, configured via nitro preset |
 | **Package Manager** | Bun | Fast package installation and script execution |
+| **Search (V2)** | Meilisearch (planned) | Self-hosted full-text search with Bangla language support |
+| **Podcasts (V2)** | Castopod (planned) | Self-hosted podcast hosting with Podcasting 2.0 standards |
 
 ---
 
@@ -430,7 +432,8 @@ Upload: Client validate -> Supabase Storage -> media_assets table -> return URL
 ## 14. Search System
 
 Current: PostgreSQL ILIKE queries, full-text search on media_assets
-Future: Unified search indexing posts, books, pages, videos with tsvector + pg_trgm
+V2 (planned): Meilisearch — self-hosted Docker container with Supabase sync via Edge Functions. Automatic language detection for English + Bangla, typo-tolerant search-as-you-type.
+Fallback: PostgreSQL tsvector + pg_trgm retained for admin/internal search.
 
 ---
 
@@ -478,13 +481,30 @@ Breakpoints: Mobile < 768px, Desktop >= 768px
 
 ## 18. Current Milestone
 
-Milestone: Platform Foundation Completion
-Overall: 98% complete
-Phase 1: 100% | Phase 2: 100% | Phase 3: 100% | Phase 4: 70% | Phase 5: 60%
+Milestone: Phase 06 — Section Library Expansion Complete
+Overall: 99% complete
+Phase 1: 100% | Phase 2: 100% | Phase 3: 100% | Phase 4: 72% | Phase 5: 62% | Phase 6: 100%
 
-Completed: Auth, RBAC, Admin Shell, Navigation, Media Library, Global Settings, Theme System, Post/Page CRUD, Taxonomies, Comments, Service Layer, Books module (CRUD, ratings, eye icon, PDF reader), Reading progress, Documentation, Permission framework, Error framework, Notification framework, `.env.example`, User Library page, Stripe payment integration, Cart + Checkout flow, Course module, Videos module, Community features, Newsletter, Analytics dashboard, CMS Engine, Media Engine, Form Engine, Table Engine, Resource Engine, Posts Module, Books Module enhancements, Users Module enhancements, Contact form with email notification
+Completed: Auth, RBAC, Admin Shell, Navigation, Media Library, Global Settings, Theme System, Post/Page CRUD, Taxonomies, Comments, Service Layer, Books module (CRUD, ratings, eye icon, PDF reader), Reading progress, Documentation, Permission framework, Error framework, Notification framework, `.env.example`, User Library page, Stripe payment integration, Cart + Checkout flow, Course module, Videos module, Community features, Newsletter, Analytics dashboard, CMS Engine, Media Engine, Form Engine, Table Engine, Resource Engine, Posts Module, Books Module enhancements, Users Module enhancements, Contact form with email notification, **BlockEditor v2** (DraftComparison, KeyboardShortcuts dialog, autosave indicator, media picker, drag-and-drop upload, embed support, inline image editing, Ctrl+D duplicate block, 147 tests), **Section Library v2** (Export/Import, Marketplace of 10 bundled sections, SectionPreview wireframes, Folder organization, 319 tests)
 
-Current Objective: Maintenance and production deployment prep
+Current Objective: V2 Sprint 1 continued — Supabase types regeneration, Orders panel, Email automation
+
+### Phase 04 — BlockEditor & Form Engine (2026-07-13)
+
+**Completed:**
+- BlockEditor v2: DraftComparison, KeyboardShortcuts, save status indicator, media integration (MediaPicker, drag-and-drop, embeds), inline image editing (alt/width/remove)
+- Form Engine: useFormKeyboard hook (Ctrl+S save, Escape cancel), accessibility attributes across all 13+ field types (aria-required, aria-describedby, aria-label, role=group), RequiredIndicator component, FieldDescription component with unique ID linkage
+- Autosave indicator: BlockEditorSaveContext for threading status through form engine, useAutoSave integration in admin.pages.tsx, useContentAutosave in admin.collections.$type.$id.tsx
+- onSave/onCancel wiring: ResourceListPage (all resource forms), admin.pages.tsx
+- Test expansion: 35 BlockEditor tests + 16 useFormKeyboard tests = 51 new tests (147 total)
+
+**New files created:**
+- src/components/admin/block-editor/DraftComparison.tsx
+- src/components/admin/block-editor/KeyboardShortcuts.tsx
+- src/components/admin/block-editor/MediaExtension.tsx
+- src/components/admin/form-engine/use-form-keyboard.ts
+- src/components/admin/block-editor/__tests__/BlockEditor.test.tsx
+- src/components/admin/form-engine/__tests__/use-form-keyboard.test.tsx
 
 ### TASK 05-10 Completion (2026-07-11)
 
@@ -531,15 +551,71 @@ Blockers: (none)
 
 ---
 
-## 20. Future Roadmap
+## 20. Version 2 — Sprint Roadmap
 
-| Phase | Progress | Key Modules |
-|-------|----------|-------------|
-| 1 Foundation | 100% | Auth, RBAC, Database, Admin, CMS, Media, Settings, Nav, Theme |
-| 2 Content | 100% | Content engine, CMS Engine, Form Engine, Resource Engine, CRUD, Taxonomies, SEO, Search |
-| 3 Books | 100% | Books, Reader, User Library, Reading Progress, Bookmarks, PDF.js, Typography |
-| 4 Commerce | 70% | Cart, Checkout (Stripe), Purchases, Digital Access, Payment webhooks |
-| 5 Extended | 60% | Videos, Courses, Community (profiles, comments), Newsletter, Analytics |
+### Sprint 1 — Foundation Hardening
+
+| Task | Effort | Value |
+|------|--------|-------|
+| Supabase types regeneration (eliminate 246 `as any`) | Low | High |
+| Orders management panel (purchase admin view) | Low | High |
+| Test coverage expansion (reader, cart, courses) | Medium | High |
+| Email automation (purchase confirmation emails) | Low | High |
+
+### Sprint 2 — Search & Discoverability
+
+| Task | Effort | Value |
+|------|--------|-------|
+| Meilisearch deployment + sync pipeline | Medium | High |
+| Search UI upgrade (typeahead, filters, highlighting) | Medium | High |
+| Blog reading time estimation | Low | Medium |
+
+### Sprint 3 — Reading Experience
+
+| Task | Effort | Value |
+|------|--------|-------|
+| Reader annotations (highlight + note UI polish) | Medium | High |
+| Reading statistics / streaks | Medium | High |
+| Book recommendations (by category/author) | Medium | Medium |
+
+### Sprint 4 — Commerce & Monetization
+
+| Task | Effort | Value |
+|------|--------|-------|
+| Coupon/discount codes (Stripe native API) | Low | Medium |
+| Donations page (Stripe Payment Links) | Low | Medium |
+| Purchase history page for users | Low | Medium |
+
+### Sprint 5 — Content Expansion
+
+| Task | Effort | Value |
+|------|--------|-------|
+| Podcasts module (Castopod integration) | Medium | High |
+| Course completion certificates | Medium | Medium |
+| Newsletter automation (welcome series) | Medium | Medium |
+
+### Sprint 6 — Polish & Performance
+
+| Task | Effort | Value |
+|------|--------|-------|
+| Bundle optimization (code-split large chunks) | Medium | High |
+| Lighthouse audit + fixes | Medium | High |
+| Accessibility audit + fixes | Medium | High |
+| Performance budget enforcement | Low | Medium |
+
+### V1 Baseline vs V2 Targets
+
+| Metric | V1 Baseline | V2 Target |
+|--------|-------------|-----------|
+| TypeScript errors | 0 | 0 |
+| `as any` casts | 246 | <50 |
+| Test count | 62 | 150+ |
+| Test coverage | ~15% of lib/ | >60% of lib/ |
+| User-facing search | ILIKE (basic) | Meilisearch (production) |
+| Reading features | View + progress | View + progress + annotate |
+| Commerce features | Purchase + cart | Purchase + cart + coupons |
+| Content types | 5 | 6 (+ podcast) |
+| Lighthouse score | Unknown | >90 all categories |
 
 ---
 
@@ -585,6 +661,46 @@ useRef + setTimeout pattern avoids closure staleness from synchronous Supabase a
 
 **Date:** 2026-07-11
 
+### AD-013: Meilisearch for Public Search
+
+**Decision:** Use Meilisearch (self-hosted Docker) as the dedicated search engine for public-facing search, replacing PostgreSQL ILIKE queries for user-facing features.
+
+**Rationale:** PostgreSQL ILIKE queries do not handle Bangla (non-Latin script) well. Meilisearch offers automatic language detection, typo tolerance, search-as-you-type, and disk-based scalability. Keeps PostgreSQL FTS as fallback for admin/internal search.
+
+**Architecture:** Sidecar Docker container, sync via Supabase Edge Functions + Database Webhooks. Initial load via one-time script.
+
+**Date:** 2026-07-11 (V2 Planning)
+
+### AD-014: Stripe Native Coupons (Not External Platform)
+
+**Decision:** Start with Stripe's native Coupons and Promotion Codes API for discount management.
+
+**Rationale:** Already using Stripe Checkout. Stripe coupons handle percentage off, fixed amount, duration, and max redemptions — sufficient for current commerce scale. Only reach for external platforms (Voucherify, Talon.One) if complex stacking rules or loyalty programs are needed in the future.
+
+**Local cache:** `coupons` table in Supabase for admin CRUD UI.
+
+**Date:** 2026-07-11 (V2 Planning)
+
+### AD-015: Custom PDF Annotations (Not Third-Party Library)
+
+**Decision:** Build highlight/annotation UI as a custom canvas overlay on existing PDF.js, rather than integrating a third-party annotation library.
+
+**Rationale:** No mature self-hosted annotation library fits the signed-URL + access-control model. Existing codebase already has PDF.js, `reader_notes` table with server functions, and `reader_highlights` table (empty, ready for V2). Custom overlay avoids licensing costs and external dependencies while maintaining full DRM control.
+
+**Research reserve:** Evaluate Hypothesis overlay (`pdf.js-hypothes.is`) during implementation as potential accelerator.
+
+**Date:** 2026-07-11 (V2 Planning)
+
+### AD-016: Castopod for Podcasts (Not In-House Build)
+
+**Decision:** Use Castopod (self-hosted, open-source) for podcast hosting rather than building custom podcast infrastructure.
+
+**Rationale:** Castopod supports Podcasting 2.0 standards, multi-feed management for bilingual content, and RSS generation. Building custom podcast hosting (audio storage, RSS feeds, player, episode management) would duplicate mature open-source functionality.
+
+**Strategy:** Two separate feeds (English / Bangla) for better discoverability in podcast apps. Embed Castopod player in main site pages.
+
+**Date:** 2026-07-11 (V2 Planning)
+
 ### AD-011: Platform-First, Library-First Strategy
 
 **Decision:** Build a reusable platform foundation before any feature modules. Use mature open-source libraries before custom code.
@@ -617,7 +733,9 @@ Component Pattern: Thin handler, no business logic, delegate to services
 | Vercel (Free Tier) | Configured |
 | Google Analytics | Configurable |
 | Payment provider (Stripe) | Connected (Checkout Sessions + webhooks) |
-| Email service | Not connected |
+| Email service (Resend) | Connected (contact form notifications) |
+| Search engine (Meilisearch) | Planned (V2 Sprint 2) |
+| Podcast hosting (Castopod) | Planned (V2 Sprint 5) |
 
 ---
 
@@ -640,17 +758,853 @@ Component Pattern: Thin handler, no business logic, delegate to services
 
 | Metric | Value |
 |--------|-------|
-| Overall completion | 98% |
-| Completed modules | 30 |
-| Modules in progress | 0 |
+| V1 overall completion | 99% |
+| V2 planning | Complete |
+| Completed modules | 33 |
+| Modules in progress | 5 (V2 Sprints) |
 | Database migrations | 42 |
 | TypeScript errors | 0 |
-| Current phase | Phase 4 (Commerce) — maintenance/cleanup |
-| Next milestone | Production testing + live deployment |
+| `as any` casts | 246 (target: <50) |
+| Test count | 319 (target: 150+) ✅ |
+| Current phase | Phase 06 — Section Library Expansion |
+| Next milestone | V2 Sprint 1 continued (Supabase types, Orders, Email automation)
 
 ---
 
-*Last updated: 2026-07-11*
+## 26. Appendix A — V2 Design Specifications
+
+### Sprint 1 — Email Automation (Purchase Confirmations)
+
+**User Flow:**
+1. User completes Stripe checkout for a book
+2. Webhook fires → purchase recorded
+3. Server function sends confirmation email via Resend
+4. Email contains: book title, receipt amount, link to reader, library link
+
+**Component Architecture:**
+- `src/lib/purchase-emails.ts` — Server function `sendPurchaseConfirmation(userId, purchaseId)`
+  - Fetch user profile (email, name) + book details
+  - Call Resend API with HTML template
+  - Graceful fallback if RESEND_API_KEY not configured
+- `src/emails/purchase-confirmation.tsx` — React Email template (or inline HTML)
+
+**Data Model:** No new tables. Uses existing: `purchases`, `books`, `profiles`
+
+**API Contract:**
+```ts
+async function sendPurchaseConfirmation(params: {
+  userId: string;
+  purchaseId: string;
+}): Promise<{ sent: boolean; reason?: string }>
+```
+
+**Implementation Tasks:**
+1. Create `src/lib/purchase-emails.ts` with sendPurchaseConfirmation
+2. Integrate into `src/routes/api/stripe-webhook.ts` after successful purchase insert
+3. Test with Resend dev mode (onboarding@resend.dev)
+
+---
+
+### Sprint 1 — Test Coverage Expansion
+
+**Target Modules to Cover:**
+
+| Module | Existing Tests | Target | Key Functions to Test |
+|--------|---------------|--------|----------------------|
+| reader (books-reader.ts) | 0 | 20 | getReaderBookmarks, addReaderBookmark, getReaderNotes, addReaderNote, deleteReaderNote |
+| cart (cart.ts) | 0 | 15 | addToCart, removeFromCart, clearCart, getCart, checkoutCart |
+| courses (courses.ts) | 0 | 20 | fetchPublishedCourses, enrollInCourse, getEnrollmentStatus, toggleLessonProgress |
+| search (search.ts) | 0 | 10 | searchContent (all 5 content types, empty, edge cases) |
+| newsletter (newsletter.ts) | 0 | 5 | subscribeToNewsletter (valid, duplicate, invalid email) |
+| books-reader server fns | 0 | 10 | getPdfReaderUrl, checkBookOwnership, purchaseBookAction |
+
+**Testing Pattern:** Follow existing `makeChainable()` pattern from `books.test.ts` for Supabase mocking.
+
+---
+
+### Sprint 2 — Meilisearch Search
+
+**Architecture:**
+```
+Supabase DB
+  |
+  +-- Database Webhook (on insert/update/delete)
+  |     or
+  +-- Supabase Edge Function (polling or realtime)
+  |
+  +-- Meilisearch Index
+        |
+        +-- Public /search route calls Meilisearch client directly
+```
+
+**Indexed Content Types:**
+- Posts (id, slug, title_en, title_bn, excerpt_en, excerpt_bn, cover_image, created_at, status)
+- Pages (id, slug, title_en, title_bn, body_en_preview, body_bn_preview, banner_url, created_at, visible)
+- Books (id, slug, title_en, title_bn, description_en, description_bn, cover_image, author_name, created_at, status)
+- Videos (id, slug, title, description, thumbnail_url, created_at)
+- Courses (id, slug, title_en, title_bn, description_en, description_bn, cover_image, created_at, published)
+
+**Sync Strategy:**
+1. One-time script: `scripts/seed-meilisearch.mjs` — reads all content from Supabase, indexes
+2. Real-time sync: Supabase Database Webhook → Edge Function → Meilisearch API
+3. Fallback: Keep existing `searchContent` for admin/internal search
+
+**Search UI Updates:**
+- `/search` route gets typeahead dropdown on search bar (debounced 300ms)
+- Result cards get search term highlighting (Meilisearch `matchesPosition` or `formatted`)
+- Filter chips remain (All, Posts, Pages, Books, Videos, Courses)
+- Empty state, loading skeleton, error handling preserved
+
+**Implementation Tasks:**
+1. Docker Compose config for Meilisearch (`docker-compose.yml`)
+2. `src/integrations/meilisearch/client.ts` — Meilisearch client singleton
+3. `src/integrations/meilisearch/sync.ts` — Index management functions
+4. `scripts/initial-index.mjs` — One-time index population
+5. Meilisearch Edge Function for real-time sync
+6. Update `src/lib/search.ts` to use Meilisearch for public queries
+7. Update `src/routes/search.tsx` with typeahead + highlighting
+
+---
+
+### Sprint 2 — Reading Time Estimation
+
+**Implementation:** Add a utility function and display on post cards/articles.
+
+**Utility:**
+```ts
+function estimateReadingTime(text: string, wordsPerMinute = 200): number {
+  const words = text.trim().split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / wordsPerMinute));
+}
+```
+
+**Display:**
+- On post cards in grid: show "X min read" badge
+- On article page: show "X min read" in metadata header alongside date
+
+**Files to modify:**
+- `src/lib/utils.ts` — Add `estimateReadingTime()`
+- `src/components/PostCard.tsx` or equivalent — Add reading time display
+- Post detail route — Add reading time to article header
+
+---
+
+### Sprint 3 — Reader Annotations (Highlights + Notes UI)
+
+**Prerequisite:** `reader_highlights` table already exists (empty, migration applied). `reader_notes` has server functions but no highlight UI.
+
+**Highlights — User Flow:**
+1. User selects text in PDF.js viewer with mouse
+2. Context menu appears: "Highlight" + color picker (yellow/green/blue/pink)
+3. Selection is saved to `reader_highlights` table with page_number, selection_text, color, position_data
+4. Highlighted text is rendered as colored overlay on the PDF canvas
+5. Highlights tab in side panel shows all highlights for the book, grouped by page
+
+**Notes — UI Polish:**
+- Existing: Text input + submit in side panel
+- Upgrade: Add color picker per note, edit capability, pin-to-highlight relationship
+
+**Component Architecture:**
+- `src/components/reader/HighlightLayer.tsx` — Canvas overlay for highlights
+- `src/components/reader/HighlightPicker.tsx` — Color picker + context menu
+- `src/components/reader/AnnotationsPanel.tsx` — Unified side panel tab (combines notes + highlights)
+
+**Data Model (already migrated):**
+```sql
+-- reader_highlights table:
+CREATE TABLE public.reader_highlights (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  book_id UUID NOT NULL REFERENCES public.books(id) ON DELETE CASCADE,
+  page_number INTEGER NOT NULL,
+  color TEXT NOT NULL DEFAULT '#fef08a',
+  selection_text TEXT NOT NULL,
+  position_data JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+```
+
+**Server Functions to Add (in `books-reader.ts` or new `reader-highlights.ts`):**
+```ts
+getReaderHighlights(bookId, userId): ReaderHighlight[]
+addReaderHighlight(bookId, pageNumber, color, selectionText, positionData): ReaderHighlight
+removeReaderHighlight(id): void
+```
+
+**Implementation Tasks:**
+1. Create highlight server functions
+2. Build HighlightLayer component (PDF.js text layer extraction + canvas overlay)
+3. Build HighlightPicker component
+4. Update reader side panel with AnnotationsPanel combining notes + highlights
+5. Wire context menu in PdfViewer
+
+---
+
+### Sprint 3 — Reading Statistics & Streaks
+
+**User Flow:**
+1. Profile page shows reading stats: total pages read, total books completed, current streak, all-time streak
+2. Streak = consecutive days with reading activity (at least 1 page)
+3. Stats computed from `reading_progress` table
+
+**Server Functions:**
+```ts
+getReadingStats(userId): {
+  totalPagesRead: number;
+  totalBooksCompleted: number;
+  currentStreak: number;
+  longestStreak: number;
+  readingDays: { date: string; pages: number }[]; // for charts
+}
+```
+
+**Data:** Uses existing `reading_progress` table. Streak computed by querying distinct dates where progress was updated.
+
+**Profile Page Update:** Add stats cards section between profile header and activity.
+
+---
+
+### Sprint 3 — Book Recommendations
+
+**Strategy:** Simple rule-based recommendations (no ML):
+1. Same category as user's last read/purchased book
+2. By same author as user's most-read author
+3. Featured books in categories user hasn't explored
+
+**Server Function:**
+```ts
+getBookRecommendations(userId, limit = 6): Book[]
+```
+
+**Display:** "Recommended for You" section on books listing page, below the main grid.
+
+---
+
+### Sprint 4 — Coupon/Discount Codes
+
+**Architecture Decision:** AD-014 (Stripe native Coupons API)
+
+**Data Model — New Table:**
+```sql
+CREATE TABLE IF NOT EXISTS public.coupons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stripe_coupon_id TEXT, -- Stripe Coupon ID (nullable until synced)
+  code TEXT NOT NULL UNIQUE,
+  description TEXT,
+  discount_type TEXT NOT NULL CHECK (discount_type IN ('percentage', 'fixed_amount')),
+  discount_value NUMERIC(10, 2) NOT NULL, -- percentage (10 = 10%) or fixed amount ($5.00)
+  max_redemptions INTEGER,
+  current_redemptions INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMPTZ,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+**Coupon Application Flow:**
+1. Admin creates coupon in admin panel (stores locally + optionally in Stripe)
+2. On cart checkout, user enters coupon code
+3. Server validates: exists, active, not expired, not maxed out
+4. If valid, update Stripe Checkout Session with `discounts` array
+5. On successful purchase, increment `current_redemptions`
+
+**Admin Panel:**
+- `/admin/coupons` — ResourceListPage with CRUD for coupons
+- Fields: Code, Type (percentage/fixed), Value, Max redemptions, Expiry, Active toggle
+
+**Cart UI Update:**
+- Add coupon code input field in cart page
+- Show discount line item in cart summary
+- Apply/remove button with validation feedback
+
+**Implementation Tasks:**
+1. Create Supabase migration for `coupons` table
+2. Create `src/lib/coupons.ts` — Server functions (validate, apply, sync with Stripe)
+3. Create `src/routes/admin.coupons.tsx` — Admin CRUD page
+4. Update `src/routes/cart.tsx` — Add coupon input + discount display
+5. Update `src/lib/stripe-checkout.ts` — Pass discount to Stripe Checkout Session
+
+---
+
+### Sprint 4 — Donations Page
+
+**User Flow:**
+1. User visits `/donate` page
+2. Sees preset amounts ($5, $10, $25, $50, custom)
+3. Clicks amount → redirected to Stripe Payment Link or custom Checkout Session
+4. After payment, thank-you message displayed
+
+**Implementation (Minimal):**
+- Static `/donate` route with preset amount buttons
+- Each button creates a Stripe Checkout Session with mode="payment", no product (direct donation)
+- Or: Embed Stripe Payment Link directly as redirect
+
+**Tracker:** Track donation conversions via Google Analytics event on checkout redirect.
+
+---
+
+### Sprint 4 — Purchase History Page
+
+**User Flow:**
+1. User visits `/profile` → sees "My Purchases" section
+2. Lists all books purchased, with: cover, title, purchase date, amount paid
+3. Links to reader for each book
+4. Empty state: "You haven't purchased any books yet. Browse the library."
+
+**Implementation:**
+- Extends existing profile page (`src/routes/profile.tsx`)
+- Server function `getUserPurchaseHistory(userId)` joins purchases + books
+- Reuses existing `LibraryBookCard` component
+
+---
+
+### Sprint 5 — Podcasts Module (Castopod Integration)
+
+**Architecture Decision:** AD-016 (Castopod)
+
+**Integration Strategy:**
+1. Deploy Castopod on a subdomain (e.g., `podcast.bodhimitra.test`) or `/podcasts` path
+2. Main site links to Castopod for full podcast experience
+3. Embed Castopod player widget on relevant pages (episode pages, blog posts)
+4. Cross-link between site and Castopod
+
+**Sitemap Update:** Add podcast episodes to sitemap if Castopod exposes RSS.
+
+**Nav Link:** Add "Podcasts" to public navigation if Castopod URL is configured.
+
+**Castopod Admin:** Managed separately via Castopod's own admin panel (not through Sabbe Satta admin).
+
+---
+
+### Sprint 5 — Course Completion Certificates
+
+**User Flow:**
+1. User completes all lessons in a course (all lesson_progress entries = completed)
+2. A "Download Certificate" button appears on the course page
+3. Certificate is a dynamically generated PDF/image with:
+   - User's name, course title, completion date
+   - Bodhi Mitra branding
+4. Certificate data is stored in `enrollments.completed_at`
+
+**Implementation Options:**
+1. **Server-side PDF (Recommended):** Use a library like `pdf-lib` or `jsPDF` on the server to generate a certificate PDF
+2. **HTML→PDF:** Render HTML template server-side, convert via Puppeteer/Playwright
+3. **Canvas-based:** Generate certificate as an image on the client using HTML Canvas
+
+**Recommendation:** Server-side PDF generation via `pdf-lib` (lightweight, no headless browser needed).
+
+**Data:** No new table. `enrollments` already has `completed_at` column.
+
+**Server Function:**
+```ts
+generateCertificate(courseId, userId): { pdfUrl: string; completedAt: string }
+```
+
+---
+
+### Sprint 5 — Newsletter Automation (Welcome Series)
+
+**User Flow:**
+1. User subscribes via footer or article sidebar
+2. Welcome email sent automatically via Resend
+3. Optionally: sequence of 3 emails (Welcome, Featured Books, Community)
+
+**Implementation:**
+1. Create `src/lib/newsletter-emails.ts` — Server functions for welcome/sequence emails
+2. Integrate with existing `subscribeToNewsletter` — send welcome on subscription
+3. Use Resend's `contact` API to manage audience if needed, or keep simple server function
+
+**Email Templates:**
+```html
+<!-- Welcome email -->
+<h1>Welcome to Bodhi Mitra</h1>
+<p>Dear {{name}},</p>
+<p>Thank you for subscribing to the Bodhi Mitra newsletter...</p>
+<hr/>
+<a href="{{siteUrl}}/books">Browse Books</a>
+```
+
+---
+
+### Sprint 6 — Bundle Optimization
+
+**Current Large Chunks:**
+| Chunk | Size | Issue |
+|-------|------|-------|
+| echarts.js | 2,264 kB | Largest single dependency |
+| admin.index.js | 1,154 kB | Admin dashboard page |
+| index.js (main) | 855 kB | Main app bundle |
+| pdfjs-dist | 1,255 kB (worker) + 846 kB (main) | PDF.js library |
+
+**Actions:**
+1. **Code-split ECharts** — Dynamic import in analytics widgets (only loaded on admin dashboard)
+2. **Code-split PDF.js** — Already lazy-loaded? Verify `PdfViewer` lazy import pattern
+3. **Manual Vite chunks** — Configure `build.rollupOptions.output.manualChunks` to separate vendor chunks
+4. **Remove unused exports** — Tree-shake lucide-react (replace with direct imports)
+5. **Analyze bundle** — Use `vite build --mode development --analyze` or rollup-plugin-visualizer
+
+**Configuration:** Update `vite.config.ts` with chunk splitting rules.
+
+---
+
+### Sprint 6 — Lighthouse Audit
+
+**Target:** >90 on all categories (Performance, Accessibility, Best Practices, SEO)
+
+**Common Fixes to Apply:**
+- Add `loading="lazy"` to all below-fold images
+- Ensure proper `alt` attributes (already done in V1 freeze)
+- Add `rel="preconnect"` for Supabase + external CDN origins
+- Inline critical CSS (via Vite plugin if available)
+- Add `font-display: swap` for all custom fonts
+- Ensure color contrast ratios meet WCAG AA (4.5:1 for text)
+- Add proper `aria-label` to interactive elements
+
+---
+
+### Sprint 6 — Accessibility Audit
+
+**Checklist:**
+- [ ] All form elements have associated labels
+- [ ] All images have meaningful `alt` text
+- [ ] Color contrast meets WCAG AA (checked on light, dark, and sepia themes)
+- [ ] Keyboard navigation works (Tab, Enter, Escape) across all interactive elements
+- [ ] Focus indicators visible (not removed via `outline: none`)
+- [ ] Screen reader announcements for dynamic content (aria-live regions)
+- [ ] Proper heading hierarchy (h1 → h2 → h3, no skipping)
+- [ ] Link text is descriptive (not "click here")
+- [ ] Modal/dialog focus trapping
+- [ ] Touch targets at least 44x44px on mobile
+
+**Tools:**
+- axe DevTools for automated audit
+- VoiceOver (macOS) / NVDA (Windows) for screen reader testing
+- Chrome DevTools Rendering tab for color contrast checking
+
+---
+
+*Last updated: 2026-07-13*
+
+---
+
+## 27. Appendix B — Version 3 Roadmap
+
+### V3 Vision
+
+Transform Sabbe Satta from a **publishing platform** into an **intelligent learning ecosystem**. Every piece of content becomes queryable, discoverable, and personalized. Readers become an active community. The platform meets users everywhere — web, mobile, offline.
+
+### Strategic Themes
+
+| Theme | Description | Sprint |
+|-------|-------------|--------|
+| **AI Foundation** | RAG-powered chat assistant, semantic recommendations, AI-guided reading | 1 |
+| **Community & Engagement** | Discussion forums, Q&A, reading groups, achievements | 2 |
+| **Mobile + Analytics** | React Native (Expo) app, offline reading, push notifications, Umami analytics | 3 |
+
+### V3 Architecture Decisions
+
+#### AD-017: Vercel AI SDK for LLM Integration
+
+**Decision:** Use the Vercel AI SDK as the unified interface for all LLM interactions.
+
+**Rationale:** Provides provider-agnostic abstractions (`useChat`, `streamText`, `embed`). Swap between OpenAI, Anthropic, or local Ollama models by changing a single import. Built-in streaming support for React. Already compatible with React 19 and TanStack Start.
+
+**Provider Strategy (Hybrid):**
+- **Sprint 1**: OpenAI GPT-4o-mini + `text-embedding-3-small` — fastest to production, highest quality
+- **Post-V3**: Add Ollama (Llama 3) fallback for privacy-sensitive content — zero API cost, 100% private
+- **Swapping**: Single import change via Vercel AI SDK provider abstraction
+
+**Date:** 2026-07-12
+
+#### AD-018: pgvector for Vector Storage
+
+**Decision:** Use Supabase pgvector extension for all embedding storage and similarity search.
+
+**Rationale:** pgvector is already available in Supabase PostgreSQL. No new infrastructure, no additional services. RLS policies apply directly to vector queries — content access control is automatic. Cosine similarity search via `match_content_sections` RPC function.
+
+**Schema:**
+```sql
+CREATE TABLE public.content_sections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  content_type TEXT NOT NULL, -- 'book' | 'post' | 'course' | 'video' | 'podcast'
+  content_id UUID NOT NULL,
+  section_index INTEGER NOT NULL,
+  heading TEXT DEFAULT '',
+  body_text TEXT NOT NULL,
+  embedding VECTOR(1536), -- OpenAI text-embedding-3-small
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_content_sections_embedding
+  ON public.content_sections
+  USING ivfflat (embedding vector_cosine_ops)
+  WITH (lists = 100);
+```
+
+**Date:** 2026-07-12
+
+#### AD-019: Custom Supabase Community (Not Discourse/Circle)
+
+**Decision:** Build discussion forums, Q&A, and reading groups as a custom module on Supabase rather than embedding Discourse or using Circle.
+
+**Rationale:** Tight auth integration (no SSO bridge, no session management issues). Unified UI using existing shadcn design system. Supabase Realtime provides live thread updates without additional infrastructure. RLS enforces access control via existing roles and permissions. Zero additional hosting costs.
+
+**Trade-off accepted:** Custom build requires more development effort upfront than embedding Discourse, but eliminates ongoing maintenance of a second platform with separate hosting, auth, and theming.
+
+**Data Model:**
+```sql
+-- Discussion forums
+CREATE TABLE public.discussion_threads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  book_id UUID REFERENCES public.books(id) ON DELETE CASCADE,
+  course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  pinned BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.discussion_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  thread_id UUID NOT NULL REFERENCES public.discussion_threads(id) ON DELETE CASCADE,
+  parent_id UUID REFERENCES public.discussion_posts(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Reading groups
+CREATE TABLE public.reading_groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  book_id UUID NOT NULL REFERENCES public.books(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  max_members INTEGER DEFAULT 20,
+  start_date DATE,
+  schedule TEXT, -- 'weekly' | 'biweekly' | 'monthly'
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.group_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID NOT NULL REFERENCES public.reading_groups(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT DEFAULT 'member' CHECK (role IN ('member', 'moderator', 'creator')),
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(group_id, user_id)
+);
+
+-- Q&A
+CREATE TABLE public.qa_questions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  content_type TEXT NOT NULL,
+  content_id UUID NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT,
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  upvotes INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.qa_answers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  question_id UUID NOT NULL REFERENCES public.qa_questions(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  accepted BOOLEAN DEFAULT false,
+  upvotes INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Achievements
+CREATE TABLE public.achievements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN (
+    'first_book', 'ten_books', 'reading_streak_7', 'reading_streak_30',
+    'first_comment', 'first_discussion', 'helpful_answer', 'course_complete'
+  )),
+  earned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(user_id, type)
+);
+```
+
+**Date:** 2026-07-12
+
+#### AD-020: React Native (Expo) for Mobile
+
+**Decision:** Build native mobile apps using React Native with Expo rather than PWA or Tauri.
+
+**Rationale:** Expo provides native file system APIs (`expo-file-system`) for reliable offline PDF storage — critical for the book reader use case. Push notifications are native-grade reliable (unreliable on iOS PWA). 70-80% code reuse via monorepo shared packages (types, Zod schemas, TanStack Query hooks, Supabase client). TanStack Query and Supabase have first-class React Native support.
+
+**Monorepo Structure:**
+```
+bodhi-mitra/
+  apps/
+    web/           -- Existing TanStack Start app
+    mobile/        -- New Expo app
+  packages/
+    shared/        -- Types, Zod schemas, hooks, API clients
+    ui/            -- Shared design system components
+```
+
+**Code Sharing Strategy:**
+| Layer | What's Shared | How |
+|-------|---------------|-----|
+| Types | Zod schemas, TS interfaces | Direct import from `@bodhi-mitra/shared` |
+| API | TanStack Query hooks, Supabase client | Factory functions in shared package |
+| Business logic | Server functions → REST routes | Web uses server functions, mobile uses REST |
+| UI | Design tokens, colors, icons | CSS variables → Expo theme provider |
+
+**Date:** 2026-07-12
+
+#### AD-021: Umami Self-Hosted Analytics
+
+**Decision:** Deploy Umami (self-hosted via Docker) for privacy-first web analytics alongside existing Google Analytics.
+
+**Rationale:** Umami is lightweight (single Docker container, minimal resource usage), MIT licensed, and provides essential metrics (pageviews, referrers, countries) without cookie banners or GDPR concerns. Keeps Google Analytics for advanced features (conversion tracking, audience insights).
+
+**Product Analytics:** Evaluate PostHog Cloud free tier if user-journey analysis becomes critical, but start with Umami for simplicity.
+
+**Date:** 2026-07-12
+
+#### AD-022: Edge Functions for AI Core
+
+**Decision:** Run all AI-related server logic (content chunking, embedding, RAG queries) in Supabase Edge Functions (Deno) rather than Vercel serverless functions.
+
+**Rationale:** Edge Functions co-locate with Supabase PostgreSQL — minimizing latency for vector queries. Deno runtime supports streaming responses for chat. No overhead of fetching data from Vercel → Supabase → LLM → back. Edge Functions are included in Supabase pricing.
+
+**Exception:** The chat stream to the client can be proxied through Vercel if needed for caching/auth middleware, but the core AI logic (embedding, vector search, prompt assembly) runs in Edge Functions.
+
+**Date:** 2026-07-12
+
+---
+
+### V3 Sprint Roadmap
+
+#### Sprint 1 — AI Foundation (8 weeks) 🥇
+
+**Theme:** Make every piece of content queryable, discoverable, and personalized.
+
+| Task | Effort | Dependencies |
+|------|--------|-------------|
+| 1.1 Enable pgvector + create `content_sections` migration | 1 day | None |
+| 1.2 Build content chunking Edge Function (chunk + embed on content changes) | 3 days | 1.1 |
+| 1.3 Build chat-assistant Edge Function (search + RAG + LLM streaming) | 1 week | 1.2 |
+| 1.4 Create `src/lib/ai/chat.ts` — Chat server functions | 2 days | 1.3 |
+| 1.5 Create `src/lib/ai/recommendations.ts` — Recommendation server functions | 2 days | 1.2 |
+| 1.6 Build `AiChatPanel` component — Floating chat UI with streaming | 1 week | 1.4 |
+| 1.7 Build `BookRecommendations` component — Recommendation carousel | 3 days | 1.5 |
+| 1.8 Add "Ask Bodhi" FAB to public layout | 1 day | 1.6 |
+| 1.9 Seed initial embeddings via one-time script | 1 day | 1.2 |
+| 1.10 Monorepo setup: Turborepo + `packages/shared` extraction | 1 week | None (parallel) |
+| 1.11 Test coverage expansion (AI + existing modules) | Ongoing | — |
+
+**User Flows:**
+- **Chat**: Floating "Ask Bodhi" button → opens chat panel → user asks question → AI searches all content → answers with citations → "Read more" links to source
+- **Recommendations**: Book detail page shows "You might also like" → embedding similarity across categories/author/tags
+- **Reading Guide**: While reading, user asks "Summarize this chapter" → AI searches current book content → generates context-aware summary
+
+**Architecture:**
+```
+Content DB (posts, books, courses, videos)
+  |
+  +-- Database Webhook (on insert/update/delete)
+  |     |
+  |     +-- Edge Function: content-embedder
+  |           |-- Chunk text (langchain/text-splitter)
+  |           |-- Generate embedding (OpenAI / local BGE-m3)
+  |           |-- Store in content_sections with VECTOR(1536)
+  |
+  +-- Edge Function: chat-assistant
+  |     |-- Receives user query from client
+  |     |-- Vector search: match_content_sections RPC
+  |     |-- Assemble prompt: system + top-5 context chunks + user question
+  |     |-- Stream response via Vercel AI SDK
+  |
+  +-- React UI: AiChatPanel
+        |-- useChat() from Vercel AI SDK
+        |-- Streaming markdown responses
+        |-- Citation links back to content
+```
+
+---
+
+#### Sprint 2 — Community & Engagement (6 weeks)
+
+**Theme:** Turn passive readers into an active learning community.
+
+| Task | Effort | Dependencies |
+|------|--------|-------------|
+| 2.1 Create discussion tables migration (threads + posts + RLS) | 1 day | None |
+| 2.2 Create Q&A tables migration (questions + answers + voting) | 1 day | None |
+| 2.3 Create reading groups migration (groups + members) | 1 day | 2.1 |
+| 2.4 Create achievements migration | 1 day | None |
+| 2.5 Build `src/lib/discussions.ts` — Server functions | 3 days | 2.1 |
+| 2.6 Build `src/lib/qa.ts` — Server functions | 2 days | 2.2 |
+| 2.7 Build `src/lib/groups.ts` — Server functions | 2 days | 2.3 |
+| 2.8 Build `src/lib/achievements.ts` — Server functions | 1 day | 2.4 |
+| 2.9 Build Discussion UI: thread list, post composer, nested replies | 1 week | 2.5 |
+| 2.10 Build Q&A UI: question list, voting, accepted answer | 3 days | 2.6 |
+| 2.11 Build Reading Groups UI: creation, member management, schedule | 3 days | 2.7 |
+| 2.12 Build Achievements UI: profile badges, streak display | 2 days | 2.8 |
+| 2.13 Wire into profile, book detail, and course pages | 2 days | 2.9-2.12 |
+| 2.14 Build Expo app scaffold + auth integration | 2 weeks | 1.10 (shared packages) |
+| 2.15 Test coverage expansion | Ongoing | — |
+
+**User Flows:**
+- **Discussions**: Book/course page has "Discussions" tab → threaded conversations with real-time updates → reply to threads → @mention users
+- **Q&A**: Each content page has "Ask a Question" → other users answer → upvote/downvote → asker can mark accepted answer
+- **Reading Groups**: User creates group for a book → sets schedule (weekly chapters) → members discuss on schedule → progress tracked per member
+- **Achievements**: Profile shows badges (First Book Read, 7-Day Streak, Course Complete) → streaks in reading stats
+
+---
+
+#### Sprint 3 — Mobile + Analytics (6 weeks)
+
+**Theme:** Meet users everywhere — mobile reading with offline support.
+
+| Task | Effort | Dependencies |
+|------|--------|-------------|
+| 3.1 Build offline PDF reader with `expo-file-system` | 3 weeks | 2.14 (Expo scaffold) |
+| 3.2 Implement progress sync (online → storage → upload when connected) | 1 week | 3.1 |
+| 3.3 Add push notifications (Expo Push API) | 1 week | 2.14 |
+| 3.4 Deploy Umami on Docker | 0.5 week | None |
+| 3.5 Configure PostHog for product analytics | 0.5 week | None |
+| 3.6 Bundle optimization (code-split ECharts/PDF.js) | 1 week | None |
+| 3.7 Lighthouse audit + fixes (>95 all categories) | 1 week | 3.6 |
+| 3.8 Accessibility audit + fixes | 1 week | None |
+| 3.9 Final test coverage push (target 150+) | 1 week | — |
+| 3.10 Release documentation + CHANGELOG | 1 day | — |
+
+**User Flows:**
+- **Offline Reading**: User downloads book PDF → reads offline on commute → progress syncs when connectivity returns → seamless web/mobile handoff
+- **Push Notifications**: New book in favorite category → reply to discussion → achievement earned → reading streak reminder
+- **Analytics**: Privacy-first pageviews via Umami dashboard → product analytics via PostHog for feature adoption
+
+---
+
+### V3 Targets
+
+| Metric | V2 Baseline | V3 Target |
+|--------|-------------|-----------|
+| TypeScript errors | 0 | 0 |
+| Tests | 62 | 150+ |
+| Lighthouse (all categories) | Unknown | >95 |
+| Content types | 6 | 7 (+ discussion) |
+| AI features | 0 | 3 (chat, recommendations, reading guide) |
+| Community features | Comments only | Full forums + Q&A + reading groups |
+| Mobile apps | None | iOS + Android (Expo) |
+| Analytics | Google Analytics | GA + Umami + PostHog |
+| Test coverage (lib/ modules) | ~15% | >60% |
+| User-facing search | Meilisearch | Meilisearch + semantic search |
+
+---
+
+### V3 Development Timeline
+
+```
+Week 1-4                                     Week 5-8                                     Week 9-14                                   Week 15-20
+┌──────────────────────────────────────────┐ ┌──────────────────────────────────────────┐ ┌──────────────────────────────────────────┐ ┌──────────────────────────────┐
+│ SPRINT 1: AI FOUNDATION                  │ │ SPRINT 1 (cont.) + MONOREPO              │ │ SPRINT 2: COMMUNITY                       │ │ SPRINT 3: MOBILE + ANALYTICS │
+│                                          │ │                                          │ │                                          │ │                              │
+│ 1.1 pgvector + migration                 │ │ 1.6 AiChatPanel UI                      │ │ 2.1-2.4 Migrations (4)                    │ │ 3.1 Offline PDF reader      │
+│ 1.2 Content chunker Edge Function        │ │ 1.7 BookRecommendations UI              │ │ 2.5-2.8 Server functions (4)             │ │ 3.2 Progress sync           │
+│ 1.3 Chat-assistant Edge Function         │ │ 1.8 Ask Bodhi FAB                      │ │ 2.9 Discussion UI                        │ │ 3.3 Push notifications      │
+│ 1.4 Chat server functions                │ │ 1.9 Seed embeddings                    │ │ 2.10 Q&A UI                              │ │ 3.4 Umami deployment        │
+│ 1.5 Recommendations server functions     │ │ 1.10 Monorepo setup                     │ │ 2.11 Reading Groups UI                    │ │ 3.5 PostHog config          │
+│                                          │ │ 1.11 Test coverage                     │ │ 2.12 Achievements UI                      │ │ 3.6 Bundle optimization     │
+│                                          │ │                                          │ │ 2.13 Wire into existing pages             │ │ 3.7 Lighthouse audit        │
+│                                          │ │                                          │ │ 2.14 Expo scaffold + auth                 │ │ 3.8 Accessibility audit     │
+│                                          │ │                                          │ │ 2.15 Test coverage                        │ │ 3.9-3.10 Finalize + release │
+└──────────────────────────────────────────┘ └──────────────────────────────────────────┘ └──────────────────────────────────────────┘ └──────────────────────────────┘
+```
+
+---
+
+### Technology Stack Additions (V3)
+
+| Layer | Technology | Purpose | Sprint |
+|-------|-----------|---------|--------|
+| **AI/LLM** | Vercel AI SDK + OpenAI | LLM integration with provider abstraction | 1 |
+| **Vector DB** | pgvector (Supabase) | Embedding storage + similarity search | 1 |
+| **Content Chunking** | langchain/text-splitter | Smart text splitting for RAG | 1 |
+| **Streaming** | Server-Sent Events (via Edge Functions) | Real-time chat responses | 1 |
+| **Community** | Supabase Realtime | Live discussion updates | 2 |
+| **Mobile** | React Native (Expo SDK 50+) | Cross-platform mobile apps | 2-3 |
+| **Push** | Expo Push Notifications API | Native push notifications | 3 |
+| **Offline** | expo-file-system, expo-sqlite | Offline PDF storage + sync | 3 |
+| **Analytics** | Umami (self-hosted) | Privacy-first web analytics | 3 |
+| **Product Analytics** | PostHog (Cloud) | User behavior, feature flags | 3 |
+| **Monorepo** | Turborepo | Shared packages management | 1 |
+
+---
+
+### V3 External Service Status
+
+| Service | Purpose | Status |
+|---------|---------|--------|
+| OpenAI API | LLM + embeddings | Planned (Sprint 1) |
+| Meilisearch | Full-text search | V2 Sprint 2 (carried forward) |
+| Castopod | Podcast hosting | V2 Sprint 5 (carried forward) |
+| Umami | Web analytics | Planned (Sprint 3) |
+| PostHog | Product analytics | Planned (Sprint 3) |
+| Expo | Mobile framework | Planned (Sprint 2-3) |
+
+---
+
+### V3 Risks & Mitigations
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|-----------|
+| OpenAI API costs exceed budget for LLM queries | Medium | Medium | Implement rate limiting, caching, and Ollama fallback for high-volume queries |
+| pgvector query performance degrades at scale | Low | Medium | Monitor query times, add IVFFlat indexes, consider partitioning by content type |
+| Monorepo migration breaks existing CI/CD | Medium | High | Extract shared packages incrementally, keep existing web app untouched during migration |
+| Expo build complexity for PDF rendering | Medium | High | Prototype PDF rendering in Expo early (Sprint 2), have PWA fallback ready |
+| Community features require moderation effort | Low | Medium | Implement automated content filtering, user reporting, and admin moderation panel |
+
+---
+
+### V3 Success Criteria
+
+1. **AI Chat Assistant** — Users can ask questions about any content and receive accurate, cited answers
+2. **Semantic Recommendations** — Book detail pages show relevant recommendations based on content similarity
+3. **Active Community** — At least 5 discussion threads per book, Q&A with answered questions
+4. **Mobile App** — iOS and Android apps published with offline reading capability
+5. **Performance** — Lighthouse >95, bundle size reduced by 30%+, first contentful paint <1.5s
+6. **Quality** — 0 TypeScript errors, 150+ passing tests, accessibility WCAG AA compliance
+
+---
+
+### 2026-07-11 — Version 3 Planning
+
+- **V3 Roadmap defined** — 3 sprints across AI Foundation, Community & Engagement, and Mobile + Analytics.
+- **5 new Architecture Decisions**: AD-017 (Vercel AI SDK for LLM), AD-018 (pgvector for vector storage), AD-019 (Custom Supabase community), AD-020 (React Native Expo for mobile), AD-021 (Umami self-hosted analytics), AD-022 (Edge Functions for AI core).
+- **Market research completed** across 4 domains: AI/LLM integration (OpenAI vs Claude vs Ollama), Mobile strategy (Expo vs PWA vs Tauri), Community platforms (Custom vs Discourse vs Circle), Analytics (Umami vs Plausible vs PostHog).
+- **V3 targets set**: 3 AI features (chat, recommendations, reading guide), Full community features (forums, Q&A, reading groups), iOS + Android mobile apps, >95 Lighthouse, 150+ tests.
+- **Hybrid AI strategy**: Start with OpenAI + Vercel AI SDK for speed, design for Ollama swap for privacy. pgvector on existing Supabase infrastructure.
+- **Parallel mobile prep**: Monorepo setup (Turborepo + shared packages) starts Sprint 1 alongside AI foundation.
+
+### 2026-07-11 — Version 2 Design
+
+
+- **Complete V2 Design Specifications** compiled for all 6 sprints (see Appendix A):
+  - Sprint 1: Email automation, Test expansion specs
+  - Sprint 2: Meilisearch search, Search UI, Reading time
+  - Sprint 3: Annotations, Reading stats, Book recommendations
+  - Sprint 4: Coupons, Donations, Purchase history
+  - Sprint 5: Podcasts, Course certs, Newsletter automation
+  - Sprint 6: Bundle optimization, Lighthouse, Accessibility
+
+### 2026-07-11 — Version 2 Planning
+
+- **V2 Roadmap defined** — 6 sprints across Foundation Hardening, Search & Discoverability, Reading Experience, Commerce & Monetization, Content Expansion, and Polish & Performance.
+- **4 new Architecture Decisions**: AD-013 (Meilisearch for search), AD-014 (Stripe Native Coupons), AD-015 (Custom PDF Annotations), AD-016 (Castopod for Podcasts).
+- **Market research completed**: Evaluated Meilisearch vs Typesense vs pg_search for bilingual full-text search. Evaluated Castopod for podcasts. Evaluated Stripe Coupons vs Voucherify for discounts. Evaluated annotation libraries for PDF.js.
+- **Targets set**: Reduce `as any` casts from 246 to <50. Expand test count from 62 to 150+. Achieve Lighthouse score >90.
+- See PROJECT.md Section 20 for full sprint breakdown.
 
 ### 2026-07-10 — Stripe Payment Integration
 

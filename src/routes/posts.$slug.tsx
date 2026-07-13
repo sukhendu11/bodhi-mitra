@@ -18,21 +18,26 @@ import { Reveal } from "@/components/Reveal";
 import { TableOfContents } from "@/components/TableOfContents";
 import { parseHeadings, injectHeadingIds } from "@/lib/headings";
 
-
 export const Route = createFileRoute("/posts/$slug")({
   loader: async ({ params }) => {
-    const [post, siteName] = await Promise.all([
-      fetchPostBySlug(params.slug),
-      getSiteName(),
-    ]);
+    const [post, siteName] = await Promise.all([fetchPostBySlug(params.slug), getSiteName()]);
     if (!post) throw notFound();
     return { post, siteName };
   },
   head: ({ loaderData }: Record<string, unknown>) => {
-    const ld = loaderData as {
-      post: { title_en?: string | null; title_bn?: string | null; title?: string | null; excerpt_en?: string | null; excerpt_bn?: string | null; cover_image?: string | null };
-      siteName: string;
-    } | undefined;
+    const ld = loaderData as
+      | {
+          post: {
+            title_en?: string | null;
+            title_bn?: string | null;
+            title?: string | null;
+            excerpt_en?: string | null;
+            excerpt_bn?: string | null;
+            cover_image?: string | null;
+          };
+          siteName: string;
+        }
+      | undefined;
     const p = ld?.post;
     const name = ld?.siteName ?? "Bodhi Mitra";
     const postTitle = p?.title_en || p?.title_bn || p?.title || "Post";
@@ -54,7 +59,10 @@ export const Route = createFileRoute("/posts/$slug")({
   notFoundComponent: () => (
     <div className="mx-auto max-w-2xl px-6 py-32 text-center">
       <h1 className="font-serif text-3xl">This reflection has not been written yet.</h1>
-      <Link to="/" className="mt-6 inline-block border-b border-foreground/40 pb-0.5 text-sm hover:border-foreground">
+      <Link
+        to="/"
+        className="mt-6 inline-block border-b border-foreground/40 pb-0.5 text-sm hover:border-foreground"
+      >
         Return home
       </Link>
     </div>
@@ -94,7 +102,9 @@ function PostPage() {
 
   const locale = lang === "bn" ? "bn-BD" : "en-US";
   const date = new Date(post.created_at).toLocaleDateString(locale, {
-    month: "long", day: "numeric", year: "numeric",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
   });
 
   const isHtml = /<\/?[a-z][\s\S]*>/i.test(content);
@@ -121,145 +131,169 @@ function PostPage() {
     <>
       <ReadingProgress targetRef={articleRef} />
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-        <div className={headings.length > 0 ? "lg:grid lg:grid-cols-[minmax(0,42rem)_1fr] lg:gap-8 xl:gap-12" : ""}>
-      <article ref={articleRef} className="mx-auto lg:mx-0 w-full max-w-2xl">
-      <Reveal delay={0}>
-        <header className="mb-14 text-center">
-          <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">
-            {post.category}
-          </p>
-          <h1 className="font-serif text-4xl md:text-5xl leading-[1.15]">
-            {title}
-          </h1>
-          {a.show_author_bio && (
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
-              <LetterAvatar name={post.author_name} src={post.author_image} size={36} />
-              <span className="inline-flex flex-wrap items-center gap-x-1.5">
-                {t("by")} <span className="italic">{post.author_name}</span>
-                <span className="text-muted-foreground/40" aria-hidden="true">·</span>
-                <span>{date}</span>
-                <span className="text-muted-foreground/40" aria-hidden="true">·</span>
-                <span className="text-xs uppercase tracking-[0.12em] whitespace-nowrap">
-                  {readingTime} {t("min_read")}
-                </span>
-              </span>
-            </div>
-          )}
+        <div
+          className={
+            headings.length > 0
+              ? "lg:grid lg:grid-cols-[minmax(0,42rem)_1fr] lg:gap-8 xl:gap-12"
+              : ""
+          }
+        >
+          <article ref={articleRef} className="mx-auto lg:mx-0 w-full max-w-2xl">
+            <Reveal delay={0}>
+              <header className="mb-14 text-center">
+                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">
+                  {post.category}
+                </p>
+                <h1 className="font-serif text-4xl md:text-5xl leading-[1.15]">{title}</h1>
+                {a.show_author_bio && (
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+                    <LetterAvatar name={post.author_name} src={post.author_image} size={36} />
+                    <span className="inline-flex flex-wrap items-center gap-x-1.5">
+                      {t("by")} <span className="italic">{post.author_name}</span>
+                      <span className="text-muted-foreground/40" aria-hidden="true">
+                        ·
+                      </span>
+                      <span>{date}</span>
+                      <span className="text-muted-foreground/40" aria-hidden="true">
+                        ·
+                      </span>
+                      <span className="text-xs uppercase tracking-[0.12em] whitespace-nowrap">
+                        {readingTime} {t("min_read")}
+                      </span>
+                    </span>
+                  </div>
+                )}
 
-          {post.tags && post.tags.length > 0 && (
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              {post.tags.map((tg) => (
-                <span key={tg} className="text-[0.7rem] uppercase tracking-[0.14em] border border-border/50 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full hover:bg-secondary/90 transition-colors">
-                  {tg}
-                </span>
-              ))}
-            </div>
-          )}
+                {post.tags && post.tags.length > 0 && (
+                  <div className="mt-5 flex flex-wrap justify-center gap-2">
+                    {post.tags.map((tg) => (
+                      <span
+                        key={tg}
+                        className="text-[0.7rem] uppercase tracking-[0.14em] border border-border/50 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full hover:bg-secondary/90 transition-colors"
+                      >
+                        {tg}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-          <div className="mt-5 flex items-center justify-center gap-4">
-            <BookmarkButton postId={post.id} />
-            <TypographyControls settings={typoSettings} onChange={setTypoSettings} />
-          </div>
-        </header>
-      </Reveal>
+                <div className="mt-5 flex items-center justify-center gap-4">
+                  <BookmarkButton resourceId={post.id} resourceType="post" />
+                  <TypographyControls settings={typoSettings} onChange={setTypoSettings} />
+                </div>
+              </header>
+            </Reveal>
 
-      {post.cover_image && (
-        <Reveal delay={0.1}>
-          <div className="mb-14 -mx-6 md:mx-0">
-            <img
-              src={post.cover_image}
-              alt={title}
-              className="w-full aspect-[16/9] object-cover rounded-md"
-            />
-          </div>
-        </Reveal>
-      )}
+            {post.cover_image && (
+              <Reveal delay={0.1}>
+                <div className="mb-14 -mx-6 md:mx-0">
+                  <img
+                    src={post.cover_image}
+                    alt={title}
+                    className="w-full aspect-[16/9] object-cover rounded-md"
+                  />
+                </div>
+              </Reveal>
+            )}
 
-      <Reveal delay={0.15}>
-      {/* Mobile ToC (collapsible, only with headings) */}
-      {headings.length > 0 && <TableOfContents headings={headings} />}
+            <Reveal delay={0.15}>
+              {/* Mobile ToC (collapsible, only with headings) */}
+              {headings.length > 0 && <TableOfContents headings={headings} />}
 
-      <div className={typoClass}>
-      {isHtml ? (
-        <SanitizedHtml html={contentWithIds} />
-      ) : (
-        <div className="prose-mitra">
-          {content.split("\n\n").filter(Boolean).map((p, i, arr) => {
-            const isPullout =
-              post.category === "Buddhist Psychology" &&
-              i === Math.floor(arr.length / 2);
-            return (
-              <div key={i}>
-                <p>{p}</p>
-                {isPullout && <MindfulConnection />}
+              <div className={typoClass}>
+                {isHtml ? (
+                  <SanitizedHtml html={contentWithIds} />
+                ) : (
+                  <div className="prose-mitra">
+                    {content
+                      .split("\n\n")
+                      .filter(Boolean)
+                      .map((p, i, arr) => {
+                        const isPullout =
+                          post.category === "Buddhist Psychology" &&
+                          i === Math.floor(arr.length / 2);
+                        return (
+                          <div key={i}>
+                            <p>{p}</p>
+                            {isPullout && <MindfulConnection />}
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
-            );
-          })}
-        </div>
-      )}
-      </div>
+            </Reveal>
 
-      </Reveal>
+            {(sidebarTitle || sidebarText || newsletterTitle || newsletterText) && (
+              <Reveal delay={0.2}>
+                <aside className="mt-16 grid gap-6 md:grid-cols-2">
+                  {(sidebarTitle || sidebarText) && (
+                    <div className="border border-border rounded-md p-6 bg-secondary/30">
+                      {sidebarTitle && <p className="font-serif text-lg mb-2">{sidebarTitle}</p>}
+                      {sidebarText && (
+                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                          {sidebarText}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {(newsletterTitle || newsletterText) && (
+                    <div className="border border-border rounded-md p-6 bg-secondary/30">
+                      <NewsletterSignup title={newsletterTitle} text={newsletterText} />
+                    </div>
+                  )}
+                </aside>
+              </Reveal>
+            )}
 
-      {(sidebarTitle || sidebarText || newsletterTitle || newsletterText) && (
-        <Reveal delay={0.2}>
-        <aside className="mt-16 grid gap-6 md:grid-cols-2">
-          {(sidebarTitle || sidebarText) && (
-            <div className="border border-border rounded-md p-6 bg-secondary/30">
-              {sidebarTitle && <p className="font-serif text-lg mb-2">{sidebarTitle}</p>}
-              {sidebarText && <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{sidebarText}</p>}
-            </div>
+            <Reveal delay={0.25}>
+              <Comments postId={post.id} />
+            </Reveal>
+
+            {a.show_related_posts && relatedFiltered.length > 0 && (
+              <Reveal delay={0.3}>
+                <section className="mt-20 pt-10 border-t border-border">
+                  <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-6">
+                    {lang === "bn" ? "সম্পর্কিত প্রতিফলন" : "Related reflections"}
+                  </p>
+                  <ul className="space-y-4">
+                    {relatedFiltered.map((r) => {
+                      const rt = pickLocalized(r.title_en ?? r.title, r.title_bn, lang, "Untitled");
+                      return (
+                        <li key={r.id}>
+                          <Link
+                            to="/posts/$slug"
+                            params={{ slug: r.slug }}
+                            className="font-serif text-lg hover:underline"
+                          >
+                            {rt}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              </Reveal>
+            )}
+
+            <Reveal delay={0.35}>
+              <footer className="mt-20 pt-10 border-t border-border text-center">
+                <Link
+                  to="/"
+                  className="text-sm text-muted-foreground hover:text-foreground border-b border-transparent hover:border-foreground/40 pb-0.5"
+                >
+                  {t("back_all")}
+                </Link>
+              </footer>
+            </Reveal>
+          </article>
+
+          {/* Desktop ToC sidebar */}
+          {headings.length > 0 && (
+            <aside className="hidden lg:block">
+              <TableOfContents headings={headings} />
+            </aside>
           )}
-          {(newsletterTitle || newsletterText) && (
-            <div className="border border-border rounded-md p-6 bg-secondary/30">
-              <NewsletterSignup title={newsletterTitle} text={newsletterText} />
-            </div>
-          )}
-        </aside>
-        </Reveal>
-      )}
-
-      <Reveal delay={0.25}>
-        <Comments postId={post.id} />
-      </Reveal>
-
-      {a.show_related_posts && relatedFiltered.length > 0 && (
-        <Reveal delay={0.3}>
-        <section className="mt-20 pt-10 border-t border-border">
-          <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-6">
-            {lang === "bn" ? "সম্পর্কিত প্রতিফলন" : "Related reflections"}
-          </p>
-          <ul className="space-y-4">
-            {relatedFiltered.map((r) => {
-              const rt = pickLocalized(r.title_en ?? r.title, r.title_bn, lang, "Untitled");
-              return (
-                <li key={r.id}>
-                  <Link to="/posts/$slug" params={{ slug: r.slug }} className="font-serif text-lg hover:underline">
-                    {rt}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-        </Reveal>
-      )}
-
-      <Reveal delay={0.35}>
-      <footer className="mt-20 pt-10 border-t border-border text-center">
-        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground border-b border-transparent hover:border-foreground/40 pb-0.5">
-          {t("back_all")}
-        </Link>
-      </footer>
-      </Reveal>
-    </article>
-
-    {/* Desktop ToC sidebar */}
-    {headings.length > 0 && (
-      <aside className="hidden lg:block">
-        <TableOfContents headings={headings} />
-      </aside>
-    )}
         </div>
       </div>
     </>
@@ -273,8 +307,8 @@ function MindfulConnection() {
         ❖ The Mindful Connection
       </p>
       <p className="font-serif text-xl md:text-2xl leading-relaxed text-center text-foreground/90">
-        Here, the Buddhist insight and the clinical evidence meet — two languages
-        pointing toward one quiet truth about the mind.
+        Here, the Buddhist insight and the clinical evidence meet — two languages pointing toward
+        one quiet truth about the mind.
       </p>
     </aside>
   );

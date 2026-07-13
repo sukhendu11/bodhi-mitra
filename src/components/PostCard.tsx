@@ -3,7 +3,6 @@ import type { Post } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { LetterAvatar } from "@/components/LetterAvatar";
 
-
 export function PostCard({ post }: { post: Post }) {
   const { lang, t } = useLang();
   const title = pickLocalized(post.title_en ?? post.title, post.title_bn, lang, "Untitled");
@@ -11,7 +10,9 @@ export function PostCard({ post }: { post: Post }) {
 
   const locale = lang === "bn" ? "bn-BD" : "en-US";
   const date = new Date(post.created_at).toLocaleDateString(locale, {
-    month: "long", day: "numeric", year: "numeric",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
   });
 
   return (
@@ -41,14 +42,15 @@ export function PostCard({ post }: { post: Post }) {
         {title}
       </h3>
       {excerpt && (
-        <p className="mt-3 text-sm text-muted-foreground leading-relaxed line-clamp-2">
-          {excerpt}
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed line-clamp-2">{excerpt}</p>
       )}
       {post.tags && post.tags.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {post.tags.slice(0, 3).map((t) => (
-            <span key={t} className="text-[0.65rem] uppercase tracking-[0.12em] border border-border/50 bg-secondary/60 text-secondary-foreground px-2.5 py-0.5 rounded-full hover:bg-secondary/90 transition-colors">
+            <span
+              key={t}
+              className="text-[0.65rem] uppercase tracking-[0.12em] border border-border/50 bg-secondary/60 text-secondary-foreground px-2.5 py-0.5 rounded-full hover:bg-secondary/90 transition-colors"
+            >
               {t}
             </span>
           ))}
@@ -64,7 +66,6 @@ export function PostCard({ post }: { post: Post }) {
       ) : (
         <p className="mt-4 text-xs text-muted-foreground/80">{date}</p>
       )}
-
     </Link>
   );
 }

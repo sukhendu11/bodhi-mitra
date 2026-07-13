@@ -35,21 +35,20 @@ export interface CourseLesson {
 
 // ─── Public ─────────────────────────────────────────────────────
 
-export const fetchPublishedCourses = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const db = supabase as any;
-    const { data, error } = await db
-      .from("courses")
-      .select("*")
-      .eq("published", true)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return (data ?? []) as Course[];
-  });
+export const fetchPublishedCourses = createServerFn({ method: "GET" }).handler(async () => {
+  const db = supabase as any;
+  const { data, error } = await db
+    .from("courses")
+    .select("*")
+    .eq("published", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Course[];
+});
 
-export const fetchCourseBySlug = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: unknown }) => {
+export const fetchCourseBySlug = createServerFn({ method: "GET" }).handler(
+  async ({ data }: { data: unknown }) => {
     const input = data as { slug: string };
     const db = supabase as any;
     const { data: course, error } = await db
@@ -60,10 +59,11 @@ export const fetchCourseBySlug = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw error;
     return course as Course | null;
-  });
+  },
+);
 
-export const fetchLessons = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: unknown }) => {
+export const fetchLessons = createServerFn({ method: "GET" }).handler(
+  async ({ data }: { data: unknown }) => {
     const input = data as { courseId: string };
     const db = supabase as any;
     const { data: lessons, error } = await db
@@ -74,10 +74,11 @@ export const fetchLessons = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true });
     if (error) throw error;
     return (lessons ?? []) as CourseLesson[];
-  });
+  },
+);
 
-export const fetchLessonBySlug = createServerFn({ method: "GET" })
-  .handler(async ({ data }: { data: unknown }) => {
+export const fetchLessonBySlug = createServerFn({ method: "GET" }).handler(
+  async ({ data }: { data: unknown }) => {
     const input = data as { courseSlug: string; lessonSlug: string };
     const db = supabase as any;
     const { data: course } = await db
@@ -95,7 +96,8 @@ export const fetchLessonBySlug = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw error;
     return lesson as CourseLesson | null;
-  });
+  },
+);
 
 // ─── Enrollment ─────────────────────────────────────────────────
 
@@ -105,10 +107,9 @@ export const enrollInCourse = createServerFn({ method: "POST" })
     const { userId } = context;
     const input = data as { courseId: string };
     const db = supabase as any;
-    const { error } = await db.from("enrollments").upsert(
-      { user_id: userId, course_id: input.courseId },
-      { onConflict: "user_id,course_id" },
-    );
+    const { error } = await db
+      .from("enrollments")
+      .upsert({ user_id: userId, course_id: input.courseId }, { onConflict: "user_id,course_id" });
     if (error) throw error;
     return { enrolled: true };
   });
@@ -151,14 +152,25 @@ export const toggleLessonProgress = createServerFn({ method: "POST" })
     const input = data as { lessonId: string; courseId: string; completed: boolean };
     const db = supabase as any;
     if (input.completed) {
-      const { error } = await db.from("lesson_progress").upsert(
-        { user_id: userId, lesson_id: input.lessonId, course_id: input.courseId, completed: true, completed_at: new Date().toISOString() },
-        { onConflict: "user_id,lesson_id" },
-      );
+      const { error } = await db
+        .from("lesson_progress")
+        .upsert(
+          {
+            user_id: userId,
+            lesson_id: input.lessonId,
+            course_id: input.courseId,
+            completed: true,
+            completed_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,lesson_id" },
+        );
       if (error) throw error;
     } else {
-      const { error } = await db.from("lesson_progress").delete()
-        .eq("user_id", userId).eq("lesson_id", input.lessonId);
+      const { error } = await db
+        .from("lesson_progress")
+        .delete()
+        .eq("user_id", userId)
+        .eq("lesson_id", input.lessonId);
       if (error) throw error;
     }
     return { completed: input.completed };
@@ -177,5 +189,3 @@ export const getLessonProgress = createServerFn({ method: "GET" })
       .eq("course_id", input.courseId);
     return (progress ?? []) as { lesson_id: string; completed: boolean }[];
   });
-
-

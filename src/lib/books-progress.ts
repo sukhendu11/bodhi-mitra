@@ -46,9 +46,7 @@ export async function getReadingProgress(
  * Save or update reading progress for a user on a book.
  * Computes `progress_pct` and `completed` automatically.
  */
-export async function upsertProgress(
-  input: ProgressUpdate,
-): Promise<ReadingProgress> {
+export async function upsertProgress(input: ProgressUpdate): Promise<ReadingProgress> {
   const { userId, bookId, lastPage, totalPages } = input;
 
   // Get total_pages from the book if not provided
@@ -62,9 +60,7 @@ export async function upsertProgress(
     total = book?.pages ?? 0;
   }
 
-  const progressPct = total > 0
-    ? Math.min(100, Math.round((lastPage / total) * 10000) / 100)
-    : 0;
+  const progressPct = total > 0 ? Math.min(100, Math.round((lastPage / total) * 10000) / 100) : 0;
 
   const completed = progressPct >= 100;
 
@@ -110,15 +106,12 @@ export async function upsertProgress(
 
 /* ─── Mark a book as completed ─────────────────────────────────── */
 
-export async function markBookCompleted(
-  userId: string,
-  bookId: string,
-): Promise<ReadingProgress> {
+export async function markBookCompleted(userId: string, bookId: string): Promise<ReadingProgress> {
   return upsertProgress({
     userId,
     bookId,
     lastPage: 999999, // Will get capped to 100%
-    totalPages: 1,     // Ensures progress_pct = 100
+    totalPages: 1, // Ensures progress_pct = 100
   });
 }
 
@@ -126,7 +119,9 @@ export async function markBookCompleted(
 
 export async function getUserProgress(
   userId: string,
-): Promise<(ReadingProgress & { book_slug: string; book_title_en: string; book_title_bn: string })[]> {
+): Promise<
+  (ReadingProgress & { book_slug: string; book_title_en: string; book_title_bn: string })[]
+> {
   const { data, error } = await (supabase as any)
     .from("reading_progress")
     .select("*, books!inner(slug, title_en, title_bn)")
@@ -145,10 +140,7 @@ export async function getUserProgress(
 
 /* ─── Delete reading progress ──────────────────────────────────── */
 
-export async function deleteProgress(
-  userId: string,
-  bookId: string,
-): Promise<void> {
+export async function deleteProgress(userId: string, bookId: string): Promise<void> {
   const { error } = await (supabase as any)
     .from("reading_progress")
     .delete()

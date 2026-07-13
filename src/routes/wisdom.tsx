@@ -5,17 +5,16 @@ import { CategoryPage } from "@/components/CategoryPage";
 
 export const Route = createFileRoute("/wisdom")({
   loader: async () => {
-    const [settings, page] = await Promise.all([
-      fetchSiteSettings(),
-      fetchPageBySlug("wisdom"),
-    ]);
+    const [settings, page] = await Promise.all([fetchSiteSettings(), fetchPageBySlug("wisdom")]);
     return { settings, page };
   },
   head: ({ loaderData }) => {
     const settings = loaderData?.settings;
     const page = loaderData?.page;
     const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
-    const metaDesc = page?.meta_description_en || "Reflections on mindfulness, philosophy, and the quiet art of living.";
+    const metaDesc =
+      page?.meta_description_en ||
+      "Reflections on mindfulness, philosophy, and the quiet art of living.";
     const pageTitle = page?.title_en || "Wisdom";
     return {
       meta: [

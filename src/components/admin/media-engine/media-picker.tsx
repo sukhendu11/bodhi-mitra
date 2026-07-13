@@ -6,15 +6,7 @@ import { UppyUploader, type UploadResult } from "@/components/admin/uppy-uploade
 import { MEDIA_BUCKETS, formatFileSize } from "./types";
 import type { MediaPickerResult, MediaPickerOptions } from "./types";
 import type { MediaAsset } from "@/lib/media";
-import {
-  Image,
-  Search,
-  FileText,
-  Upload,
-  X,
-  Check,
-  Loader2,
-} from "lucide-react";
+import { Image, Search, FileText, Upload, X, Check, Loader2 } from "lucide-react";
 
 /* ─── Props ──────────────────────────────────────────────────────── */
 
@@ -27,12 +19,7 @@ interface MediaPickerProps {
 
 /* ─── Media Picker ───────────────────────────────────────────────── */
 
-export function MediaPicker({
-  open,
-  options,
-  onSelect,
-  onClose,
-}: MediaPickerProps) {
+export function MediaPicker({ open, options, onSelect, onClose }: MediaPickerProps) {
   const [tab, setTab] = useState<"browse" | "upload">("browse");
   const [search, setSearch] = useState("");
   const [bucket, setBucket] = useState(options?.bucket ?? "");
@@ -132,9 +119,7 @@ export function MediaPicker({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 shrink-0">
-          <h3 className="text-sm font-semibold">
-            {options?.title || "Select Media"}
-          </h3>
+          <h3 className="text-sm font-semibold">{options?.title || "Select Media"}</h3>
           <button
             onClick={onClose}
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
@@ -283,9 +268,7 @@ export function MediaPicker({
 
                         {/* Filename */}
                         <div className="px-2.5 py-2">
-                          <p className="text-[0.55rem] font-medium truncate">
-                            {asset.filename}
-                          </p>
+                          <p className="text-[0.55rem] font-medium truncate">{asset.filename}</p>
                           <p className="text-[0.45rem] text-muted-foreground mt-0.5">
                             {formatFileSize(asset.file_size)}
                           </p>

@@ -11,7 +11,10 @@ const dict = {
   nav_practice: { en: "Practice", bn: "Practice" },
   nav_buddhism: { en: "Buddhism", bn: "Buddhism" },
   nav_mind: { en: "Mind (Buddhist Psychology)", bn: "Mind (Buddhist Psychology)" },
-  nav_wellness: { en: "Wellness (Mental Health Approach)", bn: "Wellness (Mental Health Approach)" },
+  nav_wellness: {
+    en: "Wellness (Mental Health Approach)",
+    bn: "Wellness (Mental Health Approach)",
+  },
   nav_today: { en: "Today (Modern Relevance)", bn: "Today (Modern Relevance)" },
   nav_books: { en: "Books", bn: "Books" },
   nav_about: { en: "About", bn: "About" },
@@ -42,7 +45,10 @@ const dict = {
   // Post / generic system labels — English only
   by: { en: "By", bn: "By" },
   back_all: { en: "← Back to all reflections", bn: "← Back to all reflections" },
-  no_posts: { en: "No reflections here yet. Return soon.", bn: "No reflections here yet. Return soon." },
+  no_posts: {
+    en: "No reflections here yet. Return soon.",
+    bn: "No reflections here yet. Return soon.",
+  },
   load_error: { en: "Unable to load posts right now.", bn: "Unable to load posts right now." },
 
   // Search
@@ -132,6 +138,6 @@ export function pickLocalized(
   lang: Lang,
   fallback = "",
 ): string {
-  if (lang === "bn") return (bnValue?.trim() || enValue?.trim() || fallback);
-  return (enValue?.trim() || bnValue?.trim() || fallback);
+  if (lang === "bn") return bnValue?.trim() || enValue?.trim() || fallback;
+  return enValue?.trim() || bnValue?.trim() || fallback;
 }

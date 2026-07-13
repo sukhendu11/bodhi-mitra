@@ -67,26 +67,40 @@ export async function fetchAllComments(
 
 /** Get comment stats. */
 export async function getCommentStats(): Promise<{
-  total: number; today: number; thisWeek: number; withReplies: number;
+  total: number;
+  today: number;
+  thisWeek: number;
+  withReplies: number;
 }> {
   const dbc = db();
   const { count: total } = await dbc.from("comments").select("*", { count: "exact", head: true });
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
-  const { count: today } = await dbc.from("comments").select("*", { count: "exact", head: true })
+  const { count: today } = await dbc
+    .from("comments")
+    .select("*", { count: "exact", head: true })
     .gte("created_at", todayStart.toISOString());
 
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - 7);
   weekStart.setHours(0, 0, 0, 0);
-  const { count: thisWeek } = await dbc.from("comments").select("*", { count: "exact", head: true })
+  const { count: thisWeek } = await dbc
+    .from("comments")
+    .select("*", { count: "exact", head: true })
     .gte("created_at", weekStart.toISOString());
 
-  const { count: withReplies } = await dbc.from("comments").select("*", { count: "exact", head: true })
+  const { count: withReplies } = await dbc
+    .from("comments")
+    .select("*", { count: "exact", head: true })
     .not("parent_id", "is", null);
 
-  return { total: total ?? 0, today: today ?? 0, thisWeek: thisWeek ?? 0, withReplies: withReplies ?? 0 };
+  return {
+    total: total ?? 0,
+    today: today ?? 0,
+    thisWeek: thisWeek ?? 0,
+    withReplies: withReplies ?? 0,
+  };
 }
 
 /** Admin: delete any comment (bypasses RLS via service role). */
@@ -105,8 +119,10 @@ export const adminUpdateComment = createServerFn({ method: "POST" })
   .handler(async ({ data }: { data: unknown }) => {
     const input = data as { id: string; comment_text: string };
     if (!input.comment_text?.trim()) throw new Error("Comment text is required");
-    if (input.comment_text.trim().length > 2000) throw new Error("Comment is too long (max 2000 characters)");
-    const { error } = await supabaseAdmin.from("comments")
+    if (input.comment_text.trim().length > 2000)
+      throw new Error("Comment is too long (max 2000 characters)");
+    const { error } = await supabaseAdmin
+      .from("comments")
       .update({ comment_text: input.comment_text.trim(), updated_at: new Date().toISOString() })
       .eq("id", input.id);
     if (error) throw new Error(error.message);
@@ -137,8 +153,11 @@ export async function fetchContactMessages(
 ): Promise<PaginatedContactMessages> {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-  let query = db().from("contact_messages").select("*", { count: "exact" })
-    .order("created_at", { ascending: false }).range(from, to);
+  let query = db()
+    .from("contact_messages")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, to);
   if (options?.unreadOnly) query = query.eq("read", false);
   if (options?.search?.trim()) {
     const q = options.search.trim().replace(/[%_]/g, "");
@@ -160,7 +179,10 @@ export const deleteContactMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ data }: { data: unknown }) => {
     const input = data as { id: string };
-    const { error } = await (supabaseAdmin as any).from("contact_messages").delete().eq("id", input.id);
+    const { error } = await (supabaseAdmin as any)
+      .from("contact_messages")
+      .delete()
+      .eq("id", input.id);
     if (error) throw new Error(error.message);
     return { success: true };
   });
@@ -168,7 +190,12 @@ export const deleteContactMessage = createServerFn({ method: "POST" })
 /** Get contact message stats. */
 export async function getContactMessageStats(): Promise<{ total: number; unread: number }> {
   const dbc = db();
-  const { count: total } = await dbc.from("contact_messages").select("*", { count: "exact", head: true });
-  const { count: unread } = await dbc.from("contact_messages").select("*", { count: "exact", head: true }).eq("read", false);
+  const { count: total } = await dbc
+    .from("contact_messages")
+    .select("*", { count: "exact", head: true });
+  const { count: unread } = await dbc
+    .from("contact_messages")
+    .select("*", { count: "exact", head: true })
+    .eq("read", false);
   return { total: total ?? 0, unread: unread ?? 0 };
 }

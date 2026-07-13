@@ -1,7 +1,14 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { fetchCourseBySlug, fetchLessonBySlug, fetchLessons, toggleLessonProgress, getLessonProgress, type CourseLesson } from "@/lib/courses";
+import {
+  fetchCourseBySlug,
+  fetchLessonBySlug,
+  fetchLessons,
+  toggleLessonProgress,
+  getLessonProgress,
+  type CourseLesson,
+} from "@/lib/courses";
 import { getSiteName } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { useAuthSession } from "@/hooks/useAuth";
@@ -10,9 +17,7 @@ import { CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2, ArrowLeft } fr
 export const Route = createFileRoute("/courses/$courseSlug/lessons/$lessonSlug")({
   loader: () => getSiteName(),
   head: ({ loaderData }) => ({
-    meta: [
-      { title: `Lesson — ${loaderData}` },
-    ],
+    meta: [{ title: `Lesson — ${loaderData}` }],
   }),
   component: LessonPage,
 });
@@ -54,12 +59,19 @@ function LessonPage() {
     staleTime: 30_000,
   });
 
-  const completedLessonIds = new Set(progress.filter((p: any) => p.completed).map((p: any) => p.lesson_id));
+  const completedLessonIds = new Set(
+    progress.filter((p: any) => p.completed).map((p: any) => p.lesson_id),
+  );
 
   const mutation = useMutation({
-    mutationFn: () => (doToggle as any)({
-      data: { lessonId: lesson?.id, courseId: course?.id, completed: !completedLessonIds.has(lesson?.id) },
-    }),
+    mutationFn: () =>
+      (doToggle as any)({
+        data: {
+          lessonId: lesson?.id,
+          courseId: course?.id,
+          completed: !completedLessonIds.has(lesson?.id),
+        },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lesson-progress", course?.id] });
     },
@@ -69,7 +81,12 @@ function LessonPage() {
   const prevLesson = currentIndex > 0 ? lessons[currentIndex - 1] : null;
   const nextLesson = currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null;
 
-  if (isLoading) return <div className="mx-auto max-w-4xl px-6 py-20"><div className="h-64 bg-secondary/20 animate-pulse" /></div>;
+  if (isLoading)
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-20">
+        <div className="h-64 bg-secondary/20 animate-pulse" />
+      </div>
+    );
   if (!course || !lesson) throw notFound();
 
   const title = pickLocalized(lesson.title_en, lesson.title_bn, lang, "Untitled");
@@ -79,8 +96,12 @@ function LessonPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-14 md:py-20">
       {/* Breadcrumb */}
-      <Link to={`/courses/${courseSlug}` as any} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors mb-6">
-        <ArrowLeft className="h-3 w-3" /> {pickLocalized(course.title_en, course.title_bn, lang, "Course")}
+      <Link
+        to={`/courses/${courseSlug}` as any}
+        className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors mb-6"
+      >
+        <ArrowLeft className="h-3 w-3" />{" "}
+        {pickLocalized(course.title_en, course.title_bn, lang, "Course")}
       </Link>
 
       {/* Lesson header */}
@@ -122,27 +143,40 @@ function LessonPage() {
 
       {/* Content */}
       <div className="prose-mitra max-w-none">
-        {content.split("\n\n").filter(Boolean).map((p, i) => (
-          <p key={i} className="mb-4 leading-relaxed">{p}</p>
-        ))}
+        {content
+          .split("\n\n")
+          .filter(Boolean)
+          .map((p, i) => (
+            <p key={i} className="mb-4 leading-relaxed">
+              {p}
+            </p>
+          ))}
       </div>
 
       {/* Navigation */}
       <div className="flex items-center justify-between mt-12 pt-8 border-t border-border/40">
         {prevLesson ? (
-          <Link to={`/courses/${courseSlug}/lessons/${prevLesson.slug}` as any}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            to={`/courses/${courseSlug}/lessons/${prevLesson.slug}` as any}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ChevronLeft className="h-3.5 w-3.5" />
             {pickLocalized(prevLesson.title_en, prevLesson.title_bn, lang, "Previous")}
           </Link>
-        ) : <div />}
+        ) : (
+          <div />
+        )}
         {nextLesson ? (
-          <Link to={`/courses/${courseSlug}/lessons/${nextLesson.slug}` as any}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            to={`/courses/${courseSlug}/lessons/${nextLesson.slug}` as any}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
             {pickLocalized(nextLesson.title_en, nextLesson.title_bn, lang, "Next")}
             <ChevronRight className="h-3.5 w-3.5" />
           </Link>
-        ) : <div />}
+        ) : (
+          <div />
+        )}
       </div>
     </div>
   );

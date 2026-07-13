@@ -40,7 +40,10 @@ export interface ResourceDefinition<TData extends { id: string }, TForm extends 
   defaultValues: TForm;
 
   /** Form content component to render inside the FormDrawer */
-  FormContent: React.ComponentType<{ form: UseFormReturn<TForm>; resource: ResourceDefinition<TData, TForm> }>;
+  FormContent: React.ComponentType<{
+    form: UseFormReturn<TForm>;
+    resource: ResourceDefinition<TData, TForm>;
+  }>;
 
   /** (Optional) Stats configuration */
   stats?: {

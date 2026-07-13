@@ -3,10 +3,10 @@ import type { ContentTypeDefinition } from "./content-type";
 /* ─── Relationship Types ──────────────────────────────────────────── */
 
 export type RelationshipType =
-  | "belongs_to"      // Foreign key on this table (e.g., post belongs to category)
-  | "has_many"        // Foreign key on other table (e.g., course has many lessons)
-  | "has_one"         // One-to-one via foreign key on other table
-  | "many_to_many";   // Junction table (e.g., posts and tags via post_tags)
+  | "belongs_to" // Foreign key on this table (e.g., post belongs to category)
+  | "has_many" // Foreign key on other table (e.g., course has many lessons)
+  | "has_one" // One-to-one via foreign key on other table
+  | "many_to_many"; // Junction table (e.g., posts and tags via post_tags)
 
 /* ─── Relationship Definition ─────────────────────────────────────── */
 
@@ -58,9 +58,7 @@ export function registerRelationships(
 /**
  * Get all relationships for a content type.
  */
-export function getRelationships(
-  contentTypeName: string,
-): RelationshipDef[] {
+export function getRelationships(contentTypeName: string): RelationshipDef[] {
   return Array.from(relationshipRegistry.get(contentTypeName)?.values() ?? []);
 }
 
@@ -104,34 +102,25 @@ export interface RelationshipQuery {
 /**
  * Build a query config for fetching related data based on relationship definition.
  */
-export function buildRelationshipQuery(
-  rel: RelationshipDef,
-  parentId?: string,
-): RelationshipQuery {
+export function buildRelationshipQuery(rel: RelationshipDef, parentId?: string): RelationshipQuery {
   switch (rel.type) {
     case "belongs_to":
       return {
-        filter: rel.foreignKey
-          ? { [rel.foreignKey]: parentId }
-          : undefined,
+        filter: rel.foreignKey ? { [rel.foreignKey]: parentId } : undefined,
         select: "*",
       };
 
     case "has_many":
     case "has_one":
       return {
-        filter: rel.relatedForeignKey
-          ? { [rel.relatedForeignKey]: parentId }
-          : undefined,
+        filter: rel.relatedForeignKey ? { [rel.relatedForeignKey]: parentId } : undefined,
         select: "*",
       };
 
     case "many_to_many":
       // For many-to-many, you need a join query
       return {
-        filter: rel.throughThisKey
-          ? { [rel.throughThisKey]: parentId }
-          : undefined,
+        filter: rel.throughThisKey ? { [rel.throughThisKey]: parentId } : undefined,
         select: `*, ${rel.through}(*)`,
       };
 

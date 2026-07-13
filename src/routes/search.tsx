@@ -58,7 +58,11 @@ function SearchPage() {
   }
 
   function setTypeFilter(t: ContentType | "all") {
-    navigate({ to: "/search", search: { q, type: t === "all" ? undefined : t, page: 1 }, replace: true });
+    navigate({
+      to: "/search",
+      search: { q, type: t === "all" ? undefined : t, page: 1 },
+      replace: true,
+    });
   }
 
   function goToPage(p: number) {
@@ -73,7 +77,10 @@ function SearchPage() {
           Search
         </h1>
         <form
-          onSubmit={(e) => { e.preventDefault(); doSearch(inputValue); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            doSearch(inputValue);
+          }}
           className="relative"
         >
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -128,7 +135,8 @@ function SearchPage() {
 
           {/* Results count */}
           <p className="text-xs text-muted-foreground mb-6">
-            {total} result{total !== 1 ? "s" : ""} for "<span className="text-foreground font-medium">{q}</span>"
+            {total} result{total !== 1 ? "s" : ""} for "
+            <span className="text-foreground font-medium">{q}</span>"
             {type && <span> in {type}s</span>}
           </p>
 
@@ -137,7 +145,9 @@ function SearchPage() {
             <div className="text-center py-16 border border-border/60">
               <Search className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
               <p className="text-sm text-muted-foreground">No results found.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Try different keywords or browse the site.</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Try different keywords or browse the site.
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -181,24 +191,42 @@ function ResultCard({ result }: { result: SearchResult }) {
   const Icon = typeIcons[result.type] ?? FileText;
 
   return (
-    <Link to={result.url as any} className="group block border border-border/60 p-5 hover:border-foreground/30 hover:bg-secondary/10 transition-all duration-200">
+    <Link
+      to={result.url as any}
+      className="group block border border-border/60 p-5 hover:border-foreground/30 hover:bg-secondary/10 transition-all duration-200"
+    >
       <div className="flex items-start gap-4">
         {result.thumbnail && (
           <div className="hidden sm:block w-20 h-20 shrink-0 bg-secondary/20 overflow-hidden">
-            <img src={result.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+            <img
+              src={result.thumbnail}
+              alt={result.title || "Search result thumbnail"}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
           </div>
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1.5">
             <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground font-medium">{result.type}</span>
+            <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground font-medium">
+              {result.type}
+            </span>
           </div>
-          <h3 className="text-base font-medium text-foreground group-hover:text-foreground/80 transition-colors line-clamp-2">{result.title}</h3>
+          <h3 className="text-base font-medium text-foreground group-hover:text-foreground/80 transition-colors line-clamp-2">
+            {result.title}
+          </h3>
           {result.excerpt && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{result.excerpt}</p>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+              {result.excerpt}
+            </p>
           )}
           <p className="text-[0.6rem] text-muted-foreground/50 mt-2">
-            {new Date(result.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+            {new Date(result.created_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })}
           </p>
         </div>
       </div>

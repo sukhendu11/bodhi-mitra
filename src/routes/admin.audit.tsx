@@ -29,11 +29,15 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const ACTION_STYLES: Record<string, string> = {
-  role_changed: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 border-blue-300/50",
+  role_changed:
+    "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 border-blue-300/50",
   user_deleted: "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300 border-red-300/50",
-  user_invited: "bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300 border-green-300/50",
-  bulk_role_changed: "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300 border-purple-300/50",
-  bulk_users_deleted: "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border-rose-300/50",
+  user_invited:
+    "bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300 border-green-300/50",
+  bulk_role_changed:
+    "bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300 border-purple-300/50",
+  bulk_users_deleted:
+    "bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border-rose-300/50",
 };
 
 function timeAgo(dateStr: string): string {
@@ -73,10 +77,7 @@ function AdminAuditPage() {
 
   const [filterAction, setFilterAction] = useState("");
 
-  const actionTypes = useMemo(
-    () => [...new Set(log.map((e) => e.action))],
-    [log],
-  );
+  const actionTypes = useMemo(() => [...new Set(log.map((e) => e.action))], [log]);
 
   const filtered = useMemo(
     () => log.filter((e) => (filterAction ? e.action === filterAction : true)),
@@ -93,7 +94,8 @@ function AdminAuditPage() {
         cell: ({ getValue }) => (
           <span
             className={`text-[0.55rem] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap ${
-              ACTION_STYLES[getValue()] || "bg-neutral-100 text-neutral-700 border-neutral-300/50 dark:bg-neutral-800 dark:text-neutral-300"
+              ACTION_STYLES[getValue()] ||
+              "bg-neutral-100 text-neutral-700 border-neutral-300/50 dark:bg-neutral-800 dark:text-neutral-300"
             }`}
           >
             {ACTION_LABELS[getValue()] || getValue()}
@@ -104,7 +106,10 @@ function AdminAuditPage() {
         header: "Actor",
         enableSorting: true,
         cell: ({ getValue }) => (
-          <span className="text-xs font-mono text-foreground/80 truncate max-w-[160px] block" title={getValue()}>
+          <span
+            className="text-xs font-mono text-foreground/80 truncate max-w-[160px] block"
+            title={getValue()}
+          >
             {getValue()}
           </span>
         ),
@@ -117,7 +122,10 @@ function AdminAuditPage() {
             {row.original.target_user_id ? (
               <>
                 <span className="text-muted-foreground/40 text-xs">→</span>
-                <span className="text-xs font-mono text-muted-foreground truncate max-w-[160px] block" title={row.original.target_user_id}>
+                <span
+                  className="text-xs font-mono text-muted-foreground truncate max-w-[160px] block"
+                  title={row.original.target_user_id}
+                >
                   {row.original.target_user_id}
                 </span>
               </>
@@ -213,7 +221,10 @@ function AdminAuditPage() {
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-14 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse" />
+            <div
+              key={i}
+              className="h-14 bg-white dark:bg-zinc-900 rounded-xl border border-border/60 animate-pulse"
+            />
           ))}
         </div>
       ) : filtered.length === 0 ? (

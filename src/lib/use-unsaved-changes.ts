@@ -11,9 +11,7 @@ import { useBlocker } from "@tanstack/react-router";
  * @param message - Optional custom warning message (default: "You have unsaved changes. Are you sure you want to leave?").
  */
 export function useUnsavedChanges(isDirty: boolean, message?: string) {
-  const warning =
-    message ||
-    "You have unsaved changes. Are you sure you want to leave?";
+  const warning = message || "You have unsaved changes. Are you sure you want to leave?";
 
   useBlocker({
     shouldBlockFn: () => {

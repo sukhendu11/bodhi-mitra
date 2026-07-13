@@ -23,7 +23,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    captureError(error, { component: "ErrorBoundary", metadata: { componentStack: errorInfo.componentStack } });
+    captureError(error, {
+      component: "ErrorBoundary",
+      metadata: { componentStack: errorInfo.componentStack },
+    });
     this.props.onError?.(error, errorInfo);
   }
 
@@ -32,12 +35,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       if (this.props.fallback) {
         return this.props.fallback;
       }
-      return (
-        <ErrorPage
-          error={this.state.error}
-          reset={() => this.setState({ error: null })}
-        />
-      );
+      return <ErrorPage error={this.state.error} reset={() => this.setState({ error: null })} />;
     }
     return this.props.children;
   }

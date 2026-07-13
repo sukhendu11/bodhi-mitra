@@ -4,7 +4,9 @@ import { ROLE_LEVELS } from "@/hooks/useAuth";
 export const refineAccessControlProvider: AccessControlProvider = {
   can: async ({ resource, action }) => {
     const { supabase } = await import("@/integrations/supabase/client");
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user || !resource || !action) return { can: false };
 
     const { isHardcodedAdmin } = await import("@/hooks/useAuth");

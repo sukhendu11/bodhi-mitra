@@ -62,9 +62,7 @@ export interface SubscriptionConfig<T extends Record<string, unknown>> {
   enabled?: boolean;
 }
 
-export function useSubscription<T extends Record<string, unknown>>(
-  config: SubscriptionConfig<T>,
-) {
+export function useSubscription<T extends Record<string, unknown>>(config: SubscriptionConfig<T>) {
   const { table, schema = "public", event = "*", filter, onPayload, enabled = true } = config;
   const handlerRef = useRef(onPayload);
   handlerRef.current = onPayload;
@@ -105,7 +103,14 @@ export function useAdminNotifications() {
     table: "comments",
     event: "INSERT",
     onPayload: async (payload) => {
-      const record = payload.new as { id: string; post_id?: string; name?: string; email?: string; content?: string; created_at?: string };
+      const record = payload.new as {
+        id: string;
+        post_id?: string;
+        name?: string;
+        email?: string;
+        content?: string;
+        created_at?: string;
+      };
       const postTitle = record.post_id ? await fetchPostTitle(record.post_id) : "a post";
       setNotifications((prev) => [
         {
@@ -133,9 +138,7 @@ export function useAdminNotifications() {
         {
           id: `reply-${record.id}`,
           type: "comment_reply",
-          message: record.name
-            ? `${record.name} replied to a comment`
-            : `New reply to a comment`,
+          message: record.name ? `${record.name} replied to a comment` : `New reply to a comment`,
           link: "/admin/comments",
           created_at: record.created_at ?? new Date().toISOString(),
           read: false,
@@ -158,11 +161,7 @@ export function useAdminNotifications() {
 
 async function fetchPostTitle(postId: string): Promise<string> {
   try {
-    const { data } = await supabase
-      .from("posts")
-      .select("title_en")
-      .eq("id", postId)
-      .maybeSingle();
+    const { data } = await supabase.from("posts").select("title_en").eq("id", postId).maybeSingle();
     return data?.title_en ?? "a post";
   } catch {
     return "a post";

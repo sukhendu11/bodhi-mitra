@@ -40,7 +40,9 @@ export function NewsletterSignup({ title, text, compact }: NewsletterSignupProps
 
   if (status === "success") {
     return (
-      <div className={`flex items-start gap-3 ${compact ? "mt-3" : "p-4 bg-secondary/20 border border-border/60"}`}>
+      <div
+        className={`flex items-start gap-3 ${compact ? "mt-3" : "p-4 bg-secondary/20 border border-border/60"}`}
+      >
         <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-medium text-foreground">{message}</p>
@@ -58,7 +60,11 @@ export function NewsletterSignup({ title, text, compact }: NewsletterSignupProps
   return (
     <form onSubmit={handleSubmit} className={compact ? "mt-3" : ""}>
       {title && <p className="font-serif text-lg mb-2">{title}</p>}
-      {text && <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line mb-4">{text}</p>}
+      {text && (
+        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line mb-4">
+          {text}
+        </p>
+      )}
       <div className="flex gap-2">
         <input
           type="email"
@@ -78,9 +84,7 @@ export function NewsletterSignup({ title, text, compact }: NewsletterSignupProps
           Subscribe
         </button>
       </div>
-      {status === "error" && (
-        <p className="mt-2 text-xs text-destructive">{message}</p>
-      )}
+      {status === "error" && <p className="mt-2 text-xs text-destructive">{message}</p>}
     </form>
   );
 }

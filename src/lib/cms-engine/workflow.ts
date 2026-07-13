@@ -1,5 +1,10 @@
 import type { ContentTypeDefinition, WorkflowDef } from "./content-type";
-import { getValidNextStatuses, getStatusLabel, getStatusColor, isValidTransition } from "./content-type";
+import {
+  getValidNextStatuses,
+  getStatusLabel,
+  getStatusColor,
+  isValidTransition,
+} from "./content-type";
 
 /* ─── Workflow Helpers ────────────────────────────────────────────── */
 

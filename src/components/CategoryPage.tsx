@@ -50,8 +50,18 @@ export function CategoryPage({
     );
   }
 
-  const eyebrow = pickLocalized(page?.title_en || titleEn, page?.title_bn || titleBn, lang, titleEn);
-  const heading = pickLocalized(page?.header_en || titleEn, page?.header_bn || titleBn, lang, titleEn);
+  const eyebrow = pickLocalized(
+    page?.title_en || titleEn,
+    page?.title_bn || titleBn,
+    lang,
+    titleEn,
+  );
+  const heading = pickLocalized(
+    page?.header_en || titleEn,
+    page?.header_bn || titleBn,
+    lang,
+    titleEn,
+  );
   const description = pickLocalized(
     page?.body_en || defaultDescriptionEn,
     page?.body_bn || defaultDescriptionBn,
@@ -64,15 +74,23 @@ export function CategoryPage({
       {page?.banner_url && (
         <Reveal delay={0}>
           <div className="mb-12 -mx-6 md:mx-0 overflow-hidden rounded-md">
-            <img src={page.banner_url} alt={heading} className="w-full aspect-[21/9] object-cover" />
+            <img
+              src={page.banner_url}
+              alt={heading}
+              className="w-full aspect-[21/9] object-cover"
+            />
           </div>
         </Reveal>
       )}
       <Reveal delay={0.1}>
         <header className="max-w-2xl mb-20">
-          <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">{eyebrow}</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">
+            {eyebrow}
+          </p>
           <h1 className="font-serif text-4xl md:text-5xl leading-tight">{heading}</h1>
-          <p className="mt-6 text-muted-foreground leading-relaxed text-lg whitespace-pre-line">{description}</p>
+          <p className="mt-6 text-muted-foreground leading-relaxed text-lg whitespace-pre-line">
+            {description}
+          </p>
         </header>
       </Reveal>
       <PostGrid category={category} />

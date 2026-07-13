@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { fetchPublishedBooks, type Book } from "@/lib/books";
+import { getUserBookmarks, type BookmarkedItem } from "@/lib/bookmarks";
 import { fetchPageBySlug } from "@/lib/pages";
 import { fetchSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized, type Lang } from "@/lib/i18n";
@@ -14,17 +15,15 @@ import { getPdfReaderUrl, purchaseBookAction } from "@/lib/books-reader";
 import { addToCart } from "@/lib/cart";
 import { AuthModal } from "@/components/AuthModal";
 import { StarRating } from "@/components/StarRating";
+import { BookmarkButton } from "@/components/BookmarkButton";
 
-const PdfViewer = lazy(() => import("@/components/PdfViewer").then((m) => ({ default: m.PdfViewer })));
+const PdfViewer = lazy(() =>
+  import("@/components/PdfViewer").then((m) => ({ default: m.PdfViewer })),
+);
 import { BookSkeleton } from "@/components/BookSkeleton";
 import { Reveal } from "@/components/Reveal";
 import { SearchBar } from "@/components/SearchBar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   BookOpen,
@@ -34,6 +33,7 @@ import {
   Loader2,
   Search,
   BookMarked,
+  BookmarkCheck,
   ChevronRight,
   Lock,
   X,
@@ -45,17 +45,16 @@ import {
 
 export const Route = createFileRoute("/books")({
   loader: async () => {
-    const [settings, page] = await Promise.all([
-      fetchSiteSettings(),
-      fetchPageBySlug("books"),
-    ]);
+    const [settings, page] = await Promise.all([fetchSiteSettings(), fetchPageBySlug("books")]);
     return { settings, page };
   },
   head: ({ loaderData }) => {
     const settings = loaderData?.settings;
     const page = loaderData?.page;
     const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
-    const metaDesc = page?.meta_description_en || "A small shelf of companions — books we return to, and the ones we recommend without hesitation.";
+    const metaDesc =
+      page?.meta_description_en ||
+      "A small shelf of companions — books we return to, and the ones we recommend without hesitation.";
     const pageTitle = page?.title_en || "Books";
     return {
       meta: [
@@ -85,32 +84,70 @@ function BooksPage() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const pageSize = 12;
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [showBookmarked, setShowBookmarked] = useState(false);
+
+  /* ── Bookmarked books query ──────────────────────────────────── */
+  const doGetUserBookmarks = useServerFn(getUserBookmarks);
+  const { data: bookmarkedData, isLoading: bookmarkLoading } = useQuery({
+    queryKey: ["user-bookmarks"],
+    queryFn: () => (doGetUserBookmarks as any)(),
+    enabled: !!user && showBookmarked,
+    staleTime: 30_000,
+  });
+
+  const bookmarkedBooks: Book[] = useMemo(() => {
+    if (!bookmarkedData) return [];
+    return (bookmarkedData as BookmarkedItem[])
+      .filter((b) => b.resourceType === "book")
+      .map((b) => ({
+        id: b.resourceId,
+        slug: b.slug,
+        title_en: b.titleEn ?? "",
+        title_bn: b.titleBn ?? "",
+        author_name: b.authorName ?? "",
+        description_en: "",
+        description_bn: "",
+        cover_image: b.coverImage ?? "",
+        pdf_url: b.pdfUrl ?? "",
+        pdf_file_size: 0,
+        price: b.price ?? 0,
+        is_free: b.isFree ?? false,
+        pages: b.pages ?? 0,
+        isbn: "",
+        status: "published" as const,
+        featured: b.featured ?? false,
+        tags: [],
+        category: "",
+        meta_description_en: "",
+        meta_description_bn: "",
+        sort_order: 0,
+        avg_rating: b.avgRating ?? 0,
+        total_ratings: b.totalRatings ?? 0,
+        created_at: b.createdAt || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+  }, [bookmarkedData]);
 
   /* ── Infinite query ──────────────────────────────────────────── */
 
-  const {
-    data,
-    isLoading,
-    isError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ["public-books-infinite", search],
-    queryFn: async ({ pageParam = 1 }) => {
-      const result = await fetchPublishedBooks(pageParam, pageSize, {
-        search: search || undefined,
-      });
-      return { ...result, page: pageParam };
-    },
-    getNextPageParam: (lastPage) => {
-      const totalPages = Math.max(1, Math.ceil(lastPage.total / pageSize));
-      return lastPage.page < totalPages ? lastPage.page + 1 : undefined;
-    },
-    initialPageParam: 1,
-    staleTime: 60_000,
-  });
+  const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: ["public-books-infinite", search, categoryFilter],
+      queryFn: async ({ pageParam = 1 }) => {
+        const result = await fetchPublishedBooks(pageParam, pageSize, {
+          search: search || undefined,
+          category: categoryFilter || undefined,
+        });
+        return { ...result, page: pageParam };
+      },
+      getNextPageParam: (lastPage) => {
+        const totalPages = Math.max(1, Math.ceil(lastPage.total / pageSize));
+        return lastPage.page < totalPages ? lastPage.page + 1 : undefined;
+      },
+      initialPageParam: 1,
+      staleTime: 60_000,
+    });
 
   const { data: pageData } = useQuery({
     queryKey: ["public-page", "books"],
@@ -122,7 +159,9 @@ function BooksPage() {
   const total = data?.pages[0]?.total ?? 0;
 
   const header = pageData?.header_en || "Books";
-  const description = pageData?.body_en || "A small shelf of companions — books we return to, and the ones we recommend without hesitation.";
+  const description =
+    pageData?.body_en ||
+    "A small shelf of companions — books we return to, and the ones we recommend without hesitation.";
   const banner = pageData?.banner_url || "";
 
   /* ── Infinite scroll observer ────────────────────────────────── */
@@ -252,45 +291,49 @@ function BooksPage() {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
 
   /* ── Open PDF reader ─────────────────────────────────────────── */
-  const openPdfReader = useCallback(async (book: Book) => {
-    if (!book.pdf_url) {
-      toast.error("No PDF available for this book.");
-      return;
-    }
-    setPdfLoading(true);
-    setPdfExpired(false);
-    try {
-      const result = await (doGetPdfReaderUrl as any)({
-        data: { bookId: book.id, bucketPath: book.pdf_url },
-      });
-      setReaderBook(book);
-      setPdfReaderUrl(result.signedUrl);
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to open reader.",
-      );
-    } finally {
-      setPdfLoading(false);
-    }
-  }, [doGetPdfReaderUrl]);
+  const openPdfReader = useCallback(
+    async (book: Book) => {
+      if (!book.pdf_url) {
+        toast.error("No PDF available for this book.");
+        return;
+      }
+      setPdfLoading(true);
+      setPdfExpired(false);
+      try {
+        const result = await (doGetPdfReaderUrl as any)({
+          data: { bookId: book.id, bucketPath: book.pdf_url },
+        });
+        setReaderBook(book);
+        setPdfReaderUrl(result.signedUrl);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to open reader.");
+      } finally {
+        setPdfLoading(false);
+      }
+    },
+    [doGetPdfReaderUrl],
+  );
 
   /* ── Eye icon click handler ──────────────────────────────────── */
-  const handleEyeClick = useCallback(async (book: Book) => {
-    if (!user) {
-      // Store the pending book in a ref (separate from pendingAction to avoid closure issues)
-      pendingBookRef.current = book;
-      setAuthModalOpen(true);
-      return;
-    }
+  const handleEyeClick = useCallback(
+    async (book: Book) => {
+      if (!user) {
+        // Store the pending book in a ref (separate from pendingAction to avoid closure issues)
+        pendingBookRef.current = book;
+        setAuthModalOpen(true);
+        return;
+      }
 
-    // Free books or already-owned: open PDF directly
-    if (book.is_free || (await checkOwnership(user.id, book.id))) {
-      await openPdfReader(book);
-    } else {
-      // Premium, not purchased: show purchase modal
-      setPurchaseBook(book);
-    }
-  }, [user, openPdfReader]);
+      // Free books or already-owned: open PDF directly
+      if (book.is_free || (await checkOwnership(user.id, book.id))) {
+        await openPdfReader(book);
+      } else {
+        // Premium, not purchased: show purchase modal
+        setPurchaseBook(book);
+      }
+    },
+    [user, openPdfReader],
+  );
 
   /* ── Purchase confirmation ───────────────────────────────────── */
   const handlePurchaseConfirm = useCallback(async () => {
@@ -322,9 +365,7 @@ function BooksPage() {
       await openPdfReader(purchased);
     } catch (err) {
       setPurchaseLoading(false);
-      toast.error(
-        err instanceof Error ? err.message : "Purchase failed.",
-      );
+      toast.error(err instanceof Error ? err.message : "Purchase failed.");
     }
   }, [purchaseBook, user, doPurchase, queryClient, openPdfReader]);
 
@@ -334,7 +375,11 @@ function BooksPage() {
       <Reveal delay={0}>
         <div className="text-center mb-16">
           {banner && (
-            <img src={banner} alt="" className="w-full aspect-[21/9] object-cover rounded-md mb-10" />
+            <img
+              src={banner}
+              alt="Books page banner"
+              className="w-full aspect-[21/9] object-cover rounded-md mb-10"
+            />
           )}
           <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">
             {lang === "bn" ? "বই" : "Books"}
@@ -353,8 +398,74 @@ function BooksPage() {
 
       {/* Search */}
       <Reveal delay={0.1}>
-        <div className="max-w-md mx-auto mb-12">
+        <div className="max-w-md mx-auto mb-8">
           <SearchBar value={search} onChange={handleSearchChange} />
+        </div>
+      </Reveal>
+
+      {/* Filter chips: categories + bookmarked toggle */}
+      <Reveal delay={0.15}>
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+          <button
+            onClick={() => {
+              setCategoryFilter("");
+              setShowBookmarked(false);
+            }}
+            className={`px-3 py-1.5 text-[0.55rem] font-medium uppercase tracking-[0.1em] rounded-full border transition-all ${
+              !categoryFilter && !showBookmarked
+                ? "bg-foreground text-background border-foreground"
+                : "border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30"
+            }`}
+          >
+            All
+          </button>
+          {[
+            "general",
+            "buddhist-psychology",
+            "wisdom",
+            "meditation",
+            "philosophy",
+            "sutra",
+            "commentary",
+            "biography",
+            "reference",
+          ].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                setCategoryFilter(categoryFilter === cat ? "" : cat);
+                setShowBookmarked(false);
+              }}
+              className={`px-3 py-1.5 text-[0.55rem] font-medium uppercase tracking-[0.1em] rounded-full border transition-all ${
+                categoryFilter === cat && !showBookmarked
+                  ? "bg-foreground text-background border-foreground"
+                  : "border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30"
+              }`}
+            >
+              {cat.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+            </button>
+          ))}
+
+          {/* Divider */}
+          <span className="w-px h-5 bg-border/60 mx-1" />
+
+          {/* Bookmarked toggle */}
+          {user && (
+            <button
+              onClick={() => {
+                setShowBookmarked(!showBookmarked);
+                setCategoryFilter("");
+              }}
+              className={`px-3 py-1.5 text-[0.55rem] font-medium uppercase tracking-[0.1em] rounded-full border transition-all inline-flex items-center gap-1.5 ${
+                showBookmarked
+                  ? "bg-amber-500 text-white border-amber-500"
+                  : "border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30"
+              }`}
+            >
+              <BookmarkCheck className="h-3 w-3" />
+              Bookmarked
+            </button>
+          )}
         </div>
       </Reveal>
 
@@ -365,9 +476,7 @@ function BooksPage() {
       {isError && (
         <div className="text-center py-16">
           <BookOpen className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-          <p className="text-lg text-muted-foreground mb-4">
-            Unable to load books right now.
-          </p>
+          <p className="text-lg text-muted-foreground mb-4">Unable to load books right now.</p>
           <button
             onClick={() => refetch()}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors"
@@ -377,58 +486,120 @@ function BooksPage() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!isLoading && !isError && books.length === 0 && (
+      {/* Bookmarked view: loading */}
+      {showBookmarked && bookmarkLoading && <BookSkeleton count={4} />}
+
+      {/* Bookmarked view: empty */}
+      {showBookmarked && !bookmarkLoading && bookmarkedBooks.length === 0 && (
         <div className="text-center py-16">
-          <BookOpen className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-          <p className="text-lg text-muted-foreground">
-            {search ? "No books match your search." : "No books available yet."}
+          <BookmarkCheck className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+          <p className="text-lg text-muted-foreground">No bookmarked books yet.</p>
+          <p className="text-xs text-muted-foreground/60 mt-2">
+            Click the bookmark icon on any book to save it here.
           </p>
-          {search && (
-            <button
-              onClick={() => handleSearchChange("")}
-              className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
-            >
-              Clear search
-            </button>
-          )}
         </div>
       )}
 
-      {/* Book grid */}
-      {!isLoading && !isError && books.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-          {books.map((book, i) => (
-            <Reveal key={book.id} delay={Math.min(i * 0.04, 0.3)}>
-              <BookCard
-                book={book}
-                lang={lang}
-                userId={user?.id}
-                onEyeClick={handleEyeClick}
-                requireAuth={requireAuth}
-                pdfLoading={pdfLoading}
-                onAddToCart={(bookId) => cartMutation.mutate(bookId)}
-                isCartAdding={cartMutation.isPending}
-              />
-            </Reveal>
-          ))}
-        </div>
-      )}
-
-      {/* Infinite scroll sentinel */}
-      <div ref={loadMoreRef} className="h-10 mt-8 flex items-center justify-center">
-        {isFetchingNextPage && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading more books…
+      {/* Bookmarked view: grid */}
+      {showBookmarked && !bookmarkLoading && bookmarkedBooks.length > 0 && (
+        <div>
+          <p className="text-xs text-muted-foreground/60 text-center mb-6">
+            {bookmarkedBooks.length} bookmarked {bookmarkedBooks.length === 1 ? "book" : "books"}
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            {bookmarkedBooks.map((book, i) => (
+              <Reveal key={book.id} delay={Math.min(i * 0.04, 0.3)}>
+                <BookCard
+                  book={book}
+                  lang={lang}
+                  userId={user?.id}
+                  onEyeClick={handleEyeClick}
+                  requireAuth={requireAuth}
+                  pdfLoading={pdfLoading}
+                  onAddToCart={(bookId) => cartMutation.mutate(bookId)}
+                  isCartAdding={cartMutation.isPending}
+                />
+              </Reveal>
+            ))}
           </div>
-        )}
-        {!hasNextPage && books.length > 0 && !isLoading && (
-          <p className="text-xs text-muted-foreground/50">
-            You've reached the end{total > 0 && ` — ${total} book${total !== 1 ? "s" : ""} total`}
-          </p>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Regular view: only render when NOT showing bookmarked */}
+      {!showBookmarked && (
+        <>
+          {/* Loading state */}
+          {isLoading && <BookSkeleton count={8} />}
+
+          {/* Error state with retry */}
+          {isError && (
+            <div className="text-center py-16">
+              <BookOpen className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+              <p className="text-lg text-muted-foreground mb-4">Unable to load books right now.</p>
+              <button
+                onClick={() => refetch()}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors"
+              >
+                <Loader2 className="h-3 w-3" /> Retry
+              </button>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!isLoading && !isError && books.length === 0 && (
+            <div className="text-center py-16">
+              <BookOpen className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+              <p className="text-lg text-muted-foreground">
+                {search ? "No books match your search." : "No books available yet."}
+              </p>
+              {search && (
+                <button
+                  onClick={() => handleSearchChange("")}
+                  className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Book grid */}
+          {!isLoading && !isError && books.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+              {books.map((book, i) => (
+                <Reveal key={book.id} delay={Math.min(i * 0.04, 0.3)}>
+                  <BookCard
+                    book={book}
+                    lang={lang}
+                    userId={user?.id}
+                    onEyeClick={handleEyeClick}
+                    requireAuth={requireAuth}
+                    pdfLoading={pdfLoading}
+                    onAddToCart={(bookId) => cartMutation.mutate(bookId)}
+                    isCartAdding={cartMutation.isPending}
+                  />
+                </Reveal>
+              ))}
+            </div>
+          )}
+
+          {/* Infinite scroll sentinel */}
+          <div ref={loadMoreRef} className="h-10 mt-8 flex items-center justify-center">
+            {isFetchingNextPage && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading more books…
+              </div>
+            )}
+            {!hasNextPage && books.length > 0 && !isLoading && (
+              <p className="text-xs text-muted-foreground/50">
+                You've reached the end
+                {total > 0 && ` — ${total} book${total !== 1 ? "s" : ""} total`}
+              </p>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Auth Modal */}
       <AuthModal
@@ -444,11 +615,17 @@ function BooksPage() {
       />
 
       {/* ── Purchase Modal ──────────────────────────────────────── */}
-      <Dialog open={!!purchaseBook} onOpenChange={(open) => { if (!open) setPurchaseBook(null); }}>
+      <Dialog
+        open={!!purchaseBook}
+        onOpenChange={(open) => {
+          if (!open) setPurchaseBook(null);
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl text-center">
-              {purchaseBook && pickLocalized(purchaseBook.title_en, purchaseBook.title_bn, lang, "Untitled")}
+              {purchaseBook &&
+                pickLocalized(purchaseBook.title_en, purchaseBook.title_bn, lang, "Untitled")}
             </DialogTitle>
           </DialogHeader>
 
@@ -457,7 +634,11 @@ function BooksPage() {
               {/* Cover thumbnail */}
               <div className="mx-auto w-32 aspect-[3/4] bg-gradient-to-br from-secondary/40 to-secondary/10 rounded-lg overflow-hidden border border-border/50">
                 {purchaseBook.cover_image ? (
-                  <img src={purchaseBook.cover_image} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={purchaseBook.cover_image}
+                    alt={pickLocalized(purchaseBook.title_en, purchaseBook.title_bn, lang, "Book cover")}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <BookOpen className="h-10 w-10 text-muted-foreground/20" />
@@ -493,11 +674,18 @@ function BooksPage() {
                   className="w-full px-6 py-3 text-sm font-medium bg-foreground text-background rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity inline-flex items-center justify-center gap-2"
                 >
                   {purchaseLoading ? (
-                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…</>
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…
+                    </>
                   ) : purchaseBook.is_free ? (
-                    <><Download className="h-3.5 w-3.5" /> Get Free Copy</>
+                    <>
+                      <Download className="h-3.5 w-3.5" /> Get Free Copy
+                    </>
                   ) : (
-                    <><Lock className="h-3.5 w-3.5" /> Purchase — ${Number(purchaseBook.price).toFixed(2)}</>
+                    <>
+                      <Lock className="h-3.5 w-3.5" /> Purchase — $
+                      {Number(purchaseBook.price).toFixed(2)}
+                    </>
                   )}
                 </button>
                 <button
@@ -514,14 +702,37 @@ function BooksPage() {
       </Dialog>
 
       {/* ── PDF Reader Modal ────────────────────────────────────── */}
-      <Dialog open={!!pdfReaderUrl} onOpenChange={(open) => { if (!open) { setPdfReaderUrl(null); setReaderBook(null); setPdfExpired(false); } }}>
+      <Dialog
+        open={!!pdfReaderUrl}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPdfReaderUrl(null);
+            setReaderBook(null);
+            setPdfExpired(false);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col p-0 gap-0">
           {pdfReaderUrl && (
-            <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh] text-muted-foreground text-sm">Loading reader…</div>}>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground text-sm">
+                  Loading reader…
+                </div>
+              }
+            >
               <PdfViewer
                 url={pdfReaderUrl}
-                title={readerBook ? pickLocalized(readerBook.title_en, readerBook.title_bn, lang, "Untitled") : undefined}
-                onClose={() => { setPdfReaderUrl(null); setReaderBook(null); setPdfExpired(false); }}
+                title={
+                  readerBook
+                    ? pickLocalized(readerBook.title_en, readerBook.title_bn, lang, "Untitled")
+                    : undefined
+                }
+                onClose={() => {
+                  setPdfReaderUrl(null);
+                  setReaderBook(null);
+                  setPdfExpired(false);
+                }}
               />
             </Suspense>
           )}
@@ -660,6 +871,11 @@ function BookCard({
             )}
           </div>
 
+          {/* Bookmark button — bottom-right */}
+          <div className="absolute bottom-3 right-3 z-10">
+            <BookmarkButton resourceId={book.id} resourceType="book" compact />
+          </div>
+
           {/* Access state badge — always visible */}
           <div className="absolute top-3 right-3 z-10">
             {isUnlocked ? (
@@ -703,7 +919,9 @@ function BookCard({
           search={{ search: "", page: 1 }}
           className="block"
         >
-          <p className="text-sm font-medium line-clamp-1 font-serif hover:text-primary transition-colors">{title}</p>
+          <p className="text-sm font-medium line-clamp-1 font-serif hover:text-primary transition-colors">
+            {title}
+          </p>
           <p className="text-[0.6rem] text-muted-foreground mt-1">{author}</p>
         </Link>
 

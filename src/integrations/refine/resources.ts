@@ -71,4 +71,9 @@ export const refineResources: IResourceItem[] = [
     list: "/admin/audit",
     meta: { label: "Audit Log" },
   },
+  {
+    name: "purchases",
+    list: "/admin/orders",
+    meta: { label: "Orders" },
+  },
 ];

@@ -1,6 +1,13 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPublicNavItems, safeBuildNavTree, getNavCache, setNavCache, type NavTreeNode, type NavItem } from "@/lib/navigation";
+import {
+  fetchPublicNavItems,
+  safeBuildNavTree,
+  getNavCache,
+  setNavCache,
+  type NavTreeNode,
+  type NavItem,
+} from "@/lib/navigation";
 import { useSiteSettings, type SiteConfig } from "@/lib/siteSettings";
 import { useLang } from "@/lib/i18n";
 
@@ -38,6 +45,7 @@ export interface LayoutState {
   footerText: string;
   copyright: string;
   contactEmail: string;
+  contactPhone: string;
 
   /* ─── Social links ──────────────────────────────────────────── */
   social: {
@@ -60,9 +68,51 @@ export interface LayoutState {
 // Used only when Supabase AND cache both fail.
 
 const FALLBACK_NAV_ITEMS: NavItem[] = [
-  { id: "fb-home",  parent_id: null, type: "internal", label_en: "Home",    label_bn: "Home",    url: "", slug: "/",        icon: "", sort_order: 0, visible: true, location: "header", created_at: "", updated_at: "" },
-  { id: "fb-about", parent_id: null, type: "internal", label_en: "About",   label_bn: "About",   url: "", slug: "/about",   icon: "", sort_order: 1, visible: true, location: "header", created_at: "", updated_at: "" },
-  { id: "fb-contact",parent_id: null, type: "internal", label_en: "Contact", label_bn: "Contact", url: "", slug: "/contact", icon: "", sort_order: 2, visible: true, location: "header", created_at: "", updated_at: "" },
+  {
+    id: "fb-home",
+    parent_id: null,
+    type: "internal",
+    label_en: "Home",
+    label_bn: "Home",
+    url: "",
+    slug: "/",
+    icon: "",
+    sort_order: 0,
+    visible: true,
+    location: "header",
+    created_at: "",
+    updated_at: "",
+  },
+  {
+    id: "fb-about",
+    parent_id: null,
+    type: "internal",
+    label_en: "About",
+    label_bn: "About",
+    url: "",
+    slug: "/about",
+    icon: "",
+    sort_order: 1,
+    visible: true,
+    location: "header",
+    created_at: "",
+    updated_at: "",
+  },
+  {
+    id: "fb-contact",
+    parent_id: null,
+    type: "internal",
+    label_en: "Contact",
+    label_bn: "Contact",
+    url: "",
+    slug: "/contact",
+    icon: "",
+    sort_order: 2,
+    visible: true,
+    location: "header",
+    created_at: "",
+    updated_at: "",
+  },
 ];
 
 const FALLBACK_TREE = safeBuildNavTree(FALLBACK_NAV_ITEMS);
@@ -92,6 +142,7 @@ function defaultLayout(): LayoutState {
     footerText: "Where ancient wisdom meets modern psychology.",
     copyright: "\u00a9 Bodhi Mitra. All rights reserved.",
     contactEmail: "",
+    contactPhone: "",
     social: { ...EMPTY_SOCIAL },
     headerVisible: true,
     mode: "light",
@@ -106,10 +157,7 @@ function pickLocalized(valEn: string, valBn: string | null | undefined, lang: "e
   return lang === "bn" && valBn?.trim() ? valBn.trim() : valEn;
 }
 
-function buildFooterSections(
-  navTree: NavTreeNode[],
-  lang: "en" | "bn",
-): FooterSection[] {
+function buildFooterSections(navTree: NavTreeNode[], lang: "en" | "bn"): FooterSection[] {
   const dropdownGroups = navTree.filter((n) => n.type === "dropdown");
   const topLevelLinks = navTree.filter((n) => n.type !== "dropdown");
 
@@ -118,7 +166,7 @@ function buildFooterSections(
       title: lang === "bn" && g.label_bn?.trim() ? g.label_bn.trim() : g.label_en,
       links: g.children.map((c) => ({
         key: c.id,
-        to: c.type === "external" ? c.url : (c.slug || "/"),
+        to: c.type === "external" ? c.url : c.slug || "/",
         label: lang === "bn" && c.label_bn?.trim() ? c.label_bn.trim() : c.label_en,
         external: c.type === "external",
       })),
@@ -127,7 +175,7 @@ function buildFooterSections(
       title: lang === "bn" ? "\u0985\u09a8\u09cd\u09ac\u09c7\u09b7\u09a3" : "Explore",
       links: topLevelLinks.map((n) => ({
         key: n.id,
-        to: n.type === "external" ? n.url : (n.slug || "/"),
+        to: n.type === "external" ? n.url : n.slug || "/",
         label: lang === "bn" && n.label_bn?.trim() ? n.label_bn.trim() : n.label_en,
         external: n.type === "external",
       })),
@@ -146,9 +194,13 @@ function normalizeLayout(
 ): LayoutState {
   const effectiveNav = navTree.length > 0 ? navTree : FALLBACK_TREE;
 
-  const brandName = pickLocalized(settings.branding.site_name_en, settings.branding.site_name_bn, lang) || "Bodhi Mitra";
+  const brandName =
+    pickLocalized(settings.branding.site_name_en, settings.branding.site_name_bn, lang) ||
+    "Bodhi Mitra";
   const footerText = pickLocalized(settings.footer.text_en, settings.footer.text_bn, lang);
-  const copyrightTpl = pickLocalized(settings.footer.copyright_en, settings.footer.copyright_bn, lang) || "\u00a9 Bodhi Mitra. All rights reserved.";
+  const copyrightTpl =
+    pickLocalized(settings.footer.copyright_en, settings.footer.copyright_bn, lang) ||
+    "\u00a9 Bodhi Mitra. All rights reserved.";
   const copyright = copyrightTpl.replace("{year}", String(new Date().getFullYear()));
 
   const dropdownGroups = effectiveNav.filter((n) => n.type === "dropdown");
@@ -167,6 +219,7 @@ function normalizeLayout(
     footerText,
     copyright,
     contactEmail: settings.contact.email || "",
+    contactPhone: settings.contact.phone || "",
     social: {
       facebook: settings.social.facebook || "",
       twitter: settings.social.twitter || "",
@@ -238,9 +291,5 @@ export function LayoutProvider({ children }: LayoutProviderProps) {
 
   const layout = normalizeLayout(navTree ?? FALLBACK_TREE, settings, lang);
 
-  return (
-    <LayoutContext.Provider value={layout}>
-      {children}
-    </LayoutContext.Provider>
-  );
+  return <LayoutContext.Provider value={layout}>{children}</LayoutContext.Provider>;
 }

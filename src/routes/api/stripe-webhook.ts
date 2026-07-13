@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getStripeClient } from "@/integrations/stripe/server";
 import { STRIPE_WEBHOOK_SECRET } from "@/integrations/stripe/config";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendPurchaseConfirmation } from "@/lib/purchase-emails";
 
 export const Route = createFileRoute("/api/stripe-webhook")({
   server: {
@@ -30,14 +31,17 @@ export const Route = createFileRoute("/api/stripe-webhook")({
 
           const db = supabaseAdmin as any;
 
+          const purchasedBookIds: string[] = [];
+
           if (isCartCheckout && userId) {
             // Cart checkout: purchase all books using book_ids from metadata
             const bookIdsStr = session.metadata?.book_ids;
             if (bookIdsStr) {
               const bookIdList = bookIdsStr.split(",");
-              const perItemAmount = bookIdList.length > 0
-                ? Math.round((amountPaid / bookIdList.length) * 100) / 100
-                : amountPaid;
+              const perItemAmount =
+                bookIdList.length > 0
+                  ? Math.round((amountPaid / bookIdList.length) * 100) / 100
+                  : amountPaid;
 
               for (const bid of bookIdList) {
                 const { error } = await db.from("purchases").insert({
@@ -48,6 +52,8 @@ export const Route = createFileRoute("/api/stripe-webhook")({
                 });
                 if (error && error.code !== "23505") {
                   console.error("[stripe-webhook] cart checkout item insert failed", error);
+                } else if (!error) {
+                  purchasedBookIds.push(bid);
                 }
               }
             }
@@ -71,6 +77,22 @@ export const Route = createFileRoute("/api/stripe-webhook")({
             });
             if (error && error.code !== "23505") {
               console.error("[stripe-webhook] purchase insert failed", error);
+            } else if (!error) {
+              purchasedBookIds.push(bookId);
+            }
+          }
+
+          // Send purchase confirmation emails (fire-and-forget — don't block response)
+          if (userId && purchasedBookIds.length > 0) {
+            for (const pid of purchasedBookIds) {
+              sendPurchaseConfirmation({
+                userId,
+                bookId: pid,
+                amountPaid: amountPaid / purchasedBookIds.length,
+                isFree: false,
+              }).catch((err) => {
+                console.error("[stripe-webhook] Failed to send purchase email:", err);
+              });
             }
           }
         }

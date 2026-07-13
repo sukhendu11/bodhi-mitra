@@ -45,10 +45,7 @@ async function resolveUserRole(
   return roleRow.role as AppRole;
 }
 
-export function checkPermission(
-  role: string | null | undefined,
-  minRole: AppRole,
-): boolean {
+export function checkPermission(role: string | null | undefined, minRole: AppRole): boolean {
   return getRoleLevel(role) >= getRoleLevel(minRole);
 }
 

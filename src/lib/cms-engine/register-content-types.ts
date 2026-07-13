@@ -1,6 +1,20 @@
-import { registerContentType, BASIC_WORKFLOW, EXTENDED_WORKFLOW, BILINGUAL_TITLE_FIELDS, BILINGUAL_DESCRIPTION_FIELDS, SEO_METADATA_FIELDS, TIMESTAMP_FIELDS } from "./content-type";
+import {
+  registerContentType,
+  BASIC_WORKFLOW,
+  EXTENDED_WORKFLOW,
+  BILINGUAL_TITLE_FIELDS,
+  BILINGUAL_DESCRIPTION_FIELDS,
+  SEO_METADATA_FIELDS,
+  TIMESTAMP_FIELDS,
+} from "./content-type";
 import type { ContentTypeDefinition } from "./content-type";
-import { registerRelationships, CATEGORY_RELATIONSHIP, TAGS_RELATIONSHIP, authorRelationship, childrenRelationship } from "./relationships";
+import {
+  registerRelationships,
+  CATEGORY_RELATIONSHIP,
+  TAGS_RELATIONSHIP,
+  authorRelationship,
+  childrenRelationship,
+} from "./relationships";
 
 /* ─── Posts ───────────────────────────────────────────────────────── */
 
@@ -12,7 +26,12 @@ const postsDefinition: ContentTypeDefinition = {
   description: "Bilingual journal entries with categories and tags",
   slug: { sourceFields: ["title_en", "title"], unique: true, maxLength: 100 },
   workflow: BASIC_WORKFLOW,
-  fields: [...BILINGUAL_TITLE_FIELDS, ...BILINGUAL_DESCRIPTION_FIELDS, ...SEO_METADATA_FIELDS, ...TIMESTAMP_FIELDS],
+  fields: [
+    ...BILINGUAL_TITLE_FIELDS,
+    ...BILINGUAL_DESCRIPTION_FIELDS,
+    ...SEO_METADATA_FIELDS,
+    ...TIMESTAMP_FIELDS,
+  ],
   routes: { public: "/posts/:slug", adminList: "/admin", adminEdit: "/admin/$id" },
   hasRevisions: true,
   hasSeo: true,
@@ -77,10 +96,7 @@ const booksDefinition: ContentTypeDefinition = {
 
 registerContentType(booksDefinition);
 
-registerRelationships("book", [
-  TAGS_RELATIONSHIP,
-  authorRelationship("author_name"),
-]);
+registerRelationships("book", [TAGS_RELATIONSHIP, authorRelationship("author_name")]);
 
 /* ─── Videos ──────────────────────────────────────────────────────── */
 
@@ -109,12 +125,12 @@ const coursesDefinition: ContentTypeDefinition = {
   labelPlural: "Courses",
   description: "Structured courses with sequential lessons",
   slug: { sourceFields: ["title_en"], unique: true, maxLength: 80 },
-  fields: [
-    ...BILINGUAL_TITLE_FIELDS,
-    ...BILINGUAL_DESCRIPTION_FIELDS,
-    ...TIMESTAMP_FIELDS,
-  ],
-  routes: { public: "/courses/:slug", adminList: "/admin/courses", adminEdit: "/admin/courses/$id" },
+  fields: [...BILINGUAL_TITLE_FIELDS, ...BILINGUAL_DESCRIPTION_FIELDS, ...TIMESTAMP_FIELDS],
+  routes: {
+    public: "/courses/:slug",
+    adminList: "/admin/courses",
+    adminEdit: "/admin/courses/$id",
+  },
   hasSeo: true,
   defaultSortField: "sort_order",
   defaultSortOrder: "asc",
@@ -122,6 +138,4 @@ const coursesDefinition: ContentTypeDefinition = {
 
 registerContentType(coursesDefinition);
 
-registerRelationships("course", [
-  childrenRelationship("course_lesson", "course_id", "Lessons"),
-]);
+registerRelationships("course", [childrenRelationship("course_lesson", "course_id", "Lessons")]);

@@ -55,9 +55,7 @@ function HeroSection({ content }: { content: Record<string, string> }) {
         </h1>
       )}
       {content.subheading && (
-        <p className="mt-4 text-lg md:text-xl text-muted-foreground">
-          {content.subheading}
-        </p>
+        <p className="mt-4 text-lg md:text-xl text-muted-foreground">{content.subheading}</p>
       )}
       {content.body && (
         <div className="mt-8 prose-mitra max-w-none">
@@ -147,9 +145,7 @@ function VideoSection({ content }: { content: Record<string, string> }) {
         )}
       </div>
       {content.caption && (
-        <p className="mt-3 text-center text-sm text-muted-foreground">
-          {content.caption}
-        </p>
+        <p className="mt-3 text-center text-sm text-muted-foreground">{content.caption}</p>
       )}
     </div>
   );
@@ -160,12 +156,8 @@ function CTASection({ content }: { content: Record<string, string> }) {
   return (
     <div className="max-w-2xl mx-auto px-6 text-center">
       <div className="p-10 md:p-14 rounded-xl border border-border/60 bg-secondary/20">
-        {content.heading && (
-          <h2 className="font-serif text-2xl md:text-3xl">{content.heading}</h2>
-        )}
-        {content.body && (
-          <p className="mt-4 text-muted-foreground">{content.body}</p>
-        )}
+        {content.heading && <h2 className="font-serif text-2xl md:text-3xl">{content.heading}</h2>}
+        {content.body && <p className="mt-4 text-muted-foreground">{content.body}</p>}
         {content.button_text && content.button_url && (
           <a
             href={content.button_url}

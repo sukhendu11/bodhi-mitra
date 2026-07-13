@@ -32,9 +32,7 @@ export interface RatingAggregate {
  *
  * @returns The updated/created rating, or throws on error.
  */
-export async function submitRating(
-  input: RatingSubmission,
-): Promise<BookRating> {
+export async function submitRating(input: RatingSubmission): Promise<BookRating> {
   if (input.rating < 1 || input.rating > 5) {
     throw new Error("Rating must be between 1 and 5");
   }
@@ -96,9 +94,7 @@ export async function getUserRating(
 
 /* ─── Get rating aggregates for a book ─────────────────────────── */
 
-export async function getBookRatingAggregates(
-  bookId: string,
-): Promise<RatingAggregate> {
+export async function getBookRatingAggregates(bookId: string): Promise<RatingAggregate> {
   const { data: book } = await (supabase as any)
     .from("books")
     .select("avg_rating, total_ratings")
@@ -127,10 +123,7 @@ export async function getBookRatingAggregates(
 
 /* ─── Delete user's rating for a book ──────────────────────────── */
 
-export async function deleteRating(
-  userId: string,
-  bookId: string,
-): Promise<void> {
+export async function deleteRating(userId: string, bookId: string): Promise<void> {
   const { error } = await (supabase as any)
     .from("book_ratings")
     .delete()

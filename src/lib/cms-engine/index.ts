@@ -104,11 +104,6 @@ export type { Revision, FieldDiff, ContentDiff } from "./revisions";
 
 /* ─── SEO ─────────────────────────────────────────────────────────── */
 
-export {
-  extractSeoData,
-  generateMetaTags,
-  buildRouteMeta,
-  extractBilingualSeoData,
-} from "./seo";
+export { extractSeoData, generateMetaTags, buildRouteMeta, extractBilingualSeoData } from "./seo";
 
 export type { MetaTag, SeoData, RouteMeta, BilingualSeoData } from "./seo";

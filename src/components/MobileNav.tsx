@@ -1,12 +1,7 @@
 import { Menu, ChevronRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { LangToggle } from "./LangToggle";
 
 interface MobileNavItem {
@@ -123,7 +118,7 @@ export function MobileNav({
             <SheetClose key="/books/library" asChild>
               <Link
                 to="/books/library"
-                search={{} as any}
+                search={{ search: "", page: 1 }}
                 className="mt-1 rounded-md px-4 py-3 text-base text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
               >
                 {libraryLabel}
@@ -134,7 +129,6 @@ export function MobileNav({
             <SheetClose key="/bookmarks" asChild>
               <Link
                 to="/bookmarks"
-                search={{} as any}
                 className="mt-1 rounded-md px-4 py-3 text-base text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
               >
                 {bookmarksLabel}
@@ -145,7 +139,6 @@ export function MobileNav({
             <SheetClose key="/profile" asChild>
               <Link
                 to="/profile"
-                search={{} as any}
                 className="mt-1 rounded-md px-4 py-3 text-base text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
               >
                 {profileLabel}

@@ -7,8 +7,7 @@ const colorMap: Record<string, string> = {
   amber: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
   purple: "bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400",
   slate: "bg-slate-50 text-slate-700 dark:bg-slate-950/30 dark:text-slate-400",
-  emerald:
-    "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
+  emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
 };
 
 interface StatCardProps {

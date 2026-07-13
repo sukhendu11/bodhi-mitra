@@ -104,17 +104,23 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       db.from("comments").select("*", { count: "exact", head: true }),
       db.from("purchases").select("*", { count: "exact", head: true }),
       db.from("book_ratings").select("*", { count: "exact", head: true }),
-      db.from("posts")
+      db
+        .from("posts")
         .select("id, title_en, title_bn, status, slug, created_at")
         .order("created_at", { ascending: false })
         .limit(5),
-      db.from("posts")
+      db
+        .from("posts")
         .select("id, created_at", { count: "exact" })
         .gte("created_at", new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString()),
-      db.from("comments")
-        .select("post_id, posts!inner(id, slug, title_en, title_bn), comment_text", { count: "exact" })
+      db
+        .from("comments")
+        .select("post_id, posts!inner(id, slug, title_en, title_bn), comment_text", {
+          count: "exact",
+        })
         .not("post_id", "is", null),
-      db.from("books")
+      db
+        .from("books")
         .select("id, slug, title_en, title_bn, avg_rating, total_ratings")
         .eq("status", "published")
         .gt("total_ratings", 0)
@@ -123,7 +129,21 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     ]);
 
     // Log errors
-    for (const r of [totalPosts, publishedPosts, draftPosts, totalPages, totalBooks, publishedBooks, draftBooks, archivedBooks, freeBooks, totalUsers, totalComments, totalPurchases, totalRatings]) {
+    for (const r of [
+      totalPosts,
+      publishedPosts,
+      draftPosts,
+      totalPages,
+      totalBooks,
+      publishedBooks,
+      draftBooks,
+      archivedBooks,
+      freeBooks,
+      totalUsers,
+      totalComments,
+      totalPurchases,
+      totalRatings,
+    ]) {
       if (r.error) console.error("[getDashboardStats] count error:", r.error.message);
     }
 
@@ -140,12 +160,19 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
-        months.push({ year: d.getFullYear(), month: d.getMonth() + 1, count: countMap.get(key) || 0 });
+        months.push({
+          year: d.getFullYear(),
+          month: d.getMonth() + 1,
+          count: countMap.get(key) || 0,
+        });
       }
     }
 
     // Aggregate top commented posts
-    const commentCountMap = new Map<string, { id: string; slug: string; title_en: string | null; title_bn: string | null; count: number }>();
+    const commentCountMap = new Map<
+      string,
+      { id: string; slug: string; title_en: string | null; title_bn: string | null; count: number }
+    >();
     if (topCommented.data) {
       for (const c of topCommented.data) {
         const pid = c.post_id;
@@ -274,29 +301,37 @@ export interface SetRoleResult {
 /** Set a user's role. Permission checks enforced server-side by the RPC function. */
 export const setUserRoleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }: { context: { supabase: ReturnType<typeof createClient<Database>>; userId: string }; data: unknown }) => {
-    const { supabase, userId } = context;
-    const input = data as { targetUserId: string; newRole: string };
-    const { data: result, error } = await supabase.rpc("set_user_role", {
-      _admin_id: userId,
-      _target_user_id: input.targetUserId,
-      _new_role: input.newRole,
-    });
-    if (error) throw new Error(error.message);
-    const res = (result ?? { ok: true }) as unknown as SetRoleResult;
-
-    // Audit log
-    if (res.ok) {
-      logAuditEvent({
-        actor_id: userId,
-        action: "role_changed",
-        target_user_id: input.targetUserId,
-        details: { new_role: input.newRole },
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { supabase: ReturnType<typeof createClient<Database>>; userId: string };
+      data: unknown;
+    }) => {
+      const { supabase, userId } = context;
+      const input = data as { targetUserId: string; newRole: string };
+      const { data: result, error } = await supabase.rpc("set_user_role", {
+        _admin_id: userId,
+        _target_user_id: input.targetUserId,
+        _new_role: input.newRole,
       });
-    }
+      if (error) throw new Error(error.message);
+      const res = (result ?? { ok: true }) as unknown as SetRoleResult;
 
-    return res;
-  });
+      // Audit log
+      if (res.ok) {
+        logAuditEvent({
+          actor_id: userId,
+          action: "role_changed",
+          target_user_id: input.targetUserId,
+          details: { new_role: input.newRole },
+        });
+      }
+
+      return res;
+    },
+  );
 
 export interface InviteUserResult {
   ok: boolean;
@@ -308,46 +343,55 @@ export interface InviteUserResult {
  *  creates the user, and assigns a default role. Only accessible by admin/super_admin. */
 export const inviteUserFn = createServerFn({ method: "POST" })
   .middleware([requireMinRole("admin")])
-  .handler(async ({ context, data }: { context: { supabase: ReturnType<typeof createClient<Database>>; userId: string }; data: unknown }) => {
-    const { supabase, userId } = context;
-    const input = data as { email: string; role: string; displayName?: string };
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { supabase: ReturnType<typeof createClient<Database>>; userId: string };
+      data: unknown;
+    }) => {
+      const { supabase, userId } = context;
+      const input = data as { email: string; role: string; displayName?: string };
 
-    const email = input.email?.trim().toLowerCase();
-    if (!email) throw new Error("Email is required");
+      const email = input.email?.trim().toLowerCase();
+      if (!email) throw new Error("Email is required");
 
-    // Send invitation email via Supabase Auth Admin API
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      data: { display_name: input.displayName?.trim() || email.split("@")[0] },
-    });
+      // Send invitation email via Supabase Auth Admin API
+      const { data: inviteData, error: inviteError } =
+        await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+          data: { display_name: input.displayName?.trim() || email.split("@")[0] },
+        });
 
-    if (inviteError) throw new Error(inviteError.message);
-    if (!inviteData?.user?.id) throw new Error("Failed to invite user");
+      if (inviteError) throw new Error(inviteError.message);
+      if (!inviteData?.user?.id) throw new Error("Failed to invite user");
 
-    const newUserId = inviteData.user.id;
+      const newUserId = inviteData.user.id;
 
-    // Assign role
-    const { error: roleError } = await supabase.rpc("set_user_role", {
-      _admin_id: userId,
-      _target_user_id: newUserId,
-      _new_role: input.role || "user",
-    });
+      // Assign role
+      const { error: roleError } = await supabase.rpc("set_user_role", {
+        _admin_id: userId,
+        _target_user_id: newUserId,
+        _new_role: input.role || "user",
+      });
 
-    if (roleError) {
-      // Clean up: delete the auth user if role assignment fails
-      await supabaseAdmin.auth.admin.deleteUser(newUserId).catch(() => {});
-      throw new Error(roleError.message);
-    }
+      if (roleError) {
+        // Clean up: delete the auth user if role assignment fails
+        await supabaseAdmin.auth.admin.deleteUser(newUserId).catch(() => {});
+        throw new Error(roleError.message);
+      }
 
-    // Audit log
-    logAuditEvent({
-      actor_id: userId,
-      action: "user_invited",
-      target_user_id: newUserId,
-      details: { email, role: input.role || "user" },
-    });
+      // Audit log
+      logAuditEvent({
+        actor_id: userId,
+        action: "user_invited",
+        target_user_id: newUserId,
+        details: { email, role: input.role || "user" },
+      });
 
-    return { ok: true, userId: newUserId } as InviteUserResult;
-  });
+      return { ok: true, userId: newUserId } as InviteUserResult;
+    },
+  );
 
 export interface DeleteUserResult {
   ok: boolean;
@@ -358,66 +402,76 @@ export interface DeleteUserResult {
  *  Only accessible by admin/super_admin. Cannot delete yourself. */
 export const deleteUserFn = createServerFn({ method: "POST" })
   .middleware([requireMinRole("admin")])
-  .handler(async ({ context, data }: { context: { supabase: ReturnType<typeof createClient<Database>>; userId: string }; data: unknown }) => {
-    const { supabase, userId } = context;
-    const input = data as { targetUserId: string };
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { supabase: ReturnType<typeof createClient<Database>>; userId: string };
+      data: unknown;
+    }) => {
+      const { supabase, userId } = context;
+      const input = data as { targetUserId: string };
 
-    if (input.targetUserId === userId) {
-      return { ok: false, error: "You cannot delete your own account." } as DeleteUserResult;
-    }
-
-    // Get target info for audit before deleting
-    const { data: targetInfo } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", input.targetUserId)
-      .maybeSingle();
-    const { data: targetProfile } = await supabase
-      .from("profiles")
-      .select("email, display_name")
-      .eq("user_id", input.targetUserId)
-      .maybeSingle();
-
-    // Prevent deleting the last super_admin
-    if (targetInfo?.role === "super_admin") {
-      const { count } = await supabase
-        .from("user_roles")
-        .select("role", { count: "exact", head: true })
-        .eq("role", "super_admin");
-      if (count !== null && count <= 1) {
-        return { ok: false, error: "Cannot delete the last super_admin." } as DeleteUserResult;
+      if (input.targetUserId === userId) {
+        return { ok: false, error: "You cannot delete your own account." } as DeleteUserResult;
       }
-    }
 
-    // Delete from user_roles first (FK constraint safety)
-    const { error: roleDeleteError } = await supabase
-      .from("user_roles")
-      .delete()
-      .eq("user_id", input.targetUserId);
-    if (roleDeleteError) {
-      return { ok: false, error: roleDeleteError.message } as DeleteUserResult;
-    }
+      // Get target info for audit before deleting
+      const { data: targetInfo } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", input.targetUserId)
+        .maybeSingle();
+      const { data: targetProfile } = await supabase
+        .from("profiles")
+        .select("email, display_name")
+        .eq("user_id", input.targetUserId)
+        .maybeSingle();
 
-    // Delete from auth via Admin API
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(input.targetUserId);
-    if (authDeleteError) {
-      return { ok: false, error: authDeleteError.message } as DeleteUserResult;
-    }
+      // Prevent deleting the last super_admin
+      if (targetInfo?.role === "super_admin") {
+        const { count } = await supabase
+          .from("user_roles")
+          .select("role", { count: "exact", head: true })
+          .eq("role", "super_admin");
+        if (count !== null && count <= 1) {
+          return { ok: false, error: "Cannot delete the last super_admin." } as DeleteUserResult;
+        }
+      }
 
-    // Audit log
-    logAuditEvent({
-      actor_id: userId,
-      action: "user_deleted",
-      target_user_id: input.targetUserId,
-      details: {
-        email: targetProfile?.email ?? null,
-        display_name: targetProfile?.display_name ?? null,
-        role: targetInfo?.role ?? null,
-      },
-    });
+      // Delete from user_roles first (FK constraint safety)
+      const { error: roleDeleteError } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", input.targetUserId);
+      if (roleDeleteError) {
+        return { ok: false, error: roleDeleteError.message } as DeleteUserResult;
+      }
 
-    return { ok: true } as DeleteUserResult;
-  });
+      // Delete from auth via Admin API
+      const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
+        input.targetUserId,
+      );
+      if (authDeleteError) {
+        return { ok: false, error: authDeleteError.message } as DeleteUserResult;
+      }
+
+      // Audit log
+      logAuditEvent({
+        actor_id: userId,
+        action: "user_deleted",
+        target_user_id: input.targetUserId,
+        details: {
+          email: targetProfile?.email ?? null,
+          display_name: targetProfile?.display_name ?? null,
+          role: targetInfo?.role ?? null,
+        },
+      });
+
+      return { ok: true } as DeleteUserResult;
+    },
+  );
 
 export interface BulkActionResult {
   ok: boolean;
@@ -430,227 +484,571 @@ export interface BulkActionResult {
 /** Bulk set role for multiple users. Validates the caller is admin and applies the role to each user. */
 export const bulkSetRoleFn = createServerFn({ method: "POST" })
   .middleware([requireMinRole("admin")])
-  .handler(async ({ context, data }: { context: { supabase: ReturnType<typeof createClient<Database>>; userId: string }; data: unknown }) => {
-    const { supabase, userId } = context;
-    const input = data as { targetUserIds: string[]; newRole: string };
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { supabase: ReturnType<typeof createClient<Database>>; userId: string };
+      data: unknown;
+    }) => {
+      const { supabase, userId } = context;
+      const input = data as { targetUserIds: string[]; newRole: string };
 
-    if (!input.targetUserIds?.length) {
-      return { ok: false, error: "No users selected.", succeeded: 0, failed: 0, errors: [] } as BulkActionResult;
-    }
-    if (!input.newRole) {
-      return { ok: false, error: "No role specified.", succeeded: 0, failed: 0, errors: [] } as BulkActionResult;
-    }
-
-    const errors: { userId: string; error: string }[] = [];
-    let succeeded = 0;
-
-    for (const targetUserId of input.targetUserIds) {
-      if (targetUserId === userId) {
-        errors.push({ userId: targetUserId, error: "Cannot change your own role here. Use the inline editor." });
-        continue;
+      if (!input.targetUserIds?.length) {
+        return {
+          ok: false,
+          error: "No users selected.",
+          succeeded: 0,
+          failed: 0,
+          errors: [],
+        } as BulkActionResult;
       }
-      const { data: result, error: rpcError } = await supabase.rpc("set_user_role", {
-        _admin_id: userId,
-        _target_user_id: targetUserId,
-        _new_role: input.newRole,
-      });
-      if (rpcError) {
-        errors.push({ userId: targetUserId, error: rpcError.message });
-      } else {
-        const res = (result ?? {}) as Record<string, unknown>;
-        if (res.ok === true) {
-          succeeded++;
+      if (!input.newRole) {
+        return {
+          ok: false,
+          error: "No role specified.",
+          succeeded: 0,
+          failed: 0,
+          errors: [],
+        } as BulkActionResult;
+      }
+
+      const errors: { userId: string; error: string }[] = [];
+      let succeeded = 0;
+
+      for (const targetUserId of input.targetUserIds) {
+        if (targetUserId === userId) {
+          errors.push({
+            userId: targetUserId,
+            error: "Cannot change your own role here. Use the inline editor.",
+          });
+          continue;
+        }
+        const { data: result, error: rpcError } = await supabase.rpc("set_user_role", {
+          _admin_id: userId,
+          _target_user_id: targetUserId,
+          _new_role: input.newRole,
+        });
+        if (rpcError) {
+          errors.push({ userId: targetUserId, error: rpcError.message });
         } else {
-          errors.push({ userId: targetUserId, error: (res.error as string) || "Failed" });
+          const res = (result ?? {}) as Record<string, unknown>;
+          if (res.ok === true) {
+            succeeded++;
+          } else {
+            errors.push({ userId: targetUserId, error: (res.error as string) || "Failed" });
+          }
         }
       }
-    }
 
-    // Audit log (one entry for the bulk action)
-    if (succeeded > 0) {
-      logAuditEvent({
-        actor_id: userId,
-        action: "bulk_role_changed",
-        details: {
-          new_role: input.newRole,
-          succeeded_count: succeeded,
-          failed_count: errors.length,
-          target_user_ids: input.targetUserIds,
-        },
-      });
-    }
+      // Audit log (one entry for the bulk action)
+      if (succeeded > 0) {
+        logAuditEvent({
+          actor_id: userId,
+          action: "bulk_role_changed",
+          details: {
+            new_role: input.newRole,
+            succeeded_count: succeeded,
+            failed_count: errors.length,
+            target_user_ids: input.targetUserIds,
+          },
+        });
+      }
 
-    return {
-      ok: errors.length === 0 || succeeded > 0,
-      succeeded,
-      failed: errors.length,
-      errors,
-    } as BulkActionResult;
-  });
+      return {
+        ok: errors.length === 0 || succeeded > 0,
+        succeeded,
+        failed: errors.length,
+        errors,
+      } as BulkActionResult;
+    },
+  );
 
 /** Bulk delete multiple users. Validates each user (not self, not last super_admin) before deleting. */
 export const bulkDeleteUsersFn = createServerFn({ method: "POST" })
   .middleware([requireMinRole("admin")])
-  .handler(async ({ context, data }: { context: { supabase: ReturnType<typeof createClient<Database>>; userId: string }; data: unknown }) => {
-    const { supabase, userId } = context;
-    const input = data as { targetUserIds: string[] };
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { supabase: ReturnType<typeof createClient<Database>>; userId: string };
+      data: unknown;
+    }) => {
+      const { supabase, userId } = context;
+      const input = data as { targetUserIds: string[] };
 
-    if (!input.targetUserIds?.length) {
-      return { ok: false, error: "No users selected.", succeeded: 0, failed: 0, errors: [] } as BulkActionResult;
-    }
-
-    // Pre-validate: check self-delete and super_admin constraints
-    const errors: { userId: string; error: string }[] = [];
-    const validIds: string[] = [];
-
-    for (const targetUserId of input.targetUserIds) {
-      if (targetUserId === userId) {
-        errors.push({ userId: targetUserId, error: "Cannot delete yourself." });
-        continue;
+      if (!input.targetUserIds?.length) {
+        return {
+          ok: false,
+          error: "No users selected.",
+          succeeded: 0,
+          failed: 0,
+          errors: [],
+        } as BulkActionResult;
       }
 
-      const { data: targetRoleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", targetUserId)
-        .maybeSingle();
+      // Pre-validate: check self-delete and super_admin constraints
+      const errors: { userId: string; error: string }[] = [];
+      const validIds: string[] = [];
 
-      if (targetRoleData?.role === "super_admin") {
-        const { count } = await supabase
-          .from("user_roles")
-          .select("role", { count: "exact", head: true })
-          .eq("role", "super_admin");
-        const othersInSelection = input.targetUserIds.filter(
-          (id) => id !== targetUserId
-        ).length;
-        if (count !== null && count - othersInSelection <= 1) {
-          errors.push({ userId: targetUserId, error: "Cannot delete the last super_admin." });
+      for (const targetUserId of input.targetUserIds) {
+        if (targetUserId === userId) {
+          errors.push({ userId: targetUserId, error: "Cannot delete yourself." });
           continue;
         }
+
+        const { data: targetRoleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+
+        if (targetRoleData?.role === "super_admin") {
+          const { count } = await supabase
+            .from("user_roles")
+            .select("role", { count: "exact", head: true })
+            .eq("role", "super_admin");
+          const othersInSelection = input.targetUserIds.filter((id) => id !== targetUserId).length;
+          if (count !== null && count - othersInSelection <= 1) {
+            errors.push({ userId: targetUserId, error: "Cannot delete the last super_admin." });
+            continue;
+          }
+        }
+
+        validIds.push(targetUserId);
       }
 
-      validIds.push(targetUserId);
-    }
+      // Process deletions in sequence for safety
+      let succeeded = 0;
+      for (const targetUserId of validIds) {
+        const { error: roleDeleteError } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", targetUserId);
+        if (roleDeleteError) {
+          errors.push({ userId: targetUserId, error: roleDeleteError.message });
+          continue;
+        }
 
-    // Process deletions in sequence for safety
-    let succeeded = 0;
-    for (const targetUserId of validIds) {
-      const { error: roleDeleteError } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", targetUserId);
-      if (roleDeleteError) {
-        errors.push({ userId: targetUserId, error: roleDeleteError.message });
-        continue;
+        const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
+        if (authDeleteError) {
+          errors.push({ userId: targetUserId, error: authDeleteError.message });
+          continue;
+        }
+
+        succeeded++;
       }
 
-      const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
-      if (authDeleteError) {
-        errors.push({ userId: targetUserId, error: authDeleteError.message });
-        continue;
+      // Audit log (one entry for the bulk action)
+      if (succeeded > 0) {
+        logAuditEvent({
+          actor_id: userId,
+          action: "bulk_users_deleted",
+          details: {
+            succeeded_count: succeeded,
+            failed_count: errors.length,
+            target_user_ids: validIds,
+          },
+        });
       }
 
-      succeeded++;
-    }
-
-    // Audit log (one entry for the bulk action)
-    if (succeeded > 0) {
-      logAuditEvent({
-        actor_id: userId,
-        action: "bulk_users_deleted",
-        details: {
-          succeeded_count: succeeded,
-          failed_count: errors.length,
-          target_user_ids: validIds,
-        },
-      });
-    }
-
-    return {
-      ok: errors.length === 0 || succeeded > 0,
-      succeeded,
-      failed: errors.length,
-      errors,
-    } as BulkActionResult;
-  });
+      return {
+        ok: errors.length === 0 || succeeded > 0,
+        succeeded,
+        failed: errors.length,
+        errors,
+      } as BulkActionResult;
+    },
+  );
 
 /* ── Admin: get audit events for a specific user ──────────────── */
 
 /** Fetch audit log entries where a specific user is the actor or target. */
 export const getUserAuditEvents = createServerFn({ method: "GET" })
   .middleware([requireMinRole("admin")])
-  .handler(async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+  .handler(
+    async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+      const { supabase } = context;
+      const input = data as { targetUserId: string; limit?: number };
+
+      const { data: entries, error } = await (supabase as any)
+        .from("audit_log")
+        .select("*")
+        .or(`actor_id.eq.${input.targetUserId},target_user_id.eq.${input.targetUserId}`)
+        .order("created_at", { ascending: false })
+        .limit(input.limit ?? 20);
+
+      if (error) throw new Error(error.message);
+      return (entries ?? []) as AuditEvent[];
+    },
+  );
+
+/* ── Login History Types & Functions ────────────────────────── */
+
+export interface LoginEvent {
+  id: string;
+  user_id: string;
+  email: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  sign_in_method: string | null;
+  created_at: string;
+}
+
+export interface ActiveSession {
+  id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  factor_id: string | null;
+  aal: string | null;
+  not_after: string | null;
+  // Enriched with user info
+  user_email?: string | null;
+  user_name?: string | null;
+}
+
+/** Log a login event (called internally after successful auth). */
+export const logLoginEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(
+    async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+      const { supabase, userId } = context;
+      const input = data as {
+        email?: string;
+        ip_address?: string;
+        user_agent?: string;
+        sign_in_method?: string;
+      };
+      const db = supabase as any;
+      await db.from("login_history").insert({
+        user_id: userId,
+        email: input.email ?? null,
+        ip_address: input.ip_address ?? null,
+        user_agent: input.user_agent ?? null,
+        sign_in_method: input.sign_in_method ?? "email",
+      });
+      return { ok: true };
+    },
+  );
+
+/** Get login history for a specific user (admin only). */
+export const getUserLoginHistory = createServerFn({ method: "GET" })
+  .middleware([requireMinRole("admin")])
+  .handler(
+    async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+      const { supabase } = context;
+      const input = data as { targetUserId: string; limit?: number };
+      const db = supabase as any;
+      const { data: entries, error } = await db
+        .from("login_history")
+        .select("*")
+        .eq("user_id", input.targetUserId)
+        .order("created_at", { ascending: false })
+        .limit(input.limit ?? 20);
+      if (error) throw new Error(error.message);
+      return (entries ?? []) as LoginEvent[];
+    },
+  );
+
+/** Get login history across all users (admin only). */
+export const getAllLoginHistory = createServerFn({ method: "GET" })
+  .middleware([requireMinRole("admin")])
+  .handler(async ({ context }) => {
     const { supabase } = context;
-    const input = data as { targetUserId: string; limit?: number };
-
-    const { data: entries, error } = await (supabase as any)
-      .from("audit_log")
+    const db = supabase as any;
+    const { data: entries, error } = await db
+      .from("login_history")
       .select("*")
-      .or(`actor_id.eq.${input.targetUserId},target_user_id.eq.${input.targetUserId}`)
       .order("created_at", { ascending: false })
-      .limit(input.limit ?? 20);
-
+      .limit(100);
     if (error) throw new Error(error.message);
-    return (entries ?? []) as AuditEvent[];
+    return (entries ?? []) as LoginEvent[];
   });
+
+/** Get active sessions from auth.sessions (super_admin only, uses service_role). */
+export const getActiveSessions = createServerFn({ method: "GET" })
+  .middleware([requireMinRole("super_admin")])
+  .handler(async ({ context }) => {
+    const db = supabaseAdmin as any;
+    // Query the auth schema sessions table
+    const { data: sessions, error } = await db
+      .from("sessions")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const rows = (sessions ?? []) as ActiveSession[];
+
+    // Enrich with user email/name from profiles
+    if (rows.length > 0) {
+      const userIds = [...new Set(rows.map((s) => s.user_id))];
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id, email, display_name")
+        .in("user_id", userIds);
+      const profileMap = new Map(
+        (profiles ?? []).map((p: any) => [p.user_id, p]),
+      );
+      for (const s of rows) {
+        const p = profileMap.get(s.user_id);
+        if (p) {
+          s.user_email = p.email;
+          s.user_name = p.display_name;
+        }
+      }
+    }
+
+    return rows;
+  });
+
+/** Revoke a specific session (super_admin only, uses service_role). */
+export const revokeSessionFn = createServerFn({ method: "POST" })
+  .middleware([requireMinRole("super_admin")])
+  .handler(
+    async ({ data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+      const input = data as { sessionId: string };
+      const db = supabaseAdmin as any;
+
+      // Delete from sessions first
+      const { error: sessionError } = await db
+        .from("sessions")
+        .delete()
+        .eq("id", input.sessionId);
+      if (sessionError) throw new Error(sessionError.message);
+
+      return { ok: true };
+    },
+  );
+
+/** Revoke all sessions for a user (super_admin only, uses service_role). */
+export const revokeAllUserSessionsFn = createServerFn({ method: "POST" })
+  .middleware([requireMinRole("super_admin")])
+  .handler(
+    async ({ data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+      const input = data as { targetUserId: string };
+      const db = supabaseAdmin as any;
+
+      // Delete from sessions
+      const { error: sessionError } = await db
+        .from("sessions")
+        .delete()
+        .eq("user_id", input.targetUserId);
+      if (sessionError) throw new Error(sessionError.message);
+
+      // Delete refresh tokens to prevent session renewal
+      const { error: refreshError } = await db
+        .from("refresh_tokens")
+        .delete()
+        .eq("user_id", input.targetUserId);
+      if (refreshError) throw new Error(refreshError.message);
+
+      return { ok: true };
+    },
+  );
+
+/* ── Permission Management Types ─────────────────────────────── */
+
+export interface PermissionRow {
+  id: string;
+  role: string;
+  resource: string;
+  action: string;
+  allowed: boolean;
+  created_at: string;
+}
+
+export interface RoleHierarchyRow {
+  role: string;
+  level: number;
+  label: string;
+  description: string | null;
+}
+
+export const KNOWN_RESOURCES = [
+  "posts",
+  "comments",
+  "media",
+  "users",
+  "settings",
+  "pages",
+  "books",
+  "videos",
+] as const;
+
+export const KNOWN_ACTIONS = [
+  "create",
+  "edit",
+  "delete",
+  "publish",
+  "view_all",
+  "moderate",
+  "upload",
+  "manage_roles",
+  "view",
+] as const;
+
+/** Fetch all role_permissions rows (super_admin only). */
+export const getPermissions = createServerFn({ method: "GET" })
+  .middleware([requireMinRole("super_admin")])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const db = supabase as any;
+    const { data, error } = await db
+      .from("role_permissions")
+      .select("*")
+      .order("resource", { ascending: true })
+      .order("action", { ascending: true })
+      .order("role", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as PermissionRow[];
+  });
+
+/** Fetch all roles from the role_hierarchy table. */
+export const getRoleHierarchy = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const db = supabase as any;
+    const { data, error } = await db
+      .from("role_hierarchy")
+      .select("*")
+      .order("level", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RoleHierarchyRow[];
+  });
+
+/** Create a new permission row. */
+export const createPermissionFn = createServerFn({ method: "POST" })
+  .middleware([requireMinRole("super_admin")])
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { supabase: any; userId: string };
+      data: unknown;
+    }) => {
+      const { supabase, userId } = context;
+      const input = data as { role: string; resource: string; action: string; allowed: boolean };
+      const db = supabase as any;
+      const { data: result, error } = await db.from("role_permissions").insert({
+        role: input.role,
+        resource: input.resource,
+        action: input.action,
+        allowed: input.allowed,
+      }).select().single();
+      if (error) throw new Error(error.message);
+      return result as PermissionRow;
+    },
+  );
+
+/** Update an existing permission row (toggle allowed or change values). */
+export const updatePermissionFn = createServerFn({ method: "POST" })
+  .middleware([requireMinRole("super_admin")])
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { supabase: any; userId: string };
+      data: unknown;
+    }) => {
+      const { supabase } = context;
+      const input = data as { id: string; allowed: boolean };
+      const db = supabase as any;
+      const { data: result, error } = await db
+        .from("role_permissions")
+        .update({ allowed: input.allowed })
+        .eq("id", input.id)
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return result as PermissionRow;
+    },
+  );
+
+/** Delete a permission row. */
+export const deletePermissionFn = createServerFn({ method: "POST" })
+  .middleware([requireMinRole("super_admin")])
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { supabase: any; userId: string };
+      data: unknown;
+    }) => {
+      const { supabase } = context;
+      const input = data as { id: string };
+      const db = supabase as any;
+      const { error } = await db.from("role_permissions").delete().eq("id", input.id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    },
+  );
 
 /* ── Admin: get a specific user's library with progress ────────── */
 
 /** Fetch a user's purchased books with reading progress (admin variant). */
 export const getUserLibraryAdmin = createServerFn({ method: "GET" })
   .middleware([requireMinRole("admin")])
-  .handler(async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
-    const { supabase } = context;
-    const input = data as { targetUserId: string };
-    const db = supabase as any;
+  .handler(
+    async ({ context, data }: { context: { supabase: any; userId: string }; data: unknown }) => {
+      const { supabase } = context;
+      const input = data as { targetUserId: string };
+      const db = supabase as any;
 
-    const { data: purchases } = await db
-      .from("purchases")
-      .select("id, book_id, amount_paid, purchase_date, created_at")
-      .eq("user_id", input.targetUserId)
-      .order("purchase_date", { ascending: false });
-
-    if (!purchases?.length) return { books: [] };
-
-    const bookIds = purchases.map((p: any) => p.book_id) as string[];
-
-    const [{ data: books }, { data: progress }] = await Promise.all([
-      db
-        .from("books")
-        .select("id, title_en, title_bn, slug, cover_image, author_name, is_free, pages, status")
-        .in("id", bookIds),
-      db
-        .from("reading_progress")
-        .select("book_id, progress_pct, completed, last_page, total_pages, updated_at")
+      const { data: purchases } = await db
+        .from("purchases")
+        .select("id, book_id, amount_paid, purchase_date, created_at")
         .eq("user_id", input.targetUserId)
-        .in("book_id", bookIds),
-    ]);
+        .order("purchase_date", { ascending: false });
 
-    const bookMap = new Map((books ?? []).map((b: any) => [b.id, b]));
-    const progressMap = new Map((progress ?? []).map((p: any) => [p.book_id, p]));
+      if (!purchases?.length) return { books: [] };
 
-    const library = (purchases ?? []).map((p: any) => {
-      const book = bookMap.get(p.book_id) ?? {} as any;
-      const prog = progressMap.get(p.book_id) as any | undefined;
-      return {
-        purchaseId: p.id,
-        bookId: p.book_id,
-        titleEn: book.title_en ?? null,
-        titleBn: book.title_bn ?? null,
-        slug: book.slug ?? "",
-        coverImage: book.cover_image ?? null,
-        author: book.author_name ?? null,
-        isFree: !!book.is_free,
-        status: book.status ?? "draft",
-        amountPaid: p.amount_paid ?? 0,
-        purchaseDate: p.purchase_date ?? p.created_at,
-        progressPct: prog?.progress_pct ?? 0,
-        completed: prog?.completed ?? false,
-        lastPage: prog?.last_page ?? 0,
-        totalPages: prog?.total_pages ?? 0,
-        updatedAt: prog?.updated_at ?? null,
-      };
-    });
+      const bookIds = purchases.map((p: any) => p.book_id) as string[];
 
-    return { books: library };
-  });
+      const [{ data: books }, { data: progress }] = await Promise.all([
+        db
+          .from("books")
+          .select("id, title_en, title_bn, slug, cover_image, author_name, is_free, pages, status")
+          .in("id", bookIds),
+        db
+          .from("reading_progress")
+          .select("book_id, progress_pct, completed, last_page, total_pages, updated_at")
+          .eq("user_id", input.targetUserId)
+          .in("book_id", bookIds),
+      ]);
+
+      const bookMap = new Map((books ?? []).map((b: any) => [b.id, b]));
+      const progressMap = new Map((progress ?? []).map((p: any) => [p.book_id, p]));
+
+      const library = (purchases ?? []).map((p: any) => {
+        const book = bookMap.get(p.book_id) ?? ({} as any);
+        const prog = progressMap.get(p.book_id) as any | undefined;
+        return {
+          purchaseId: p.id,
+          bookId: p.book_id,
+          titleEn: book.title_en ?? null,
+          titleBn: book.title_bn ?? null,
+          slug: book.slug ?? "",
+          coverImage: book.cover_image ?? null,
+          author: book.author_name ?? null,
+          isFree: !!book.is_free,
+          status: book.status ?? "draft",
+          amountPaid: p.amount_paid ?? 0,
+          purchaseDate: p.purchase_date ?? p.created_at,
+          progressPct: prog?.progress_pct ?? 0,
+          completed: prog?.completed ?? false,
+          lastPage: prog?.last_page ?? 0,
+          totalPages: prog?.total_pages ?? 0,
+          updatedAt: prog?.updated_at ?? null,
+        };
+      });
+
+      return { books: library };
+    },
+  );

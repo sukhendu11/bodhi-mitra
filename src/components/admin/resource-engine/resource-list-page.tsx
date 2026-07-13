@@ -11,6 +11,7 @@ import { FormDrawer } from "@/components/admin/form-drawer";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { StatCard } from "@/components/admin/stat-card";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
+import { useFormKeyboard } from "@/components/admin/form-engine";
 import type { ResourceDefinition } from "./types";
 
 /* ─── Props ──────────────────────────────────────────────────────── */
@@ -152,6 +153,13 @@ export function ResourceListPage<TData extends { id: string }>({
 
   useUnsavedChanges(showForm && form.formState.isDirty);
 
+  /* ── Form keyboard shortcuts ────────────────────────────────────── */
+
+  useFormKeyboard({
+    onSave: handleSubmit,
+    enabled: showForm,
+  });
+
   /* ── Auto-append action column ─────────────────────────────────── */
 
   const allColumns = useMemo((): ColumnDef<TData, any>[] => {
@@ -276,7 +284,11 @@ export function ResourceListPage<TData extends { id: string }>({
           setEditingId(null);
         }}
         title={mode === "edit" ? `Edit ${def.label}` : `Add New ${def.label}`}
-        description={mode === "edit" ? `Update ${labelLower} details.` : `Add a new ${labelLower} to the collection.`}
+        description={
+          mode === "edit"
+            ? `Update ${labelLower} details.`
+            : `Add a new ${labelLower} to the collection.`
+        }
         isPending={isCreating || isUpdating}
         submitLabel={mode === "edit" ? `Update ${def.label}` : `Create ${def.label}`}
         size="full"

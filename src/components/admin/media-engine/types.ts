@@ -37,7 +37,6 @@ export interface MediaPickerOptions {
 /* ─── Media Buckets ──────────────────────────────────────────────── */
 
 import type { LucideIcon } from "lucide-react";
-import { Image, FileText } from "lucide-react";
 
 export interface MediaBucketDef {
   value: string;
@@ -47,11 +46,33 @@ export interface MediaBucketDef {
   allowedTypes?: string[];
 }
 
+import { Image, FileText, Music, Video, FileType, Palette } from "lucide-react";
+
 export const MEDIA_BUCKETS: MediaBucketDef[] = [
   { value: "blog-images", label: "Blog Images", icon: Image, allowedTypes: ["image/*"] },
-  { value: "site-assets", label: "Site Assets", icon: FileText, allowedTypes: ["image/*", ".pdf", ".svg"] },
+  {
+    value: "site-assets",
+    label: "Site Assets",
+    icon: FileText,
+    allowedTypes: ["image/*", ".pdf", ".svg"],
+  },
   { value: "book-covers", label: "Book Covers", icon: Image, allowedTypes: ["image/*"] },
   { value: "avatars", label: "Avatars", icon: Image, allowedTypes: ["image/*"] },
+  { value: "audio", label: "Audio", icon: Music, allowedTypes: ["audio/*"] },
+  {
+    value: "videos",
+    label: "Videos",
+    icon: Video,
+    allowedTypes: ["video/*"],
+  },
+  {
+    value: "documents",
+    label: "Documents",
+    icon: FileType,
+    allowedTypes: ["application/pdf", "application/msword", "text/plain", "text/csv"],
+  },
+  { value: "fonts", label: "Fonts", icon: Palette, allowedTypes: ["font/*"] },
+  { value: "icons", label: "Icons", icon: Image, allowedTypes: ["image/svg+xml", "image/png"] },
 ];
 
 /* ─── File Size Format ────────────────────────────────────────────── */

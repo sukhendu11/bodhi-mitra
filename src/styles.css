@@ -4,12 +4,24 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ═══════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Theme Definition
+   ═══════════════════════════════════════════════════════════════════
+   All tokens below become Tailwind utility classes automatically.
+   Usage: bg-background, text-foreground, shadow-sm, rounded-lg, etc.
+   ═══════════════════════════════════════════════════════════════════ */
+
 @theme inline {
+  /* ── Border Radius ───────────────────────────────────────────── */
+  --radius-xs: calc(var(--radius) - 6px);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
+
+  /* ── Semantic Colors (mapped to CSS variables for dark mode) ─── */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -30,19 +42,193 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --font-serif: "Cormorant Garamond", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-bn: "Hind Siliguri", "Inter", system-ui, sans-serif;
+  /* ── Status Colors ────────────────────────────────────────────── */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
 
-  /* Saffron / Gerua brand accent */
+  /* ── Sidebar Colors ──────────────────────────────────────────── */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ── Brand Colors ────────────────────────────────────────────── */
   --color-saffron: #d35400;
   --color-saffron-hover: #e67e22;
+  --color-saffron-50: #fef2e8;
+  --color-saffron-100: #fde0cc;
+  --color-saffron-200: #fbc199;
+  --color-saffron-300: #f8a266;
+  --color-saffron-400: #f68333;
+  --color-saffron-500: #d35400;
+  --color-saffron-600: #a84300;
+  --color-saffron-700: #7d3200;
+  --color-saffron-800: #522100;
+  --color-saffron-900: #271000;
+
+  /* ── Neutral Scale ───────────────────────────────────────────── */
+  --color-neutral-50: oklch(0.985 0 0);
+  --color-neutral-100: oklch(0.97 0 0);
+  --color-neutral-200: oklch(0.92 0 0);
+  --color-neutral-300: oklch(0.87 0 0);
+  --color-neutral-400: oklch(0.72 0 0);
+  --color-neutral-500: oklch(0.56 0 0);
+  --color-neutral-600: oklch(0.44 0 0);
+  --color-neutral-700: oklch(0.37 0 0);
+  --color-neutral-800: oklch(0.26 0 0);
+  --color-neutral-900: oklch(0.15 0 0);
+  --color-neutral-950: oklch(0.1 0 0);
+
+  /* ── Font Families ───────────────────────────────────────────── */
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-bn: "Hind Siliguri", "Inter", system-ui, sans-serif;
+
+  /* ── Font Sizes (type scale) ─────────────────────────────────── */
+  --font-size-xxs: 0.625rem;   /* 10px */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 1.875rem;   /* 30px */
+  --font-size-4xl: 2.25rem;    /* 36px */
+  --font-size-5xl: 3rem;       /* 48px */
+
+  /* ── Font Weights ────────────────────────────────────────────── */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ── Line Heights ────────────────────────────────────────────── */
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+
+  /* ── Letter Spacing ──────────────────────────────────────────── */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+
+  /* ── Shadows (Elevation) ─────────────────────────────────────── */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.02);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.04), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.04), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.08);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.03);
+
+  /* ── Ring Shadows (focus rings) ──────────────────────────────── */
+  --ring-offset-shadow: 0 0 transparent;
+  --ring-shadow: 0 0 transparent;
+  --shadow-ring: 0 0 0 2px var(--ring);
+
+  /* ── Spacing Scale ───────────────────────────────────────────── */
+  --spacing-px: 1px;
+  --spacing-0: 0px;
+  --spacing-0\.5: 0.125rem;  /* 2px */
+  --spacing-1: 0.25rem;      /* 4px */
+  --spacing-1\.5: 0.375rem;  /* 6px */
+  --spacing-2: 0.5rem;       /* 8px */
+  --spacing-2\.5: 0.625rem;  /* 10px */
+  --spacing-3: 0.75rem;      /* 12px */
+  --spacing-3\.5: 0.875rem;  /* 14px */
+  --spacing-4: 1rem;         /* 16px */
+  --spacing-5: 1.25rem;      /* 20px */
+  --spacing-6: 1.5rem;       /* 24px */
+  --spacing-7: 1.75rem;      /* 28px */
+  --spacing-8: 2rem;         /* 32px */
+  --spacing-9: 2.25rem;      /* 36px */
+  --spacing-10: 2.5rem;      /* 40px */
+  --spacing-11: 2.75rem;     /* 44px */
+  --spacing-12: 3rem;        /* 48px */
+  --spacing-14: 3.5rem;      /* 56px */
+  --spacing-16: 4rem;        /* 64px */
+  --spacing-20: 5rem;        /* 80px */
+  --spacing-24: 6rem;        /* 96px */
+  --spacing-28: 7rem;        /* 112px */
+  --spacing-32: 8rem;        /* 128px */
+  --spacing-36: 9rem;        /* 144px */
+  --spacing-40: 10rem;       /* 160px */
+  --spacing-44: 11rem;       /* 176px */
+  --spacing-48: 12rem;       /* 192px */
+  --spacing-52: 13rem;       /* 208px */
+  --spacing-56: 14rem;       /* 224px */
+  --spacing-60: 15rem;       /* 240px */
+  --spacing-64: 16rem;       /* 256px */
+  --spacing-72: 18rem;       /* 288px */
+  --spacing-80: 20rem;       /* 320px */
+  --spacing-96: 24rem;       /* 384px */
+
+  /* ── Z-Index Scale ───────────────────────────────────────────── */
+  --z-0: 0;
+  --z-10: 10;
+  --z-20: 20;
+  --z-30: 30;
+  --z-40: 40;
+  --z-50: 50;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-banner: 300;
+  --z-drawer: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+
+  /* ── Transition Duration ─────────────────────────────────────── */
+  --duration-75: 75ms;
+  --duration-100: 100ms;
+  --duration-150: 150ms;
+  --duration-200: 200ms;
+  --duration-300: 300ms;
+  --duration-400: 400ms;
+  --duration-500: 500ms;
+  --duration-700: 700ms;
+  --duration-1000: 1000ms;
+
+  /* ── Transition Timing Functions ─────────────────────────────── */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Animation Keyframes ─────────────────────────────────────── */
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-fade-out: fade-out 0.15s ease-in;
+  --animate-slide-in: slide-in 0.2s ease-out;
+  --animate-slide-out: slide-out 0.15s ease-in;
+  --animate-scale-in: scale-in 0.15s ease-out;
+  --animate-scale-out: scale-out 0.1s ease-in;
+  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
+  --animate-spin-slow: spin 3s linear infinite;
+  --animate-bounce-subtle: bounce-subtle 1s ease-in-out infinite;
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES — Light Mode (default)
+   ═══════════════════════════════════════════════════════════════════ */
 
 :root {
   --radius: 0.25rem;
 
-  /* Warm off-white / paper */
+  /* ── Surface Colors ──────────────────────────────────────────── */
   --background: oklch(0.985 0.008 80);
   --foreground: oklch(0.25 0.012 60);
 
@@ -52,7 +238,7 @@
   --popover: oklch(0.985 0.008 80);
   --popover-foreground: oklch(0.25 0.012 60);
 
-  /* Earthy clay primary */
+  /* ── Brand / Interactive ─────────────────────────────────────── */
   --primary: oklch(0.45 0.06 50);
   --primary-foreground: oklch(0.985 0.008 80);
 
@@ -65,13 +251,135 @@
   --accent: oklch(0.88 0.03 70);
   --accent-foreground: oklch(0.28 0.015 60);
 
+  /* ── Status Colors ───────────────────────────────────────────── */
   --destructive: oklch(0.55 0.18 25);
   --destructive-foreground: oklch(0.985 0.008 80);
 
+  --success: oklch(0.55 0.14 145);
+  --success-foreground: oklch(0.985 0.008 80);
+
+  --warning: oklch(0.68 0.14 70);
+  --warning-foreground: oklch(0.15 0.01 60);
+
+  --info: oklch(0.55 0.08 240);
+  --info-foreground: oklch(0.985 0.008 80);
+
+  /* ── Borders & Rings ─────────────────────────────────────────── */
   --border: oklch(0.9 0.012 75);
   --input: oklch(0.9 0.012 75);
   --ring: oklch(0.5 0.04 60);
+
+  /* ── Sidebar (admin) ─────────────────────────────────────────── */
+  --sidebar: oklch(0.12 0.005 60);
+  --sidebar-foreground: oklch(0.7 0.01 60);
+  --sidebar-accent: oklch(0.2 0.01 60);
+  --sidebar-accent-foreground: oklch(0.85 0.01 60);
+  --sidebar-border: oklch(0.18 0.005 60);
+  --sidebar-ring: oklch(0.4 0.04 60);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK MODE
+   ═══════════════════════════════════════════════════════════════════ */
+
+.dark {
+  --background: oklch(0.12 0.008 280);
+  --foreground: oklch(0.92 0.008 280);
+
+  --card: oklch(0.14 0.008 280);
+  --card-foreground: oklch(0.92 0.008 280);
+
+  --popover: oklch(0.14 0.008 280);
+  --popover-foreground: oklch(0.92 0.008 280);
+
+  --primary: oklch(0.65 0.12 50);
+  --primary-foreground: oklch(0.15 0.008 280);
+
+  --secondary: oklch(0.2 0.008 280);
+  --secondary-foreground: oklch(0.85 0.008 280);
+
+  --muted: oklch(0.18 0.008 280);
+  --muted-foreground: oklch(0.55 0.008 280);
+
+  --accent: oklch(0.22 0.008 280);
+  --accent-foreground: oklch(0.9 0.008 280);
+
+  --destructive: oklch(0.45 0.15 25);
+  --destructive-foreground: oklch(0.95 0.008 280);
+
+  --success: oklch(0.5 0.12 145);
+  --success-foreground: oklch(0.95 0.008 280);
+
+  --warning: oklch(0.6 0.12 70);
+  --warning-foreground: oklch(0.1 0.008 280);
+
+  --info: oklch(0.5 0.08 240);
+  --info-foreground: oklch(0.95 0.008 280);
+
+  --border: oklch(0.22 0.008 280);
+  --input: oklch(0.22 0.008 280);
+  --ring: oklch(0.65 0.08 50);
+
+  --sidebar: oklch(0.08 0.005 60);
+  --sidebar-foreground: oklch(0.65 0.01 60);
+  --sidebar-accent: oklch(0.15 0.01 60);
+  --sidebar-accent-foreground: oklch(0.9 0.01 60);
+  --sidebar-border: oklch(0.14 0.005 60);
+  --sidebar-ring: oklch(0.55 0.04 60);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   KEYFRAMES
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(4px); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes scale-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════════════ */
 
 @layer base {
   * {
@@ -96,26 +404,20 @@
     letter-spacing: -0.01em;
   }
 
-  /* When Bangla is the active language, switch the entire UI to Hind Siliguri. */
+  /* Bangla language override */
   html[data-lang="bn"],
   html[data-lang="bn"] body,
   html[data-lang="bn"] .font-serif,
-  html[data-lang="bn"] h1,
-  html[data-lang="bn"] h2,
-  html[data-lang="bn"] h3,
-  html[data-lang="bn"] h4,
+  html[data-lang="bn"] h1, html[data-lang="bn"] h2,
+  html[data-lang="bn"] h3, html[data-lang="bn"] h4,
   html[data-lang="bn"] .prose-mitra,
-  html[data-lang="bn"] .prose-mitra h1,
-  html[data-lang="bn"] .prose-mitra h2,
-  html[data-lang="bn"] .prose-mitra h3,
-  html[data-lang="bn"] .prose-mitra h4 {
+  html[data-lang="bn"] .prose-mitra h1, html[data-lang="bn"] .prose-mitra h2,
+  html[data-lang="bn"] .prose-mitra h3, html[data-lang="bn"] .prose-mitra h4 {
     font-family: var(--font-bn) !important;
     letter-spacing: 0 !important;
   }
-}
 
-/* ── Page entrance animation ─────────────────────────────────── */
-@layer base {
+  /* Page entrance animation */
   main {
     animation: page-enter 0.35s ease-out both;
   }
@@ -127,24 +429,30 @@
     .stagger-enter {
       animation: none !important;
     }
+    .skeleton-shimmer {
+      animation: none;
+    }
+    *[style*="opacity: 0"] {
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
 }
 
 @keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Shimmer loading skeleton ─────────────────────────────────── */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* ── Utilities ──────────────────────────────────────────────────── */
+
+@utility stagger-enter {
+  animation: card-enter 0.4s ease-out both;
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @layer base {
@@ -161,32 +469,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .skeleton-shimmer {
-    animation: none;
-  }
-  /* Disable reveal animations for users who prefer reduced motion */
-  *[style*="opacity: 0"] {
-    opacity: 1 !important;
-    transform: none !important;
-  }
-}
-
-/* ── Staggered card entrance ─────────────────────────────────── */
-@utility stagger-enter {
-  animation: card-enter 0.4s ease-out both;
-}
-
-@keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* ── Component Styles ────────────────────────────────────────────── */
 
 @layer components {
   .prose-mitra {
@@ -196,10 +479,7 @@
     color: var(--color-foreground);
   }
   .prose-mitra p { margin-bottom: 1.4em; }
-  .prose-mitra h1,
-  .prose-mitra h2,
-  .prose-mitra h3,
-  .prose-mitra h4 {
+  .prose-mitra h1, .prose-mitra h2, .prose-mitra h3, .prose-mitra h4 {
     font-family: var(--font-serif);
     margin-top: 1.6em;
     margin-bottom: 0.6em;
@@ -209,8 +489,7 @@
   .prose-mitra h3 { font-size: 1.5rem; }
   .prose-mitra strong { font-weight: 600; color: var(--color-foreground); }
   .prose-mitra em { font-style: italic; }
-  .prose-mitra ul,
-  .prose-mitra ol {
+  .prose-mitra ul, .prose-mitra ol {
     margin: 0 0 1.4em 1.5em;
     padding-left: 0.5em;
   }
@@ -236,7 +515,7 @@
   }
   .prose-mitra a:hover { border-bottom-color: var(--color-primary); }
   .prose-mitra code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: var(--font-mono);
     background-color: var(--color-secondary);
     padding: 0.1em 0.4em;
     border-radius: 0.2em;

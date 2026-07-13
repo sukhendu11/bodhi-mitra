@@ -30,7 +30,9 @@ function loadSettings(): TypoSettings {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return { ...defaults, ...JSON.parse(stored) };
-  } catch { /* noop */ }
+  } catch {
+    /* noop */
+  }
   return defaults;
 }
 
@@ -53,7 +55,9 @@ export function useTypography() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
   }, [settings]);
 
   const typoClass = `${fontSizeMap[settings.fontSize]} ${lineHeightMap[settings.lineHeight]}`;

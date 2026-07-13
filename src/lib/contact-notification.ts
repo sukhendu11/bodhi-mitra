@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getResendClient } from "@/integrations/resend/client";
+import { escapeHtml } from "@/lib/utils";
 
 interface ContactFormInput {
   name: string;
@@ -15,8 +16,8 @@ interface ContactFormInput {
  * Requires RESEND_API_KEY env var. If not configured, the email is
  * silently skipped (the message is still stored in the database).
  */
-export const sendContactNotification = createServerFn({ method: "POST" })
-  .handler(async ({ data }: { data: unknown }) => {
+export const sendContactNotification = createServerFn({ method: "POST" }).handler(
+  async ({ data }: { data: unknown }) => {
     const input = data as ContactFormInput;
 
     if (!input.name?.trim() || !input.email?.trim() || !input.message?.trim()) {
@@ -89,13 +90,7 @@ export const sendContactNotification = createServerFn({ method: "POST" })
       console.error("[contact-notification] Error sending email:", err);
       return { sent: false, reason: "error" };
     }
-  });
+  },
+);
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+

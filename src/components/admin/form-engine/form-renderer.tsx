@@ -1,16 +1,11 @@
 import type { FieldValues, UseFormReturn } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ValidationSummary } from "./validation-summary";
 import type { FormGroup } from "./types";
 import { renderGroupFields } from "./field-renderer";
+import { useFormKeyboard } from "./use-form-keyboard";
 
 /* ─── Props ──────────────────────────────────────────────────────── */
 
@@ -26,6 +21,10 @@ interface FormRendererProps<TForm extends FieldValues> {
   className?: string;
   /** Callback when submit is attempted but validation fails */
   onValidationError?: (errors: Record<string, any>) => void;
+  /** Called on Ctrl+S (or Cmd+S on Mac) for save */
+  onSave?: () => void;
+  /** Called on Escape for cancel/close */
+  onCancel?: () => void;
 }
 
 /* ─── Form Renderer ──────────────────────────────────────────────── */
@@ -37,16 +36,18 @@ export function FormRenderer<TForm extends FieldValues>({
   showValidationSummary = true,
   className,
   onValidationError,
+  onSave,
+  onCancel,
 }: FormRendererProps<TForm>) {
   const formErrors = form.formState.errors;
   const hasErrors = Object.keys(formErrors).length > 0;
 
+  useFormKeyboard({ onSave, onCancel });
+
   return (
     <Form {...form}>
       {/* Validation Summary */}
-      {showValidationSummary && hasErrors && (
-        <ValidationSummary errors={formErrors} />
-      )}
+      {showValidationSummary && hasErrors && <ValidationSummary errors={formErrors} />}
 
       <div className={className ?? "space-y-6"}>
         {/* Render field groups */}
@@ -58,9 +59,7 @@ export function FormRenderer<TForm extends FieldValues>({
               </h4>
             )}
             {group.description && (
-              <p className="text-[0.65rem] text-muted-foreground mb-3 -mt-1">
-                {group.description}
-              </p>
+              <p className="text-[0.65rem] text-muted-foreground mb-3 -mt-1">{group.description}</p>
             )}
             {renderGroupFields(group, form)}
           </div>
@@ -108,7 +107,13 @@ export function AdminTextField<TForm extends FieldValues>({
             {label}
           </FormLabel>
           <FormControl>
-            <Input {...field} value={field.value ?? ""} {...inputExtra} placeholder={placeholder} disabled={disabled} />
+            <Input
+              {...field}
+              value={field.value ?? ""}
+              {...inputExtra}
+              placeholder={placeholder}
+              disabled={disabled}
+            />
           </FormControl>
           {fieldState.error && <FormMessage className="text-[0.65rem]" />}
         </FormItem>

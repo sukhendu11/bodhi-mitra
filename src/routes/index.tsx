@@ -12,8 +12,12 @@ export const Route = createFileRoute("/")({
   loader: () => fetchSiteSettings(),
   head: ({ loaderData }) => {
     const seo = loaderData?.seo;
-    const tagline = loaderData?.hero?.title_en?.replace(/\n/g, " ") || "Where Ancient Wisdom Meets Modern Psychology";
-    const metaDesc = seo?.meta_desc_en || "Reflections on Buddhist psychology, mindfulness, and mental health by practicing psychiatrists.";
+    const tagline =
+      loaderData?.hero?.title_en?.replace(/\n/g, " ") ||
+      "Where Ancient Wisdom Meets Modern Psychology";
+    const metaDesc =
+      seo?.meta_desc_en ||
+      "Reflections on Buddhist psychology, mindfulness, and mental health by practicing psychiatrists.";
     const siteName = loaderData?.branding?.site_name_en || "Bodhi Mitra";
     return {
       meta: [
@@ -51,7 +55,7 @@ function Home() {
       {hero.visible && (
         <section className="relative overflow-hidden border-b border-border/60">
           <div className="absolute inset-0 opacity-90">
-            <img src={hero.image_url || heroImg} alt="" className="w-full h-full object-cover" />
+            <img src={hero.image_url || heroImg} alt={heroTitle || "Hero background"} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/10 to-background/70" />
           </div>
           <div className="relative mx-auto max-w-4xl px-6 py-32 md:py-44 text-center">

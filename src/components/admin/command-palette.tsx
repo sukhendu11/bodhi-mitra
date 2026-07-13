@@ -41,21 +41,99 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, to: "/admin", keywords: ["home", "overview"] },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    to: "/admin",
+    keywords: ["home", "overview"],
+  },
   { id: "posts", label: "All Posts", icon: FileText, to: "/admin", keywords: ["articles", "blog"] },
-  { id: "new-post", label: "New Post", icon: PlusCircle, to: "/admin/new", keywords: ["create", "write", "article"] },
+  {
+    id: "new-post",
+    label: "New Post",
+    icon: PlusCircle,
+    to: "/admin/new",
+    keywords: ["create", "write", "article"],
+  },
   { id: "pages", label: "Pages", icon: Globe, to: "/admin/pages", keywords: ["static"] },
-  { id: "media", label: "Media Library", icon: ImageIcon, to: "/admin/media", keywords: ["images", "uploads", "files"] },
-  { id: "books", label: "All Books", icon: BookOpen, to: "/admin/books", keywords: ["library", "publications"] },
-  { id: "videos", label: "All Videos", icon: Video, to: "/admin/videos", keywords: ["youtube", "media"] },
-  { id: "courses", label: "All Courses", icon: BookOpen, to: "/admin/courses", keywords: ["learning", "lessons"] },
-  { id: "navigation", label: "Menu Builder", icon: Menu, to: "/admin/navigation", keywords: ["nav", "menu"] },
-  { id: "moderation", label: "Moderation", icon: MessageSquare, to: "/admin/comments", keywords: ["comments", "contact", "spam"] },
-  { id: "taxonomy", label: "Taxonomy", icon: FolderTree, to: "/admin/taxonomy", keywords: ["categories", "tags"] },
-  { id: "users", label: "Users & Roles", icon: Users, to: "/admin/users", keywords: ["permissions", "accounts"] },
-  { id: "audit", label: "Audit Log", icon: Activity, to: "/admin/audit", keywords: ["history", "changes"] },
-  { id: "settings", label: "General Settings", icon: Settings, to: "/admin/settings", keywords: ["config", "preferences"] },
-  { id: "view-site", label: "View Site", icon: ExternalLink, to: "/", keywords: ["frontend", "public"] },
+  {
+    id: "media",
+    label: "Media Library",
+    icon: ImageIcon,
+    to: "/admin/media",
+    keywords: ["images", "uploads", "files"],
+  },
+  {
+    id: "books",
+    label: "All Books",
+    icon: BookOpen,
+    to: "/admin/books",
+    keywords: ["library", "publications"],
+  },
+  {
+    id: "videos",
+    label: "All Videos",
+    icon: Video,
+    to: "/admin/videos",
+    keywords: ["youtube", "media"],
+  },
+  {
+    id: "courses",
+    label: "All Courses",
+    icon: BookOpen,
+    to: "/admin/courses",
+    keywords: ["learning", "lessons"],
+  },
+  {
+    id: "navigation",
+    label: "Menu Builder",
+    icon: Menu,
+    to: "/admin/navigation",
+    keywords: ["nav", "menu"],
+  },
+  {
+    id: "moderation",
+    label: "Moderation",
+    icon: MessageSquare,
+    to: "/admin/comments",
+    keywords: ["comments", "contact", "spam"],
+  },
+  {
+    id: "taxonomy",
+    label: "Taxonomy",
+    icon: FolderTree,
+    to: "/admin/taxonomy",
+    keywords: ["categories", "tags"],
+  },
+  {
+    id: "users",
+    label: "Users & Roles",
+    icon: Users,
+    to: "/admin/users",
+    keywords: ["permissions", "accounts"],
+  },
+  {
+    id: "audit",
+    label: "Audit Log",
+    icon: Activity,
+    to: "/admin/audit",
+    keywords: ["history", "changes"],
+  },
+  {
+    id: "settings",
+    label: "General Settings",
+    icon: Settings,
+    to: "/admin/settings",
+    keywords: ["config", "preferences"],
+  },
+  {
+    id: "view-site",
+    label: "View Site",
+    icon: ExternalLink,
+    to: "/",
+    keywords: ["frontend", "public"],
+  },
 ];
 
 const typeIcons: Record<ContentType, LucideIcon> = {
@@ -146,7 +224,11 @@ export function CommandPalette() {
       />
       <CommandList>
         <CommandEmpty>
-          {isFetching ? "Searching…" : search.length >= 2 ? "No results found." : "Type at least 2 characters to search content."}
+          {isFetching
+            ? "Searching…"
+            : search.length >= 2
+              ? "No results found."
+              : "Type at least 2 characters to search content."}
         </CommandEmpty>
 
         {showNav && (

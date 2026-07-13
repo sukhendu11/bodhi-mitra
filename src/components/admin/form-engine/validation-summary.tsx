@@ -40,9 +40,7 @@ export function ValidationSummary({ errors, className }: ValidationSummaryProps)
         <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
         <div className="min-w-0">
           <p className="text-xs font-semibold text-destructive">
-            {errorMessages.length === 1
-              ? "1 form error"
-              : `${errorMessages.length} form errors`}
+            {errorMessages.length === 1 ? "1 form error" : `${errorMessages.length} form errors`}
           </p>
           <ul className="mt-2 space-y-1">
             {errorMessages.map((msg, i) => (

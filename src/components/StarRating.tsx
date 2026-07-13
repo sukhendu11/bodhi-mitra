@@ -56,9 +56,7 @@ export function StarRating({
               }}
               className={cn(
                 "transition-all duration-150",
-                isInteractive
-                  ? "cursor-pointer hover:scale-110 active:scale-90"
-                  : "cursor-default",
+                isInteractive ? "cursor-pointer hover:scale-110 active:scale-90" : "cursor-default",
                 disabled && "opacity-60",
               )}
               aria-label={`${starValue} star${starValue > 1 ? "s" : ""}`}
@@ -86,9 +84,7 @@ export function StarRating({
         </span>
       )}
       {totalRatings !== undefined && totalRatings > 0 && (
-        <span className="text-[0.55rem] text-muted-foreground/60 ml-0.5">
-          ({totalRatings})
-        </span>
+        <span className="text-[0.55rem] text-muted-foreground/60 ml-0.5">({totalRatings})</span>
       )}
     </div>
   );
@@ -102,11 +98,7 @@ interface RatingBreakdownProps {
   avgRating: number;
 }
 
-export function RatingBreakdown({
-  distribution,
-  totalRatings,
-  avgRating,
-}: RatingBreakdownProps) {
+export function RatingBreakdown({ distribution, totalRatings, avgRating }: RatingBreakdownProps) {
   if (totalRatings === 0) {
     return (
       <div className="text-center py-4">

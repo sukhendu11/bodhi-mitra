@@ -27,12 +27,22 @@ const shortcuts: Shortcut[] = [
 
 const isInputFocused = () => {
   const tag = document.activeElement?.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (document.activeElement?.getAttribute("contenteditable") === "true");
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    document.activeElement?.getAttribute("contenteditable") === "true"
+  );
 };
 
 export function KeyboardShortcutsHelp({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Keyboard Shortcuts</DialogTitle>

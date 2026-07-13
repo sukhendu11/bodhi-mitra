@@ -140,135 +140,155 @@ export function Comments({ postId }: { postId: string }) {
                 )}
               </p>
               <time className="text-xs text-muted-foreground shrink-0">
-                {new Date(c.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                {c.updated_at && new Date(c.updated_at).getTime() - new Date(c.created_at).getTime() > 1500 && (
-                  <span className="ml-2 italic">
-                    (edited {new Date(c.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})
-                  </span>
-                )}
+                {new Date(c.created_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+                {c.updated_at &&
+                  new Date(c.updated_at).getTime() - new Date(c.created_at).getTime() > 1500 && (
+                    <span className="ml-2 italic">
+                      (edited{" "}
+                      {new Date(c.updated_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                      )
+                    </span>
+                  )}
               </time>
             </div>
 
-        {isEditing ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (editingText.trim().length === 0) return;
-              editMutation.mutate({ id: c.id, text: editingText });
-            }}
-            className="space-y-2"
-          >
-            <textarea
-              value={editingText}
-              onChange={(e) => setEditingText(e.target.value)}
-              rows={3}
-              maxLength={2000}
-              className="w-full border border-border bg-background px-3 py-2 text-sm font-sans focus:outline-none focus:border-foreground/60 resize-y"
-            />
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => { setEditingId(null); setEditingText(""); }}
-                className="px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.2em] border border-border hover:border-foreground/60"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={editMutation.isPending || editingText.trim().length === 0}
-                className="px-4 py-1.5 text-[0.65rem] uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-40"
-              >
-                {editMutation.isPending ? "Saving…" : "Save"}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap">{c.comment_text}</p>
-        )}
-
-        {!isEditing && (
-          <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-            {canReply && (
-              <button
-                onClick={() => {
-                  setReplyTo(replyTo?.id === c.id ? null : c);
-                  setReplyText("");
+            {isEditing ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editingText.trim().length === 0) return;
+                  editMutation.mutate({ id: c.id, text: editingText });
                 }}
-                className="hover:text-foreground"
+                className="space-y-2"
               >
-                {replyTo?.id === c.id ? "Cancel" : "Reply"}
-              </button>
+                <textarea
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  rows={3}
+                  maxLength={2000}
+                  className="w-full border border-border bg-background px-3 py-2 text-sm font-sans focus:outline-none focus:border-foreground/60 resize-y"
+                />
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingId(null);
+                      setEditingText("");
+                    }}
+                    className="px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.2em] border border-border hover:border-foreground/60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editMutation.isPending || editingText.trim().length === 0}
+                    className="px-4 py-1.5 text-[0.65rem] uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-40"
+                  >
+                    {editMutation.isPending ? "Saving…" : "Save"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap">
+                {c.comment_text}
+              </p>
             )}
-            {!user && (
-              <button onClick={() => setAuthOpen(true)} className="hover:text-foreground">
-                Reply
-              </button>
-            )}
-            {canEdit && (
-              <button onClick={() => startEdit(c)} className="hover:text-foreground">
-                Edit
-              </button>
-            )}
-            {canDelete && (
-              <button onClick={() => setDeleteTarget(c)} className="hover:text-foreground">
-                Delete
-              </button>
-            )}
-          </div>
-        )}
 
-        {replyTo?.id === c.id && canReply && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (replyText.trim().length === 0) return;
-              postMutation.mutate({ text: replyText, parent_id: c.id });
-            }}
-            className="mt-4 space-y-2 pl-4 border-l-2 border-foreground/30"
-          >
-            <div className="bg-secondary/40 border-l-2 border-foreground/40 px-3 py-2 text-xs text-muted-foreground italic">
-              <span className="not-italic font-medium text-foreground/70">Replying to {c.user_name}: </span>
-              "{snippet(c.comment_text)}"
-            </div>
-            <textarea
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Write a reply…"
-              rows={3}
-              maxLength={2000}
-              autoFocus
-              className="w-full border border-border bg-background px-3 py-2 text-sm font-sans focus:outline-none focus:border-foreground/60 resize-y"
-            />
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={postMutation.isPending || replyText.trim().length === 0}
-                className="px-4 py-1.5 text-[0.65rem] uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-40"
+            {!isEditing && (
+              <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+                {canReply && (
+                  <button
+                    onClick={() => {
+                      setReplyTo(replyTo?.id === c.id ? null : c);
+                      setReplyText("");
+                    }}
+                    className="hover:text-foreground"
+                  >
+                    {replyTo?.id === c.id ? "Cancel" : "Reply"}
+                  </button>
+                )}
+                {!user && (
+                  <button onClick={() => setAuthOpen(true)} className="hover:text-foreground">
+                    Reply
+                  </button>
+                )}
+                {canEdit && (
+                  <button onClick={() => startEdit(c)} className="hover:text-foreground">
+                    Edit
+                  </button>
+                )}
+                {canDelete && (
+                  <button onClick={() => setDeleteTarget(c)} className="hover:text-foreground">
+                    Delete
+                  </button>
+                )}
+              </div>
+            )}
+
+            {replyTo?.id === c.id && canReply && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (replyText.trim().length === 0) return;
+                  postMutation.mutate({ text: replyText, parent_id: c.id });
+                }}
+                className="mt-4 space-y-2 pl-4 border-l-2 border-foreground/30"
               >
-                {postMutation.isPending ? "Posting…" : "Reply"}
-              </button>
-            </div>
-          </form>
-        )}
+                <div className="bg-secondary/40 border-l-2 border-foreground/40 px-3 py-2 text-xs text-muted-foreground italic">
+                  <span className="not-italic font-medium text-foreground/70">
+                    Replying to {c.user_name}:{" "}
+                  </span>
+                  "{snippet(c.comment_text)}"
+                </div>
+                <textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Write a reply…"
+                  rows={3}
+                  maxLength={2000}
+                  autoFocus
+                  className="w-full border border-border bg-background px-3 py-2 text-sm font-sans focus:outline-none focus:border-foreground/60 resize-y"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={postMutation.isPending || replyText.trim().length === 0}
+                    className="px-4 py-1.5 text-[0.65rem] uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-40"
+                  >
+                    {postMutation.isPending ? "Posting…" : "Reply"}
+                  </button>
+                </div>
+              </form>
+            )}
 
-        {replies.length > 0 && (
-          <ul className="mt-5 pl-5 border-l-2 border-border space-y-5">
-            {replies.map((r) => {
-              const parent = r.parent_id ? commentsById.get(r.parent_id) : null;
-              return (
-                <li key={r.id}>
-                  {parent && (
-                    <div className="mb-2 bg-secondary/40 border-l-2 border-foreground/30 px-3 py-1.5 text-xs text-muted-foreground italic">
-                      <span className="not-italic font-medium text-foreground/70">↳ {parent.user_name}: </span>
-                      "{snippet(parent.comment_text, 100)}"
-                    </div>
-                  )}
-                  {renderComment(r, true)}
-                </li>
-              );
-            })}
-          </ul>
-        )}
+            {replies.length > 0 && (
+              <ul className="mt-5 pl-5 border-l-2 border-border space-y-5">
+                {replies.map((r) => {
+                  const parent = r.parent_id ? commentsById.get(r.parent_id) : null;
+                  return (
+                    <li key={r.id}>
+                      {parent && (
+                        <div className="mb-2 bg-secondary/40 border-l-2 border-foreground/30 px-3 py-1.5 text-xs text-muted-foreground italic">
+                          <span className="not-italic font-medium text-foreground/70">
+                            ↳ {parent.user_name}:{" "}
+                          </span>
+                          "{snippet(parent.comment_text, 100)}"
+                        </div>
+                      )}
+                      {renderComment(r, true)}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </div>
       </li>
@@ -346,8 +366,8 @@ export function Comments({ postId }: { postId: string }) {
                 className="hover:text-foreground underline"
               >
                 Sign in
-              </button>
-              {" "}to share a reflection
+              </button>{" "}
+              to share a reflection
             </p>
             <button
               type="button"
@@ -364,7 +384,9 @@ export function Comments({ postId }: { postId: string }) {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
         title="Delete reflection"
         description={
           deleteTarget

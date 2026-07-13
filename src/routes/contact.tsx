@@ -64,13 +64,15 @@ function ContactPage() {
       if (error) throw error;
 
       // Send notification email server-side (best-effort — won't block the form submission)
-      (doSendNotification as any)({ data: { name, email, message } }).then((result: any) => {
-        if (!result.sent) {
-          console.warn("[contact] Email notification not sent:", result.reason);
-        }
-      }).catch((err: Error) => {
-        console.warn("[contact] Email notification failed:", err.message);
-      });
+      (doSendNotification as any)({ data: { name, email, message } })
+        .then((result: any) => {
+          if (!result.sent) {
+            console.warn("[contact] Email notification not sent:", result.reason);
+          }
+        })
+        .catch((err: Error) => {
+          console.warn("[contact] Email notification failed:", err.message);
+        });
 
       setStatus("sent");
       form.reset();
@@ -95,68 +97,74 @@ function ContactPage() {
       )}
 
       <Reveal delay={0.3}>
-      <div className="mt-14 grid gap-12 md:grid-cols-[1fr_280px]">
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          <div className="space-y-1.5">
-            <label className="text-xs uppercase tracking-wider text-muted-foreground">{nameLabel}</label>
-            <Input name="name" required disabled={status === "sending"} />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs uppercase tracking-wider text-muted-foreground">{emailLabel}</label>
-            <Input name="email" type="email" required disabled={status === "sending"} />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs uppercase tracking-wider text-muted-foreground">{msgLabel}</label>
-            <Textarea name="message" rows={6} required disabled={status === "sending"} />
-          </div>
-          {status === "sent" ? (
-            <p className="text-sm text-muted-foreground">{successText}</p>
-          ) : (
-            <div>
-              <Button type="submit" disabled={status === "sending"}>
-                {status === "sending" ? "Sending…" : submitLabel}
-              </Button>
-              {status === "error" && (
-                <p className="mt-2 text-sm text-destructive">{errorMsg}</p>
-              )}
+        <div className="mt-14 grid gap-12 md:grid-cols-[1fr_280px]">
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div className="space-y-1.5">
+              <label className="text-xs uppercase tracking-wider text-muted-foreground">
+                {nameLabel}
+              </label>
+              <Input name="name" required disabled={status === "sending"} />
             </div>
-          )}
-        </form>
+            <div className="space-y-1.5">
+              <label className="text-xs uppercase tracking-wider text-muted-foreground">
+                {emailLabel}
+              </label>
+              <Input name="email" type="email" required disabled={status === "sending"} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs uppercase tracking-wider text-muted-foreground">
+                {msgLabel}
+              </label>
+              <Textarea name="message" rows={6} required disabled={status === "sending"} />
+            </div>
+            {status === "sent" ? (
+              <p className="text-sm text-muted-foreground">{successText}</p>
+            ) : (
+              <div>
+                <Button type="submit" disabled={status === "sending"}>
+                  {status === "sending" ? "Sending…" : submitLabel}
+                </Button>
+                {status === "error" && <p className="mt-2 text-sm text-destructive">{errorMsg}</p>}
+              </div>
+            )}
+          </form>
 
-        <aside className="space-y-4 text-sm text-muted-foreground">
-          {c.email && (
-            <div>
-              <p className="text-xs uppercase tracking-wider mb-1">Email</p>
-              <a className="text-foreground hover:underline" href={`mailto:${c.email}`}>{c.email}</a>
-            </div>
-          )}
-          {c.phone && (
-            <div>
-              <p className="text-xs uppercase tracking-wider mb-1">Phone</p>
-              <p className="text-foreground">{c.phone}</p>
-            </div>
-          )}
-          {address && (
-            <div>
-              <p className="text-xs uppercase tracking-wider mb-1">Location</p>
-              <p className="text-foreground whitespace-pre-line">{address}</p>
-            </div>
-          )}
-        </aside>
-      </div>
+          <aside className="space-y-4 text-sm text-muted-foreground">
+            {c.email && (
+              <div>
+                <p className="text-xs uppercase tracking-wider mb-1">Email</p>
+                <a className="text-foreground hover:underline" href={`mailto:${c.email}`}>
+                  {c.email}
+                </a>
+              </div>
+            )}
+            {c.phone && (
+              <div>
+                <p className="text-xs uppercase tracking-wider mb-1">Phone</p>
+                <p className="text-foreground">{c.phone}</p>
+              </div>
+            )}
+            {address && (
+              <div>
+                <p className="text-xs uppercase tracking-wider mb-1">Location</p>
+                <p className="text-foreground whitespace-pre-line">{address}</p>
+              </div>
+            )}
+          </aside>
+        </div>
       </Reveal>
 
       {c.map_embed_url && (
         <Reveal delay={0.4}>
-        <div className="mt-16 aspect-[16/8] w-full overflow-hidden rounded-md border border-border">
-          <iframe
-            src={c.map_embed_url}
-            title="Location map"
-            className="w-full h-full"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
+          <div className="mt-16 aspect-[16/8] w-full overflow-hidden rounded-md border border-border">
+            <iframe
+              src={c.map_embed_url}
+              title="Location map"
+              className="w-full h-full"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
         </Reveal>
       )}
     </div>

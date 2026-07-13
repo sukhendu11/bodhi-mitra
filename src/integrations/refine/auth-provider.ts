@@ -20,13 +20,17 @@ export const refineAuthProvider: AuthProvider = {
   },
 
   check: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (session) return { authenticated: true };
     return { authenticated: false, redirectTo: "/login" };
   },
 
   getIdentity: async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return undefined;
 
     return {
@@ -38,7 +42,9 @@ export const refineAuthProvider: AuthProvider = {
   },
 
   getPermissions: async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return [];
 
     if (isHardcodedAdmin(user)) return ["super_admin"];
