@@ -5,6 +5,9 @@ import { useLang, pickLocalized } from "@/lib/i18n";
 import { getSiteName } from "@/lib/siteSettings";
 import { PageSectionRenderer } from "@/components/PageSectionRenderer";
 import { Reveal } from "@/components/Reveal";
+import { BuilderPreview, deserializeTree } from "@/components/admin/page-builder";
+import { generateHoverCss, generateResponsiveCss } from "@/lib/page-builder/utils";
+import type { BuilderComponentNode } from "@/lib/page-builder/types";
 
 export const Route = createFileRoute("/pages/$slug")({
   loader: async ({ params }) => {
@@ -91,9 +94,27 @@ function PublicPage() {
   const hasSections = page.sections && page.sections.length > 0;
   const hasLegacyBody = page.body_en || page.body_bn;
 
+  // Detect builder data: sections array with a single _builder entry
+  const rawSections = (page.sections ?? []) as unknown as Array<Record<string, unknown>>;
+  const builderEntry =
+    hasSections && rawSections.length === 1 && rawSections[0]?._builder
+      ? (rawSections[0] as { _builder: boolean; tree: string })
+      : null;
+
+  let parsedBuilderTree: BuilderComponentNode | null = null;
+  if (builderEntry?.tree) {
+    try {
+      parsedBuilderTree = deserializeTree(builderEntry.tree);
+    } catch {
+      // Fall through to legacy rendering
+    }
+  }
+
+  const isBuilderPage = parsedBuilderTree !== null;
+
   return (
     <article className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-      {/* Header */}
+      {/* Page header — always rendered from DB metadata */}
       <header className="text-center mb-16">
         <Reveal delay={0}>
           <h1 className="font-serif text-4xl md:text-5xl leading-tight">{title}</h1>
@@ -110,8 +131,8 @@ function PublicPage() {
         )}
       </header>
 
-      {/* Banner image */}
-      {page.banner_url && (
+      {/* Banner image — skip for builder pages (builder manages its own visuals) */}
+      {!isBuilderPage && page.banner_url && (
         <Reveal delay={0.15}>
           <div className="mb-16 -mx-6 md:mx-0">
             <img
@@ -123,8 +144,26 @@ function PublicPage() {
         </Reveal>
       )}
 
-      {/* Section-based content */}
-      {hasSections ? (
+      {/* Content: Builder tree OR legacy sections OR body */}
+      {isBuilderPage ? (
+        <>
+          {/* Builder dynamic CSS: animations + hover + responsive */}
+          <style>{`
+            @keyframes pb-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes pb-slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes pb-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+            @keyframes pb-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+            @keyframes pb-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            @keyframes pb-scaleIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+            @keyframes pb-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+            @keyframes pb-float { 0%, 100% { transform: translateY(0); box-shadow: 0 4px 12px oklch(0 0 0 / 0.1); } 50% { transform: translateY(-6px); box-shadow: 0 8px 24px oklch(0 0 0 / 0.15); } }
+            @keyframes pb-wiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
+            ${generateHoverCss(parsedBuilderTree!)}
+            ${generateResponsiveCss(parsedBuilderTree!)}
+          `}</style>
+          <BuilderPreview tree={parsedBuilderTree!} />
+        </>
+      ) : hasSections ? (
         <PageSectionRenderer sections={page.sections} lang={lang} />
       ) : hasLegacyBody ? (
         <div className="max-w-2xl mx-auto">

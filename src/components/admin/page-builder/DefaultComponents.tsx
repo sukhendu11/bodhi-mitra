@@ -617,7 +617,7 @@ export function ComponentRenderer({ node, isEditing }: RendererProps) {
   if (!Renderer) return null;
 
   return (
-    <div className={isEditing ? "builder-component" : undefined}>
+    <div data-pb-id={node.id} className={isEditing ? "builder-component" : undefined}>
       <Renderer node={node} isEditing={isEditing} />
     </div>
   );
@@ -632,8 +632,30 @@ export function BuilderPreview({
   tree: BuilderComponentNode;
   className?: string;
 }) {
+  // Generate hover + responsive CSS from tree for public rendering
+  const dynamicCss = React.useMemo(() => {
+    const rules: string[] = [];
+    // Hover effects
+    const walk = (n: BuilderComponentNode) => {
+      const hs = n.styles;
+      const hoverProps: string[] = [];
+      if (hs.hoverTransform) hoverProps.push(`transform: ${hs.hoverTransform};`);
+      if (hs.hoverBoxShadow) hoverProps.push(`box-shadow: ${hs.hoverBoxShadow};`);
+      if (hs.hoverBackgroundColor) hoverProps.push(`background-color: ${hs.hoverBackgroundColor};`);
+      if (hs.hoverColor) hoverProps.push(`color: ${hs.hoverColor};`);
+      if (hs.hoverBorderColor) hoverProps.push(`border-color: ${hs.hoverBorderColor};`);
+      if (hoverProps.length > 0) {
+        rules.push(`[data-pb-id="${n.id}"]:hover { ${hoverProps.join(" ")} }`);
+      }
+      n.children.forEach(walk);
+    };
+    walk(tree);
+    return rules.join("\n");
+  }, [tree]);
+
   return (
     <div className={className}>
+      {dynamicCss && <style>{dynamicCss}</style>}
       {tree.children.map((child) => (
         <ComponentRenderer key={child.id} node={child} />
       ))}

@@ -2,7 +2,7 @@
 // Page Builder — Style Panel (visual style controls)
 // ============================================================================
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import type { BuilderComponentNode, StyleProps, BackgroundGradient, BackgroundGradientStop } from "@/lib/page-builder/types";
 import { gradientToCss } from "./DefaultComponents";
 
@@ -663,6 +663,164 @@ export function StylePanel({ node, onUpdateStyles }: StylePanelProps) {
           <ColorInput value={s.hoverBorderColor || ""} onChange={(v) => update("hoverBorderColor", v || undefined)} />
         </StyleRow>
       </StyleSection>
+
+      {/* Grid Controls (when display=grid) */}
+      {s.display === "grid" && (
+        <StyleSection title="Grid">
+          <StyleRow label="Columns">
+            <TextInput
+              value={s.gridTemplateColumns || ""}
+              onChange={(v) => update("gridTemplateColumns", v)}
+              placeholder="repeat(3, 1fr)"
+            />
+          </StyleRow>
+          <StyleRow label="Rows">
+            <TextInput
+              value={s.gridTemplateRows || ""}
+              onChange={(v) => update("gridTemplateRows", v)}
+              placeholder="auto"
+            />
+          </StyleRow>
+          <StyleRow label="Col Span">
+            <TextInput
+              value={s.gridColumn || ""}
+              onChange={(v) => update("gridColumn", v)}
+              placeholder="auto"
+            />
+          </StyleRow>
+          <StyleRow label="Row Span">
+            <TextInput
+              value={s.gridRow || ""}
+              onChange={(v) => update("gridRow", v)}
+              placeholder="auto"
+            />
+          </StyleRow>
+        </StyleSection>
+      )}
+
+      {/* Responsive Breakpoint Overrides */}
+      <ResponsiveSection node={node} onUpdateStyles={onUpdateStyles} />
     </div>
+  );
+}
+
+/* ─── Responsive Section ──────────────────────────────────────────── */
+
+type BreakpointKey = "sm" | "md" | "lg" | "xl";
+const BREAKPOINT_LABELS: Record<BreakpointKey, { label: string; query: string }> = {
+  sm: { label: "SM", query: "≥640px" },
+  md: { label: "MD", query: "≥768px" },
+  lg: { label: "LG", query: "≥1024px" },
+  xl: { label: "XL", query: "≥1280px" },
+};
+const BREAKPOINT_KEYS: BreakpointKey[] = ["sm", "md", "lg", "xl"];
+
+/** Common properties that can be overridden per breakpoint. */
+const RESPONSIVE_PROPS: Array<{ key: keyof StyleProps; label: string; type: "text" | "select"; options?: Array<{ value: string; label: string }> }> = [
+  { key: "fontSize", label: "Font Size", type: "text" },
+  { key: "fontWeight", label: "Weight", type: "select", options: [
+    { value: "400", label: "Normal" }, { value: "500", label: "Medium" },
+    { value: "600", label: "Semibold" }, { value: "700", label: "Bold" },
+  ]},
+  { key: "textAlign", label: "Align", type: "select", options: [
+    { value: "left", label: "Left" }, { value: "center", label: "Center" },
+    { value: "right", label: "Right" }, { value: "justify", label: "Justify" },
+  ]},
+  { key: "display", label: "Display", type: "select", options: [
+    { value: "flex", label: "Flex" }, { value: "grid", label: "Grid" },
+    { value: "block", label: "Block" }, { value: "none", label: "None" },
+  ]},
+  { key: "flexDirection", label: "Direction", type: "select", options: [
+    { value: "row", label: "Row" }, { value: "column", label: "Column" },
+  ]},
+  { key: "width", label: "Width", type: "text" },
+  { key: "marginTop", label: "Margin T", type: "text" },
+  { key: "marginBottom", label: "Margin B", type: "text" },
+  { key: "paddingTop", label: "Padding T", type: "text" },
+  { key: "paddingBottom", label: "Padding B", type: "text" },
+  { key: "gap", label: "Gap", type: "text" },
+  { key: "gridTemplateColumns", label: "Grid Cols", type: "text" },
+];
+
+function ResponsiveSection({
+  node,
+  onUpdateStyles,
+}: {
+  node: BuilderComponentNode;
+  onUpdateStyles: (id: string, styles: Partial<StyleProps>) => void;
+}) {
+  const [activeBp, setActiveBp] = useState<BreakpointKey>("sm");
+  const bpStyles = node.styles[activeBp] || {};
+
+  const updateBp = useCallback(
+    (key: keyof StyleProps, value: string | number | undefined) => {
+      const current = { ...(node.styles[activeBp] || {}) };
+      if (value === undefined || value === "") {
+        delete current[key];
+      } else {
+        (current as any)[key] = value;
+      }
+      // Only store if non-empty
+      const hasKeys = Object.keys(current).length > 0;
+      onUpdateStyles(node.id, { [activeBp]: hasKeys ? current : undefined });
+    },
+    [node.id, node.styles, activeBp, onUpdateStyles],
+  );
+
+  return (
+    <StyleSection title="Responsive">
+      {/* Breakpoint tabs */}
+      <div className="flex gap-1 mb-2">
+        {BREAKPOINT_KEYS.map((bp) => {
+          const hasOverrides = node.styles[bp] && Object.keys(node.styles[bp]!).length > 0;
+          return (
+            <button
+              key={bp}
+              onClick={() => setActiveBp(bp)}
+              className={`flex-1 px-2 py-1.5 text-[0.45rem] font-medium rounded-md border transition-colors ${
+                activeBp === bp
+                  ? "border-foreground/40 bg-foreground/5 text-foreground"
+                  : "border-border/30 text-muted-foreground/60 hover:text-foreground hover:border-foreground/20"
+              }`}
+            >
+              {BREAKPOINT_LABELS[bp].label}
+              {hasOverrides && (
+                <span className="ml-1 w-1.5 h-1.5 rounded-full bg-primary inline-block" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[0.4rem] text-muted-foreground/50 mb-2">
+        Overrides at {BREAKPOINT_LABELS[activeBp].query}
+      </p>
+
+      {/* Override controls */}
+      <div className="space-y-1.5">
+        {RESPONSIVE_PROPS.map((prop) => {
+          const val = (bpStyles as any)[prop.key] ?? "";
+          if (prop.type === "select" && prop.options) {
+            return (
+              <StyleRow key={prop.key} label={prop.label}>
+                <SelectInput
+                  value={val}
+                  options={prop.options}
+                  onChange={(v) => updateBp(prop.key, v || undefined)}
+                />
+              </StyleRow>
+            );
+          }
+          return (
+            <StyleRow key={prop.key} label={prop.label}>
+              <TextInput
+                value={val}
+                onChange={(v) => updateBp(prop.key, v || undefined)}
+                placeholder="—"
+              />
+            </StyleRow>
+          );
+        })}
+      </div>
+    </StyleSection>
   );
 }

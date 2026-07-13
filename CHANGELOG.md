@@ -2,6 +2,172 @@
 
 ## 2026-07-14
 
+### Phase Validation — 01 → 08 Fixes
+
+**End-to-end validation of Phases 01–08. Fixed 3 critical issues found during cross-phase audit.**
+
+#### Fixes
+
+- **Palette drag-to-canvas** (`BuilderCanvas.tsx`) — `onDropInCanvas` was accepted as a prop but never called in the drop handler. Now properly invoked when a palette component is dropped on the canvas.
+- **Canvas nested selection** (`BuilderCanvas.tsx`) — `CanvasNode` compared `child.id` against `onSelect.name` (a function's `.name` property), which always evaluated to false. Added `selectedId` prop to `CanvasNode` and fixed the comparison to `child.id === selectedId`.
+- **Reader font size** (`PdfViewer.tsx`, `reader.$bookId.tsx`) — `default_font_size` setting was configurable in admin but not consumed by the reader. Added `initialScale` prop to `PdfViewer` and wired `siteConfig.reader.default_font_size` as the initial zoom level.
+
+#### Validation Results
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| 01 — Admin Foundation | COMPLETE | 3-column shell, sidebar, dashboard, Cmd+K search |
+| 02 — Auth & Access | COMPLETE | 6-role hierarchy, hardcoded admin bypass, middleware stack |
+| 03 — CMS Engine | COMPLETE | 5 content types, slug gen, workflows, relationships, revisions, SEO |
+| 04 — Content Editors | COMPLETE | BlockEditor (20+ commands, 3 view modes, DraftComparison, KeyboardShortcuts), FormEngine (25 field types, autosave, accessibility) |
+| 05 — Media & Digital Assets | COMPLETE | MediaPicker, full DAM with folders/tags/favorites/replace/bulk delete |
+| 06 — Page Builder | COMPLETE | 20 component types, drag-and-drop, StylePanel (13 sections), responsive/grid controls, frontend rendering |
+| 07 — Theme Builder | COMPLETE | 6 presets, typography controls, accent propagation, radius scale, custom CSS |
+| 08 — Settings | COMPLETE | 13 tabs, maintenance mode, feature flags, reader/commerce settings, dynamic fonts |
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+| Cross-phase sync | All connections verified ✅ |
+| Dead code | None found ✅ |
+| Broken imports | None found ✅ |
+| Architecture violations | None found ✅ |
+
+---
+
+## 2026-07-14
+
+### Phase 08 — Website Settings & Global Configuration
+
+**Centralized settings hub with maintenance mode, feature flags, reader settings, commerce config, and dynamic Google Fonts.**
+
+#### New SiteConfig Groups
+
+- **`maintenance`** — `enabled` (boolean), `message_en/bn` (bilingual maintenance message)
+- **`features`** — 8 feature flags: `reader_annotations`, `reading_stats`, `book_recommendations`, `ai_chat`, `podcasts`, `donations`, `course_certificates`, `newsletter_automation`
+- **`reader`** — `default_theme`, `default_font_size`, `default_line_height`, `allow_download`, `show_page_numbers`
+- **`commerce`** — `currency`, `currency_symbol`, `tax_rate`, `refund_policy_en/bn`
+
+#### Maintenance Mode
+
+- **`MaintenanceGate`** component in `__root.tsx` — Checks `config.maintenance.enabled`, shows bilingual maintenance page to non-admin users. Admins always see the site.
+- Admin toggle in Settings → Maintenance tab with message fields.
+
+#### Feature Flags
+
+- **`useFeatureFlag(flag)`** hook in `src/hooks/useFeatureFlags.ts` — Single flag check.
+- **`useFeatureFlags()`** hook — Returns all flags as a record.
+- Admin UI in Settings → Features tab with toggle switches and on/off badges.
+
+#### Reader Settings
+
+- **`reader.$bookId.tsx`** — Applies `config.reader.default_theme` on mount via `useEffect`.
+- Admin UI in Settings → Reader tab: theme selector (light/dark/sepia), font size slider, line height slider, download/page numbers toggles.
+
+#### Commerce Settings
+
+- Currency selector (8 currencies: USD, BDT, EUR, GBP, INR, JPY, AUD, CAD) with preview.
+- Tax rate slider (0–30%) with live calculation preview.
+- Refund policy bilingual text fields.
+
+#### Dynamic Google Fonts
+
+- **`__root.tsx`** head function — Builds Google Fonts URL from `theme.font_heading/font_body/font_bn` settings. Deduplicates font families. Always includes defaults as fallback.
+
+#### New Settings Tabs
+
+| Tab | Component | Controls |
+|-----|-----------|----------|
+| Features | `SettingsFeaturesTab.tsx` | 8 feature flag toggles |
+| Reader | `SettingsReaderTab.tsx` | Default theme, font size, line height, download, page numbers |
+| Commerce | `SettingsCommerceTab.tsx` | Currency, tax rate, refund policy |
+| Maintenance | `SettingsMaintenanceTab.tsx` | Toggle, message EN/BN |
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
+### Phase 07 — Theme Builder & Design System
+
+**Centralized theme engine: accent color propagation, typography controls, theme presets, custom CSS injection, deep config merge.**
+
+#### Design Token Propagation
+
+- **`siteSettings.tsx`** — `SiteConfig.theme` extended with `font_heading`, `font_body`, `font_bn`, `font_size_base`, `radius_scale`, `preset`, `custom_css`
+- **`SiteSettingsProvider`** — Now propagates accent color to `--primary`/`--primary-foreground` semantic tokens, overrides `--font-serif`/`--font-sans`/`--font-bn` CSS variables, overrides `--radius` base via radius scale, injects custom CSS via `<style id="site-custom-css">`
+- **`mergeConfig()`** — Fixed to use recursive deep merge instead of shallow one-level merge. Nested config changes now preserve sibling properties.
+
+#### Theme Builder UI
+
+- **Theme Presets** — 6 curated presets: Warm Saffron, Cool Indigo, Forest Green, Minimal Gray, Elegant Serif, Modern Clean. Each sets accent color, hover, fonts, and radius scale in one click.
+- **Typography Controls** — Heading font (8 options), Body font (8 options), Bangla font (4 options), Base font size slider (12–22px). Live preview for each font selection.
+- **Border Radius Scale** — Global multiplier (0–2x) with visual radius preview.
+- **Custom CSS** — Textarea for injecting site-wide custom styles. Stored in config, injected as a style tag in document head.
+- **Accent Color** — Opacity preview swatch strip. Preset tracker shows "Custom" when manually changed.
+
+#### Files Modified
+
+| File | Changes |
+|------|---------|
+| `src/lib/siteSettings.tsx` | Extended SiteConfig.theme, deep merge fix, provider applies all design tokens |
+| `src/components/SettingsThemeTab.tsx` | Complete rewrite: presets, typography, radius, custom CSS, accent preview |
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
+### Phase 06 — Frontend Rendering Fix
+
+**Critical fix — Builder pages now render correctly on the public site, plus responsive style controls and grid layout editor.**
+
+#### Frontend ↔ Backend Synchronization
+
+- **`pages.$slug.tsx`** — Detects `_builder` marker in page sections, deserializes the builder tree, and renders `BuilderPreview` instead of `PageSectionRenderer`. Falls back to legacy rendering on deserialization failure.
+- **`BuilderPreview`** — Now injects hover CSS and responsive CSS media queries (`data-pb-id` selectors) for public rendering, matching the builder editor's live effects.
+- **`ComponentRenderer`** — Added `data-pb-id` attribute to wrapper div for hover/responsive CSS targeting.
+- **Animation keyframes** — Injected on public pages with builder content (fadeIn, slideIn, bounce, pulse, rotate, scaleIn, shake, float, wiggle).
+- **Banner image** — Skipped for builder pages since the builder manages its own visuals.
+- **Page header** — Always rendered from DB metadata (title, header, meta description) regardless of builder vs legacy content.
+
+#### Responsive Style Controls
+
+- **`page-builder/utils.ts`** — New `generateHoverCss()` and `generateResponsiveCss()` utility functions extracted from inline code. CSS property map converts StyleProps keys to CSS declarations. Breakpoint media queries: sm (≥640px), md (≥768px), lg (≥1024px), xl (≥1280px).
+- **`StylePanel.tsx`** — New "Responsive" section with breakpoint tabs (SM/MD/LG/XL). Each tab shows 11 overridable properties: font size, weight, align, display, direction, width, margin-top/bottom, padding-top/bottom, gap, grid columns. Active overrides indicated by dot badge.
+- **`PageBuilder.tsx`** — Editor now injects responsive CSS media queries alongside hover CSS via `generateResponsiveCss()`.
+- **`pages.$slug.tsx`** — Public rendering injects both hover and responsive CSS via shared utilities.
+
+#### Grid Layout Controls
+
+- **`StylePanel.tsx`** — New "Grid" section appears when `display: grid` is active. Controls for `gridTemplateColumns`, `gridTemplateRows`, `gridColumn`, `gridRow`. Gap already in Spacing section.
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase 06 — Section Library Expansion
 
 **Phase 06 deliverable — Section export/import, marketplace of 10 bundled sections, visual wireframe preview, folder organization, and 43 marketplace unit tests.**

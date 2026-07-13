@@ -14,7 +14,7 @@ Sabbe Satta is a full-stack platform for publishing, digital reading, multimedia
 - Responsive modern interface
 - Articles & Blog
 - Digital Books
-- PDF Reader
+- PDF Reader (with configurable themes, zoom, bookmarks, notes)
 - Categories & Collections
 - Search
 - User Authentication
@@ -22,9 +22,14 @@ Sabbe Satta is a full-stack platform for publishing, digital reading, multimedia
 - Bookmarks
 - Comments & Discussions
 - Videos & Multimedia
+- Courses & Enrollments
+- Shopping Cart & Checkout
+- AI Chat Assistant
+- Book Recommendations
 - SEO Optimized
 - Newsletter
 - Contact & About Pages
+- Maintenance Mode
 
 ---
 
@@ -33,16 +38,19 @@ Sabbe Satta is a full-stack platform for publishing, digital reading, multimedia
 - Secure Admin Dashboard
 - Content Management System (CMS)
 - Post Management
-- Page Management
+- Page Management (with Visual Page Builder)
 - Book Management
-- Media Library
-- Navigation Builder
-- Theme Settings
+- Media Library (full DAM with folders, tags, favorites)
+- Navigation Builder (drag-and-drop)
+- Theme Builder (6 presets, typography, colors, custom CSS)
 - Homepage Builder
 - SEO Settings
 - User & Role Management
 - Analytics Configuration
-- Site-wide Configuration
+- Site-wide Configuration (13 settings tabs)
+- Feature Flags
+- Maintenance Mode Toggle
+- Commerce Settings (currency, tax, refund policy)
 
 ---
 

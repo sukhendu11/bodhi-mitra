@@ -84,7 +84,38 @@ Production-harden the platform and fill remaining feature gaps across Commerce a
 - useAutoSave in admin.pages.tsx (pages editor)
 - useContentAutosave in admin.collections.$type.$id.tsx (collections editor)
 
-## Phase 06 — Section Library Expansion (2026-07-14)
+## Phase 06 — Visual Page Builder & Section Library (2026-07-14)
+
+### Visual Page Builder
+- 20 component types: Container, Row, Column, Text, Heading, Image, Video, Button, Icon, Divider, Spacer, Gallery, Slider, Tabs, Accordion, Card, Cards, Form, HTML, Custom
+- Drag-and-drop editing with live canvas, hover/selection indicators, hover toolbar
+- Responsive preview (desktop 1440px / tablet 768px / mobile 375px)
+- Undo/redo history with keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z)
+- Auto-save with save status indicator
+- 5 section templates (Hero, Two-Column, Image & Text, CTA Banner, Feature Cards)
+- Copy/paste with clipboard indicator (Ctrl+C/V)
+- Keyboard shortcuts (Delete, Escape, Ctrl+S save)
+
+### Style Panel
+- Typography: font, size, weight, align, line height, letter spacing
+- Colors: text, background
+- Background: solid color, gradient (linear/radial) with stops, direction, preview
+- Spacing: margin (T/R/B/L), padding (T/R/B/L), gap
+- Sizing: width, height, max-width, min-height
+- Borders: width, style, color, radius
+- Shadows: small/medium/large presets
+- Flex: display, direction, align, justify, wrap
+- Position: position, z-index, opacity
+- Animation: 9 keyframe presets with duration, easing, delay, repeat, fill, live preview
+- Hover: scale, shadow, bg, text, border color
+- **Responsive**: sm/md/lg/xl breakpoint tabs with 11 overridable properties
+- **Grid**: gridTemplateColumns, gridTemplateRows, gridColumn, gridRow (when display=grid)
+
+### Frontend Rendering
+- `pages.$slug.tsx` detects `_builder` marker, renders `BuilderPreview` with animation keyframes
+- `BuilderPreview` injects hover CSS + responsive CSS media queries via `data-pb-id` selectors
+- `ComponentRenderer` wraps each component with `data-pb-id` attribute
+- Utility functions `generateHoverCss()` and `generateResponsiveCss()` in `page-builder/utils.ts`
 
 ### Section Export/Import
 - `exportSectionToJson()`, `exportAllSectionsToJson()`, `importSectionsFromJson()` with 4-format support
@@ -111,15 +142,70 @@ Production-harden the platform and fill remaining feature gaps across Commerce a
 - 43 new marketplace tests: data integrity, tree validation, category grouping, search filtering
 - **Total: 319 tests passing** (from 147)
 
+## Phase 07 — Theme Builder & Design System (2026-07-14)
+
+### Design Token Propagation
+- Accent color propagates to `--primary`/`--primary-foreground` semantic tokens
+- Font families override `--font-serif`/`--font-sans`/`--font-bn` CSS variables
+- Border radius scale overrides `--radius` base
+- Custom CSS injected via `<style id="site-custom-css">` in document head
+
+### Theme Builder UI
+- 6 theme presets: Warm Saffron, Cool Indigo, Forest Green, Minimal Gray, Elegant Serif, Modern Clean
+- Typography controls: heading font (8 options), body font (8 options), Bangla font (4 options), base font size (12-22px)
+- Border radius scale (0-2x) with visual preview
+- Custom CSS textarea for site-wide injection
+- Accent color opacity preview swatch strip
+
+### Config System
+- `SiteConfig.theme` extended with `font_heading`, `font_body`, `font_bn`, `font_size_base`, `radius_scale`, `preset`, `custom_css`
+- `mergeConfig()` fixed to use recursive deep merge
+
+## Phase 08 — Website Settings & Global Configuration (2026-07-14)
+
+### New SiteConfig Groups
+- `maintenance` — enabled, message_en/bn
+- `features` — 8 feature flags: reader_annotations, reading_stats, book_recommendations, ai_chat, podcasts, donations, course_certificates, newsletter_automation
+- `reader` — default_theme, default_font_size, default_line_height, allow_download, show_page_numbers
+- `commerce` — currency, currency_symbol, tax_rate, refund_policy_en/bn
+
+### Maintenance Mode
+- `MaintenanceGate` component in `__root.tsx` — bilingual maintenance page for non-admin users
+- Admin toggle in Settings → Maintenance tab
+
+### Feature Flags
+- `useFeatureFlag(flag)` and `useFeatureFlags()` hooks in `src/hooks/useFeatureFlags.ts`
+- Admin UI with toggle switches and on/off badges
+
+### Reader Settings
+- Reader page applies `config.reader.default_theme` on mount
+- Admin UI: theme selector, font size/line height sliders, download/page number toggles
+
+### Commerce Settings
+- Currency selector (8 currencies), tax rate slider, refund policy fields
+
+### Dynamic Google Fonts
+- `__root.tsx` head builds Google Fonts URL from theme font settings
+
+### New Settings Tabs
+- Features, Reader, Commerce, Maintenance — 4 new tabs in admin.settings.tsx
+
 ## Next Move
-1. **Phase 06 complete** — Section Library fully expanded with marketplace, previews, folders.
+1. **Phase 08 complete** — Global settings hub with maintenance, features, reader, commerce, dynamic fonts.
 2. Continue **V2 Sprint 1**: Supabase types regeneration → Orders panel → Email automation.
 3. Update CHANGELOG.md after each sprint.
 
 ## Relevant Files
-- `src/lib/page-builder/`: core types, defaults, utils, section-library, marketplace-sections
-- `src/components/admin/page-builder/`: PageBuilder, SectionLibrary, SectionPreview, BuilderCanvas, etc.
-- `src/lib/__tests__/marketplace-sections.test.ts`: 43 marketplace unit tests
+- `src/lib/siteSettings.tsx`: SiteConfig type (13 groups), DEFAULT_CONFIG, mergeConfig (deep), SiteSettingsProvider (applies all tokens + custom CSS)
+- `src/components/SettingsThemeTab.tsx`: Theme presets, typography, radius, custom CSS
+- `src/components/SettingsMaintenanceTab.tsx`: Maintenance toggle + message
+- `src/components/SettingsFeaturesTab.tsx`: 8 feature flag toggles
+- `src/components/SettingsReaderTab.tsx`: Reader defaults (theme, font, download)
+- `src/components/SettingsCommerceTab.tsx`: Currency, tax, refund policy
+- `src/hooks/useFeatureFlags.ts`: useFeatureFlag/useFeatureFlags hooks
+- `src/routes/__root.tsx`: MaintenanceGate, dynamic Google Fonts, SiteSettingsProvider
+- `src/routes/reader.$bookId.tsx`: Reader applies default theme from settings
+- `src/styles.css`: Design token CSS variables (overridden at runtime by SiteSettingsProvider)
 - `src/integrations/refine/`: Refine integration layer (data provider, auth, access control, resources).
 - `src/routes/admin.tsx`: `<Refine>` wrapper around admin layout.
 - `src/hooks/useAuth.ts`: Single source for auth, roles, permissions.

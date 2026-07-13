@@ -247,3 +247,112 @@ export function serializeTree(tree: BuilderComponentNode): string {
 export function deserializeTree(json: string): BuilderComponentNode {
   return JSON.parse(json);
 }
+
+/* ─── Dynamic CSS Generation ────────────────────────────────────── */
+
+/** CSS property map for converting StyleProps keys to CSS property names. */
+const CSS_MAP: Record<string, string> = {
+  fontFamily: "font-family", fontSize: "font-size", fontWeight: "font-weight",
+  lineHeight: "line-height", letterSpacing: "letter-spacing",
+  textAlign: "text-align", textDecoration: "text-decoration",
+  fontStyle: "font-style", textTransform: "text-transform",
+  color: "color", backgroundColor: "background-color",
+  marginTop: "margin-top", marginRight: "margin-right",
+  marginBottom: "margin-bottom", marginLeft: "margin-left",
+  paddingTop: "padding-top", paddingRight: "padding-right",
+  paddingBottom: "padding-bottom", paddingLeft: "padding-left",
+  width: "width", height: "height", minWidth: "min-width",
+  minHeight: "min-height", maxWidth: "max-width", maxHeight: "max-height",
+  borderWidth: "border-width", borderStyle: "border-style",
+  borderColor: "border-color", borderRadius: "border-radius",
+  boxShadow: "box-shadow", position: "position",
+  top: "top", right: "right", bottom: "bottom", left: "left",
+  zIndex: "z-index", display: "display", flexDirection: "flex-direction",
+  alignItems: "align-items", justifyContent: "justify-content",
+  flexWrap: "flex-wrap", flexGrow: "flex-grow", flexShrink: "flex-shrink",
+  flexBasis: "flex-basis", gridTemplateColumns: "grid-template-columns",
+  gridTemplateRows: "grid-template-rows", gridColumn: "grid-column",
+  gridRow: "grid-row", gap: "gap", opacity: "opacity",
+  transform: "transform", transition: "transition",
+  backgroundImage: "background-image", backgroundSize: "background-size",
+  backgroundPosition: "background-position", backgroundRepeat: "background-repeat",
+};
+
+const BREAKPOINTS = [
+  { key: "sm" as const, query: "(min-width: 640px)" },
+  { key: "md" as const, query: "(min-width: 768px)" },
+  { key: "lg" as const, query: "(min-width: 1024px)" },
+  { key: "xl" as const, query: "(min-width: 1280px)" },
+];
+
+/** Convert a partial StyleProps to a CSS declaration string. */
+function partialToCss(partial: Partial<StyleProps>): string {
+  const decls: string[] = [];
+  for (const [key, cssProp] of Object.entries(CSS_MAP)) {
+    const val = partial[key as keyof StyleProps];
+    if (val !== undefined && val !== null && val !== "") {
+      decls.push(`${cssProp}: ${val};`);
+    }
+  }
+  // Handle backgroundGradient
+  if (partial.backgroundGradient) {
+    const stops = partial.backgroundGradient.stops;
+    if (stops && stops.length >= 2) {
+      const stopStr = stops
+        .map((s) => (s.position !== undefined ? `${s.color} ${s.position}%` : s.color))
+        .join(", ");
+      const dir = partial.backgroundGradient.direction || "to bottom right";
+      const fn = partial.backgroundGradient.type === "radial" ? "radial-gradient" : "linear-gradient";
+      const shape = partial.backgroundGradient.type === "radial" ? `${dir}, ` : "";
+      decls.push(`background-image: ${fn}(${shape}${stopStr});`);
+    }
+  }
+  return decls.join(" ");
+}
+
+/** Generate hover CSS rules for the tree (targets data-pb-id). */
+export function generateHoverCss(tree: BuilderComponentNode): string {
+  const rules: string[] = [];
+  const walk = (n: BuilderComponentNode) => {
+    const hs = n.styles;
+    const hoverProps: string[] = [];
+    if (hs.hoverTransform) hoverProps.push(`transform: ${hs.hoverTransform};`);
+    if (hs.hoverBoxShadow) hoverProps.push(`box-shadow: ${hs.hoverBoxShadow};`);
+    if (hs.hoverBackgroundColor) hoverProps.push(`background-color: ${hs.hoverBackgroundColor};`);
+    if (hs.hoverColor) hoverProps.push(`color: ${hs.hoverColor};`);
+    if (hs.hoverBorderColor) hoverProps.push(`border-color: ${hs.hoverBorderColor};`);
+    if (hoverProps.length > 0) {
+      rules.push(`[data-pb-id="${n.id}"]:hover { ${hoverProps.join(" ")} }`);
+    }
+    n.children.forEach(walk);
+  };
+  walk(tree);
+  return rules.join("\n");
+}
+
+/** Generate responsive CSS media queries for the tree (targets data-pb-id). */
+export function generateResponsiveCss(tree: BuilderComponentNode): string {
+  const byBreakpoint: Record<string, string[]> = { sm: [], md: [], lg: [], xl: [] };
+
+  const walk = (n: BuilderComponentNode) => {
+    for (const bp of BREAKPOINTS) {
+      const override = n.styles[bp.key];
+      if (override) {
+        const css = partialToCss(override);
+        if (css) {
+          byBreakpoint[bp.key].push(`[data-pb-id="${n.id}"] { ${css} }`);
+        }
+      }
+    }
+    n.children.forEach(walk);
+  };
+  walk(tree);
+
+  const rules: string[] = [];
+  for (const bp of BREAKPOINTS) {
+    if (byBreakpoint[bp.key].length > 0) {
+      rules.push(`@media ${bp.query} { ${byBreakpoint[bp.key].join("\n")} }`);
+    }
+  }
+  return rules.join("\n");
+}

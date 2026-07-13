@@ -16,18 +16,20 @@ interface PdfViewerProps {
   onClose?: () => void;
   /** Initial page to display (for "resume from last read") */
   initialPage?: number;
+  /** Initial zoom scale (1.0 = 100%) */
+  initialScale?: number;
   /** Called when the user changes page */
   onPageChange?: (page: number, totalPages: number) => void;
 }
 
-export function PdfViewer({ url, title, onClose, initialPage, onPageChange }: PdfViewerProps) {
+export function PdfViewer({ url, title, onClose, initialPage, initialScale, onPageChange }: PdfViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [pdf, setPdf] = useState<PdfJs.PDFDocumentProxy | null>(null);
   const [pdfjs, setPdfjs] = useState<typeof PdfJs | null>(null);
   const [pageNum, setPageNum] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [scale, setScale] = useState(1.2);
+  const [scale, setScale] = useState(initialScale ?? 1.2);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fullscreen, setFullscreen] = useState(false);

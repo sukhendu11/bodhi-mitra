@@ -26,6 +26,8 @@ import {
   findNodeById,
   findParent,
   regenerateIds,
+  generateHoverCss,
+  generateResponsiveCss,
 } from "@/lib/page-builder/utils";
 import { BuilderCanvas } from "./BuilderCanvas";
 import { BuilderSidebar } from "./BuilderSidebar";
@@ -356,26 +358,10 @@ export function PageBuilder({
     [tree.id, setTree],
   );
 
-  /* ── Generate hover CSS from tree ────────────────────────────── */
+  /* ── Generate hover + responsive CSS from tree ────────────────── */
 
-  const hoverCss = useMemo(() => {
-    const rules: string[] = [];
-    const walk = (n: BuilderComponentNode) => {
-      const hs = n.styles;
-      const hoverProps: string[] = [];
-      if (hs.hoverTransform) hoverProps.push(`transform: ${hs.hoverTransform};`);
-      if (hs.hoverBoxShadow) hoverProps.push(`box-shadow: ${hs.hoverBoxShadow};`);
-      if (hs.hoverBackgroundColor) hoverProps.push(`background-color: ${hs.hoverBackgroundColor};`);
-      if (hs.hoverColor) hoverProps.push(`color: ${hs.hoverColor};`);
-      if (hs.hoverBorderColor) hoverProps.push(`border-color: ${hs.hoverBorderColor};`);
-      if (hoverProps.length > 0) {
-        rules.push(`[data-pb-id="${n.id}"]:hover { ${hoverProps.join(" ")} }`);
-        rules.push(`[data-pb-id="${n.id}"]:hover > .builder-component-inner { ${hoverProps.join(" ")} }`);
-      }
-      n.children.forEach(walk);
-    };
-    walk(tree);
-    return rules.join("\n");
+  const dynamicCss = useMemo(() => {
+    return [generateHoverCss(tree), generateResponsiveCss(tree)].filter(Boolean).join("\n");
   }, [tree]);
 
   /* ── Render ──────────────────────────────────────────────────────── */
@@ -384,8 +370,8 @@ export function PageBuilder({
     <>
       {/* Inject predefined animation keyframes */}
       <style>{`
-        /* Hover effects */
-        ${hoverCss}
+        /* Dynamic hover + responsive effects */
+        ${dynamicCss}
 
         @keyframes pb-fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pb-slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }

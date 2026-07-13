@@ -14,7 +14,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { useAuthSession, useIsAdmin, signOut } from "@/hooks/useAuth";
 import { LanguageProvider, useLang } from "@/lib/i18n";
-import { SiteSettingsProvider, fetchSiteSettings, DEFAULT_CONFIG } from "@/lib/siteSettings";
+import { SiteSettingsProvider, fetchSiteSettings, DEFAULT_CONFIG, useSiteSettings } from "@/lib/siteSettings";
 import { useLayout, LayoutProvider } from "@/lib/layout-engine";
 import type { NavTreeNode } from "@/lib/navigation";
 import { LangToggle } from "@/components/LangToggle";
@@ -42,6 +42,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       "A serene blog blending Buddhist teachings with modern mental health, by practicing psychiatrists.";
     const ogImage = cfg.seo.og_image_url || "";
 
+    // Build Google Fonts URL from theme settings
+    const fonts = new Set<string>();
+    const addFont = (family: string) => {
+      const name = family.split(",")[0].trim().replace(/"/g, "");
+      if (name && name !== "system-ui" && name !== "sans-serif" && name !== "serif" && name !== "monospace") {
+        fonts.add(name);
+      }
+    };
+    addFont(cfg.theme.font_heading);
+    addFont(cfg.theme.font_body);
+    addFont(cfg.theme.font_bn);
+    // Always include defaults as fallback
+    fonts.add("Cormorant Garamond");
+    fonts.add("Inter");
+    fonts.add("Hind Siliguri");
+
+    const fontParams = Array.from(fonts)
+      .map((f) => `family=${f.replace(/ /g, "+")}:wght@300;400;500;600;700`)
+      .join("&");
+    const fontsUrl = `https://fonts.googleapis.com/css2?${fontParams}&display=swap`;
+
     return {
       meta: [
         { charSet: "utf-8" },
@@ -63,7 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
         {
           rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap",
+          href: fontsUrl,
         },
       ],
     };
@@ -85,6 +106,43 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+/* ─── Maintenance Gate ────────────────────────────────────────────── */
+
+function MaintenanceGate({ children }: { children: React.ReactNode }) {
+  const config = useSiteSettings();
+  const { lang } = useLang();
+  const { user } = useAuthSession();
+  const { data: isAdmin } = useIsAdmin(user);
+
+  // Admins always see the site (for maintenance management)
+  if (isAdmin) return <>{children}</>;
+
+  // Maintenance mode off — render normally
+  if (!config.maintenance.enabled) return <>{children}</>;
+
+  // Maintenance page
+  const message = lang === "bn" && config.maintenance.message_bn
+    ? config.maintenance.message_bn
+    : config.maintenance.message_en;
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-6">
+      <div className="max-w-md text-center space-y-6">
+        <div className="w-16 h-16 mx-auto rounded-full bg-secondary/60 flex items-center justify-center">
+          <svg className="h-8 w-8 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <h1 className="font-serif text-3xl font-semibold">We&rsquo;ll be back soon</h1>
+        <p className="text-muted-foreground">{message}</p>
+        <div className="pt-4 border-t border-border/40">
+          <p className="text-xs text-muted-foreground/60">{config.branding.site_name_en || "Bodhi Mitra"}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -510,7 +568,8 @@ function RootComponent() {
       <ErrorBoundary>
         <LanguageProvider>
           <SiteSettingsProvider>
-            <LayoutProvider>
+            <MaintenanceGate>
+              <LayoutProvider>
               <div className="min-h-screen flex flex-col">
                 <Header />
                 <main className="flex-1">
@@ -521,7 +580,8 @@ function RootComponent() {
               <AiChatPanel />
               <ScrollToTop />
               <Toaster position="bottom-center" />
-            </LayoutProvider>
+              </LayoutProvider>
+            </MaintenanceGate>
           </SiteSettingsProvider>
         </LanguageProvider>
       </ErrorBoundary>

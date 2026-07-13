@@ -27,6 +27,20 @@ export interface SiteConfig {
     accent_hover: string;
     mode: "light" | "dark";
     header_visible: boolean;
+    /** Heading font family */
+    font_heading: string;
+    /** Body/UI font family */
+    font_body: string;
+    /** Bangla font family */
+    font_bn: string;
+    /** Base font size (px) */
+    font_size_base: number;
+    /** Border radius scale multiplier (0.5–2) */
+    radius_scale: number;
+    /** Theme preset name */
+    preset: string;
+    /** Custom CSS injected into the page */
+    custom_css: string;
   };
   footer: {
     copyright_en: string;
@@ -99,6 +113,53 @@ export interface SiteConfig {
     note_text_en: string;
     note_text_bn: string;
   };
+  maintenance: {
+    enabled: boolean;
+    message_en: string;
+    message_bn: string;
+  };
+  features: {
+    /** Enable reader annotations (highlights + notes) */
+    reader_annotations: boolean;
+    /** Enable reading statistics / streaks */
+    reading_stats: boolean;
+    /** Enable book recommendations */
+    book_recommendations: boolean;
+    /** Enable podcast module */
+    podcasts: boolean;
+    /** Enable donations page */
+    donations: boolean;
+    /** Enable course certificates */
+    course_certificates: boolean;
+    /** Enable newsletter welcome series */
+    newsletter_automation: boolean;
+    /** Enable AI chat assistant */
+    ai_chat: boolean;
+  };
+  reader: {
+    /** Default reader theme: light | dark | sepia */
+    default_theme: "light" | "dark" | "sepia";
+    /** Default font size in the reader (0.75–2.0) */
+    default_font_size: number;
+    /** Default line height in the reader (1.2–2.5) */
+    default_line_height: number;
+    /** Enable download button in reader */
+    allow_download: boolean;
+    /** Show page numbers in reader */
+    show_page_numbers: boolean;
+  };
+  commerce: {
+    /** Currency code (USD, BDT, EUR, etc.) */
+    currency: string;
+    /** Currency symbol */
+    currency_symbol: string;
+    /** Tax rate percentage (0–100) */
+    tax_rate: number;
+    /** Refund policy text (EN) */
+    refund_policy_en: string;
+    /** Refund policy text (BN) */
+    refund_policy_bn: string;
+  };
 }
 
 export const DEFAULT_CONFIG: SiteConfig = {
@@ -127,6 +188,13 @@ export const DEFAULT_CONFIG: SiteConfig = {
     accent_hover: "#e67e22",
     mode: "light",
     header_visible: true,
+    font_heading: "Cormorant Garamond, serif",
+    font_body: "Inter, sans-serif",
+    font_bn: "Hind Siliguri, sans-serif",
+    font_size_base: 16,
+    radius_scale: 1,
+    preset: "warm",
+    custom_css: "",
   },
   footer: {
     copyright_en: "© {year} Bodhi Mitra. All rights reserved.",
@@ -199,22 +267,53 @@ export const DEFAULT_CONFIG: SiteConfig = {
     note_text_bn:
       "এই সাইটের কিছুই চিকিৎসা পরামর্শ নয়। যদি আপনি কষ্টে থাকেন, অনুগ্রহ করে আপনার কমিউনিটিতে একজন যোগ্য চিকিৎসকের কাছে যান।",
   },
+  maintenance: {
+    enabled: false,
+    message_en: "We are performing scheduled maintenance. Please check back soon.",
+    message_bn: "আমরা নির্ধারিত রক্ষণাবেক্ষণ করছি। অনুগ্রহ করে শীঘ্রই আবার দেখুন।",
+  },
+  features: {
+    reader_annotations: true,
+    reading_stats: true,
+    book_recommendations: true,
+    podcasts: false,
+    donations: false,
+    course_certificates: false,
+    newsletter_automation: false,
+    ai_chat: true,
+  },
+  reader: {
+    default_theme: "sepia",
+    default_font_size: 1.0,
+    default_line_height: 1.8,
+    allow_download: false,
+    show_page_numbers: true,
+  },
+  commerce: {
+    currency: "USD",
+    currency_symbol: "$",
+    tax_rate: 0,
+    refund_policy_en: "",
+    refund_policy_bn: "",
+  },
 };
 
 /** Deep-merge a partial config onto defaults so missing keys still resolve. */
 export function mergeConfig(partial: unknown): SiteConfig {
-  const p = (partial ?? {}) as Record<string, unknown>;
-  const out = {} as SiteConfig;
-  for (const k of Object.keys(DEFAULT_CONFIG) as (keyof SiteConfig)[]) {
-    const defVal = DEFAULT_CONFIG[k];
-    const inVal = p[k];
-    if (defVal && typeof defVal === "object") {
-      (out as any)[k] = { ...(defVal as object), ...((inVal as object) || {}) };
-    } else {
-      (out as any)[k] = inVal ?? defVal;
+  function deepMerge(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
+    const out = { ...target };
+    for (const key of Object.keys(source)) {
+      const srcVal = source[key];
+      const tgtVal = out[key];
+      if (srcVal && typeof srcVal === "object" && !Array.isArray(srcVal) && tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
+        out[key] = deepMerge(tgtVal as Record<string, unknown>, srcVal as Record<string, unknown>);
+      } else if (srcVal !== undefined) {
+        out[key] = srcVal;
+      }
     }
+    return out;
   }
-  return out;
+  return deepMerge(DEFAULT_CONFIG as unknown as Record<string, unknown>, (partial ?? {}) as Record<string, unknown>) as unknown as SiteConfig;
 }
 
 export async function fetchSiteSettings(): Promise<SiteConfig> {
@@ -256,13 +355,31 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
-    root.style.setProperty("--color-saffron", config.theme.accent_color);
-    root.style.setProperty("--color-saffron-hover", config.theme.accent_hover);
+    const t = config.theme;
+
+    // Accent color → semantic tokens
+    root.style.setProperty("--color-saffron", t.accent_color);
+    root.style.setProperty("--color-saffron-hover", t.accent_hover);
+    root.style.setProperty("--primary", t.accent_color);
+    root.style.setProperty("--primary-foreground", "#ffffff");
+
+    // Typography — override the CSS custom properties in styles.css
+    root.style.setProperty("--font-serif", t.font_heading);
+    root.style.setProperty("--font-sans", t.font_body);
+    root.style.setProperty("--font-bn", t.font_bn);
+    root.style.setProperty("--font-size-base", `${t.font_size_base / 16}rem`);
+
+    // Radius scale — override the base radius
+    root.style.setProperty("--radius", `${0.25 * t.radius_scale}rem`);
+
+    // Logo
     root.style.setProperty("--site-logo-max-width", `${config.branding.logo_max_width}px`);
 
-    if (config.theme.mode === "dark") root.classList.add("dark");
+    // Dark mode
+    if (t.mode === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
 
+    // Favicon
     if (config.branding.favicon_url) {
       let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
       if (!link) {
@@ -271,6 +388,19 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
         document.head.appendChild(link);
       }
       link.href = config.branding.favicon_url;
+    }
+
+    // Custom CSS
+    let styleEl = document.getElementById("site-custom-css") as HTMLStyleElement | null;
+    if (t.custom_css && t.custom_css.trim()) {
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = "site-custom-css";
+        document.head.appendChild(styleEl);
+      }
+      styleEl.textContent = t.custom_css;
+    } else if (styleEl) {
+      styleEl.remove();
     }
   }, [config]);
 

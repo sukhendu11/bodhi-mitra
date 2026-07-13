@@ -19,6 +19,10 @@ import { ThemeTab } from "@/components/SettingsThemeTab";
 import { SocialTab } from "@/components/SettingsSocialTab";
 import { SeoTab } from "@/components/SettingsSeoTab";
 import { FooterTab } from "@/components/SettingsFooterTab";
+import { MaintenanceTab } from "@/components/SettingsMaintenanceTab";
+import { FeaturesTab } from "@/components/SettingsFeaturesTab";
+import { ReaderTab } from "@/components/SettingsReaderTab";
+import { CommerceTab } from "@/components/SettingsCommerceTab";
 import { Settings } from "lucide-react";
 import { ErrorPage } from "@/components/error-page";
 
@@ -37,6 +41,10 @@ const TABS = [
   { id: "theme", label: "Theme" },
   { id: "social", label: "Social" },
   { id: "seo", label: "SEO" },
+  { id: "features", label: "Features" },
+  { id: "reader", label: "Reader" },
+  { id: "commerce", label: "Commerce" },
+  { id: "maintenance", label: "Maintenance" },
 ] as const;
 
 function SettingsPage() {
@@ -163,6 +171,10 @@ function SettingsPage() {
                 {tab.id === "theme" && <ThemeTab {...tabProps} />}
                 {tab.id === "social" && <SocialTab {...tabProps} />}
                 {tab.id === "seo" && <SeoTab {...tabProps} />}
+                {tab.id === "features" && <FeaturesTab {...tabProps} />}
+                {tab.id === "reader" && <ReaderTab {...tabProps} />}
+                {tab.id === "commerce" && <CommerceTab {...tabProps} />}
+                {tab.id === "maintenance" && <MaintenanceTab {...tabProps} />}
               </TabsContent>
             ))}
           </div>

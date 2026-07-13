@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { fetchBookById, type Book } from "@/lib/books";
 import { useAuthSession } from "@/hooks/useAuth";
 import { useLang, pickLocalized } from "@/lib/i18n";
+import { useSiteSettings } from "@/lib/siteSettings";
 import {
   getPdfReaderUrl,
   getReaderBookmarks,
@@ -106,6 +107,12 @@ function ReaderPage() {
   const [panelTab, setPanelTab] = useState<PanelTab>("bookmarks");
   const [noteText, setNoteText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Apply default reader theme from site settings
+  const siteConfig = useSiteSettings();
+  useEffect(() => {
+    setReaderTheme(siteConfig.reader.default_theme as ReaderTheme);
+  }, [siteConfig.reader.default_theme]);
 
   const doGetReaderUrl = useServerFn(getPdfReaderUrl);
   const doGetBookmarks = useServerFn(getReaderBookmarks);
@@ -355,6 +362,7 @@ function ReaderPage() {
               url={pdfUrl}
               title={title}
               initialPage={initialPage}
+              initialScale={siteConfig.reader.default_font_size}
               onPageChange={handlePageChange}
               onClose={() =>
                 navigate({

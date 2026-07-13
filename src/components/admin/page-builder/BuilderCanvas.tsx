@@ -35,6 +35,7 @@ export function BuilderCanvas({
   hoveredId,
   onSelect,
   onHover,
+  onDropInCanvas,
   onReorder,
   onDuplicate,
   onRemove,
@@ -83,8 +84,8 @@ export function BuilderCanvas({
       e.preventDefault();
       setDropIndicator(null);
       const type = e.dataTransfer.getData("builder-component");
-      if (type && dropIndicator) {
-        // Handle palette drop - handled by parent
+      if (type && onDropInCanvas) {
+        onDropInCanvas(type);
       }
       if (dragNodeRef.current) {
         onReorder(
@@ -95,7 +96,7 @@ export function BuilderCanvas({
         dragNodeRef.current = null;
       }
     },
-    [dropIndicator, onReorder],
+    [dropIndicator, onReorder, onDropInCanvas],
   );
 
   /* ── Click outside to deselect ────────────────────────────────────── */
@@ -150,6 +151,7 @@ export function BuilderCanvas({
               depth={1}
               isSelected={child.id === selectedId}
               isHovered={child.id === hoveredId}
+              selectedId={selectedId}
               onSelect={onSelect}
               onHover={onHover}
               onDuplicate={onDuplicate}
@@ -193,6 +195,7 @@ interface CanvasNodeProps {
   depth: number;
   isSelected: boolean;
   isHovered: boolean;
+  selectedId: string | null;
   onSelect: (id: string | null) => void;
   onHover: (id: string | null) => void;
   onDuplicate: (id: string) => void;
@@ -210,6 +213,7 @@ function CanvasNode({
   depth,
   isSelected,
   isHovered,
+  selectedId,
   onSelect,
   onHover,
   onDuplicate,
@@ -329,8 +333,9 @@ function CanvasNode({
                 key={child.id}
                 node={child}
                 depth={depth + 1}
-                isSelected={child.id === onSelect.name ? false : child.id === (onSelect as any)?.name || false}
+                isSelected={child.id === selectedId}
                 isHovered={false}
+                selectedId={selectedId}
                 onSelect={(id) => onSelect(id || child.id)}
                 onHover={() => {}}
                 onDuplicate={onDuplicate}
