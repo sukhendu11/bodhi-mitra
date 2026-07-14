@@ -203,3 +203,20 @@ export const deleteReaderNote = createServerFn({ method: "POST" })
     if (error) throw error;
     return { success: true };
   });
+
+export const updateReaderNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }: { context: { userId: string }; data: unknown }) => {
+    const { userId } = context;
+    const input = data as { id: string; text: string; color?: string };
+    const db = supabase as any;
+    const { data: row, error } = await db
+      .from("reader_notes")
+      .update({ text: input.text, color: input.color })
+      .eq("id", input.id)
+      .eq("user_id", userId)
+      .select()
+      .single();
+    if (error) throw error;
+    return row as ReaderNote;
+  });

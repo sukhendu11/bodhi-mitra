@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useLang } from "@/lib/i18n";
 import { useAuthSession } from "@/hooks/useAuth";
 import { getMyLibrary, type LibraryBook } from "@/lib/books-purchases";
-import { BookOpen, Library, ArrowRight, BookMarked, Clock, CheckCircle2 } from "lucide-react";
+import { BookOpen, Library, ArrowRight, BookMarked, Clock, CheckCircle2, ArrowUpDown } from "lucide-react";
 
 export const Route = createFileRoute("/books/library")({
   head: () => ({
@@ -20,6 +21,8 @@ function LibraryPage() {
   const { user, loading: authLoading } = useAuthSession();
   const { lang } = useLang();
   const doGetLibrary = useServerFn(getMyLibrary);
+  const [sortBy, setSortBy] = useState<"recent" | "title" | "progress">("recent");
+  const [filterBy, setFilterBy] = useState<"all" | "in-progress" | "completed" | "not-started">("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-library", user?.id],
@@ -68,6 +71,32 @@ function LibraryPage() {
 
   const books: LibraryBook[] = data?.books ?? [];
 
+  // Filter and sort books
+  const filteredBooks = useMemo(() => {
+    let result = [...books];
+
+    // Filter
+    if (filterBy === "in-progress") {
+      result = result.filter((b) => b.progressPct > 0 && !b.completed);
+    } else if (filterBy === "completed") {
+      result = result.filter((b) => b.completed);
+    } else if (filterBy === "not-started") {
+      result = result.filter((b) => b.progressPct === 0 && !b.completed);
+    }
+
+    // Sort
+    if (sortBy === "title") {
+      result.sort((a, b) => (a.titleEn ?? "").localeCompare(b.titleEn ?? ""));
+    } else if (sortBy === "progress") {
+      result.sort((a, b) => b.progressPct - a.progressPct);
+    } else {
+      // recent — sort by purchase date descending
+      result.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+    }
+
+    return result;
+  }, [books, sortBy, filterBy]);
+
   const totalBooks = books.length;
   const completedBooks = books.filter((b: LibraryBook) => b.completed).length;
   const inProgressBooks = books.filter(
@@ -114,11 +143,55 @@ function LibraryPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-8">
-          {books.map((book) => (
-            <LibraryBookCard key={book.bookId} book={book} lang={lang} />
-          ))}
-        </div>
+        <>
+          {/* Sort and Filter Controls */}
+          <div className="flex items-center gap-4 mt-8 mb-6">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="text-xs bg-background border border-border/60 rounded-lg px-2 py-1.5 focus:outline-none focus:border-foreground/40"
+              >
+                <option value="recent">Recently Added</option>
+                <option value="title">Title (A-Z)</option>
+                <option value="progress">Progress</option>
+              </select>
+            </div>
+            <div className="flex gap-1">
+              {([
+                { value: "all", label: "All" },
+                { value: "in-progress", label: "In Progress" },
+                { value: "completed", label: "Completed" },
+                { value: "not-started", label: "Not Started" },
+              ] as const).map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => setFilterBy(f.value)}
+                  className={`px-2.5 py-1 text-xs rounded-lg transition-colors ${
+                    filterBy === f.value
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {filteredBooks.map((book) => (
+              <LibraryBookCard key={book.bookId} book={book} lang={lang} />
+            ))}
+          </div>
+
+          {filteredBooks.length === 0 && books.length > 0 && (
+            <div className="text-center py-12">
+              <p className="text-sm text-muted-foreground">No books match this filter.</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -260,7 +260,7 @@ export const getMyLibrary = createServerFn({ method: "GET" })
     const [{ data: books }, { data: progress }] = await Promise.all([
       db
         .from("books")
-        .select("id, title_en, title_bn, slug, cover_image, author, is_free, pages")
+        .select("id, title_en, title_bn, slug, cover_image, author_name, is_free, pages")
         .in("id", bookIds),
       db
         .from("reading_progress")
@@ -281,7 +281,7 @@ export const getMyLibrary = createServerFn({ method: "GET" })
         titleBn: book.title_bn ?? null,
         slug: book.slug ?? "",
         coverImage: book.cover_image ?? null,
-        author: book.author ?? null,
+        author: book.author_name ?? null,
         isFree: !!book.is_free,
         purchaseDate: p.purchase_date ?? p.created_at,
         progressPct: prog?.progress_pct ?? 0,

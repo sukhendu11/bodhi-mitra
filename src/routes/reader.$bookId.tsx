@@ -14,6 +14,7 @@ import {
   getReaderNotes,
   addReaderNote,
   deleteReaderNote,
+  updateReaderNote,
 } from "@/lib/books-reader";
 import { getReadingProgress, upsertProgress } from "@/lib/books-progress";
 import { PdfViewer } from "@/components/PdfViewer";
@@ -33,6 +34,7 @@ import {
   X,
   Loader2,
   BookOpen,
+  Download,
 } from "lucide-react";
 
 /* ─── Theme types ──────────────────────────────────────────────── */
@@ -121,6 +123,10 @@ function ReaderPage() {
   const doGetNotes = useServerFn(getReaderNotes);
   const doAddNote = useServerFn(addReaderNote);
   const doDeleteNote = useServerFn(deleteReaderNote);
+  const doUpdateNote = useServerFn(updateReaderNote);
+
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteText, setEditingNoteText] = useState("");
 
   /* ── Load signed PDF URL ─────────────────────────────────────── */
   useEffect(() => {
@@ -245,6 +251,16 @@ function ReaderPage() {
     },
   });
 
+  const updateNoteMutation = useMutation({
+    mutationFn: ({ id, text }: { id: string; text: string }) =>
+      (doUpdateNote as any)({ data: { id, text } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reader-notes", bookId] });
+      setEditingNoteId(null);
+      setEditingNoteText("");
+    },
+  });
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -319,6 +335,18 @@ function ReaderPage() {
             </button>
           ))}
 
+          {/* Download button (if allowed) */}
+          {siteConfig.reader.allow_download && pdfUrl && (
+            <a
+              href={pdfUrl}
+              download={`${title || "book"}.pdf`}
+              className={`p-1.5 rounded-md transition-colors hover:${theme.accent}`}
+              title="Download PDF"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </a>
+          )}
+
           {/* Panel toggle */}
           <button
             onClick={() => setPanelOpen(!panelOpen)}
@@ -362,7 +390,7 @@ function ReaderPage() {
               url={pdfUrl}
               title={title}
               initialPage={initialPage}
-              initialScale={siteConfig.reader.default_font_size}
+              initialScale={siteConfig.reader.default_font_size / 16}
               onPageChange={handlePageChange}
               onClose={() =>
                 navigate({
@@ -507,14 +535,47 @@ function ReaderPage() {
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-medium opacity-60">Page {n.page_number}</span>
-                            <button
-                              onClick={() => deleteNoteMutation.mutate(n.id)}
-                              className="p-0.5 text-muted-foreground hover:text-destructive"
-                            >
-                              <X className="h-2.5 w-2.5" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => {
+                                  setEditingNoteId(n.id);
+                                  setEditingNoteText(n.text);
+                                }}
+                                className="p-0.5 text-muted-foreground hover:text-foreground"
+                              >
+                                <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                              </button>
+                              <button
+                                onClick={() => deleteNoteMutation.mutate(n.id)}
+                                className="p-0.5 text-muted-foreground hover:text-destructive"
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </button>
+                            </div>
                           </div>
-                          <p>{n.text}</p>
+                          {editingNoteId === n.id ? (
+                            <div className="flex gap-1">
+                              <input
+                                type="text"
+                                value={editingNoteText}
+                                onChange={(e) => setEditingNoteText(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") updateNoteMutation.mutate({ id: n.id, text: editingNoteText });
+                                  if (e.key === "Escape") { setEditingNoteId(null); setEditingNoteText(""); }
+                                }}
+                                className="flex-1 px-2 py-1 text-xs border border-border/40 rounded bg-background"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => updateNoteMutation.mutate({ id: n.id, text: editingNoteText })}
+                                className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          ) : (
+                            <p>{n.text}</p>
+                          )}
                         </div>
                       ))}
                     </div>

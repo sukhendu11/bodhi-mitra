@@ -2,6 +2,44 @@
 
 ## 2026-07-14
 
+### Phase 11 — Books, Library & Reader
+
+**Bug fixes, reading time estimation, download button, note editing, library sorting/filtering.**
+
+#### Bug Fixes
+- **`getMyLibrary` author mismatch** — Fixed `book.author` → `book.author_name` to match DB column
+- **`initialScale` semantic mismatch** — Fixed reader passing font_size (12-22) as zoom scale; now divides by 16
+- **Purchase button hardcoded `$`** — Fixed to use currency symbol from settings
+
+#### Reading Time Estimation
+- Added `estimateReadingTime()` and `formatReadingTime()` to commerce.ts
+- Book detail page shows reading time based on page count (250 words/page)
+
+#### Download Button
+- Reader toolbar shows download button when `commerce.allow_download` is enabled
+- Downloads PDF with book title as filename
+
+#### Note Editing
+- Added `updateReaderNote` server function
+- Notes now have edit button (pencil icon)
+- Inline editing with Enter to save, Escape to cancel
+
+#### Library Sorting & Filtering
+- Sort options: Recently Added, Title (A-Z), Progress
+- Filter tabs: All, In Progress, Completed, Not Started
+- Empty state for no matching results
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase 10 — Commerce & Digital Products
 
 **Commerce system with dynamic currency, refund policy display, and coupon infrastructure.**

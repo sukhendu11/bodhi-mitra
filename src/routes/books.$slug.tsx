@@ -17,6 +17,7 @@ import { addToCart } from "@/lib/cart";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { BookRecommendations } from "@/components/BookRecommendations";
 import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
+import { estimateReadingTime, formatReadingTime } from "@/lib/commerce";
 import { toast } from "sonner";
 import {
   BookOpen,
@@ -339,6 +340,14 @@ function BookDetailPage() {
                 <p className="text-sm font-medium">{book.pages}</p>
               </div>
             )}
+            {book.pages > 0 && (
+              <div>
+                <p className="text-[0.5rem] uppercase tracking-[0.1em] text-muted-foreground/60 mb-1">
+                  Reading Time
+                </p>
+                <p className="text-sm font-medium">{formatReadingTime(book.pages * 250)}</p>
+              </div>
+            )}
             {book.isbn && (
               <div>
                 <p className="text-[0.5rem] uppercase tracking-[0.1em] text-muted-foreground/60 mb-1">
@@ -439,7 +448,7 @@ function BookDetailPage() {
                         </>
                       ) : (
                         <>
-                          <Lock className="h-3.5 w-3.5" /> Purchase — $
+                          <Lock className="h-3.5 w-3.5" /> Purchase — {symbol}
                           {Number(book.price).toFixed(2)}
                         </>
                       )}

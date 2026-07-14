@@ -39,3 +39,17 @@ export function calculateTotal(subtotal: number, taxRate: number): number {
   const tax = calculateTax(subtotal, taxRate);
   return subtotal + tax;
 }
+
+/** Estimate reading time in minutes (for text content) */
+export function estimateReadingTime(text: string, wordsPerMinute: number = 200): number {
+  if (!text) return 0;
+  const words = text.trim().split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / wordsPerMinute));
+}
+
+/** Format reading time for display */
+export function formatReadingTime(minutes: number): string {
+  if (minutes < 1) return "< 1 min read";
+  if (minutes === 1) return "1 min read";
+  return `${minutes} min read`;
+}
