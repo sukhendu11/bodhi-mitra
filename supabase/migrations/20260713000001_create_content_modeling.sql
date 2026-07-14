@@ -2,6 +2,32 @@
 -- Phase 03: CMS Engine & Content Modeling
 
 -- ============================================================================
+-- Ensure app_role type exists (may not exist on fresh databases)
+-- ============================================================================
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role' AND typnamespace = 'public'::regnamespace) THEN
+    CREATE TYPE public.app_role AS ENUM ('admin', 'user');
+  END IF;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ============================================================================
+-- Ensure has_role function exists
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role TEXT)
+RETURNS BOOLEAN
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = _user_id AND role = _role::app_role
+  );
+$$;
+
+-- ============================================================================
 -- Table: content_type_definitions
 -- Stores the metadata for each dynamic content type (collections & singletons)
 -- ============================================================================
