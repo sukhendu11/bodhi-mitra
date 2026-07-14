@@ -3,6 +3,7 @@ import { getStripeClient } from "@/integrations/stripe/server";
 import { STRIPE_WEBHOOK_SECRET } from "@/integrations/stripe/config";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendPurchaseConfirmation } from "@/lib/purchase-emails";
+import { incrementRedemption } from "@/lib/coupons";
 
 export const Route = createFileRoute("/api/stripe-webhook")({
   server: {
@@ -94,6 +95,14 @@ export const Route = createFileRoute("/api/stripe-webhook")({
                 console.error("[stripe-webhook] Failed to send purchase email:", err);
               });
             }
+          }
+
+          // Increment coupon redemption count if coupon was used
+          const couponId = session.metadata?.coupon_id;
+          if (couponId) {
+            incrementRedemption(couponId).catch((err) => {
+              console.error("[stripe-webhook] Failed to increment coupon redemption:", err);
+            });
           }
         }
 

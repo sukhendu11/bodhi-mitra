@@ -2,6 +2,30 @@
 
 ## 2026-07-14
 
+### Implementation Sprint 01 — CMS Completion
+
+**Wired disconnected features, fixed dead code, extracted shared utilities.**
+
+#### Feature Wiring
+- **Coupon redemption** — Wired `incrementRedemption()` to Stripe webhook after successful purchase
+- **Book recommendations** — Gated with `useFeatureFlag("book_recommendations")`
+- **Reader settings** — Wired `show_page_numbers` setting to PdfViewer component
+
+#### Code Quality
+- **Extracted shared utilities** — `timeAgo()` and `formatDate()` added to `src/lib/utils.ts`
+- **Removed duplicate implementations** — Functions now available for import across admin pages
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Implementation Sprint — CMS Platform Polish
 
 **Rate limiting, auth fixes, error handlers, dead code cleanup, accessibility.**

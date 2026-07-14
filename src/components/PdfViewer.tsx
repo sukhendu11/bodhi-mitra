@@ -18,11 +18,13 @@ interface PdfViewerProps {
   initialPage?: number;
   /** Initial zoom scale (1.0 = 100%) */
   initialScale?: number;
+  /** Whether to show page numbers in the toolbar */
+  showPageNumbers?: boolean;
   /** Called when the user changes page */
   onPageChange?: (page: number, totalPages: number) => void;
 }
 
-export function PdfViewer({ url, title, onClose, initialPage, initialScale, onPageChange }: PdfViewerProps) {
+export function PdfViewer({ url, title, onClose, initialPage, initialScale, showPageNumbers = true, onPageChange }: PdfViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [pdf, setPdf] = useState<PdfJs.PDFDocumentProxy | null>(null);
@@ -193,7 +195,7 @@ export function PdfViewer({ url, title, onClose, initialPage, initialScale, onPa
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <div className="flex items-center gap-0.5 min-w-[4.5rem] justify-center">
+            <div className={`flex items-center gap-0.5 min-w-[4.5rem] justify-center ${!showPageNumbers ? "opacity-0 pointer-events-none" : ""}`}>
               <input
                 type="text"
                 value={pageInput || pageNum}

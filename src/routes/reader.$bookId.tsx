@@ -402,6 +402,7 @@ function ReaderPage() {
               title={title}
               initialPage={initialPage}
               initialScale={siteConfig.reader.default_font_size / 16}
+              showPageNumbers={siteConfig.reader.show_page_numbers}
               onPageChange={handlePageChange}
               onClose={() =>
                 navigate({

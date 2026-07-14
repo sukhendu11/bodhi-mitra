@@ -20,6 +20,7 @@ import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 import { formatReadingTime } from "@/lib/commerce";
 import { generateBookSchema, generateBreadcrumbSchema } from "@/lib/structured-data";
 import { SocialShare } from "@/components/SocialShare";
+import { useFeatureFlag } from "@/hooks/useFeatureFlags";
 import { toast } from "sonner";
 import {
   BookOpen,
@@ -529,12 +530,14 @@ function BookDetailPage() {
       />
 
       {/* Recommendations */}
-      <BookRecommendations
-        contentType="book"
-        contentId={book.id}
-        title="You Might Also Like"
-        limit={6}
-      />
+      {useFeatureFlag("book_recommendations") && (
+        <BookRecommendations
+          contentType="book"
+          contentId={book.id}
+          title="You Might Also Like"
+          limit={6}
+        />
+      )}
     </div>
   );
 }
