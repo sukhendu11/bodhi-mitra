@@ -2,6 +2,29 @@
 
 ## 2026-07-14
 
+### Sprint 01 — Feature Completion & CMS Perfection
+
+**Wired remaining disconnected features, improved navigation settings, added feature flag gating.**
+
+#### Navigation Settings Wired
+- **`sticky_header`** — Header now respects the sticky_header setting from SiteConfig
+- **`mobile_nav_style`** — MobileNav now uses the mobile_nav_style setting (slide/overlay)
+
+#### Feature Flags Wired
+- **`reader_annotations`** — Notes tab in reader gated by feature flag
+- **`book_recommendations`** — Recommendations section gated by feature flag (from previous sprint)
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Implementation Sprint 01 — CMS Completion
 
 **Wired disconnected features, fixed dead code, extracted shared utilities.**

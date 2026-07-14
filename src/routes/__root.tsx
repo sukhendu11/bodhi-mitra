@@ -224,6 +224,7 @@ function Header() {
   const { data: isAdmin } = useIsAdmin(user);
   const { lang } = useLang();
   const layout = useLayout();
+  const config = useSiteSettings();
   const currentPath = useRouterState({ select: (s) => s.location.href });
   const loginSearch = { message: "", redirect: currentPath === "/login" ? "/" : currentPath };
 
@@ -238,8 +239,10 @@ function Header() {
     "px-4 py-1.5 text-xs uppercase tracking-[0.2em] rounded-sm text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 hover:brightness-110";
   const signInStyle = { backgroundColor: "var(--color-saffron)" };
 
+  const isSticky = config.navigation?.sticky_header !== false;
+
   return (
-    <header className="border-b border-border/60 bg-background/60 backdrop-blur-md sticky top-0 z-40">
+    <header className={`border-b border-border/60 bg-background/60 backdrop-blur-md ${isSticky ? "sticky top-0 z-40" : ""}`}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         {/* Brand */}
         <Link to="/" className="font-serif text-2xl tracking-tight flex items-center gap-3">

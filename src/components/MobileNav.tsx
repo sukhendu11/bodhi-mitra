@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { LangToggle } from "./LangToggle";
+import { useSiteSettings } from "@/lib/siteSettings";
 
 interface MobileNavItem {
   to: string;
@@ -45,6 +46,8 @@ export function MobileNav({
   loginSearch,
 }: MobileNavProps) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const config = useSiteSettings();
+  const navStyle = config.navigation?.mobile_nav_style || "slide";
 
   return (
     <Sheet>
@@ -56,7 +59,7 @@ export function MobileNav({
           <Menu className="h-5 w-5" />
         </button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-72 sm:w-80 p-6 pt-16">
+      <SheetContent side={navStyle === "overlay" ? "left" : "right"} className="w-72 sm:w-80 p-6 pt-16">
         <nav className="flex flex-col gap-0.5">
           {/* Top-level items */}
           {items.map((item) => (

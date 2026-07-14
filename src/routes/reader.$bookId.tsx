@@ -6,6 +6,7 @@ import { fetchBookById, type Book } from "@/lib/books";
 import { useAuthSession } from "@/hooks/useAuth";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { useSiteSettings } from "@/lib/siteSettings";
+import { useFeatureFlag } from "@/hooks/useFeatureFlags";
 import {
   getPdfReaderUrl,
   getReaderBookmarks,
@@ -424,7 +425,7 @@ function ReaderPage() {
             <div className="flex border-b border-inherit">
               {[
                 { id: "bookmarks" as PanelTab, icon: BookmarkCheck, label: "Bookmarks" },
-                { id: "notes" as PanelTab, icon: StickyNote, label: "Notes" },
+                ...(useFeatureFlag("reader_annotations") ? [{ id: "notes" as PanelTab, icon: StickyNote, label: "Notes" }] : []),
                 { id: "search" as PanelTab, icon: Search, label: "Search" },
               ].map((tab) => (
                 <button
