@@ -18,6 +18,8 @@ import { BookmarkButton } from "@/components/BookmarkButton";
 import { BookRecommendations } from "@/components/BookRecommendations";
 import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 import { estimateReadingTime, formatReadingTime } from "@/lib/commerce";
+import { generateBookSchema, generateBreadcrumbSchema } from "@/lib/structured-data";
+import { SocialShare } from "@/components/SocialShare";
 import { toast } from "sonner";
 import {
   BookOpen,
@@ -42,6 +44,28 @@ export const Route = createFileRoute("/books/$slug")({
     const name = ld?.siteName ?? "Sabbe Satta";
     const bookTitle = b?.title_en || b?.title_bn || "Book";
     const desc = b?.meta_description_en || b?.description_en || "View book details.";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://bodhimitra.com";
+    const bookUrl = `${baseUrl}/books/${b?.slug || ""}`;
+
+    const bookSchema = generateBookSchema({
+      name: bookTitle,
+      description: desc,
+      url: bookUrl,
+      imageUrl: b?.cover_image || undefined,
+      author: b?.author_name || undefined,
+      isbn: b?.isbn || undefined,
+      price: b?.price || 0,
+      currency: "USD",
+      rating: b?.avg_rating || undefined,
+      ratingCount: b?.total_ratings || undefined,
+    });
+
+    const breadcrumbSchema = generateBreadcrumbSchema([
+      { name: "Home", url: baseUrl },
+      { name: "Books", url: `${baseUrl}/books` },
+      { name: bookTitle, url: bookUrl },
+    ]);
+
     return {
       meta: [
         { title: `${bookTitle} — ${name}` },
@@ -49,8 +73,16 @@ export const Route = createFileRoute("/books/$slug")({
         { property: "og:title", content: `${bookTitle} — ${name}` },
         { property: "og:description", content: desc },
         { property: "og:image", content: b?.cover_image || "" },
-        { name: "twitter:image", content: b?.cover_image || "" },
+        { property: "og:url", content: bookUrl },
+        { property: "og:type", content: "book" },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: bookTitle },
+        { name: "twitter:description", content: desc },
+        { name: "twitter:image", content: b?.cover_image || "" },
+      ],
+      scripts: [
+        { type: "application/ld+json", JSON: bookSchema },
+        { type: "application/ld+json", JSON: breadcrumbSchema },
       ],
     };
   },
@@ -404,6 +436,12 @@ function BookDetailPage() {
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3 pt-2">
+            {/* Social sharing */}
+            <SocialShare
+              url={`${typeof window !== "undefined" ? window.location.origin : "https://bodhimitra.com"}/books/${book.slug}`}
+              title={title}
+              description={pickLocalized(book.description_en, book.description_bn, lang, "")}
+            />
             {/* Bookmark button */}
             <div className="ml-auto">
               <BookmarkButton resourceId={book.id} resourceType="book" compact />

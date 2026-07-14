@@ -7,6 +7,7 @@ import type { PostCategory } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { fetchSiteSettings, useSiteSettings } from "@/lib/siteSettings";
 import { Reveal } from "@/components/Reveal";
+import { generateWebSiteSchema, generateOrganizationSchema } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/")({
   loader: () => fetchSiteSettings(),
@@ -19,12 +20,23 @@ export const Route = createFileRoute("/")({
       seo?.meta_desc_en ||
       "Reflections on Buddhist psychology, mindfulness, and mental health by practicing psychiatrists.";
     const siteName = loaderData?.branding?.site_name_en || "Bodhi Mitra";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://bodhimitra.com";
+
+    const websiteSchema = generateWebSiteSchema(baseUrl, siteName, metaDesc);
+    const orgSchema = generateOrganizationSchema(baseUrl, siteName, loaderData?.social || {});
+
     return {
       meta: [
         { title: `${siteName} — ${tagline}` },
         { name: "description", content: metaDesc },
         { property: "og:title", content: siteName },
         { property: "og:description", content: tagline },
+        { property: "og:url", content: baseUrl },
+        { property: "og:site_name", content: siteName },
+      ],
+      scripts: [
+        { type: "application/ld+json", JSON: websiteSchema },
+        { type: "application/ld+json", JSON: orgSchema },
       ],
     };
   },

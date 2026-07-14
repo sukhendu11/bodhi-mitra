@@ -1,5 +1,6 @@
 import { consumeLastCapturedError, renderErrorPage } from "./lib/errors";
 import { generateSitemapXml, generateRobotsTxt, isSitemapEnabled } from "./lib/seo";
+import { lookupRedirect } from "./lib/redirects";
 
 type ServerEntry = {
   fetch: (request: Request) => Promise<Response> | Response;
@@ -115,6 +116,22 @@ async function handleSeoRequest(request: Request): Promise<Response | null> {
 }
 
 const handler = async (request: Request): Promise<Response> => {
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  // Check for redirects before anything else
+  try {
+    const redirect = await lookupRedirect(path);
+    if (redirect) {
+      return new Response(null, {
+        status: redirect.statusCode,
+        headers: { Location: redirect.to },
+      });
+    }
+  } catch {
+    // Redirect lookup failed — continue to normal handling
+  }
+
   // Intercept sitemap.xml and robots.txt before TanStack Router
   const seoResponse = await handleSeoRequest(request);
   if (seoResponse) return seoResponse;

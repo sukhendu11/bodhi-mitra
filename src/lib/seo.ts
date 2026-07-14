@@ -107,14 +107,16 @@ export async function generateSitemapXml(baseUrl: string): Promise<string> {
       .eq("status", "published");
     if (books) {
       for (const book of books) {
-        urls.push(
-          xmlUrl({
-            loc: `${baseUrl}/books#${book.slug}`,
-            lastmod: formatDate(book.updated_at || book.created_at),
-            changefreq: "monthly",
-            priority: 0.5,
-          }),
-        );
+        if (book.slug) {
+          urls.push(
+            xmlUrl({
+              loc: `${baseUrl}/books/${book.slug}`,
+              lastmod: formatDate(book.updated_at || book.created_at),
+              changefreq: "monthly",
+              priority: 0.7,
+            }),
+          );
+        }
       }
     }
   } catch (e) {
@@ -128,18 +130,43 @@ export async function generateSitemapXml(baseUrl: string): Promise<string> {
       .eq("visible", true);
     if (pages) {
       for (const page of pages) {
-        urls.push(
-          xmlUrl({
-            loc: `${baseUrl}/${page.slug}`,
-            lastmod: formatDate(page.updated_at || page.created_at),
-            changefreq: "monthly",
-            priority: 0.7,
-          }),
-        );
+        if (page.slug) {
+          urls.push(
+            xmlUrl({
+              loc: `${baseUrl}/pages/${page.slug}`,
+              lastmod: formatDate(page.updated_at || page.created_at),
+              changefreq: "monthly",
+              priority: 0.7,
+            }),
+          );
+        }
       }
     }
   } catch (e) {
     console.error("[sitemap] Failed to fetch pages:", e);
+  }
+
+  try {
+    const { data: courses } = await (supabaseAdmin as any)
+      .from("courses")
+      .select("slug, updated_at, created_at")
+      .eq("published", true);
+    if (courses) {
+      for (const course of courses) {
+        if (course.slug) {
+          urls.push(
+            xmlUrl({
+              loc: `${baseUrl}/courses/${course.slug}`,
+              lastmod: formatDate(course.updated_at || course.created_at),
+              changefreq: "monthly",
+              priority: 0.6,
+            }),
+          );
+        }
+      }
+    }
+  } catch (e) {
+    console.error("[sitemap] Failed to fetch courses:", e);
   }
 
   return [

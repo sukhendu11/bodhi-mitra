@@ -2,6 +2,44 @@
 
 ## 2026-07-14
 
+### Phase 13 — SEO, Marketing & Growth
+
+**Schema.org structured data, social sharing, server-side redirects, sitemap consolidation.**
+
+#### Schema.org Structured Data
+- **`src/lib/structured-data.ts`** — Generators for WebSite, Organization, Article, Book, BreadcrumbList, Course, FAQ
+- Homepage: WebSite + Organization schemas
+- Book detail: Book + BreadcrumbList schemas (with offers, aggregateRating)
+- Post detail: Article + BreadcrumbList schemas
+
+#### Social Sharing
+- **`src/components/SocialShare.tsx`** — Share buttons for Twitter, Facebook, LinkedIn, WhatsApp, Email + copy link
+- Added to book detail and post detail pages
+
+#### Server-Side Redirect Enforcement
+- **`server.ts`** — Now checks `lookupRedirect()` before TanStack Router processes requests
+- Redirects stored in DB are now enforced at HTTP level
+
+#### Sitemap Fixes
+- Fixed books using hash fragments (`/books#slug`) → proper URLs (`/books/slug`)
+- Fixed pages using `/${slug}` → `/pages/${slug}`
+- Added courses to sitemap
+
+#### Canonical URLs
+- Added `og:url` to homepage, books, and posts
+- Added `og:type` (book, article) for proper social previews
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase 12 — Forms, Communication & Notifications
 
 **Email template system, newsletter management, notification persistence, contact form hardening.**

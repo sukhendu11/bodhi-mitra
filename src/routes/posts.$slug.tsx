@@ -12,6 +12,8 @@ import { SanitizedHtml } from "@/components/SanitizedHtml";
 import { Comments } from "@/components/Comments";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
+import { generateArticleSchema, generateBreadcrumbSchema } from "@/lib/structured-data";
+import { SocialShare } from "@/components/SocialShare";
 import { TypographyControls, useTypography } from "@/components/TypographyControls";
 import { ArticleSkeleton } from "@/components/ArticleSkeleton";
 import { ReadingProgress } from "@/components/ReadingProgress";
@@ -43,6 +45,25 @@ export const Route = createFileRoute("/posts/$slug")({
     const name = ld?.siteName ?? "Bodhi Mitra";
     const postTitle = p?.title_en || p?.title_bn || p?.title || "Post";
     const desc = p?.excerpt_en || p?.excerpt_bn || "Read a reflection.";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://bodhimitra.com";
+    const postUrl = `${baseUrl}/posts/${(ld?.post as any)?.slug || ""}`;
+
+    const articleSchema = generateArticleSchema({
+      title: postTitle,
+      description: desc,
+      url: postUrl,
+      imageUrl: p?.cover_image || undefined,
+      datePublished: (ld?.post as any)?.created_at || new Date().toISOString(),
+      authorName: (ld?.post as any)?.author_name || "Bodhi Mitra",
+      siteName: name,
+    });
+
+    const breadcrumbSchema = generateBreadcrumbSchema([
+      { name: "Home", url: baseUrl },
+      { name: "Reflections", url: `${baseUrl}/posts` },
+      { name: postTitle, url: postUrl },
+    ]);
+
     return {
       meta: [
         { title: `${postTitle} — ${name}` },
@@ -51,8 +72,15 @@ export const Route = createFileRoute("/posts/$slug")({
         { property: "og:title", content: `${postTitle} — ${name}` },
         { property: "og:description", content: desc },
         { property: "og:image", content: p?.cover_image || "" },
-        { name: "twitter:image", content: p?.cover_image || "" },
+        { property: "og:url", content: postUrl },
+        { property: "og:type", content: "article" },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: postTitle },
+        { name: "twitter:image", content: p?.cover_image || "" },
+      ],
+      scripts: [
+        { type: "application/ld+json", JSON: articleSchema },
+        { type: "application/ld+json", JSON: breadcrumbSchema },
       ],
     };
   },
@@ -181,6 +209,11 @@ function PostPage() {
 
                 <div className="mt-5 flex items-center justify-center gap-4">
                   <BookmarkButton resourceId={post.id} resourceType="post" />
+                  <SocialShare
+                    url={`${typeof window !== "undefined" ? window.location.origin : "https://bodhimitra.com"}/posts/${(post as any).slug}`}
+                    title={title}
+                    description={pickLocalized(post.excerpt_en, post.excerpt_bn, lang, "")}
+                  />
                   <TypographyControls settings={typoSettings} onChange={setTypoSettings} />
                 </div>
               </header>
