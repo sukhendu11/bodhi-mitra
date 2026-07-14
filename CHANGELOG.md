@@ -2,6 +2,27 @@
 
 ## 2026-07-14
 
+### Sprint 02 — Real World CMS Refinement
+
+**Fixed critical bugs found during real admin usage: settings fetch, reset confirmation, performance, delete confirmation.**
+
+#### Critical Fixes
+- **Settings fetch broken** — Fixed `.eq("id", true)` to `.eq("id", "1")` in `fetchSiteSettings()`. Settings were silently falling back to defaults.
+- **Reset button no confirmation** — Added `confirm()` dialog before resetting all settings to defaults.
+- **Orders stats performance** — Changed to filter only paid orders for revenue calculation instead of fetching all rows.
+- **Media delete confirmation** — Replaced native `confirm()` with AlertDialog for consistent UX.
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Sprint 01 — Feature Completion & CMS Perfection
 
 **Wired remaining disconnected features, improved navigation settings, added feature flag gating.**

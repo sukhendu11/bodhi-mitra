@@ -9,6 +9,16 @@ import { UppyUploader, type UploadResult } from "@/components/admin/uppy-uploade
 import { MEDIA_BUCKETS, formatFileSize } from "@/components/admin/media-engine";
 import { ErrorPage } from "@/components/error-page";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   getMediaFolders,
   createMediaFolder,
   deleteMediaFolder,
@@ -97,6 +107,7 @@ function MediaLibraryPage() {
   const [newFolderName, setNewFolderName] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
+  const [deleteTarget, setDeleteTarget] = useState<MediaAsset | null>(null);
 
   const pageSize = 24;
 
@@ -162,7 +173,12 @@ function MediaLibraryPage() {
   const isDeleting = deleteMutation?.isPending ?? false;
 
   const handleDelete = (asset: MediaAsset) => {
-    if (!confirm(`Delete "${asset.filename}"?`)) return;
+    setDeleteTarget(asset);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const asset = deleteTarget;
     supabase.storage.from(asset.bucket).remove([asset.path]).then(({ error: storageError }) => {
       if (storageError) console.warn("[media] Storage delete failed:", storageError.message);
     });
@@ -177,6 +193,7 @@ function MediaLibraryPage() {
         onError: (e: any) => toast.error(e?.message ?? "Delete failed"),
       },
     );
+    setDeleteTarget(null);
   };
 
   const handleBulkDelete = useCallback(() => {
@@ -999,6 +1016,24 @@ function MediaLibraryPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete asset?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &ldquo;{deleteTarget?.filename}&rdquo; from storage. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -96,7 +96,7 @@ export async function getOrderStats(): Promise<OrderStats> {
     db.from("purchases").select("*", { count: "exact", head: true }),
     db.from("purchases").select("*", { count: "exact", head: true }).eq("amount_paid", 0),
     db.from("purchases").select("*", { count: "exact", head: true }).gt("amount_paid", 0),
-    db.from("purchases").select("amount_paid"),
+    db.from("purchases").select("amount_paid").gt("amount_paid", 0),
   ]);
 
   const totalRevenue = (revenueData ?? []).reduce(

@@ -339,7 +339,7 @@ export async function fetchSiteSettings(): Promise<SiteConfig> {
   const { data, error } = await (supabase as any)
     .from("site_settings")
     .select("config")
-    .eq("id", true)
+    .eq("id", "1")
     .maybeSingle();
   if (error) {
     console.warn("[siteSettings] fetch failed, using defaults", error);

@@ -136,7 +136,11 @@ function SettingsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCfg(DEFAULT_CONFIG)}
+            onClick={() => {
+              if (confirm("Reset all settings to defaults? This cannot be undone.")) {
+                setCfg(DEFAULT_CONFIG);
+              }
+            }}
             disabled={isPending}
           >
             Reset
@@ -196,7 +200,11 @@ function SettingsPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setCfg(DEFAULT_CONFIG)}
+          onClick={() => {
+            if (confirm("Reset all settings to defaults? This cannot be undone.")) {
+              setCfg(DEFAULT_CONFIG);
+            }
+          }}
           disabled={isPending}
         >
           Reset
