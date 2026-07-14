@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,10 @@ const KEYS = {
 interface PreferencesPanelProps {
   open: boolean;
   onClose: () => void;
+  sidebarCollapsed: boolean;
+  onSidebarCollapsedChange: (v: boolean) => void;
+  inspectorCollapsed: boolean;
+  onInspectorCollapsedChange: (v: boolean) => void;
   onClearRecent: () => void;
   onClearFavorites: () => void;
 }
@@ -29,23 +33,20 @@ interface PreferencesPanelProps {
 export function PreferencesPanel({
   open,
   onClose,
+  sidebarCollapsed,
+  onSidebarCollapsedChange,
+  inspectorCollapsed,
+  onInspectorCollapsedChange,
   onClearRecent,
   onClearFavorites,
 }: PreferencesPanelProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(
-    () => localStorage.getItem(KEYS.sidebarCollapsed) === "true",
-  );
-  const [inspectorCollapsed, setInspectorCollapsed] = useState(
-    () => localStorage.getItem(KEYS.inspectorCollapsed) !== "false",
-  );
-
   const handleSidebarChange = (v: boolean) => {
-    setSidebarCollapsed(v);
+    onSidebarCollapsedChange(v);
     localStorage.setItem(KEYS.sidebarCollapsed, String(v));
   };
 
   const handleInspectorChange = (v: boolean) => {
-    setInspectorCollapsed(v);
+    onInspectorCollapsedChange(v);
     localStorage.setItem(KEYS.inspectorCollapsed, String(v));
   };
 

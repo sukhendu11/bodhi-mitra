@@ -2,6 +2,35 @@
 
 ## 2026-07-14
 
+### Admin Shell & Navigation Refactoring
+
+**Fixed route labels, standardized active styling, synced preferences, cleaned up navigation.**
+
+#### Route Labels Fixed
+- **`getAdminSection()`** — Extended from 14 to 21 routes (added posts, coupons, redirects, security, permissions, tokens, content-types, collections)
+- **Command palette** — Fixed "All Posts" link to point to `/admin/posts` instead of `/admin`
+
+#### Design Token Adoption
+- **Sidebar active states** — Replaced hardcoded `orange-500` with `primary` design token
+- **Sidebar active indicator** — Changed from `bg-orange-500` to `bg-primary`
+- **Sidebar icon colors** — Changed from `text-orange-400` to `text-primary`
+
+#### Preferences Panel Sync
+- **Layout state sync** — Preferences panel now reads/writes to parent layout state
+- **Sidebar collapse** — Preferences toggle now actually affects sidebar visibility
+- **Inspector collapse** — Preferences toggle now actually affects inspector visibility
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Admin Dashboard Redesign
 
 **Premium enterprise dashboard with personalized greeting, bilingual labels, cleaner layout.**

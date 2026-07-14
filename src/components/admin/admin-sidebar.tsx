@@ -170,7 +170,7 @@ export function AdminSidebar({
                       "flex items-center gap-3 rounded-lg text-sm transition-all duration-150 relative group",
                       collapsed ? "justify-center px-0 py-2.5 mx-auto w-10" : "px-3 py-2",
                       active
-                        ? "bg-orange-500/15 text-orange-400 font-medium"
+                        ? "bg-primary/15 text-primary font-medium"
                         : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60",
                     )}
                   >
@@ -302,7 +302,7 @@ export function AdminSidebar({
                             <Icon
                               className={cn(
                                 "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
-                                active ? "text-orange-400" : "text-zinc-500",
+                                active ? "text-primary" : "text-zinc-500",
                               )}
                             />
                           </Link>
@@ -324,17 +324,17 @@ export function AdminSidebar({
                           "flex items-center gap-3 rounded-lg text-sm transition-all duration-150 relative",
                           "px-3 py-2 pr-8",
                           active
-                            ? "bg-orange-500/15 text-orange-400 font-medium"
+                            ? "bg-primary/15 text-primary font-medium"
                             : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60",
                         )}
                       >
                         {active && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-orange-500 rounded-full" />
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full" />
                         )}
                         <Icon
                           className={cn(
                             "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
-                            active ? "text-orange-400" : "text-zinc-500",
+                            active ? "text-primary" : "text-zinc-500",
                           )}
                         />
                         <span className="text-xs flex-1">{item.label}</span>

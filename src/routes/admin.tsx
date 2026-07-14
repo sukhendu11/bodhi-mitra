@@ -203,6 +203,10 @@ function AdminLayout() {
         <PreferencesPanel
           open={preferencesOpen}
           onClose={() => setPreferencesOpen(false)}
+          sidebarCollapsed={sidebarCollapsed}
+          onSidebarCollapsedChange={setSidebarCollapsed}
+          inspectorCollapsed={inspectorCollapsed}
+          onInspectorCollapsedChange={setInspectorCollapsed}
           onClearRecent={clearRecent}
           onClearFavorites={clearAllFavorites}
         />

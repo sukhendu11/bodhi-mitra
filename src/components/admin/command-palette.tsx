@@ -48,7 +48,7 @@ const navItems: NavItem[] = [
     to: "/admin",
     keywords: ["home", "overview"],
   },
-  { id: "posts", label: "All Posts", icon: FileText, to: "/admin", keywords: ["articles", "blog"] },
+  { id: "posts", label: "All Posts", icon: FileText, to: "/admin/posts", keywords: ["articles", "blog"] },
   {
     id: "new-post",
     label: "New Post",
