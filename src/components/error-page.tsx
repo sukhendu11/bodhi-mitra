@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { isAppError, getUserMessage } from "@/lib/errors";
@@ -10,7 +11,11 @@ interface ErrorPageProps {
 }
 
 export function ErrorPage({ error, reset, title }: ErrorPageProps) {
-  captureError(error, { component: "ErrorPage" });
+  // Capture error once on mount, not on every render
+  useEffect(() => {
+    captureError(error, { component: "ErrorPage" });
+  }, [error]);
+
   const router = useRouter();
 
   const statusCode = isAppError(error) ? error.statusCode : 500;

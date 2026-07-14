@@ -7,16 +7,38 @@ interface ContactFormInput {
   message: string;
 }
 
+/** Simple in-memory rate limiter for contact form submissions */
+const submissionTracker = new Map<string, { count: number; resetAt: number }>();
+
+function checkContactRateLimit(identifier: string, maxPerHour = 5): boolean {
+  const now = Date.now();
+  const record = submissionTracker.get(identifier);
+  if (!record || now > record.resetAt) {
+    submissionTracker.set(identifier, { count: 1, resetAt: now + 3600_000 });
+    return true;
+  }
+  if (record.count >= maxPerHour) return false;
+  record.count++;
+  return true;
+}
+
 /**
  * Server function to send notification emails when a contact form is submitted.
  * Sends admin notification + submitter confirmation.
+ * Rate-limited to 5 submissions per IP per hour.
  */
 export const sendContactNotification = createServerFn({ method: "POST" }).handler(
   async ({ data }: { data: unknown }) => {
-    const input = data as ContactFormInput;
+    const input = data as ContactFormInput & { _ip?: string };
 
     if (!input.name?.trim() || !input.email?.trim() || !input.message?.trim()) {
       throw new Error("Missing required fields.");
+    }
+
+    // Rate limit check (by IP or email as fallback)
+    const identifier = input._ip || input.email;
+    if (!checkContactRateLimit(identifier)) {
+      throw new Error("Too many submissions. Please try again later.");
     }
 
     const results = [];

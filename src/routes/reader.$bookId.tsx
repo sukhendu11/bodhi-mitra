@@ -219,6 +219,9 @@ function ReaderPage() {
       queryClient.invalidateQueries({ queryKey: ["reader-bookmarks", bookId] });
       toast.success("Bookmark removed");
     },
+    onError: (err: Error) => {
+      toast.error(`Failed to remove bookmark: ${err.message}`);
+    },
   });
 
   const isCurrentPageBookmarked = (bookmarks as any[]).some(
@@ -249,6 +252,9 @@ function ReaderPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reader-notes", bookId] });
     },
+    onError: (err: Error) => {
+      toast.error(`Failed to delete note: ${err.message}`);
+    },
   });
 
   const updateNoteMutation = useMutation({
@@ -256,6 +262,11 @@ function ReaderPage() {
       (doUpdateNote as any)({ data: { id, text } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reader-notes", bookId] });
+      setEditingNoteId(null);
+      setEditingNoteText("");
+    },
+    onError: (err: Error) => {
+      toast.error(`Failed to update note: ${err.message}`);
       setEditingNoteId(null);
       setEditingNoteText("");
     },

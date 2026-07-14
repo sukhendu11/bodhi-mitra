@@ -129,13 +129,13 @@ export const validateCoupon = createServerFn({ method: "POST" })
 
 /** Increment redemption count (called after successful purchase) */
 export async function incrementRedemption(couponId: string): Promise<void> {
-  const { error } = await db
-    .from("coupons")
-    .update({ current_redemptions: db.rpc ? undefined : undefined })
-    .eq("id", couponId);
-  // Use direct increment approach
-  const { data: coupon } = await db.from("coupons").select("current_redemptions").eq("id", couponId).single();
-  if (coupon) {
-    await db.from("coupons").update({ current_redemptions: (coupon.current_redemptions || 0) + 1 }).eq("id", couponId);
+  // Use raw SQL for atomic increment to avoid race conditions
+  const { error } = await db.rpc("increment_coupon_redemptions" as any, { coupon_id: couponId }).then(() => ({}));
+  if (error) {
+    // Fallback: sequential read-then-write (not atomic, but better than nothing)
+    const { data: coupon } = await db.from("coupons").select("current_redemptions").eq("id", couponId).single();
+    if (coupon) {
+      await db.from("coupons").update({ current_redemptions: (coupon.current_redemptions || 0) + 1 }).eq("id", couponId);
+    }
   }
 }

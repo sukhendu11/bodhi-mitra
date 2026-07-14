@@ -17,7 +17,7 @@ import { addToCart } from "@/lib/cart";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { BookRecommendations } from "@/components/BookRecommendations";
 import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
-import { estimateReadingTime, formatReadingTime } from "@/lib/commerce";
+import { formatReadingTime } from "@/lib/commerce";
 import { generateBookSchema, generateBreadcrumbSchema } from "@/lib/structured-data";
 import { SocialShare } from "@/components/SocialShare";
 import { toast } from "sonner";

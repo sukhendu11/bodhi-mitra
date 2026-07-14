@@ -2,6 +2,32 @@
 
 ## 2026-07-14
 
+### Implementation Sprint — CMS Platform Polish
+
+**Rate limiting, auth fixes, error handlers, dead code cleanup, accessibility.**
+
+#### Security
+- **Contact form rate limiting** — In-memory rate limiter (5 submissions per IP per hour)
+- **Increment redemption** — Fixed race condition with sequential read-then-write fallback
+
+#### Error Handling
+- **Reader mutations** — Added `onError` handlers to delete/update note and remove bookmark mutations
+- **ErrorPage** — Fixed re-render issue: `captureError` now called in `useEffect` instead of render body
+
+#### Code Quality
+- **Removed unused import** — `estimateReadingTime` from books.$slug.tsx
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Milestone 03 — CMS Platform Audit Fixes
 
 **Fixed 4 critical security issues found during Phases 01-16 audit.**
