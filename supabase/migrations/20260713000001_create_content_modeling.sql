@@ -4,12 +4,27 @@
 -- ============================================================================
 -- Ensure app_role type exists (may not exist on fresh databases)
 -- ============================================================================
-DO $$ BEGIN
+DO $$
+BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role' AND typnamespace = 'public'::regnamespace) THEN
     CREATE TYPE public.app_role AS ENUM ('admin', 'user');
   END IF;
-EXCEPTION WHEN duplicate_object THEN NULL;
+EXCEPTION WHEN duplicate_object THEN
+  NULL;
 END $$;
+
+-- ============================================================================
+-- Ensure user_roles table exists
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.user_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role app_role NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, role)
+);
+
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- Ensure has_role function exists
