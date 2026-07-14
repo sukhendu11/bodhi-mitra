@@ -38,6 +38,7 @@ import {
   X,
   Trash2,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +51,10 @@ export interface DataTableProps<TData extends { id: string }> {
   onBulkDelete?: (ids: string[]) => void;
   isBulkDeleting?: boolean;
   renderSubRow?: (row: TData) => ReactNode;
+  /** Enable CSV export button */
+  enableExport?: boolean;
+  /** Custom export filename */
+  exportFilename?: string;
 }
 
 export function DataTable<TData extends { id: string }>({
@@ -61,6 +66,8 @@ export function DataTable<TData extends { id: string }>({
   onBulkDelete,
   isBulkDeleting,
   renderSubRow,
+  enableExport = false,
+  exportFilename = "export",
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -167,6 +174,40 @@ export function DataTable<TData extends { id: string }>({
     }
   };
 
+  const handleExport = () => {
+    const rows = table.getFilteredRowModel().rows;
+    if (rows.length === 0) return;
+
+    // Get visible columns
+    const visibleCols = table.getAllColumns().filter((col) => col.getIsVisible() && col.id !== "select" && col.id !== "expand");
+
+    // Build CSV header
+    const headers = visibleCols.map((col) => {
+      const header = typeof col.columnDef.header === "string" ? col.columnDef.header : col.id;
+      return `"${header.replace(/"/g, '""')}"`;
+    });
+
+    // Build CSV rows
+    const csvRows = rows.map((row) => {
+      return visibleCols
+        .map((col) => {
+          const value = row.getValue(col.id);
+          const str = value === null || value === undefined ? "" : String(value);
+          return `"${str.replace(/"/g, '""')}"`;
+        })
+        .join(",");
+    });
+
+    const csv = [headers.join(","), ...csvRows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${exportFilename}-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-3">
       {/* Toolbar: search + filters + column visibility */}
@@ -216,6 +257,18 @@ export function DataTable<TData extends { id: string }>({
               })}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {enableExport && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs gap-1.5 text-muted-foreground"
+            onClick={handleExport}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </Button>
+        )}
       </div>
 
       {/* Bulk action bar */}

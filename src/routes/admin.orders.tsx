@@ -220,6 +220,8 @@ function AdminOrdersPage() {
             columns={columns}
             data={items}
             pageSize={pageSize}
+            enableExport
+            exportFilename="orders"
           />
 
           {/* Server-side pagination */}

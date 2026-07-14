@@ -2,6 +2,27 @@
 
 ## 2026-07-14
 
+### Phase 16 — Admin Operations & Productivity
+
+**DataTable CSV export, orders page export.**
+
+#### DataTable CSV Export
+- Added `enableExport` prop to DataTable component
+- Added `exportFilename` prop for custom filenames
+- Export button downloads visible columns as CSV
+- Added to orders page with "orders" filename
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase 15 — Workflow, Publishing & Collaboration
 
 **Content revisions, content audit log, comment moderation.**
