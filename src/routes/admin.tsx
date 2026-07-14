@@ -61,6 +61,8 @@ export function useCommandPalette() {
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Dashboard — Bodhi Mitra CMS" }] }),
   beforeLoad: async ({ location }) => {
+    // Skip auth check during SSR — the client-side auth state will handle it
+    if (typeof window === "undefined") return;
     try {
       await checkAdminAccess();
     } catch (e) {
