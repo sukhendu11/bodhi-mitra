@@ -24,15 +24,16 @@ export async function sendEmail<T extends EmailTemplate>(
 
   // Get email settings from config
   const config = await fetchSiteSettings();
-  const emailConfig = (config as any).email || {};
+  const emailConfig = config.email;
+  const brandName = config.branding.site_name_en || "Bodhi Mitra";
 
   // Sender address — configured or fallback to Resend dev
-  const senderName = emailConfig.sender_name || "Bodhi Mitra";
+  const senderName = emailConfig.sender_name || brandName;
   const senderEmail = emailConfig.sender_email || "onboarding@resend.dev";
   const from = `${senderName} <${senderEmail}>`;
 
-  // Render template
-  const { subject, html, text } = renderEmailTemplate(template, data);
+  // Render template with brand name
+  const { subject, html, text } = renderEmailTemplate(template, data, { brandName });
 
   try {
     await resend.emails.send({

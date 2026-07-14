@@ -1,13 +1,18 @@
+import { getServerSiteUrl } from "@/lib/site-url";
+
 /** Shared email HTML layout with BM branding */
-export function emailLayout(bodyContent: string, options?: { preheader?: string }): string {
+export function emailLayout(bodyContent: string, options?: { preheader?: string; brandName?: string; tagline?: string }): string {
   const preheader = options?.preheader || "";
+  const brandName = options?.brandName || "Bodhi Mitra";
+  const tagline = options?.tagline || "Where ancient wisdom meets modern psychology";
+  const siteUrl = getServerSiteUrl();
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bodhi Mitra</title>
+  <title>${brandName}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f8f6f3;font-family:system-ui,-apple-system,sans-serif;">
   ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${preheader}</div>` : ""}
@@ -18,8 +23,8 @@ export function emailLayout(bodyContent: string, options?: { preheader?: string 
           <!-- Header -->
           <tr>
             <td style="text-align:center;padding-bottom:24px;">
-              <p style="font-size:20px;font-weight:600;color:#1a1a1a;margin:0;font-family:Georgia,serif;">Bodhi Mitra</p>
-              <p style="font-size:12px;color:#999;margin:4px 0 0;">Where ancient wisdom meets modern psychology</p>
+              <p style="font-size:20px;font-weight:600;color:#1a1a1a;margin:0;font-family:Georgia,serif;">${brandName}</p>
+              <p style="font-size:12px;color:#999;margin:4px 0 0;">${tagline}</p>
             </td>
           </tr>
           <!-- Body -->
@@ -31,9 +36,9 @@ export function emailLayout(bodyContent: string, options?: { preheader?: string 
           <!-- Footer -->
           <tr>
             <td style="text-align:center;padding:24px 0;">
-              <p style="font-size:12px;color:#999;margin:0;">This email was sent by Bodhi Mitra</p>
+              <p style="font-size:12px;color:#999;margin:0;">This email was sent by ${brandName}</p>
               <p style="font-size:11px;color:#bbb;margin:4px 0 0;">
-                <a href="${process.env.SITE_URL || "https://bodhimitra.com"}" style="color:#999;">Visit our site</a>
+                <a href="${siteUrl}" style="color:#999;">Visit our site</a>
               </p>
             </td>
           </tr>

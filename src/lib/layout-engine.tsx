@@ -265,10 +265,11 @@ export function LayoutProvider({ children }: LayoutProviderProps) {
     queryKey: ["layout-nav"],
     queryFn: async (): Promise<NavTreeNode[]> => {
       // Layer 1: Try Supabase
+      const maxDepth = settings.navigation?.max_depth ?? 3;
       try {
         const items = await fetchPublicNavItems();
         if (items.length > 0) {
-          const tree = safeBuildNavTree(items);
+          const tree = safeBuildNavTree(items, maxDepth);
           if (tree.length > 0) {
             setNavCache(tree);
             return tree;

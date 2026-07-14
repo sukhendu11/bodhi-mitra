@@ -2,6 +2,35 @@
 
 ## 2026-07-14
 
+### Hardcoded Values → Flexible Admin Config
+
+**Converted hardcoded functions and settings to flexible editable options in the admin panel.**
+
+#### Site URL Centralization
+- **`src/lib/site-url.ts`** — Created centralized `getSiteBaseUrl()` and `getServerSiteUrl()` utilities
+- Replaces 11+ hardcoded `"https://bodhimitra.com"` fallbacks across the codebase
+
+#### Email Configuration
+- **`SiteConfig.email`** — Added new config group: `sender_name`, `sender_email`, `reply_to`, `enabled`
+- **`send.ts`** — Now reads from `config.email` instead of hardcoded values
+- **`base-layout.ts`** — Accepts `brandName` parameter, uses `getServerSiteUrl()` for links
+- **`templates.ts`** — Updated `renderEmailTemplate` to accept `brandName` option
+
+#### Navigation Depth
+- **`safeBuildNavTree()`** — Now accepts `maxDepth` parameter (was hardcoded to 3)
+- **`layout-engine.tsx`** — Passes `settings.navigation.max_depth` to tree builder
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Admin Shell & Navigation Refactoring
 
 **Fixed route labels, standardized active styling, synced preferences, cleaned up navigation.**

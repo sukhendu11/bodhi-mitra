@@ -172,6 +172,16 @@ export interface SiteConfig {
     /** Show icons on nav items */
     show_icons: boolean;
   };
+  email: {
+    /** Sender display name for outgoing emails */
+    sender_name: string;
+    /** Sender email address (must be verified in Resend) */
+    sender_email: string;
+    /** Reply-to address for admin notifications */
+    reply_to: string;
+    /** Enable/disable email sending entirely */
+    enabled: boolean;
+  };
 }
 
 export const DEFAULT_CONFIG: SiteConfig = {
@@ -314,6 +324,12 @@ export const DEFAULT_CONFIG: SiteConfig = {
     mobile_nav_style: "slide",
     max_depth: 2,
     show_icons: true,
+  },
+  email: {
+    sender_name: "Bodhi Mitra",
+    sender_email: "onboarding@resend.dev",
+    reply_to: "",
+    enabled: true,
   },
 };
 

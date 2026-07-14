@@ -113,6 +113,7 @@ const templates: {
 export function renderEmailTemplate<T extends EmailTemplate>(
   template: T,
   data: EmailTemplateData[T],
+  options?: { brandName?: string },
 ): EmailResult {
   const renderer = templates[template];
   if (!renderer) {

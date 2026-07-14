@@ -97,10 +97,10 @@ function sanitizeNavItems(items: unknown[]): NavItem[] {
 /**
  * Build a tree with depth limit and cycle protection.
  * - Items are filtered through sanitizeNavItems first
- * - Tree depth is capped at MAX_NAV_DEPTH (3 levels)
+ * - Tree depth is capped at maxDepth (default 3 levels)
  * - Circular references are broken (parent_id chain cycle detection)
  */
-export function safeBuildNavTree(items: unknown[]): NavTreeNode[] {
+export function safeBuildNavTree(items: unknown[], maxDepth: number = 3): NavTreeNode[] {
   const valid = sanitizeNavItems(items);
   if (valid.length === 0) return [];
 
@@ -140,9 +140,9 @@ export function safeBuildNavTree(items: unknown[]): NavTreeNode[] {
     }
   }
 
-  // Apply depth limit (crop children beyond MAX_NAV_DEPTH levels)
+  // Apply depth limit (crop children beyond maxDepth levels)
   const limitDepth = (nodes: NavTreeNode[], depth: number): NavTreeNode[] => {
-    if (depth >= MAX_NAV_DEPTH) {
+    if (depth >= maxDepth) {
       return nodes.map((n) => ({ ...n, children: [] }));
     }
     return nodes.map((n) => ({
