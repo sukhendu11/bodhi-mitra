@@ -2,57 +2,6 @@
 -- Phase 03: CMS Engine & Content Modeling
 
 -- ============================================================================
--- Table: dynamic_content_items
--- Generic JSONB storage for dynamic content type instances
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.dynamic_content_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  content_type_id UUID NOT NULL REFERENCES public.content_type_definitions(id) ON DELETE CASCADE,
-  content_data JSONB NOT NULL DEFAULT '{}',
-  slug TEXT,
-  status TEXT NOT NULL DEFAULT 'draft',
-  scheduled_at TIMESTAMP WITH TIME ZONE,
-  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_dynamic_content_type_id ON public.dynamic_content_items (content_type_id);
-CREATE INDEX idx_dynamic_content_status ON public.dynamic_content_items (status);
-CREATE INDEX idx_dynamic_content_slug ON public.dynamic_content_items (slug);
-CREATE INDEX idx_dynamic_content_created ON public.dynamic_content_items (created_at DESC);
-CREATE INDEX idx_dynamic_content_scheduled ON public.dynamic_content_items (scheduled_at) WHERE scheduled_at IS NOT NULL;
-
-ALTER TABLE public.dynamic_content_items ENABLE ROW LEVEL SECURITY;
-
--- Admins can manage dynamic content
-CREATE POLICY "Admins can manage dynamic content"
-  ON public.dynamic_content_items
-  FOR ALL
-  TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'::public.app_role))
-  WITH CHECK (public.has_role(auth.uid(), 'admin'::public.app_role));
-
--- Authenticated users can read published dynamic content
-CREATE POLICY "Users can read published dynamic content"
-  ON public.dynamic_content_items
-  FOR SELECT
-  TO authenticated
-  USING (status = 'published');
-
--- Public can read published dynamic content
-CREATE POLICY "Public can read published dynamic content"
-  ON public.dynamic_content_items
-  FOR SELECT
-  TO anon
-  USING (status = 'published');
-
-CREATE TRIGGER update_dynamic_content_timestamp
-  BEFORE UPDATE ON public.dynamic_content_items
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_content_modeling_timestamp();
-
--- ============================================================================
 -- Table: content_type_definitions
 -- Stores the metadata for each dynamic content type (collections & singletons)
 -- ============================================================================
@@ -273,5 +222,56 @@ CREATE TRIGGER update_content_type_definitions_timestamp
 
 CREATE TRIGGER update_content_type_fields_timestamp
   BEFORE UPDATE ON public.content_type_fields
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_content_modeling_timestamp();
+
+-- ============================================================================
+-- Table: dynamic_content_items
+-- Generic JSONB storage for dynamic content type instances
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.dynamic_content_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  content_type_id UUID NOT NULL REFERENCES public.content_type_definitions(id) ON DELETE CASCADE,
+  content_data JSONB NOT NULL DEFAULT '{}',
+  slug TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  scheduled_at TIMESTAMP WITH TIME ZONE,
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_dynamic_content_type_id ON public.dynamic_content_items (content_type_id);
+CREATE INDEX idx_dynamic_content_status ON public.dynamic_content_items (status);
+CREATE INDEX idx_dynamic_content_slug ON public.dynamic_content_items (slug);
+CREATE INDEX idx_dynamic_content_created ON public.dynamic_content_items (created_at DESC);
+CREATE INDEX idx_dynamic_content_scheduled ON public.dynamic_content_items (scheduled_at) WHERE scheduled_at IS NOT NULL;
+
+ALTER TABLE public.dynamic_content_items ENABLE ROW LEVEL SECURITY;
+
+-- Admins can manage dynamic content
+CREATE POLICY "Admins can manage dynamic content"
+  ON public.dynamic_content_items
+  FOR ALL
+  TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'::public.app_role))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'::public.app_role));
+
+-- Authenticated users can read published dynamic content
+CREATE POLICY "Users can read published dynamic content"
+  ON public.dynamic_content_items
+  FOR SELECT
+  TO authenticated
+  USING (status = 'published');
+
+-- Public can read published dynamic content
+CREATE POLICY "Public can read published dynamic content"
+  ON public.dynamic_content_items
+  FOR SELECT
+  TO anon
+  USING (status = 'published');
+
+CREATE TRIGGER update_dynamic_content_timestamp
+  BEFORE UPDATE ON public.dynamic_content_items
   FOR EACH ROW
   EXECUTE FUNCTION public.update_content_modeling_timestamp();
