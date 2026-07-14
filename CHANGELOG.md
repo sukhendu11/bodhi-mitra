@@ -2,6 +2,38 @@
 
 ## 2026-07-14
 
+### Phase 14 — Search & Discovery
+
+**Full-text search, search highlighting, trending content, search analytics.**
+
+#### Full-Text Search
+- **Migration**: Added `tsvector` generated columns + GIN indexes on posts, pages, books, videos, courses
+- Search now uses PostgreSQL FTS with `textSearch()` instead of ILIKE
+- Fallback to ILIKE if FTS index not available
+
+#### Search Improvements
+- **Search highlighting** — Results show `<mark>` tags around matched terms in title and excerpt
+- **Sort options** — Relevance (default) or Date (newest first)
+- **Courses tab** — Added to search page filter tabs
+- **Search analytics** — `search_analytics` table for query logging + admin stats
+
+#### Trending/Popular Content
+- **View counts** — Added `view_count` column to posts, books, courses tables
+- **`getTrendingContent`** — Most viewed content in last N days
+- **`getRecentlyAdded`** — Latest published content
+- **`incrementViewCount`** — Utility to increment view count
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase 13 — SEO, Marketing & Growth
 
 **Schema.org structured data, social sharing, server-side redirects, sitemap consolidation.**

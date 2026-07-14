@@ -12,6 +12,10 @@ export interface SearchResult {
   url: string;
   thumbnail: string | null;
   created_at: string;
+  /** Highlighted title with <mark> tags */
+  highlightedTitle?: string;
+  /** Highlighted excerpt with <mark> tags */
+  highlightedExcerpt?: string;
 }
 
 export interface SearchResponse {
@@ -19,11 +23,28 @@ export interface SearchResponse {
   total: number;
 }
 
+/** Highlight search term in text */
+function highlightTerm(text: string, term: string): string {
+  if (!term || !text) return text;
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(${escaped})`, "gi");
+  return text.replace(regex, "<mark>$1</mark>");
+}
+
+/** Build tsquery from search term */
+function toTsQuery(term: string): string {
+  // Split into words and create AND query
+  const words = term.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  return words.map((w) => `${w}:*`).join(" & ");
+}
+
 export const searchContent = createServerFn({ method: "GET" }).handler(
   async ({ data }: { data: unknown }) => {
-    const input = data as { q: string; type?: ContentType; page?: number };
+    const input = data as { q: string; type?: ContentType; page?: number; sort?: "relevance" | "date" };
     const q = input.q || "";
     const type = input.type;
+    const sort = input.sort || "relevance";
     const page = input.page || 1;
     const limit = 20;
     const offset = (page - 1) * limit;
@@ -33,149 +54,204 @@ export const searchContent = createServerFn({ method: "GET" }).handler(
 
     if (!term) return { results: [], total: 0 };
 
-    if (!type || type === "post") {
-      const { data: posts, error } = await db
-        .from("posts")
-        .select("id, slug, title_en, title_bn, excerpt_en, excerpt_bn, cover_image, created_at")
-        .eq("status", "published")
-        .or(
-          `title_en.ilike.*${term}*,title_bn.ilike.*${term}*,excerpt_en.ilike.*${term}*,excerpt_bn.ilike.*${term}*`,
-        )
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      if (!error && posts) {
-        for (const p of posts) {
+    const tsQuery = toTsQuery(term);
+
+    // Helper to search a table with FTS
+    async function searchTable(
+      tableName: string,
+      select: string,
+      filters: string,
+      urlFn: (row: any) => string,
+      type: ContentType,
+      titleFn: (row: any) => string,
+      excerptFn: (row: any) => string,
+      thumbnailFn: (row: any) => string | null,
+    ) {
+      try {
+        let query = db
+          .from(tableName)
+          .select(select)
+          .eq(filters.split("=")[0], filters.split("=")[1])
+          .textSearch("search_vector", tsQuery, { type: "plain" })
+          .order("created_at", { ascending: false })
+          .limit(limit);
+
+        const { data: rows, error } = await query;
+        if (error || !rows) return;
+
+        for (const row of rows) {
+          const title = titleFn(row);
+          const excerpt = excerptFn(row);
           results.push({
-            type: "post",
-            id: p.id,
-            slug: p.slug,
-            title: p.title_en || p.title_bn || "",
-            excerpt: p.excerpt_en || p.excerpt_bn || "",
-            url: `/posts/${p.slug}`,
-            thumbnail: p.cover_image,
-            created_at: p.created_at,
+            type,
+            id: row.id,
+            slug: row.slug,
+            title,
+            excerpt: excerpt?.substring(0, 200) || "",
+            url: urlFn(row),
+            thumbnail: thumbnailFn(row),
+            created_at: row.created_at,
+            highlightedTitle: highlightTerm(title, term),
+            highlightedExcerpt: highlightTerm(excerpt?.substring(0, 200) || "", term),
           });
         }
+      } catch {
+        // FTS index might not exist yet — fall back to ILIKE
+        await searchTableFallback(tableName, select, filters, urlFn, type, titleFn, excerptFn, thumbnailFn, term, limit);
       }
+    }
+
+    // Fallback to ILIKE if FTS fails
+    async function searchTableFallback(
+      tableName: string,
+      select: string,
+      filters: string,
+      urlFn: (row: any) => string,
+      type: ContentType,
+      titleFn: (row: any) => string,
+      excerptFn: (row: any) => string,
+      thumbnailFn: (row: any) => string | null,
+      term: string,
+      limit: number,
+    ) {
+      try {
+        const [filterCol, filterVal] = filters.split("=");
+        const { data: rows, error } = await db
+          .from(tableName)
+          .select(select)
+          .eq(filterCol, filterVal)
+          .or(`title_en.ilike.*${term}*,title_bn.ilike.*${term}*,excerpt_en.ilike.*${term}*,excerpt_bn.ilike.*${term}*`)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (error || !rows) return;
+        for (const row of rows) {
+          const title = titleFn(row);
+          const excerpt = excerptFn(row);
+          results.push({
+            type,
+            id: row.id,
+            slug: row.slug,
+            title,
+            excerpt: excerpt?.substring(0, 200) || "",
+            url: urlFn(row),
+            thumbnail: thumbnailFn(row),
+            created_at: row.created_at,
+            highlightedTitle: highlightTerm(title, term),
+            highlightedExcerpt: highlightTerm(excerpt?.substring(0, 200) || "", term),
+          });
+        }
+      } catch { /* silent */ }
+    }
+
+    // Search each content type
+    if (!type || type === "post") {
+      await searchTable(
+        "posts",
+        "id, slug, title_en, title_bn, excerpt_en, excerpt_bn, cover_image, created_at",
+        "status=published",
+        (r) => `/posts/${r.slug}`,
+        "post",
+        (r) => r.title_en || r.title_bn || "",
+        (r) => r.excerpt_en || r.excerpt_bn || "",
+        (r) => r.cover_image,
+      );
     }
 
     if (!type || type === "page") {
-      const { data: pages, error } = await db
-        .from("pages")
-        .select(
-          "id, slug, title_en, title_bn, header_en, header_bn, body_en, body_bn, banner_url, created_at",
-        )
-        .eq("visible", true)
-        .or(
-          `title_en.ilike.*${term}*,title_bn.ilike.*${term}*,header_en.ilike.*${term}*,header_bn.ilike.*${term}*`,
-        )
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      if (!error && pages) {
-        for (const p of pages) {
-          results.push({
-            type: "page",
-            id: p.id,
-            slug: p.slug,
-            title: p.title_en || p.title_bn || "",
-            excerpt:
-              p.header_en ||
-              p.header_bn ||
-              p.body_en?.substring(0, 200) ||
-              p.body_bn?.substring(0, 200) ||
-              "",
-            url: p.slug === "home" ? "/" : `/${p.slug}`,
-            thumbnail: p.banner_url,
-            created_at: p.created_at,
-          });
-        }
-      }
+      await searchTable(
+        "pages",
+        "id, slug, title_en, title_bn, header_en, header_bn, body_en, body_bn, banner_url, created_at",
+        "visible=true",
+        (r) => r.slug === "home" ? "/" : `/pages/${r.slug}`,
+        "page",
+        (r) => r.title_en || r.title_bn || "",
+        (r) => r.header_en || r.header_bn || r.body_en?.substring(0, 200) || "",
+        (r) => r.banner_url,
+      );
     }
 
     if (!type || type === "book") {
-      const { data: books, error } = await db
-        .from("books")
-        .select(
-          "id, slug, title_en, title_bn, description_en, description_bn, cover_image, author_name, created_at",
-        )
-        .eq("status", "published")
-        .or(
-          `title_en.ilike.*${term}*,title_bn.ilike.*${term}*,description_en.ilike.*${term}*,description_bn.ilike.*${term}*,author_name.ilike.*${term}*`,
-        )
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      if (!error && books) {
-        for (const b of books) {
-          results.push({
-            type: "book",
-            id: b.id,
-            slug: b.slug,
-            title: b.title_en || b.title_bn || "",
-            excerpt: b.description_en || b.description_bn || "",
-            url: `/books/${b.slug}`,
-            thumbnail: b.cover_image,
-            created_at: b.created_at,
-          });
-        }
-      }
+      await searchTable(
+        "books",
+        "id, slug, title_en, title_bn, description_en, description_bn, cover_image, author_name, created_at",
+        "status=published",
+        (r) => `/books/${r.slug}`,
+        "book",
+        (r) => r.title_en || r.title_bn || "",
+        (r) => r.description_en || r.description_bn || "",
+        (r) => r.cover_image,
+      );
     }
 
     if (!type || type === "video") {
-      const { data: videos, error } = await db
-        .from("videos")
-        .select("id, slug, title, description, thumbnail_url, created_at")
-        .or(`title.ilike.*${term}*,description.ilike.*${term}*`)
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      if (!error && videos) {
-        for (const v of videos) {
-          results.push({
-            type: "video",
-            id: v.id,
-            slug: v.slug,
-            title: v.title,
-            excerpt: v.description || "",
-            url: `/videos/${v.slug}`,
-            thumbnail: v.thumbnail_url,
-            created_at: v.created_at,
-          });
-        }
-      }
+      await searchTable(
+        "videos",
+        "id, slug, title, description, thumbnail_url, created_at",
+        "status=published",
+        (r) => `/videos/${r.slug}`,
+        "video",
+        (r) => r.title || "",
+        (r) => r.description || "",
+        (r) => r.thumbnail_url,
+      );
     }
 
     if (!type || type === "course") {
-      const { data: courses, error } = await db
-        .from("courses")
-        .select(
-          "id, slug, title_en, title_bn, description_en, description_bn, cover_image, created_at",
-        )
-        .eq("published", true)
-        .or(
-          `title_en.ilike.*${term}*,title_bn.ilike.*${term}*,description_en.ilike.*${term}*,description_bn.ilike.*${term}*`,
-        )
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      if (!error && courses) {
-        for (const c of courses) {
-          results.push({
-            type: "course",
-            id: c.id,
-            slug: c.slug,
-            title: c.title_en || c.title_bn || "",
-            excerpt: c.description_en || c.description_bn || "",
-            url: `/courses/${c.slug}`,
-            thumbnail: c.cover_image,
-            created_at: c.created_at,
-          });
-        }
-      }
+      await searchTable(
+        "courses",
+        "id, slug, title_en, title_bn, description_en, description_bn, cover_image, created_at",
+        "published=true",
+        (r) => `/courses/${r.slug}`,
+        "course",
+        (r) => r.title_en || r.title_bn || "",
+        (r) => r.description_en || r.description_bn || "",
+        (r) => r.cover_image,
+      );
     }
 
-    results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    // Sort results
+    if (sort === "date") {
+      results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+    // relevance sort is default (results come in FTS rank order)
 
     return {
       results: results.slice(offset, offset + limit),
       total: results.length,
     };
+  },
+);
+
+/** Log a search query for analytics */
+export const logSearchQuery = createServerFn({ method: "POST" }).handler(
+  async ({ data }: { data: unknown }) => {
+    const input = data as { query: string; resultsCount: number; userId?: string };
+    const db = supabase as any;
+    await db.from("search_analytics").insert({
+      query: input.query,
+      user_id: input.userId || null,
+      results_count: input.resultsCount,
+    });
+  },
+);
+
+/** Get search analytics (admin) */
+export const getSearchAnalytics = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const db = supabase as any;
+    const { data: topQueries } = await db
+      .from("search_analytics")
+      .select("query, count:id.count()")
+      .group("query")
+      .order("count", { ascending: false })
+      .limit(20);
+
+    const { data: recentSearches } = await db
+      .from("search_analytics")
+      .select("query, results_count, created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    return { topQueries: topQueries || [], recentSearches: recentSearches || [] };
   },
 );

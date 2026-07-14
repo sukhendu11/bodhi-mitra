@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { searchContent, type SearchResult, type ContentType } from "@/lib/search";
-import { Search, FileText, BookOpen, Video, File, Loader2, ArrowLeft } from "lucide-react";
+import { Search, FileText, BookOpen, Video, File, Loader2, ArrowLeft, GraduationCap, ArrowUpDown } from "lucide-react";
 
 const contentTypes: { key: ContentType | "all"; label: string; icon: typeof Search }[] = [
   { key: "all", label: "All", icon: Search },
@@ -11,6 +11,7 @@ const contentTypes: { key: ContentType | "all"; label: string; icon: typeof Sear
   { key: "page", label: "Pages", icon: File },
   { key: "book", label: "Books", icon: BookOpen },
   { key: "video", label: "Videos", icon: Video },
+  { key: "course", label: "Courses", icon: GraduationCap },
 ];
 
 const typeIcons: Record<string, typeof FileText> = {
@@ -18,6 +19,7 @@ const typeIcons: Record<string, typeof FileText> = {
   page: File,
   book: BookOpen,
   video: Video,
+  course: GraduationCap,
 };
 
 export const Route = createFileRoute("/search")({
@@ -33,6 +35,7 @@ function SearchPage() {
   const navigate = useNavigate();
   const { q, type, page } = Route.useSearch();
   const [inputValue, setInputValue] = useState(q);
+  const [sortBy, setSortBy] = useState<"relevance" | "date">("relevance");
 
   useEffect(() => {
     setInputValue(q);
@@ -41,194 +44,202 @@ function SearchPage() {
   const searchFn = useServerFn(searchContent);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["search", q, type, page],
-    queryFn: () => (searchFn as any)({ data: { q, type, page } }),
+    queryKey: ["search", q, type, page, sortBy],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryFn: () => (searchFn as any)({ data: { q, type, page, sort: sortBy } }),
     enabled: q.length >= 2,
     staleTime: 30_000,
   });
 
-  const results = data?.results ?? [];
+  const results: SearchResult[] = data?.results ?? [];
   const total = data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / 20));
 
-  function doSearch(term: string) {
-    const trimmed = term.trim();
-    if (!trimmed || trimmed.length < 2) return;
-    navigate({ to: "/search", search: { q: trimmed, type: undefined, page: 1 }, replace: true });
-  }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim().length >= 2) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      navigate({ search: { q: inputValue.trim(), type, page: 1 } } as any);
+    }
+  };
 
-  function setTypeFilter(t: ContentType | "all") {
-    navigate({
-      to: "/search",
-      search: { q, type: t === "all" ? undefined : t, page: 1 },
-      replace: true,
-    });
-  }
-
-  function goToPage(p: number) {
-    navigate({ to: "/search", search: { q, type, page: p }, replace: true });
-  }
+  const setType = (t: ContentType | "all") => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    navigate({ search: { q, type: t === "all" ? undefined : t, page: 1 } } as any);
+  };
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-14 md:py-20">
-      {/* Search input */}
-      <div className="mb-10">
-        <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight mb-6">
-          Search
-        </h1>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            doSearch(inputValue);
-          }}
-          className="relative"
-        >
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+    <div className="mx-auto max-w-4xl px-6 py-16 md:py-24">
+      {/* Back link */}
+      <Link
+        to="/"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-8"
+      >
+        <ArrowLeft className="h-3 w-3" /> Home
+      </Link>
+
+      {/* Search header */}
+      <h1 className="font-serif text-3xl md:text-4xl mb-8">Search</h1>
+
+      {/* Search form */}
+      <form onSubmit={handleSearch} className="mb-8">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Search reflections, books, pages..."
-            className="w-full border border-border bg-background pl-12 pr-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground/40 transition-colors rounded-none"
+            placeholder="Search for reflections, books, pages…"
+            className="w-full pl-10 pr-4 py-3 text-sm border border-border/60 rounded-xl bg-background focus:outline-none focus:border-foreground/40"
             autoFocus
           />
-        </form>
-      </div>
+        </div>
+      </form>
 
-      {q.length < 2 ? (
-        <div className="text-center py-20">
-          <Search className="h-12 w-12 mx-auto text-muted-foreground/20 mb-4" />
-          <p className="text-sm text-muted-foreground">Enter at least 2 characters to search.</p>
-        </div>
-      ) : isLoading ? (
-        <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="border border-border/60 p-5 animate-pulse rounded-none">
-              <div className="h-4 bg-secondary/30 rounded w-1/4 mb-3" />
-              <div className="h-5 bg-secondary/30 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-secondary/20 rounded w-full" />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <>
-          {/* Type filter tabs */}
-          <div className="flex flex-wrap gap-2 mb-8">
+      {/* Filter tabs + Sort */}
+      {q && (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-1 flex-wrap">
             {contentTypes.map((ct) => {
-              const isActive = ct.key === "all" ? !type : type === ct.key;
+              const Icon = ct.icon;
+              const isActive = (ct.key === "all" && !type) || type === ct.key;
               return (
                 <button
                   key={ct.key}
-                  onClick={() => setTypeFilter(ct.key)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium border transition-colors ${
+                  onClick={() => setType(ct.key)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
                     isActive
-                      ? "border-foreground text-foreground bg-foreground/5"
-                      : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/40"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                   }`}
                 >
-                  <ct.icon className="h-3.5 w-3.5" />
+                  <Icon className="h-3 w-3" />
                   {ct.label}
                 </button>
               );
             })}
           </div>
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "relevance" | "date")}
+              className="text-xs bg-background border border-border/60 rounded-lg px-2 py-1.5 focus:outline-none focus:border-foreground/40"
+            >
+              <option value="relevance">Relevance</option>
+              <option value="date">Newest</option>
+            </select>
+          </div>
+        </div>
+      )}
 
-          {/* Results count */}
-          <p className="text-xs text-muted-foreground mb-6">
-            {total} result{total !== 1 ? "s" : ""} for "
-            <span className="text-foreground font-medium">{q}</span>"
-            {type && <span> in {type}s</span>}
+      {/* Results */}
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex gap-4 p-4 rounded-xl bg-secondary/20 animate-pulse">
+              <div className="w-16 h-16 rounded-lg bg-secondary/40 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-secondary/40 rounded w-1/3" />
+                <div className="h-3 bg-secondary/30 rounded w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : results.length === 0 && q ? (
+        <div className="text-center py-16">
+          <Search className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+          <h2 className="text-lg font-medium mb-2">No results found</h2>
+          <p className="text-sm text-muted-foreground">
+            Try different keywords or browse our content directly.
           </p>
-
-          {/* Results list */}
-          {results.length === 0 ? (
-            <div className="text-center py-16 border border-border/60">
-              <Search className="h-10 w-10 mx-auto text-muted-foreground/20 mb-3" />
-              <p className="text-sm text-muted-foreground">No results found.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Try different keywords or browse the site.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {results.map((result: SearchResult) => (
-                <ResultCard key={`${result.type}-${result.id}`} result={result} />
-              ))}
-            </div>
-          )}
+        </div>
+      ) : results.length > 0 ? (
+        <>
+          <p className="text-xs text-muted-foreground mb-4">
+            {total} result{total !== 1 ? "s" : ""} for &ldquo;{q}&rdquo;
+          </p>
+          <div className="space-y-3">
+            {results.map((result) => (
+              <ResultCard key={`${result.type}-${result.id}`} result={result} />
+            ))}
+          </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-10">
+          {total > 20 && (
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/40">
               <p className="text-xs text-muted-foreground">
-                Page {page} of {totalPages}
+                Showing {((page - 1) * 20) + 1}–{Math.min(page * 20, total)} of {total}
               </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => goToPage(page - 1)}
-                  disabled={page <= 1}
-                  className="px-4 py-2 text-xs font-medium border border-border/60 hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              <div className="flex gap-2">
+                <Link
+                  to="/search"
+                  search={{ q, type, page: Math.max(1, page - 1) }}
+                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                    page === 1
+                      ? "border-border/40 text-muted-foreground/40 pointer-events-none"
+                      : "border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/20"
+                  }`}
                 >
-                  ← Previous
-                </button>
-                <button
-                  onClick={() => goToPage(page + 1)}
-                  disabled={page >= totalPages}
-                  className="px-4 py-2 text-xs font-medium border border-border/60 hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  Previous
+                </Link>
+                <Link
+                  to="/search"
+                  search={{ q, type, page: page + 1 }}
+                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                    results.length < 20
+                      ? "border-border/40 text-muted-foreground/40 pointer-events-none"
+                      : "border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/20"
+                  }`}
                 >
-                  Next →
-                </button>
+                  Next
+                </Link>
               </div>
             </div>
           )}
         </>
-      )}
+      ) : null}
     </div>
   );
 }
 
 function ResultCard({ result }: { result: SearchResult }) {
-  const Icon = typeIcons[result.type] ?? FileText;
-
+  const Icon = typeIcons[result.type] || FileText;
   return (
     <Link
-      to={result.url as any}
-      className="group block border border-border/60 p-5 hover:border-foreground/30 hover:bg-secondary/10 transition-all duration-200"
+      to={result.url}
+      className="flex gap-4 p-4 rounded-xl border border-border/40 hover:border-foreground/20 hover:bg-secondary/20 transition-all group"
     >
-      <div className="flex items-start gap-4">
-        {result.thumbnail && (
-          <div className="hidden sm:block w-20 h-20 shrink-0 bg-secondary/20 overflow-hidden">
-            <img
-              src={result.thumbnail}
-              alt={result.title || "Search result thumbnail"}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              loading="lazy"
-            />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1.5">
-            <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground font-medium">
-              {result.type}
-            </span>
-          </div>
-          <h3 className="text-base font-medium text-foreground group-hover:text-foreground/80 transition-colors line-clamp-2">
-            {result.title}
-          </h3>
-          {result.excerpt && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-              {result.excerpt}
-            </p>
-          )}
-          <p className="text-[0.6rem] text-muted-foreground/50 mt-2">
-            {new Date(result.created_at).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </p>
+      {result.thumbnail ? (
+        <img
+          src={result.thumbnail}
+          alt={result.title}
+          className="w-16 h-16 rounded-lg object-cover shrink-0"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-16 h-16 rounded-lg bg-secondary/40 flex items-center justify-center shrink-0">
+          <Icon className="h-6 w-6 text-muted-foreground/40" />
         </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[0.55rem] uppercase tracking-wider text-muted-foreground/60 font-medium">
+            {result.type}
+          </span>
+          <span className="text-[0.5rem] text-muted-foreground/40">
+            {new Date(result.created_at).toLocaleDateString()}
+          </span>
+        </div>
+        <h3
+          className="text-sm font-medium group-hover:text-foreground transition-colors line-clamp-1"
+          dangerouslySetInnerHTML={{ __html: result.highlightedTitle || result.title }}
+        />
+        {result.excerpt && (
+          <p
+            className="text-xs text-muted-foreground mt-1 line-clamp-2"
+            dangerouslySetInnerHTML={{ __html: result.highlightedExcerpt || result.excerpt }}
+          />
+        )}
       </div>
     </Link>
   );
