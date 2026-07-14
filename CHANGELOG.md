@@ -2,6 +2,29 @@
 
 ## 2026-07-14
 
+### Admin Dashboard Redesign
+
+**Premium enterprise dashboard with personalized greeting, bilingual labels, cleaner layout.**
+
+#### Dashboard Improvements
+- **Personalized greeting** — Time-based greeting (Good morning/afternoon/evening) with user's display name
+- **Bilingual support** — All labels and messages support English and Bengali
+- **Cleaner layout** — Quick Actions and Recent Activity now side-by-side (lg:grid-cols-[1fr_380px])
+- **View Site link** — Added "View Site" link in header for quick access
+- **Removed redundant CTA** — Removed Posts Management banner (duplicated quick action)
+- **Better visual hierarchy** — Improved spacing, typography, and component organization
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### UI Architecture Consistency Fixes
 
 **Standardized critical UI patterns across the admin platform.**
