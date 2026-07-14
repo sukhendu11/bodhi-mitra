@@ -8,6 +8,10 @@ import { useLang, pickLocalized } from "@/lib/i18n";
 import { fetchSiteSettings, useSiteSettings } from "@/lib/siteSettings";
 import { Reveal } from "@/components/Reveal";
 import { generateWebSiteSchema, generateOrganizationSchema } from "@/lib/structured-data";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getRecentlyAdded } from "@/lib/trending";
+import { BookOpen, FileText, GraduationCap, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   loader: () => fetchSiteSettings(),
@@ -49,6 +53,19 @@ function Home() {
   const hero = settings.hero;
   const [active, setActive] = useState<PostCategory | "All">("All");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const doGetRecentlyAdded = useServerFn(getRecentlyAdded);
+  const { data: recentItems } = useQuery({
+    queryKey: ["recently-added"],
+    queryFn: () => (doGetRecentlyAdded as any)({ data: { limit: 6 } }),
+    staleTime: 300_000,
+  });
+
+  const typeIcons: Record<string, typeof FileText> = {
+    post: FileText,
+    book: BookOpen,
+    course: GraduationCap,
+  };
 
   const filters: { label: string; value: PostCategory | "All" }[] = [
     { label: "All", value: "All" },
@@ -136,6 +153,47 @@ function Home() {
         </div>
         <PostGrid category={active === "All" ? undefined : active} searchQuery={searchQuery} />
       </section>
+
+      {/* Recently Added */}
+      {recentItems && recentItems.length > 0 && (
+        <section className="mx-auto max-w-6xl px-6 py-16 border-t border-border/40">
+          <Reveal delay={0.1}>
+            <div className="flex items-center gap-2 mb-8">
+              <TrendingUp className="h-5 w-5 text-muted-foreground/60" />
+              <h2 className="font-serif text-2xl">Recently Added</h2>
+            </div>
+          </Reveal>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {recentItems.map((item: any) => {
+              const Icon = typeIcons[item.type] || FileText;
+              return (
+                <Link
+                  key={`${item.type}-${item.id}`}
+                  to={item.url}
+                  className="flex items-start gap-3 p-4 rounded-xl border border-border/40 hover:border-foreground/20 hover:bg-secondary/20 transition-all group"
+                >
+                  {item.thumbnail ? (
+                    <img
+                      src={item.thumbnail}
+                      alt={item.title}
+                      className="w-12 h-12 rounded-lg object-cover shrink-0"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-secondary/40 flex items-center justify-center shrink-0">
+                      <Icon className="h-5 w-5 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <span className="text-[0.5rem] uppercase tracking-wider text-muted-foreground/60">{item.type}</span>
+                    <h3 className="text-sm font-medium group-hover:text-foreground transition-colors line-clamp-1">{item.title}</h3>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </>
   );
 }

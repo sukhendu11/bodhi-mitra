@@ -23,12 +23,38 @@ import {
   Loader2,
 } from "lucide-react";
 import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
+import { generateCourseSchema, generateBreadcrumbSchema } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/courses/$slug")({
   loader: () => getSiteName(),
-  head: ({ loaderData }) => ({
-    meta: [{ title: `Course — ${loaderData}` }],
-  }),
+  head: ({ loaderData, params }) => {
+    const siteName = (loaderData as string) || "Bodhi Mitra";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://bodhimitra.com";
+    const courseUrl = `${baseUrl}/courses/${(params as any).slug || ""}`;
+
+    const courseSchema = generateCourseSchema({
+      name: `Course — ${siteName}`,
+      description: `Learn with Bodhi Mitra`,
+      url: courseUrl,
+    });
+
+    const breadcrumbSchema = generateBreadcrumbSchema([
+      { name: "Home", url: baseUrl },
+      { name: "Courses", url: `${baseUrl}/courses` },
+    ]);
+
+    return {
+      meta: [
+        { title: `Course — ${siteName}` },
+        { property: "og:type", content: "course" },
+        { property: "og:url", content: courseUrl },
+      ],
+      scripts: [
+        { type: "application/ld+json", JSON: courseSchema },
+        { type: "application/ld+json", JSON: breadcrumbSchema },
+      ],
+    };
+  },
   component: CourseDetailPage,
 });
 

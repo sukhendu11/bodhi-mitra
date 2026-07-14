@@ -2,6 +2,27 @@
 
 ## 2026-07-14
 
+### Milestone 02 — Product Audit Fixes
+
+**Fixed 4 critical issues found during Phases 11-14 audit.**
+
+#### Fixes
+- **Videos FTS migration** — Corrected column names from `title_en`/`title_bn`/`description_en`/`description_bn` to `title`/`description` (videos table uses singular column names)
+- **Search ILIKE fallback** — Changed from hardcoded column names to in-memory filtering using titleFn/excerptFn, supporting videos table correctly
+- **Trending dead code wired** — Added "Recently Added" section to homepage using `getRecentlyAdded` server function
+- **Courses structured data** — Added `generateCourseSchema` and `generateBreadcrumbSchema` to courses detail page head()
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase 14 — Search & Discovery
 
 **Full-text search, search highlighting, trending content, search analytics.**

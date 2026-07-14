@@ -120,11 +120,20 @@ export const searchContent = createServerFn({ method: "GET" }).handler(
           .from(tableName)
           .select(select)
           .eq(filterCol, filterVal)
-          .or(`title_en.ilike.*${term}*,title_bn.ilike.*${term}*,excerpt_en.ilike.*${term}*,excerpt_bn.ilike.*${term}*`)
           .order("created_at", { ascending: false })
           .limit(limit);
+
         if (error || !rows) return;
-        for (const row of rows) {
+
+        // Filter in memory since we can't dynamically build ILIKE for different column names
+        const filtered = rows.filter((row: any) => {
+          const title = titleFn(row);
+          const excerpt = excerptFn(row);
+          const searchFields = `${title} ${excerpt}`.toLowerCase();
+          return searchFields.includes(term.toLowerCase());
+        });
+
+        for (const row of filtered) {
           const title = titleFn(row);
           const excerpt = excerptFn(row);
           results.push({

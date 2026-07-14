@@ -50,14 +50,12 @@ ALTER TABLE public.books ADD COLUMN IF NOT EXISTS search_vector tsvector
 
 CREATE INDEX IF NOT EXISTS idx_books_search ON public.books USING GIN (search_vector);
 
--- Videos: tsvector on title + description
+-- Videos: tsvector on title + description (videos table uses singular column names)
 ALTER TABLE public.videos ADD COLUMN IF NOT EXISTS search_vector tsvector
   GENERATED ALWAYS AS (
     to_tsvector('simple',
-      coalesce(title_en, '') || ' ' ||
-      coalesce(title_bn, '') || ' ' ||
-      coalesce(description_en, '') || ' ' ||
-      coalesce(description_bn, '')
+      coalesce(title, '') || ' ' ||
+      coalesce(description, '')
     )
   ) STORED;
 
