@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { fetchBookBySlug, type Book } from "@/lib/books";
-import { getSiteName } from "@/lib/siteSettings";
+import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { useAuthSession } from "@/hooks/useAuth";
 import { getBookRatingAggregates, getUserRating, submitRating } from "@/lib/books-ratings";
@@ -73,6 +73,8 @@ function BookDetailPage() {
   const { lang } = useLang();
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
+  const config = useSiteSettings();
+  const symbol = config.commerce.currency_symbol || "$";
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const pendingActionRef = useRef<string | null>(null);
   const navigate = useNavigate();
@@ -350,7 +352,7 @@ function BookDetailPage() {
                 Price
               </p>
               <p className="text-sm font-medium">
-                {book.is_free ? "Free" : `$${Number(book.price).toFixed(2)}`}
+                {book.is_free ? "Free" : `${symbol}${Number(book.price).toFixed(2)}`}
               </p>
             </div>
             {book.pdf_file_size > 0 && (
@@ -360,6 +362,18 @@ function BookDetailPage() {
                 </p>
                 <p className="text-sm font-medium">
                   {(book.pdf_file_size / (1024 * 1024)).toFixed(1)} MB
+                </p>
+              </div>
+            )}
+            {config.commerce.refund_policy_en && !book.is_free && (
+              <div className="col-span-2 mt-2">
+                <p className="text-[0.5rem] uppercase tracking-[0.1em] text-muted-foreground/60 mb-1">
+                  Refund Policy
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {lang === "bn" && config.commerce.refund_policy_bn
+                    ? config.commerce.refund_policy_bn
+                    : config.commerce.refund_policy_en}
                 </p>
               </div>
             )}

@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCart, removeFromCart, clearCart, checkoutCart, type Cart } from "@/lib/cart";
+import { validateCoupon } from "@/lib/coupons";
 import { useAuthSession } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/AuthModal";
 import { ErrorPage } from "@/components/error-page";
 import { useLang, pickLocalized } from "@/lib/i18n";
+import { useSiteSettings } from "@/lib/siteSettings";
 import { toast } from "sonner";
 import {
   ShoppingCart,
@@ -29,6 +31,8 @@ export const Route = createFileRoute("/cart")({
 function CartPage() {
   const { user } = useAuthSession();
   const { lang } = useLang();
+  const config = useSiteSettings();
+  const symbol = config.commerce.currency_symbol || "$";
   const queryClient = useQueryClient();
   const doGetCart = useServerFn(getCart);
   const doRemoveFromCart = useServerFn(removeFromCart);
@@ -37,6 +41,33 @@ function CartPage() {
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [checkoutToastShown, setCheckoutToastShown] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const doValidateCoupon = useServerFn(validateCoupon);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+    setDiscount(0);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await doValidateCoupon({ data: { code: couponCode, subtotal: totalPrice } } as any);
+      if (result.valid && result.discountAmount) {
+        setDiscount(result.discountAmount);
+        toast.success(`Coupon applied! -${symbol}${result.discountAmount.toFixed(2)}`);
+      } else {
+        setCouponError(result.error || "Invalid coupon");
+      }
+    } catch (e: any) {
+      setCouponError(e.message || "Failed to validate coupon");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   // Handle Stripe redirect feedback
   useEffect(() => {
@@ -141,7 +172,7 @@ function CartPage() {
           <div>
             <h1 className="font-serif text-3xl">Your Cart</h1>
             <p className="text-xs text-muted-foreground mt-1">
-              {itemCount} {itemCount === 1 ? "item" : "items"} — ${totalPrice.toFixed(2)} total
+              {itemCount} {itemCount === 1 ? "item" : "items"} — {symbol}{totalPrice.toFixed(2)} total
             </p>
           </div>
         </div>
@@ -238,7 +269,7 @@ function CartPage() {
                       {title}
                     </Link>
                     <p className="text-[0.55rem] text-muted-foreground mt-0.5">
-                      {item.book_author || "—"} · ${Number(item.book_price).toFixed(2)}
+                      {item.book_author || "—"} · {symbol}{Number(item.book_price).toFixed(2)}
                     </p>
                   </div>
 
@@ -264,8 +295,35 @@ function CartPage() {
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/60 p-6 space-y-4">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Subtotal ({itemCount} items)</span>
-              <span className="font-medium">${totalPrice.toFixed(2)}</span>
+              <span className="font-medium">{symbol}{totalPrice.toFixed(2)}</span>
             </div>
+
+            {/* Coupon Code */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="Coupon code"
+                className="flex-1 px-3 py-2 text-xs font-mono border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40"
+              />
+              <button
+                onClick={handleApplyCoupon}
+                disabled={!couponCode || couponLoading}
+                className="px-3 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 transition-colors disabled:opacity-40"
+              >
+                {couponLoading ? "..." : "Apply"}
+              </button>
+            </div>
+            {couponError && (
+              <p className="text-xs text-destructive">{couponError}</p>
+            )}
+            {discount > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-green-600">Discount ({couponCode})</span>
+                <span className="font-medium text-green-600">-{symbol}{discount.toFixed(2)}</span>
+              </div>
+            )}
 
             <button
               onClick={() => checkoutMutation.mutate()}

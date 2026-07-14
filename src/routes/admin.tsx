@@ -43,6 +43,7 @@ import {
   Shield,
   History,
   ArrowRightLeft,
+  Ticket,
   type LucideIcon,
   X,
 } from "lucide-react";
@@ -144,6 +145,7 @@ function buildNavSections(
       icon: ShoppingCart,
       items: [
         { to: "/admin/orders", label: "Orders", icon: ShoppingCart, exact: false },
+        { to: "/admin/coupons", label: "Coupons", icon: Ticket, exact: false },
       ],
     },
     {

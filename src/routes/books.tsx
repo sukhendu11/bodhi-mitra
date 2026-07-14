@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { fetchPublishedBooks, type Book } from "@/lib/books";
 import { getUserBookmarks, type BookmarkedItem } from "@/lib/bookmarks";
 import { fetchPageBySlug } from "@/lib/pages";
-import { fetchSiteSettings } from "@/lib/siteSettings";
+import { fetchSiteSettings, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized, type Lang } from "@/lib/i18n";
 import { useAuthSession } from "@/hooks/useAuth";
 import { submitRating, getUserRating } from "@/lib/books-ratings";
@@ -77,6 +77,8 @@ function BooksPage() {
   const navigate = useNavigate();
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
+  const config = useSiteSettings();
+  const symbol = config.commerce.currency_symbol || "$";
   const search_params = Route.useSearch();
   const [search, setSearch] = useState<string>(String(search_params.search ?? ""));
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -655,7 +657,7 @@ function BooksPage() {
 
               {/* Price */}
               <p className="text-center text-lg font-medium">
-                {purchaseBook.is_free ? "Free" : `$${Number(purchaseBook.price).toFixed(2)}`}
+                {purchaseBook.is_free ? "Free" : `${symbol}${Number(purchaseBook.price).toFixed(2)}`}
               </p>
 
               {/* Purchasing indicator */}
@@ -683,7 +685,7 @@ function BooksPage() {
                     </>
                   ) : (
                     <>
-                      <Lock className="h-3.5 w-3.5" /> Purchase — $
+                      <Lock className="h-3.5 w-3.5" /> Purchase — {symbol}
                       {Number(purchaseBook.price).toFixed(2)}
                     </>
                   )}
@@ -774,6 +776,8 @@ function BookCard({
   isCartAdding?: boolean;
 }) {
   const queryClient = useQueryClient();
+  const config = useSiteSettings();
+  const symbol = config.commerce.currency_symbol || "$";
   const title = pickLocalized(book.title_en, book.title_bn, lang, "Untitled");
   const author = book.author_name || "Unknown";
 

@@ -2,6 +2,36 @@
 
 ## 2026-07-14
 
+### Phase 10 — Commerce & Digital Products
+
+**Commerce system with dynamic currency, refund policy display, and coupon infrastructure.**
+
+#### Currency System
+- **`commerce.ts`** utility — getCurrency, getCurrencySymbol, getTaxRate, formatPrice, calculateTax functions
+- **Stripe checkout** — Now uses dynamic currency from SiteConfig instead of hardcoded USD
+- **All price displays** — Cart, books listing, book detail pages now use currency_symbol from settings
+
+#### Refund Policy
+- Book detail page shows localized refund policy (EN/BN) from SiteConfig.commerce when configured
+
+#### Coupon Infrastructure
+- **`coupons`** table migration with code, discount_type (percentage/fixed_amount), discount_value, max_redemptions, expires_at, min_purchase_amount
+- Server functions: fetchCoupons, createCoupon, updateCoupon, deleteCoupon, validateCoupon
+- Admin UI at `/admin/coupons` with DataTable, stat cards, CRUD dialogs, toggle switches
+- **Cart integration** — Coupon input field with validation, discount calculation, error feedback
+- Admin sidebar link in Commerce section
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase 09 — Navigation & Site Structure
 
 **CMS-driven navigation with breadcrumbs, redirect management, and navigation config.**

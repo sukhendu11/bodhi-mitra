@@ -4,8 +4,8 @@ import { getStripeClient } from "@/integrations/stripe/server";
 import {
   CHECKOUT_CART_SUCCESS_URL,
   CHECKOUT_CART_CANCEL_URL,
-  STRIPE_PRICE_CURRENCY,
 } from "@/integrations/stripe/config";
+import { getCurrency, getTaxRate } from "@/lib/commerce";
 
 interface CheckoutItem {
   bookId: string;
@@ -59,15 +59,25 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         throw new Error("No items to checkout.");
       }
 
+      // Get currency and tax rate from settings
+      const currency = (await getCurrency()).toLowerCase();
+      const taxRate = await getTaxRate();
+
       // Build line items
       const line_items = items.map((item) => ({
         price_data: {
-          currency: STRIPE_PRICE_CURRENCY,
+          currency,
           product_data: { name: item.title },
           unit_amount: Math.round(item.price * 100),
         },
         quantity: 1,
       }));
+
+      // Apply tax if configured
+      const sessionMetadata = { ...metadata };
+      if (taxRate > 0) {
+        sessionMetadata.tax_rate = String(taxRate);
+      }
 
       const stripe = getStripeClient();
 
@@ -75,7 +85,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
         client_reference_id: userId,
-        metadata,
+        metadata: sessionMetadata,
         line_items,
         success_url: CHECKOUT_CART_SUCCESS_URL(firstSlug),
         cancel_url: CHECKOUT_CART_CANCEL_URL(firstSlug),
