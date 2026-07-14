@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useServerFn } from "@tanstack/react-start";
 import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
@@ -9,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { sendContactNotification } from "@/lib/contact-notification";
+import { contactFormSchema, type ContactFormValues } from "@/lib/schemas/contact";
 
 export const Route = createFileRoute("/contact")({
   loader: () => getSiteName(),
@@ -41,30 +44,27 @@ function ContactPage() {
   const successText = pickLocalized(c.success_text_en, c.success_text_bn, lang, "Thank you.");
   const address = pickLocalized(c.address_en, c.address_bn, lang, c.location);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: { name: "", email: "", message: "" },
+  });
+
+  const handleSubmit = form.handleSubmit(async (values) => {
     setStatus("sending");
     setErrorMsg("");
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
     try {
-      const name = formData.get("name") as string;
-      const email = formData.get("email") as string;
-      const message = formData.get("message") as string;
-
       // Store the message in the database
       const { error } = await (supabase as any).from("contact_messages").insert({
-        name,
-        email,
-        message,
+        name: values.name,
+        email: values.email,
+        message: values.message,
       });
 
       if (error) throw error;
 
-      // Send notification email server-side (best-effort — won't block the form submission)
-      (doSendNotification as any)({ data: { name, email, message } })
+      // Send notification email server-side (best-effort)
+      (doSendNotification as any)({ data: values })
         .then((result: any) => {
           if (!result.sent) {
             console.warn("[contact] Email notification not sent:", result.reason);
@@ -80,7 +80,7 @@ function ContactPage() {
       setStatus("error");
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     }
-  };
+  });
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-20 md:py-28">
@@ -103,19 +103,42 @@ function ContactPage() {
               <label className="text-xs uppercase tracking-wider text-muted-foreground">
                 {nameLabel}
               </label>
-              <Input name="name" required disabled={status === "sending"} />
+              <Input
+                {...form.register("name")}
+                disabled={status === "sending"}
+                aria-invalid={!!form.formState.errors.name}
+              />
+              {form.formState.errors.name && (
+                <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs uppercase tracking-wider text-muted-foreground">
                 {emailLabel}
               </label>
-              <Input name="email" type="email" required disabled={status === "sending"} />
+              <Input
+                {...form.register("email")}
+                type="email"
+                disabled={status === "sending"}
+                aria-invalid={!!form.formState.errors.email}
+              />
+              {form.formState.errors.email && (
+                <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs uppercase tracking-wider text-muted-foreground">
                 {msgLabel}
               </label>
-              <Textarea name="message" rows={6} required disabled={status === "sending"} />
+              <Textarea
+                {...form.register("message")}
+                rows={6}
+                disabled={status === "sending"}
+                aria-invalid={!!form.formState.errors.message}
+              />
+              {form.formState.errors.message && (
+                <p className="text-xs text-destructive">{form.formState.errors.message.message}</p>
+              )}
             </div>
             {status === "sent" ? (
               <p className="text-sm text-muted-foreground">{successText}</p>

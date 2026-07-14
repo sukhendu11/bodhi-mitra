@@ -2,6 +2,42 @@
 
 ## 2026-07-14
 
+### Phase 12 — Forms, Communication & Notifications
+
+**Email template system, newsletter management, notification persistence, contact form hardening.**
+
+#### Email Template System
+- **`src/lib/email/`** — Shared email infrastructure: base-layout.ts, templates.ts, send.ts
+- 5 email templates: contact-notification, contact-confirmation, purchase-confirmation, newsletter-welcome, newsletter-unsubscribe-confirm
+- `sendEmail()` single entry point wrapping Resend with SiteConfig email settings
+- Refactored contact-notification.ts and purchase-emails.ts to use template system
+
+#### Contact Form Hardening
+- **Zod validation** — `contactFormSchema` with name (2-100 chars), email (valid format), message (10-5000 chars)
+- **React Hook Form** — Integrated with zodResolver, error messages, aria-invalid attributes
+- **Contact confirmation email** — Submitter receives confirmation after form submission
+
+#### Newsletter Management
+- **Unsubscribe flow** — Token-based secure unsubscribe with bilingual page (`/newsletter/unsubscribe/$token`)
+- **Welcome email** — Sent automatically on new subscription
+- **Unsubscribe confirmation email** — Sent after successful unsubscribe
+- **Admin management** — SettingsNewsletterTab with stats, subscriber list, search, export CSV, delete
+
+#### Notification Persistence
+- **`admin_notifications`** table migration with RLS (admin-only)
+- Server functions: fetchAdminNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification, createAdminNotification
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase 11 — Books, Library & Reader
 
 **Bug fixes, reading time estimation, download button, note editing, library sorting/filtering.**
