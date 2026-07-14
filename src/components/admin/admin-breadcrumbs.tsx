@@ -17,6 +17,7 @@ interface Crumb {
 const breadcrumbMap: Record<string, Omit<Crumb, "to"> & { parent?: string }> = {
   "/admin": { label: "Dashboard" },
   "/admin/new": { label: "New Post", parent: "/admin" },
+  "/admin/posts": { label: "Posts", parent: "/admin" },
   "/admin/books": { label: "Books", parent: "/admin" },
   "/admin/videos": { label: "Videos", parent: "/admin" },
   "/admin/courses": { label: "Courses", parent: "/admin" },
@@ -26,8 +27,15 @@ const breadcrumbMap: Record<string, Omit<Crumb, "to"> & { parent?: string }> = {
   "/admin/navigation": { label: "Navigation", parent: "/admin" },
   "/admin/taxonomy": { label: "Taxonomy", parent: "/admin" },
   "/admin/users": { label: "Users & Roles", parent: "/admin" },
+  "/admin/orders": { label: "Orders", parent: "/admin" },
+  "/admin/coupons": { label: "Coupons", parent: "/admin" },
+  "/admin/redirects": { label: "Redirects", parent: "/admin" },
+  "/admin/security": { label: "Security", parent: "/admin" },
+  "/admin/permissions": { label: "Permissions", parent: "/admin" },
+  "/admin/tokens": { label: "Design Tokens", parent: "/admin" },
   "/admin/audit": { label: "Audit Log", parent: "/admin" },
   "/admin/settings": { label: "Settings", parent: "/admin" },
+  "/admin/content-types": { label: "Content Types", parent: "/admin" },
 };
 
 export function AdminBreadcrumbs() {

@@ -170,21 +170,26 @@ function SettingsPage() {
           <div className="p-6">
             {TABS.map((tab) => (
               <TabsContent key={tab.id} value={tab.id} className="mt-0 space-y-6">
-                {tab.id === "branding" && <BrandingTab {...tabProps} />}
-                {tab.id === "home" && <HomepageTab {...tabProps} />}
-                {tab.id === "article" && <ArticleTab {...tabProps} />}
-                {tab.id === "about" && <AboutTab {...tabProps} />}
-                {tab.id === "contact" && <ContactTab {...tabProps} />}
-                {tab.id === "footer" && <FooterTab {...tabProps} />}
-                {tab.id === "theme" && <ThemeTab {...tabProps} />}
-                {tab.id === "social" && <SocialTab {...tabProps} />}
-                {tab.id === "seo" && <SeoTab {...tabProps} />}
-                {tab.id === "features" && <FeaturesTab {...tabProps} />}
-                {tab.id === "reader" && <ReaderTab {...tabProps} />}
-                {tab.id === "commerce" && <CommerceTab {...tabProps} />}
-                {tab.id === "navigation" && <NavigationTab {...tabProps} />}
-                {tab.id === "newsletter" && <SettingsNewsletterTab />}
-                {tab.id === "maintenance" && <MaintenanceTab {...tabProps} />}
+                {activeTab === tab.id && (() => {
+                  switch (tab.id) {
+                    case "branding": return <BrandingTab {...tabProps} />;
+                    case "home": return <HomepageTab {...tabProps} />;
+                    case "article": return <ArticleTab {...tabProps} />;
+                    case "about": return <AboutTab {...tabProps} />;
+                    case "contact": return <ContactTab {...tabProps} />;
+                    case "footer": return <FooterTab {...tabProps} />;
+                    case "theme": return <ThemeTab {...tabProps} />;
+                    case "social": return <SocialTab {...tabProps} />;
+                    case "seo": return <SeoTab {...tabProps} />;
+                    case "features": return <FeaturesTab {...tabProps} />;
+                    case "reader": return <ReaderTab {...tabProps} />;
+                    case "commerce": return <CommerceTab {...tabProps} />;
+                    case "navigation": return <NavigationTab {...tabProps} />;
+                    case "newsletter": return <SettingsNewsletterTab />;
+                    case "maintenance": return <MaintenanceTab {...tabProps} />;
+                    default: return null;
+                  }
+                })()}
               </TabsContent>
             ))}
           </div>

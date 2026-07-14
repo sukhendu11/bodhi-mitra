@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -80,19 +81,17 @@ export function DataTable<TData extends { id: string }>({
     ? ({
         id: "select",
         header: ({ table: t }) => (
-          <input
-            type="checkbox"
+          <Checkbox
             checked={t.getIsAllRowsSelected()}
-            onChange={t.getToggleAllRowsSelectedHandler()}
-            className="h-3.5 w-3.5 rounded border-border/60 accent-foreground cursor-pointer"
+            onCheckedChange={(v) => t.toggleAllRowsSelected(!!v)}
+            aria-label="Select all"
           />
         ),
         cell: ({ row }) => (
-          <input
-            type="checkbox"
+          <Checkbox
             checked={row.getIsSelected()}
-            onChange={row.getToggleSelectedHandler()}
-            className="h-3.5 w-3.5 rounded border-border/60 accent-foreground cursor-pointer"
+            onCheckedChange={(v) => row.toggleSelected(!!v)}
+            aria-label={`Select ${row.original.id}`}
           />
         ),
         size: 36,
@@ -392,56 +391,57 @@ export function DataTable<TData extends { id: string }>({
             {totalRows}
           </p>
           <div className="flex items-center gap-1">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
-              className="px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+              className="h-7 px-2 text-xs"
             >
               First
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="px-2.5 py-1 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="h-7 px-2.5 text-xs"
             >
               ← Prev
-            </button>
+            </Button>
             {Array.from({ length: Math.min(pageCount, 5) }, (_, i) => {
               const start = Math.max(0, Math.min(pageIndex - 2, pageCount - 5));
               const pageNum = start + i;
               return (
-                <button
+                <Button
                   key={pageNum}
-                  type="button"
+                  variant={pageIndex === pageNum ? "default" : "ghost"}
+                  size="sm"
                   onClick={() => table.setPageIndex(pageNum)}
-                  className={`w-7 h-7 text-xs font-medium rounded-lg transition-colors ${
-                    pageIndex === pageNum
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                  }`}
+                  className="h-7 w-7 p-0 text-xs"
                 >
                   {pageNum + 1}
-                </button>
+                </Button>
               );
             })}
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="px-2.5 py-1 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              className="h-7 px-2.5 text-xs"
             >
               Next →
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => table.setPageIndex(pageCount - 1)}
               disabled={!table.getCanNextPage()}
-              className="px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+              className="h-7 px-2 text-xs"
             >
               Last
-            </button>
+            </Button>
           </div>
         </div>
       )}

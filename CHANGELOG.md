@@ -2,6 +2,34 @@
 
 ## 2026-07-14
 
+### UI Architecture Consistency Fixes
+
+**Standardized critical UI patterns across the admin platform.**
+
+#### Design Token Adoption
+- **Admin layout** — Replaced hardcoded `bg-[#f8f9fa]` with `bg-background` token
+- **Mobile nav** — Replaced hardcoded `bg-zinc-900` and `text-orange-400` with `bg-background` and `text-primary` tokens
+
+#### Component Standardization
+- **DataTable checkboxes** — Replaced raw `<input type="checkbox">` with shadcn `Checkbox` component
+- **DataTable pagination** — Replaced raw `<button>` elements with shadcn `Button` component
+- **Settings tabs** — Changed from mounting all 15 tabs simultaneously to lazy rendering (only mounts active tab)
+
+#### Navigation Consistency
+- **Mobile nav** — Updated to use curated list with Orders icon, synced with design tokens
+- **Breadcrumbs** — Extended from 12 to 21 routes (added orders, coupons, redirects, security, permissions, tokens, content-types)
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Sprint 02 — Real World CMS Refinement
 
 **Fixed critical bugs found during real admin usage: settings fetch, reset confirmation, performance, delete confirmation.**

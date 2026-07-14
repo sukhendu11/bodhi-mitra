@@ -218,7 +218,7 @@ function AdminLayout() {
             disableTelemetry: true,
           }}
         >
-          <div className="min-h-screen bg-[#f8f9fa] dark:bg-zinc-950">
+          <div className="min-h-screen bg-background">
             {/* Demo banner */}
             {!bannerDismissed && (
               <div className="relative border-b border-amber-400/20 bg-gradient-to-r from-amber-50/90 to-amber-100/70 dark:from-amber-950/15 dark:to-amber-900/10 px-4 py-2">
