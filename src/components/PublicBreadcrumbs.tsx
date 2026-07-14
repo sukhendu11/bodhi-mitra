@@ -1,5 +1,6 @@
 import { Link, useMatches } from "@tanstack/react-router";
 import { useLang } from "@/lib/i18n";
+import { useSiteSettings } from "@/lib/siteSettings";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -47,7 +48,11 @@ function labelFor(segment: string, lang: "en" | "bn"): string {
 
 export function PublicBreadcrumbs() {
   const { lang } = useLang();
+  const config = useSiteSettings();
   const matches = useMatches();
+
+  // Check if breadcrumbs are enabled
+  if (!config.navigation.show_breadcrumbs) return null;
 
   const entries: BreadcrumbEntry[] = [];
 

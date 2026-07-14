@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireMinRole } from "./permissions";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Coupon {
@@ -79,8 +80,9 @@ export const deleteCoupon = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-/** Validate and apply a coupon code (public) */
+/** Validate and apply a coupon code (requires auth) */
 export const validateCoupon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   .handler(async ({ data }: any): Promise<CouponValidation> => {
     const code = (data.code || "").toUpperCase().trim();
@@ -127,10 +129,13 @@ export const validateCoupon = createServerFn({ method: "POST" })
 
 /** Increment redemption count (called after successful purchase) */
 export async function incrementRedemption(couponId: string): Promise<void> {
-  await db.rpc("increment_coupon_redemptions" as any, { coupon_id: couponId }).then(() => {});
-  // Fallback: direct update if RPC doesn't exist
-  await db
+  const { error } = await db
     .from("coupons")
     .update({ current_redemptions: db.rpc ? undefined : undefined })
     .eq("id", couponId);
+  // Use direct increment approach
+  const { data: coupon } = await db.from("coupons").select("current_redemptions").eq("id", couponId).single();
+  if (coupon) {
+    await db.from("coupons").update({ current_redemptions: (coupon.current_redemptions || 0) + 1 }).eq("id", couponId);
+  }
 }

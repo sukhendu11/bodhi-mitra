@@ -379,7 +379,9 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     // Accent color → semantic tokens
     root.style.setProperty("--color-saffron", t.accent_color);
     root.style.setProperty("--color-saffron-hover", t.accent_hover);
+    // Use accent color for primary, with dark mode adjustment via CSS
     root.style.setProperty("--primary", t.accent_color);
+    root.style.setProperty("--primary-light", `color-mix(in oklch, ${t.accent_color} 70%, white)`);
     root.style.setProperty("--primary-foreground", "#ffffff");
 
     // Typography — override the CSS custom properties in styles.css

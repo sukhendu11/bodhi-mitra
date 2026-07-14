@@ -23,6 +23,7 @@ import { MobileNav } from "@/components/MobileNav";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ErrorPage, NotFoundPage } from "@/components/error-page";
+import { useFeatureFlag } from "@/hooks/useFeatureFlags";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCartCount } from "@/lib/cart";
@@ -469,7 +470,7 @@ function Footer() {
               </div>
             )}
             <div className="mt-6 border-t border-border/40 pt-5">
-              <NewsletterSignup compact />
+              {useFeatureFlag("newsletter_automation") && <NewsletterSignup compact />}
             </div>
           </div>
 
@@ -577,7 +578,7 @@ function RootComponent() {
                 </main>
                 <Footer />
               </div>
-              <AiChatPanel />
+              {useFeatureFlag("ai_chat") && <AiChatPanel />}
               <ScrollToTop />
               <Toaster position="bottom-center" />
               </LayoutProvider>

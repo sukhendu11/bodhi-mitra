@@ -7,6 +7,7 @@ import { DataTable } from "@/components/admin/data-table";
 import { StatCard } from "@/components/admin/stat-card";
 import { ErrorPage } from "@/components/error-page";
 import { getOrderStats, fetchOrders, type OrderData } from "@/lib/orders";
+import { useSiteSettings } from "@/lib/siteSettings";
 
 export const Route = createFileRoute("/admin/orders")({
   component: AdminOrdersPage,
@@ -15,8 +16,8 @@ export const Route = createFileRoute("/admin/orders")({
 
 /* ─── Helpers ────────────────────────────────────────────────────── */
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+function formatCurrency(amount: number, currency: string = "USD"): string {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
 }
 
 function formatDate(dateStr: string): string {
@@ -36,6 +37,8 @@ function formatDate(dateStr: string): string {
 /* ─── Admin Orders Page ──────────────────────────────────────────── */
 
 function AdminOrdersPage() {
+  const config = useSiteSettings();
+  const currency = config.commerce.currency || "USD";
   const pageSize = 25;
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -103,7 +106,7 @@ function AdminOrdersPage() {
           return amount === 0 ? (
             <span className="text-green-600 dark:text-green-400 text-xs font-medium">Free</span>
           ) : (
-            <span className="text-xs font-medium tabular-nums">{formatCurrency(amount)}</span>
+            <span className="text-xs font-medium tabular-nums">{formatCurrency(amount, currency)}</span>
           );
         },
       }),
