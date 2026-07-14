@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react";
+import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 
 export const Route = createFileRoute("/courses/$slug")({
   loader: () => getSiteName(),
@@ -94,12 +95,7 @@ function CourseDetailPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-14 md:py-20">
-      <Link
-        to="/courses"
-        className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors mb-8"
-      >
-        <ArrowLeft className="h-3 w-3" /> All Courses
-      </Link>
+      <PublicBreadcrumbs />
 
       {/* Course header */}
       <div className="grid md:grid-cols-[1fr_280px] gap-8 mb-12">

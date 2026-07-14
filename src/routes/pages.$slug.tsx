@@ -8,6 +8,7 @@ import { Reveal } from "@/components/Reveal";
 import { BuilderPreview, deserializeTree } from "@/components/admin/page-builder";
 import { generateHoverCss, generateResponsiveCss } from "@/lib/page-builder/utils";
 import type { BuilderComponentNode } from "@/lib/page-builder/types";
+import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 
 export const Route = createFileRoute("/pages/$slug")({
   loader: async ({ params }) => {
@@ -114,6 +115,7 @@ function PublicPage() {
 
   return (
     <article className="mx-auto max-w-6xl px-6 py-20 md:py-28">
+      <PublicBreadcrumbs />
       {/* Page header — always rendered from DB metadata */}
       <header className="text-center mb-16">
         <Reveal delay={0}>

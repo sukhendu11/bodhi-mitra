@@ -160,6 +160,18 @@ export interface SiteConfig {
     /** Refund policy text (BN) */
     refund_policy_bn: string;
   };
+  navigation: {
+    /** Sticky header on scroll */
+    sticky_header: boolean;
+    /** Show breadcrumbs on public pages */
+    show_breadcrumbs: boolean;
+    /** Mobile nav animation: slide | overlay */
+    mobile_nav_style: "slide" | "overlay";
+    /** Max dropdown nesting depth (1–3) */
+    max_depth: number;
+    /** Show icons on nav items */
+    show_icons: boolean;
+  };
 }
 
 export const DEFAULT_CONFIG: SiteConfig = {
@@ -295,6 +307,13 @@ export const DEFAULT_CONFIG: SiteConfig = {
     tax_rate: 0,
     refund_policy_en: "",
     refund_policy_bn: "",
+  },
+  navigation: {
+    sticky_header: true,
+    show_breadcrumbs: true,
+    mobile_nav_style: "slide",
+    max_depth: 2,
+    show_icons: true,
   },
 };
 

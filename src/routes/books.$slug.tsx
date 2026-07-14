@@ -16,6 +16,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { addToCart } from "@/lib/cart";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { BookRecommendations } from "@/components/BookRecommendations";
+import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 import { toast } from "sonner";
 import {
   BookOpen,
@@ -256,14 +257,7 @@ function BookDetailPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-      {/* Back link */}
-      <Link
-        to="/books"
-        search={{ search: "", page: 1 }}
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-10"
-      >
-        <ArrowLeft className="h-3 w-3" /> Back to books
-      </Link>
+      <PublicBreadcrumbs />
 
       <div className="grid md:grid-cols-[320px_1fr] gap-10 md:gap-14">
         {/* Cover */}

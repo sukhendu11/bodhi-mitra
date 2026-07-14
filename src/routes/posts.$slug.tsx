@@ -11,6 +11,7 @@ import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { SanitizedHtml } from "@/components/SanitizedHtml";
 import { Comments } from "@/components/Comments";
 import { BookmarkButton } from "@/components/BookmarkButton";
+import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 import { TypographyControls, useTypography } from "@/components/TypographyControls";
 import { ArticleSkeleton } from "@/components/ArticleSkeleton";
 import { ReadingProgress } from "@/components/ReadingProgress";
@@ -131,6 +132,7 @@ function PostPage() {
     <>
       <ReadingProgress targetRef={articleRef} />
       <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
+        <PublicBreadcrumbs />
         <div
           className={
             headings.length > 0

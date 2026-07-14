@@ -23,6 +23,7 @@ import { MaintenanceTab } from "@/components/SettingsMaintenanceTab";
 import { FeaturesTab } from "@/components/SettingsFeaturesTab";
 import { ReaderTab } from "@/components/SettingsReaderTab";
 import { CommerceTab } from "@/components/SettingsCommerceTab";
+import { NavigationTab } from "@/components/SettingsNavigationTab";
 import { Settings } from "lucide-react";
 import { ErrorPage } from "@/components/error-page";
 
@@ -44,6 +45,7 @@ const TABS = [
   { id: "features", label: "Features" },
   { id: "reader", label: "Reader" },
   { id: "commerce", label: "Commerce" },
+  { id: "navigation", label: "Navigation" },
   { id: "maintenance", label: "Maintenance" },
 ] as const;
 
@@ -174,6 +176,7 @@ function SettingsPage() {
                 {tab.id === "features" && <FeaturesTab {...tabProps} />}
                 {tab.id === "reader" && <ReaderTab {...tabProps} />}
                 {tab.id === "commerce" && <CommerceTab {...tabProps} />}
+                {tab.id === "navigation" && <NavigationTab {...tabProps} />}
                 {tab.id === "maintenance" && <MaintenanceTab {...tabProps} />}
               </TabsContent>
             ))}

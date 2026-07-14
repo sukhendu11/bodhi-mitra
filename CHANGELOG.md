@@ -2,6 +2,39 @@
 
 ## 2026-07-14
 
+### Phase 09 — Navigation & Site Structure
+
+**CMS-driven navigation with breadcrumbs, redirect management, and navigation config.**
+
+#### Public Breadcrumbs
+- **`PublicBreadcrumbs`** component generates breadcrumbs from route matches
+- Bilingual labels (EN/BN) for all routes (books, posts, courses, pages, etc.)
+- Shows Home > Section > Page hierarchy
+- Skips dynamic params and reader routes
+- Added to books, posts, courses, and pages detail pages
+
+#### Redirect Management
+- **`redirects`** table migration with from_path, to_path, status_code (301/302/307/308), is_active, hit_count
+- Server functions: fetchRedirects, createRedirect, updateRedirect, deleteRedirect, lookupRedirect
+- Admin UI at `/admin/redirects` with DataTable, stat cards, CRUD dialogs, toggle switches
+- Admin sidebar link in Tools section
+
+#### Navigation Config
+- Extended `SiteConfig` with `navigation` group: sticky_header, show_breadcrumbs, mobile_nav_style, max_depth, show_icons
+- **`SettingsNavigationTab`** with UI controls for all navigation settings
+- Added as 14th settings tab in admin.settings.tsx
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase Validation — 01 → 08 Fixes
 
 **End-to-end validation of Phases 01–08. Fixed 3 critical issues found during cross-phase audit.**

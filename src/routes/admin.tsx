@@ -42,6 +42,7 @@ import {
   Palette,
   Shield,
   History,
+  ArrowRightLeft,
   type LucideIcon,
   X,
 } from "lucide-react";
@@ -154,6 +155,7 @@ function buildNavSections(
         { to: "/admin/security", label: "Security", icon: History, exact: false },
         { to: "/admin/audit", label: "Audit Log", icon: Activity, exact: false },
         { to: "/admin/permissions", label: "Permissions", icon: Shield, exact: false },
+        { to: "/admin/redirects", label: "Redirects", icon: ArrowRightLeft, exact: false },
         { to: "/admin/tokens", label: "Design Tokens", icon: Palette, exact: false },
       ],
     },
