@@ -2,6 +2,35 @@
 
 ## 2026-07-14
 
+### Phase 15 — Workflow, Publishing & Collaboration
+
+**Content revisions, content audit log, comment moderation.**
+
+#### Content Revisions
+- **`content_revisions`** table migration with RLS (admin-only)
+- Server functions: createRevision, fetchRevisions
+- Version tracking with data snapshots, change lists, summaries
+
+#### Content Audit Log
+- **`content_audit_log`** table migration with RLS
+- `logContentAudit()` function for content create/edit/publish/delete events
+- Server function: fetchContentAuditLog (admin)
+
+#### Comment Moderation
+- Added `status` column to comments table (pending/approved/rejected/spam)
+- Server functions: getCommentModerationStats, moderateComment
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Milestone 02 — Product Audit Fixes
 
 **Fixed 4 critical issues found during Phases 11-14 audit.**
