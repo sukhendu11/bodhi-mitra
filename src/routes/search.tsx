@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { searchContent, type SearchResult, type ContentType } from "@/lib/search";
 import { Search, FileText, BookOpen, Video, File, Loader2, ArrowLeft, GraduationCap, ArrowUpDown } from "lucide-react";
+import DOMPurify from "dompurify";
 
 const contentTypes: { key: ContentType | "all"; label: string; icon: typeof Search }[] = [
   { key: "all", label: "All", icon: Search },
@@ -232,12 +233,12 @@ function ResultCard({ result }: { result: SearchResult }) {
         </div>
         <h3
           className="text-sm font-medium group-hover:text-foreground transition-colors line-clamp-1"
-          dangerouslySetInnerHTML={{ __html: result.highlightedTitle || result.title }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.highlightedTitle || result.title, { ALLOWED_TAGS: ["mark"] }) }}
         />
         {result.excerpt && (
           <p
             className="text-xs text-muted-foreground mt-1 line-clamp-2"
-            dangerouslySetInnerHTML={{ __html: result.highlightedExcerpt || result.excerpt }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.highlightedExcerpt || result.excerpt, { ALLOWED_TAGS: ["mark"] }) }}
           />
         )}
       </div>

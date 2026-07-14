@@ -2,6 +2,27 @@
 
 ## 2026-07-14
 
+### Milestone 03 — CMS Platform Audit Fixes
+
+**Fixed 4 critical security issues found during Phases 01-16 audit.**
+
+#### Fixes
+- **XSS in search results** — Added DOMPurify sanitization with `ALLOWED_TAGS: ["mark"]` to prevent HTML injection from database content
+- **XSS in PageSectionRenderer** — Added DOMPurify sanitization to `TextSection` component's `dangerouslySetInnerHTML`
+- **Unprotected search analytics** — Added `requireMinRole("admin")` middleware to `getSearchAnalytics` server function
+- **Unprotected search logging** — Added `requireMinRole("user")` middleware to `logSearchQuery` server function
+
+#### Validation
+
+| Check | Result |
+|-------|--------|
+| TypeScript | 0 errors ✅ |
+| Test count | 319/319 passing ✅ |
+
+---
+
+## 2026-07-14
+
 ### Phase 16 — Admin Operations & Productivity
 
 **DataTable CSV export, orders page export.**

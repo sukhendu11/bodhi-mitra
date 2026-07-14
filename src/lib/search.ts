@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { requireMinRole } from "./permissions";
 
 export type ContentType = "post" | "page" | "book" | "video" | "course";
 
@@ -232,8 +233,9 @@ export const searchContent = createServerFn({ method: "GET" }).handler(
 );
 
 /** Log a search query for analytics */
-export const logSearchQuery = createServerFn({ method: "POST" }).handler(
-  async ({ data }: { data: unknown }) => {
+export const logSearchQuery = createServerFn({ method: "POST" })
+  .middleware([requireMinRole("user")])
+  .handler(async ({ data }: { data: unknown }) => {
     const input = data as { query: string; resultsCount: number; userId?: string };
     const db = supabase as any;
     await db.from("search_analytics").insert({
@@ -245,8 +247,9 @@ export const logSearchQuery = createServerFn({ method: "POST" }).handler(
 );
 
 /** Get search analytics (admin) */
-export const getSearchAnalytics = createServerFn({ method: "GET" }).handler(
-  async () => {
+export const getSearchAnalytics = createServerFn({ method: "GET" })
+  .middleware([requireMinRole("admin")])
+  .handler(async () => {
     const db = supabase as any;
     const { data: topQueries } = await db
       .from("search_analytics")

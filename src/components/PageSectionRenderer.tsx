@@ -1,6 +1,7 @@
 import { type PageSection } from "@/lib/pages";
 import { Reveal } from "@/components/Reveal";
 import { getYoutubeId } from "@/lib/videos";
+import DOMPurify from "dompurify";
 
 interface Props {
   sections: PageSection[];
@@ -79,7 +80,7 @@ function TextSection({ content }: { content: Record<string, string> }) {
   return (
     <div className="max-w-2xl mx-auto px-6">
       <div className="prose-mitra">
-        <div dangerouslySetInnerHTML={{ __html: content.body }} />
+        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.body) }} />
       </div>
     </div>
   );
