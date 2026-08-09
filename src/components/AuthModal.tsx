@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useLang } from "@/lib/i18n";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BrandCtaButton } from "@/components/BrandCtaButton";
 
 interface AuthModalProps {
   open: boolean;
@@ -13,6 +15,7 @@ interface AuthModalProps {
 type Mode = "signin" | "signup";
 
 export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
+  const { lang } = useLang();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +37,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
         toast.error(error.message);
         return;
       }
-      toast.success("Welcome back");
+      toast.success(lang === "bn" ? "ফিরে আসায় স্বাগতম" : "Welcome back");
       onOpenChange(false);
       onSuccess?.();
       return;
@@ -53,12 +56,12 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
       return;
     }
     if (data.session) {
-      toast.success("Account created");
+      toast.success(lang === "bn" ? "অ্যাকাউন্ট তৈরি হয়েছে" : "Account created");
       onOpenChange(false);
       onSuccess?.();
       return;
     }
-    toast.success("Check your email to confirm your account");
+    toast.success(lang === "bn" ? "আপনার অ্যাকাউন্ট নিশ্চিত করতে ইমেইল চেক করুন" : "Check your email to confirm your account");
     onOpenChange(false);
     onSuccess?.();
   };
@@ -75,20 +78,20 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
         setSubmitting(false);
       }
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Google sign-in failed");
+      toast.error(e instanceof Error ? e.message : lang === "bn" ? "Google সাইন-ইন ব্যর্থ হয়েছে" : "Google sign-in failed");
       setSubmitting(false);
     }
   };
 
   const inputCls =
-    "w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground/60";
+    "w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl text-center">
-            {mode === "signin" ? "Welcome back" : "Create an account"}
+            {mode === "signin" ? (lang === "bn" ? "ফিরে আসায় স্বাগতম" : "Welcome back") : (lang === "bn" ? "একটি অ্যাকাউন্ট তৈরি করুন" : "Create an account")}
           </DialogTitle>
         </DialogHeader>
 
@@ -98,7 +101,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
             type="button"
             onClick={handleGoogle}
             disabled={submitting}
-            className="w-full px-6 py-3 text-sm tracking-wide border border-border hover:bg-secondary transition-colors disabled:opacity-40 flex items-center justify-center gap-3"
+            className="w-full px-6 py-3 text-sm tracking-wide border border-border hover:bg-secondary transition-colors disabled:opacity-50 flex items-center justify-center gap-3"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               <path
@@ -118,12 +121,12 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
                 d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"
               />
             </svg>
-            Continue with Google
+            {lang === "bn" ? "Google দিয়ে চালিয়ে যান" : "Continue with Google"}
           </button>
 
           <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             <span className="flex-1 h-px bg-border" />
-            or
+            {lang === "bn" ? "বা" : "or"}
             <span className="flex-1 h-px bg-border" />
           </div>
 
@@ -145,16 +148,16 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={mode === "signup" ? "At least 6 characters" : "Password"}
+              placeholder={mode === "signup" ? (lang === "bn" ? "কমপক্ষে ৬ অক্ষর" : "At least 6 characters") : (lang === "bn" ? "পাসওয়ার্ড" : "Password")}
               className={inputCls}
             />
-            <button
+            <BrandCtaButton
               type="submit"
               disabled={submitting}
-              className="w-full px-6 py-3 text-sm tracking-wide border border-foreground hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
+              className="w-full px-6 py-3 tracking-wide"
             >
-              {submitting ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
-            </button>
+              {submitting ? (lang === "bn" ? "অনুগ্রহ করে অপেক্ষা করুন…" : "Please wait…") : mode === "signin" ? (lang === "bn" ? "সাইন ইন" : "Sign in") : (lang === "bn" ? "অ্যাকাউন্ট তৈরি করুন" : "Create account")}
+            </BrandCtaButton>
           </form>
 
           {/* Toggle mode */}
@@ -163,7 +166,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: AuthModalProps) {
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             className="w-full text-xs text-muted-foreground hover:text-foreground"
           >
-            {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
+            {mode === "signin" ? (lang === "bn" ? "নতুন? একটি অ্যাকাউন্ট তৈরি করুন" : "New here? Create an account") : (lang === "bn" ? "ইতিমধ্যে অ্যাকাউন্ট আছে? সাইন ইন" : "Already have an account? Sign in")}
           </button>
         </div>
       </DialogContent>

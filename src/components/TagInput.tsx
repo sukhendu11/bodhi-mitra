@@ -35,7 +35,7 @@ export function TagInput({ tags, onTagsChange }: TagInputProps) {
       <label className="block text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
         Tags
       </label>
-      <div className="border border-border bg-background px-3 py-2.5 flex flex-wrap items-center gap-2">
+      <div className="border border-border bg-background px-3 py-2.5 flex flex-wrap items-center gap-2 focus-within:ring-1 focus-within:ring-primary/40 focus-within:border-primary/40 transition-all duration-200">
         {tags.map((t) => (
           <span
             key={t}

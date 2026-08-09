@@ -50,13 +50,14 @@ export async function searchContentSections(
 ): Promise<ChatSource[]> {
   const embedding = await generateEmbedding(query);
 
-  const { data, error } = await (supabase as any).rpc("match_content_sections", {
+  const { data, error } = await supabase.rpc("match_content_sections", {
     query_embedding: embedding,
     match_threshold: options?.threshold ?? 0.7,
     match_count: options?.limit ?? 5,
     filter_content_type: options?.contentType ?? null,
     filter_content_id: null,
-  });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any);
 
   if (error) {
     console.error("[ai/chat] searchContentSections error:", error);
@@ -80,11 +81,11 @@ export async function searchContentSections(
  */
 function buildRagPrompt(query: string, sources: ChatSource[]): string {
   if (sources.length === 0) {
-    return `You are Bodhi, a helpful guide for the Bodhi Mitra wisdom platform. 
+    return `You are Sabbe, a helpful guide for the Sabbe Satta wisdom platform. 
 
 The user asked: "${query}"
 
-Unfortunately, you couldn't find specific content matching this question in the platform's library. Helpfully suggest they explore the books, posts, or courses available on the platform, or rephrase their question.`;
+Unfortunately, you couldn't find specific content matching this question in the platform's library. Helpfully suggest they explore the books, posts, or videos available on the platform, or rephrase their question.`;
   }
 
   const contextBlock = sources
@@ -95,7 +96,7 @@ ${s.excerpt}`,
     )
     .join("\n\n");
 
-  return `You are Bodhi, a wise and compassionate guide for the Bodhi Mitra wisdom platform. You help users explore Buddhist psychology, mindfulness, meditation, and personal growth through the platform's content.
+  return `You are Sabbe, a wise and compassionate guide for the Sabbe Satta wisdom platform. You help users explore Buddhist psychology, mindfulness, meditation, and personal growth through the platform's content.
 
 Answer the user's question based SOLELY on the provided content sources below. If the sources don't contain enough information to answer, say so honestly.
 

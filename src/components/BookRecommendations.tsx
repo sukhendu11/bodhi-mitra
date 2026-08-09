@@ -39,10 +39,10 @@ export function BookRecommendations({
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="aspect-[3/4] bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
-              <div className="mt-2 h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-3/4" />
-              <div className="mt-1 h-2 bg-zinc-200 dark:bg-zinc-800 rounded w-1/2" />
+            <div key={i} style={{ animationDelay: `${i * 60}ms` }}>
+              <div className="aspect-[4/3] skeleton-shimmer rounded-lg" />
+              <div className="mt-2 h-3 skeleton-shimmer rounded w-3/4" />
+              <div className="mt-1 h-2 skeleton-shimmer rounded w-1/2" />
             </div>
           ))}
         </div>
@@ -75,9 +75,7 @@ export function BookRecommendations({
               ? `/books/${rec.slug}`
               : rec.contentType === "post"
                 ? `/posts/${rec.slug}`
-                : rec.contentType === "course"
-                  ? `/courses/${rec.slug}`
-                  : "#";
+                : "#";
 
           return (
             <Link
@@ -87,7 +85,7 @@ export function BookRecommendations({
               className="group block"
               style={{ animationDelay: `${i * 50}ms` }}
             >
-              <div className="aspect-[3/4] bg-gradient-to-br from-secondary/40 to-secondary/10 rounded-lg overflow-hidden border border-border/50 group-hover:border-foreground/30 group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 relative">
+              <div className="aspect-[4/3] bg-gradient-to-br from-secondary/40 to-secondary/10 rounded-lg overflow-hidden border border-border/50 group-hover:border-foreground/30 group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 relative">
                 {rec.imageUrl ? (
                   <img
                     src={rec.imageUrl}
@@ -103,7 +101,7 @@ export function BookRecommendations({
 
                 {/* Match reason badge */}
                 <div className="absolute bottom-2 left-2 right-2">
-                  <span className="block text-[0.4rem] font-medium uppercase tracking-wider text-white/80 bg-black/40 backdrop-blur-sm rounded px-1.5 py-0.5 truncate">
+                  <span className="block text-xs font-medium uppercase tracking-wider text-white/80 bg-black/40 backdrop-blur-sm rounded px-1.5 py-0.5 truncate">
                     {rec.matchReason}
                   </span>
                 </div>
@@ -113,7 +111,7 @@ export function BookRecommendations({
                 {rec.title}
               </p>
               {rec.excerpt && (
-                <p className="mt-0.5 text-[0.55rem] text-muted-foreground line-clamp-2">
+                <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
                   {rec.excerpt}
                 </p>
               )}

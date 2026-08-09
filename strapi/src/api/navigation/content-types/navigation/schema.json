@@ -1,0 +1,58 @@
+{
+  "kind": "collectionType",
+  "collectionName": "navigations",
+  "info": {
+    "singularName": "navigation",
+    "pluralName": "navigations",
+    "displayName": "Navigation",
+    "description": "Site navigation items"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title_en": {
+      "type": "string",
+      "required": true
+    },
+    "title_bn": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string",
+      "required": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["internal", "external", "dropdown"],
+      "default": "internal"
+    },
+    "target": {
+      "type": "string"
+    },
+    "parent": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::navigation.navigation"
+    },
+    "children": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::navigation.navigation",
+      "mappedBy": "parent"
+    },
+    "location": {
+      "type": "enumeration",
+      "enum": ["header", "footer"],
+      "default": "header"
+    },
+    "visible": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}

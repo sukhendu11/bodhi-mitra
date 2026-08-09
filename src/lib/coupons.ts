@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireMinRole } from "./permissions";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuthOrMock } from "@/lib/mock-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Coupon {
@@ -25,7 +25,7 @@ export interface CouponValidation {
   discountAmount?: number;
 }
 
-const db = supabase as any;
+const db = supabase;
 
 /** Fetch all coupons (admin) */
 export const fetchCoupons = createServerFn({ method: "GET" })
@@ -80,13 +80,39 @@ export const deleteCoupon = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-/** Validate and apply a coupon code (requires auth) */
+/** Validate and apply a coupon code (requires auth; mock-aware) */
 export const validateCoupon = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuthOrMock])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  .handler(async ({ data }: any): Promise<CouponValidation> => {
+  .handler(async ({ context, data }: any): Promise<CouponValidation> => {
     const code = (data.code || "").toUpperCase().trim();
     if (!code) return { valid: false, error: "Please enter a coupon code" };
+
+    // Mock mode (no Supabase) — demo coupon so the flow is testable offline
+    if (!context?.supabase) {
+      const subtotal = data.subtotal || 0;
+      if (code === "WELCOME10") {
+        return {
+          valid: true,
+          coupon: {
+            id: "mock-coupon-1",
+            code: "WELCOME10",
+            description: "Demo coupon — 10% off",
+            discount_type: "percentage",
+            discount_value: 10,
+            max_redemptions: null,
+            current_redemptions: 0,
+            expires_at: null,
+            is_active: true,
+            min_purchase_amount: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as Coupon,
+          discountAmount: subtotal * 0.1,
+        };
+      }
+      return { valid: false, error: "Invalid coupon code" };
+    }
 
     const { data: coupon, error } = await db
       .from("coupons")
@@ -112,7 +138,7 @@ export const validateCoupon = createServerFn({ method: "POST" })
     if (coupon.min_purchase_amount > 0 && subtotal < coupon.min_purchase_amount) {
       return {
         valid: false,
-        error: `Minimum purchase of $${coupon.min_purchase_amount.toFixed(2)} required`,
+        error: `Minimum purchase of BDT ${coupon.min_purchase_amount.toFixed(2)} required`,
       };
     }
 
@@ -124,13 +150,13 @@ export const validateCoupon = createServerFn({ method: "POST" })
       discountAmount = Math.min(coupon.discount_value, subtotal);
     }
 
-    return { valid: true, coupon, discountAmount };
+    return { valid: true, coupon: coupon as Coupon, discountAmount };
   });
 
 /** Increment redemption count (called after successful purchase) */
 export async function incrementRedemption(couponId: string): Promise<void> {
   // Use raw SQL for atomic increment to avoid race conditions
-  const { error } = await db.rpc("increment_coupon_redemptions" as any, { coupon_id: couponId }).then(() => ({}));
+  const { error } = await db.rpc("increment_coupon_redemptions" as any, { coupon_id: couponId }).then(() => ({ error: null as any }));
   if (error) {
     // Fallback: sequential read-then-write (not atomic, but better than nothing)
     const { data: coupon } = await db.from("coupons").select("current_redemptions").eq("id", couponId).single();

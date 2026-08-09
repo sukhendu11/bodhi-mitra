@@ -1,0 +1,3511 @@
+{
+  "$comment": "Generated from the frontend mock content (src/lib/mock-data.ts) for the fresh Strapi instance. Import with: node scripts/import-strapi-seed.mjs (see PROJECT.md §18 → Manual Setup Kit).",
+  "version": 1,
+  "generatedAt": "2026-08-08T17:06:17.320Z",
+  "categories": [
+    {
+      "name_en": "Meditation",
+      "name_bn": "ধ্যান",
+      "slug": "meditation",
+      "description_en": "Guided and silent meditation practices, techniques, and reflections on the art of sitting.",
+      "description_bn": "নির্দেশিত ও নীরব ধ্যান অনুশীলন, কৌশল এবং বসার শিল্পের প্রতিফলন।",
+      "color": "#8B5CF6",
+      "visible": true,
+      "sort_order": 0
+    },
+    {
+      "name_en": "Mindfulness",
+      "name_bn": "মাইন্ডফুলনেস",
+      "slug": "mindfulness",
+      "description_en": "Everyday mindfulness practices for cultivating awareness, presence, and peace.",
+      "description_bn": "সচেতনতা, উপস্থিতি এবং শান্তি চাষের জন্য দৈনন্দিন মাইন্ডফুলনেস অনুশীলন।",
+      "color": "#10B981",
+      "visible": true,
+      "sort_order": 1
+    },
+    {
+      "name_en": "Mental Health",
+      "name_bn": "মানসিক স্বাস্থ্য",
+      "slug": "mental-health",
+      "description_en": "Buddhist perspectives on mental health, emotional resilience, and well-being.",
+      "description_bn": "মানসিক স্বাস্থ্য, আবেগগত স্থিতিস্থাপকতা এবং সুস্থতার উপর বৌদ্ধ দৃষ্টিভঙ্গি।",
+      "color": "#F59E0B",
+      "visible": true,
+      "sort_order": 2
+    },
+    {
+      "name_en": "Philosophy",
+      "name_bn": "দর্শন",
+      "slug": "philosophy",
+      "description_en": "Exploring the philosophical foundations of Buddhist thought and their relevance today.",
+      "description_bn": "বৌদ্ধ চিন্তার দার্শনিক ভিত্তি এবং আজ তাদের প্রাসঙ্গিকতা অন্বেষণ।",
+      "color": "#3B82F6",
+      "visible": true,
+      "sort_order": 3
+    },
+    {
+      "name_en": "Buddhist Psychology",
+      "name_bn": "বৌদ্ধ মনোবিজ্ঞান",
+      "slug": "buddhist-psychology",
+      "description_en": "Where ancient Buddhist wisdom meets modern psychological understanding of mind and emotion.",
+      "description_bn": "যেখানে প্রাচীন বৌদ্ধ জ্ঞান মিলিত হয় মন ও আবেগের আধুনিক মনস্তাত্ত্বিক বোঝাপড়ার সাথে।",
+      "color": "#EC4899",
+      "visible": true,
+      "sort_order": 4
+    }
+  ],
+  "tags": [
+    {
+      "name_en": "Beginners",
+      "name_bn": "",
+      "slug": "beginners",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Buddhism",
+      "name_bn": "",
+      "slug": "buddhism",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Compassion",
+      "name_bn": "",
+      "slug": "compassion",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Contemplation",
+      "name_bn": "",
+      "slug": "contemplation",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Daily Practice",
+      "name_bn": "",
+      "slug": "daily-practice",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Emotions",
+      "name_bn": "",
+      "slug": "emotions",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Essays",
+      "name_bn": "",
+      "slug": "essays",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Four Noble Truths",
+      "name_bn": "",
+      "slug": "four-noble-truths",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Guide",
+      "name_bn": "",
+      "slug": "guide",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Loving Kindness",
+      "name_bn": "",
+      "slug": "loving-kindness",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Mbsr",
+      "name_bn": "",
+      "slug": "mbsr",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Meditation",
+      "name_bn": "",
+      "slug": "meditation",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Mental Health",
+      "name_bn": "",
+      "slug": "mental-health",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Metta",
+      "name_bn": "",
+      "slug": "metta",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Mindfulness",
+      "name_bn": "",
+      "slug": "mindfulness",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Philosophy",
+      "name_bn": "",
+      "slug": "philosophy",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Psychology",
+      "name_bn": "",
+      "slug": "psychology",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Resilience",
+      "name_bn": "",
+      "slug": "resilience",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Silence",
+      "name_bn": "",
+      "slug": "silence",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Stress",
+      "name_bn": "",
+      "slug": "stress",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Wellbeing",
+      "name_bn": "",
+      "slug": "wellbeing",
+      "color": "#6B7280"
+    },
+    {
+      "name_en": "Wisdom",
+      "name_bn": "",
+      "slug": "wisdom",
+      "color": "#6B7280"
+    }
+  ],
+  "navigation": [
+    {
+      "title_en": "Home",
+      "title_bn": "হোম",
+      "url": "/",
+      "type": "internal",
+      "location": "header",
+      "visible": true,
+      "sort_order": 0
+    },
+    {
+      "title_en": "Reflections",
+      "title_bn": "প্রতিফলন",
+      "url": "/reflections",
+      "type": "internal",
+      "location": "header",
+      "visible": true,
+      "sort_order": 1
+    },
+    {
+      "title_en": "Books",
+      "title_bn": "বই",
+      "url": "/books",
+      "type": "internal",
+      "location": "header",
+      "visible": true,
+      "sort_order": 2
+    },
+    {
+      "title_en": "Videos",
+      "title_bn": "ভিডিও",
+      "url": "/videos",
+      "type": "internal",
+      "location": "header",
+      "visible": true,
+      "sort_order": 3
+    },
+    {
+      "title_en": "About",
+      "title_bn": "সম্পর্কে",
+      "url": "/about",
+      "type": "internal",
+      "location": "header",
+      "visible": true,
+      "sort_order": 4
+    }
+  ],
+  "pages": [
+    {
+      "title_en": "About Sabbe Satta",
+      "title_bn": "সব্বে সত্তা সম্পর্কে",
+      "slug": "about",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Where ancient wisdom meets modern psychology."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Sabbe Satta is a sanctuary for contemplative practice — reflections, books, and videos bridging Buddhist wisdom with modern mental health."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "যেখানে প্রাচীন জ্ঞান মিলিত হয় আধুনিক মনোবিজ্ঞানের সাথে।"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "সব্বে সত্তা ধ্যানমূলক অনুশীলনের একটি আশ্রয়স্থল — বৌদ্ধ জ্ঞানকে আধুনিক মানসিক স্বাস্থ্যের সাথে যুক্ত করে এমন প্রতিফলন, বই এবং ভিডিও।"
+            }
+          ]
+        }
+      ],
+      "visible": true,
+      "sort_order": 0,
+      "seo_title": "About Sabbe Satta",
+      "seo_description": "About Sabbe Satta — where ancient wisdom meets modern psychology."
+    },
+    {
+      "title_en": "Frequently Asked Questions",
+      "title_bn": "সচরাচর জিজ্ঞাসা",
+      "slug": "faq",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Answers to common questions about the library."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Find answers about reading, purchasing books, the PDF reader, and more."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "লাইব্রেরি সম্পর্কে সাধারণ প্রশ্নের উত্তর।"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "পড়া, বই কেনা, পিডিএফ রিডার এবং আরও অনেক কিছু সম্পর্কে উত্তর খুঁজুন।"
+            }
+          ]
+        }
+      ],
+      "visible": true,
+      "sort_order": 1,
+      "seo_title": "Frequently Asked Questions",
+      "seo_description": "Frequently asked questions about Sabbe Satta."
+    },
+    {
+      "title_en": "Contact",
+      "title_bn": "যোগাযোগ",
+      "slug": "contact",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "We'd love to hear from you."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Send us a message — questions, feedback, or collaboration ideas."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "আমরা আপনার কাছ থেকে শুনতে চাই।"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "আমাদের একটি বার্তা পাঠান — প্রশ্ন, মতামত, বা সহযোগিতার ধারণা।"
+            }
+          ]
+        }
+      ],
+      "visible": true,
+      "sort_order": 2,
+      "seo_title": "Contact",
+      "seo_description": "Get in touch with the Sabbe Satta team."
+    },
+    {
+      "title_en": "Books",
+      "title_bn": "বই",
+      "slug": "books",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Books"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "A small shelf of companions — books we return to, and the ones we recommend without hesitation."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "বই"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "সঙ্গীদের একটি ছোট তাক — যে বইগুলোতে আমরা ফিরে আসি, আর যেগুলো নিঃসন্দেহে সুপারিশ করি।"
+            }
+          ]
+        }
+      ],
+      "visible": true,
+      "sort_order": 3,
+      "seo_title": "Books",
+      "seo_description": "Books — a small shelf of companions we return to."
+    }
+  ],
+  "posts": [
+    {
+      "title_en": "The Art of Sitting Still",
+      "title_bn": "স্থির হয়ে বসার শিল্প",
+      "slug": "the-art-of-sitting-still",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "There is a quiet revolution that happens when you simply sit. No guided voice, no music, no technique to follow — just you, the cushion, and the breath."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "In our culture of constant motion, sitting still feels almost radical. We are trained to do, to achieve, to optimize. Meditation asks us to do the opposite: to stop. Not to stop breathing or thinking, but to stop chasing the next moment."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha sat under the Bodhi tree not because he had a technique, but because he was willing to be with what was. That willingness — to sit with boredom, restlessness, doubt, and even peace — is the real practice."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When we sit without agenda, something shifts. The mind quiets not because we forced it, but because we stopped feeding it. Thoughts still arise, but we no longer chase them."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Start with ten minutes. Sit on a cushion or a chair. Close your eyes or soften your gaze. And simply be. That is enough. That is everything."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "There is a quiet revolution that happens when you simply sit. No guided voice, no music, no technique to follow — just you, the cushion, and the breath."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "In our culture of constant motion, sitting still feels almost radical. We are trained to do, to achieve, to optimize. Meditation asks us to do the opposite: to stop. Not to stop breathing or thinking, but to stop chasing the next moment."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha sat under the Bodhi tree not because he had a technique, but because he was willing to be with what was. That willingness — to sit with boredom, restlessness, doubt, and even peace — is the real practice."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When we sit without agenda, something shifts. The mind quiets not because we forced it, but because we stopped feeding it. Thoughts still arise, but we no longer chase them."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Start with ten minutes. Sit on a cushion or a chair. Close your eyes or soften your gaze. And simply be. That is enough. That is everything."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "An exploration of what it means to be fully present in meditation, beyond technique.",
+      "excerpt_bn": "ধ্যানে পুরোপুরি উপস্থিত থাকার অর্থ কী — কৌশলের বাইরে, একটি অন্বেষণ।",
+      "author": "Ananda",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 0,
+      "categories": [
+        "meditation"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Breath as Anchoring",
+      "title_bn": "নোঙর হিসাবে নিঃশ্বাস",
+      "slug": "breath-as-anchoring",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When the world spins too fast, when thoughts cascade like waterfalls, when anxiety grips your chest — there is always the breath."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The breath is the most reliable anchor we have. It is always here, always now. You cannot breathe in the past. You cannot breathe in the future. You can only breathe in this moment."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Anapanasati — mindfulness of breathing — is perhaps the oldest meditation technique in the world. The Buddha himself practiced it under the Bodhi tree. Not because it is powerful, but because it is simple."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "To practice breath awareness, sit comfortably and close your eyes. Feel the air entering your nostrils. Feel the slight coolness as it passes through. Feel the gentle rise and fall of your chest or belly."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When your mind wanders — and it will — gently return to the breath. No judgment. No frustration. Just a soft return, like a child coming home."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The breath is always available. In traffic. In meetings. In the middle of the night. It asks nothing of you except attention."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When the world spins too fast, when thoughts cascade like waterfalls, when anxiety grips your chest — there is always the breath."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The breath is the most reliable anchor we have. It is always here, always now. You cannot breathe in the past. You cannot breathe in the future. You can only breathe in this moment."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Anapanasati — mindfulness of breathing — is perhaps the oldest meditation technique in the world. The Buddha himself practiced it under the Bodhi tree. Not because it is powerful, but because it is simple."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "To practice breath awareness, sit comfortably and close your eyes. Feel the air entering your nostrils. Feel the slight coolness as it passes through. Feel the gentle rise and fall of your chest or belly."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When your mind wanders — and it will — gently return to the breath. No judgment. No frustration. Just a soft return, like a child coming home."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The breath is always available. In traffic. In meetings. In the middle of the night. It asks nothing of you except attention."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "How the simple act of breathing can ground us in the midst of chaos.",
+      "excerpt_bn": "বিশৃঙ্খলার মধ্যে নিঃশ্বাসের সরল ক্রিয়া কীভাবে আমাদের ভিত্তি দিতে পারে।",
+      "author": "Ananda",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 1,
+      "categories": [
+        "meditation"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Walking Meditation: A Complete Guide",
+      "title_bn": "হাঁটার ধ্যান: একটি সম্পূর্ণ নির্দেশিকা",
+      "slug": "walking-meditation-guide",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "In Zen monasteries, walking meditation — kinhin — is practiced between sitting periods. It is not a break from meditation; it is meditation in motion."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The practice is deceptively simple. Stand still. Feel your feet on the ground. Lift one foot slowly. Move it forward. Place it down. Feel the contact. Repeat with the other foot."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The key is slowness. Much slower than normal walking. So slow that each micro-movement becomes a world of sensation."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "As you walk, coordinate breath with movement. Inhale as you lift. Exhale as you place. This synchrony creates a rhythm that naturally calms the mind."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "You don't need a monastery or a special path. A hallway, a garden, even your living room can become a walking meditation space."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "In Zen monasteries, walking meditation — kinhin — is practiced between sitting periods. It is not a break from meditation; it is meditation in motion."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The practice is deceptively simple. Stand still. Feel your feet on the ground. Lift one foot slowly. Move it forward. Place it down. Feel the contact. Repeat with the other foot."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The key is slowness. Much slower than normal walking. So slow that each micro-movement becomes a world of sensation."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "As you walk, coordinate breath with movement. Inhale as you lift. Exhale as you place. This synchrony creates a rhythm that naturally calms the mind."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "You don't need a monastery or a special path. A hallway, a garden, even your living room can become a walking meditation space."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Rediscover the ancient practice of kinhin — mindful walking as a path to presence.",
+      "excerpt_bn": "কিনহিনের প্রাচীন অনুশীলন পুনরায় আবিষ্কার — উপস্থিতির পথে সচেতন হাঁটা।",
+      "author": "Maya",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 2,
+      "categories": [
+        "meditation"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "The Practice of Loving-Kindness (Metta)",
+      "title_bn": "মৈত্রী অনুশীলন",
+      "slug": "loving-kindness-metta",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Metta, or loving-kindness, is the practice of extending unconditional love — first to yourself, then to others."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The practice begins with yourself. Sit quietly and repeat: \"May I be happy. May I be healthy. May I be safe. May I live with ease.\" Say these words slowly, feeling their meaning."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Then expand to someone you love. Picture them clearly. Repeat the same phrases. Then to a neutral person. Then to a difficult person. Finally, to all beings everywhere."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "This practice rewires the brain. Studies show it increases positive emotions, reduces negative ones, and changes neural pathways associated with empathy."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The deepest benefit is not what metta does for others, but what it does for you. It dissolves the barriers between self and other."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Metta, or loving-kindness, is the practice of extending unconditional love — first to yourself, then to others."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The practice begins with yourself. Sit quietly and repeat: \"May I be happy. May I be healthy. May I be safe. May I live with ease.\" Say these words slowly, feeling their meaning."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Then expand to someone you love. Picture them clearly. Repeat the same phrases. Then to a neutral person. Then to a difficult person. Finally, to all beings everywhere."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "This practice rewires the brain. Studies show it increases positive emotions, reduces negative ones, and changes neural pathways associated with empathy."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The deepest benefit is not what metta does for others, but what it does for you. It dissolves the barriers between self and other."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Cultivating unconditional love for yourself and others through guided metta meditation.",
+      "excerpt_bn": "নির্দেশিত মৈত্রী ধ্যানের মাধ্যমে নিজের এবং অন্যদের জন্য নিঃশর্ত ভালোবাসা গড়ে তোলা।",
+      "author": "Siddhartha",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 3,
+      "categories": [
+        "meditation"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Body Scan Meditation for Deep Relaxation",
+      "title_bn": "গভীর বিশ্রামের জন্য বডি স্ক্যান ধ্যান",
+      "slug": "body-scan-technique",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Most of us carry tension we don't even know about. Tight shoulders. Clenched jaw. Stomach knots. The body scan is a systematic way to notice and release this stored stress."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Lie down in a comfortable position. Close your eyes. Begin at the top of your head and slowly move your attention down through each part of your body."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Notice your forehead. Is there tension? If so, breathe into it and let it soften. Move to your eyes, your jaw, your neck. Each area gets a moment of full attention."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "As you scan, you may discover areas of tightness you never knew existed. That's the point. The body holds what the mind refuses to feel."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "This practice is especially powerful before sleep. Many people find they fall asleep during the scan — and that's perfectly fine."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Most of us carry tension we don't even know about. Tight shoulders. Clenched jaw. Stomach knots. The body scan is a systematic way to notice and release this stored stress."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Lie down in a comfortable position. Close your eyes. Begin at the top of your head and slowly move your attention down through each part of your body."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Notice your forehead. Is there tension? If so, breathe into it and let it soften. Move to your eyes, your jaw, your neck. Each area gets a moment of full attention."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "As you scan, you may discover areas of tightness you never knew existed. That's the point. The body holds what the mind refuses to feel."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "This practice is especially powerful before sleep. Many people find they fall asleep during the scan — and that's perfectly fine."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "A step-by-step guide to the body scan technique — release tension stored in every cell.",
+      "excerpt_bn": "বডি স্ক্যান কৌশলের ধাপে ধাপে নির্দেশিকা — প্রতিটি কোষে সঞ্চিত উত্তেজনা মুক্ত করুন।",
+      "author": "Ananda",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 4,
+      "categories": [
+        "meditation"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Mindfulness in the Morning",
+      "title_bn": "সকালে মাইন্ডফুলনেস",
+      "slug": "mindfulness-in-the-morning",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The first minutes of the day set the tone for everything that follows. Most of us reach for our phones before our feet touch the floor."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "A mindful morning doesn't require an hour. It can be as simple as three conscious breaths before getting out of bed. Feel the sheets. Notice the light."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "As you move through your morning routine — brushing teeth, making tea — do each thing with full attention. This is not about adding something to your morning. It's about doing what you already do, but with presence."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The first minutes of the day set the tone for everything that follows. Most of us reach for our phones before our feet touch the floor."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "A mindful morning doesn't require an hour. It can be as simple as three conscious breaths before getting out of bed. Feel the sheets. Notice the light."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "As you move through your morning routine — brushing teeth, making tea — do each thing with full attention. This is not about adding something to your morning. It's about doing what you already do, but with presence."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Start your day with intention: a gentle morning mindfulness practice.",
+      "excerpt_bn": "আপনার দিনটি উদ্দেশ্য দিয়ে শুরু করুন: একটি সুন্দর সকালের মাইন্ডফুলনেস অনুশীলন।",
+      "author": "Maya",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 5,
+      "categories": [
+        "mindfulness"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "The Art of Deep Listening",
+      "title_bn": "গভীর শ্রবণের শিল্প",
+      "slug": "the-art-of-deep-listening",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Most of us don't listen. We wait to talk. We formulate our response while the other person is still speaking."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Deep listening is the practice of giving someone your complete attention. Not just your ears, but your heart."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "To practice, start by quieting your own mind. Let go of your agenda. Simply be present with the speaker. Notice their tone, their pace, their pauses."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When you truly listen, something remarkable happens. The other person feels heard. Walls come down. Connection deepens."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Most of us don't listen. We wait to talk. We formulate our response while the other person is still speaking."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Deep listening is the practice of giving someone your complete attention. Not just your ears, but your heart."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "To practice, start by quieting your own mind. Let go of your agenda. Simply be present with the speaker. Notice their tone, their pace, their pauses."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When you truly listen, something remarkable happens. The other person feels heard. Walls come down. Connection deepens."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Listening is a practice of presence. Learn to listen beyond words.",
+      "excerpt_bn": "শ্রবণ হলো উপস্থিতির একটি অনুশীলন। শব্দের বাইরে শুনতে শিখুন।",
+      "author": "Maya",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 6,
+      "categories": [
+        "mindfulness"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1474418397713-7ede21d49118?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Eating with Awareness",
+      "title_bn": "সচেতনভাবে খাওয়া",
+      "slug": "eating-with-awareness",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "We eat three or more times a day, yet most meals pass without awareness. Mindful eating is not a diet — it's about bringing full attention to nourishing yourself."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Start with one meal. Before eating, pause. Look at your food. Notice the colors, the textures, the smells. Take a small bite. Chew slowly."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "You'll be surprised at how much more satisfying a meal becomes when you actually taste it. Thich Nhat Hanh suggested eating a tangerine as if it were the first you've ever seen."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "We eat three or more times a day, yet most meals pass without awareness. Mindful eating is not a diet — it's about bringing full attention to nourishing yourself."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Start with one meal. Before eating, pause. Look at your food. Notice the colors, the textures, the smells. Take a small bite. Chew slowly."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "You'll be surprised at how much more satisfying a meal becomes when you actually taste it. Thich Nhat Hanh suggested eating a tangerine as if it were the first you've ever seen."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Transform your relationship with food through mindful eating practices.",
+      "excerpt_bn": "সচেতন খাদ্য গ্রহণ অনুশীলনের মাধ্যমে খাদ্যের সাথে আপনার সম্পর্ক রূপান্তরিত করুন।",
+      "author": "Maya",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 7,
+      "categories": [
+        "mindfulness"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1545389336-cf090694435e?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Mindful Communication: Speaking with Intention",
+      "title_bn": "সচেতন যোগাযোগ: উদ্দেশ্য সহ কথা বলা",
+      "slug": "mindful-communication",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha taught four principles of right speech: is it true, is it kind, is it helpful, and is it the right time?"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Before speaking, pause. A moment to check: Is what I'm about to say true? Is it kind? Is it necessary?"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Mindful communication starts with listening. When someone is speaking, give them your full attention. Don't plan your response. Just listen."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha taught four principles of right speech: is it true, is it kind, is it helpful, and is it the right time?"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Before speaking, pause. A moment to check: Is what I'm about to say true? Is it kind? Is it necessary?"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Mindful communication starts with listening. When someone is speaking, give them your full attention. Don't plan your response. Just listen."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "How to bring mindfulness into every conversation.",
+      "excerpt_bn": "প্রতিটি কথোপকথনে মাইন্ডফুলনেস আনার উপায়।",
+      "author": "Maya",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 8,
+      "categories": [
+        "mindfulness"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1524650359799-842906ca1c06?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Digital Detox: A Mindful Approach to Technology",
+      "title_bn": "ডিজিটাল ডিটক্স: প্রযুক্তির প্রতি সচেতন দৃষ্টিভঙ্গি",
+      "slug": "digital-detox-mindfulness",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Our phones check us more than we check them. On average, we touch our phones 96 times a day."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "A digital detox doesn't mean throwing away your phone. It means creating intentional boundaries."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Start with one hour before bed. No screens. Read a book. Sit in silence. The goal is not to reject technology, but to use it consciously. Your attention is your most precious resource."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Our phones check us more than we check them. On average, we touch our phones 96 times a day."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "A digital detox doesn't mean throwing away your phone. It means creating intentional boundaries."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Start with one hour before bed. No screens. Read a book. Sit in silence. The goal is not to reject technology, but to use it consciously. Your attention is your most precious resource."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Reclaim your attention from screens.",
+      "excerpt_bn": "স্ক্রিন থেকে আপনার মনোযোগ ফিরিয়ে নিন।",
+      "author": "Ananda",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 9,
+      "categories": [
+        "mindfulness"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "The Power of Rest",
+      "title_bn": "বিশ্রামের শক্তি",
+      "slug": "the-power-of-rest",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "We live in a culture that glorifies busyness. But the Buddha taught that rest is not laziness — it is wisdom."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "True rest is not scrolling your phone in bed. It is the complete absence of doing."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The body heals during rest. The mind consolidates memories. Without adequate rest, we operate from a deficit."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "We live in a culture that glorifies busyness. But the Buddha taught that rest is not laziness — it is wisdom."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "True rest is not scrolling your phone in bed. It is the complete absence of doing."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The body heals during rest. The mind consolidates memories. Without adequate rest, we operate from a deficit."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Why true rest is essential for mental health.",
+      "excerpt_bn": "প্রকৃত বিশ্রাম মানসিক স্বাস্থ্যের জন্য কেন অপরিহার্য।",
+      "author": "Siddhartha",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 10,
+      "categories": [
+        "mental-health"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Building Emotional Resilience",
+      "title_bn": "আবেগগত স্থিতিস্থাপকতা গঠন",
+      "slug": "building-emotional-resilience",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Resilience is not about being tough. It's about feeling fully and still finding your footing."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Three practices build resilience: mindfulness — observing emotions without being consumed. Loving-kindness — extending compassion to yourself first. Community — sharing struggles with trusted others."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Resilience is not about being tough. It's about feeling fully and still finding your footing."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Three practices build resilience: mindfulness — observing emotions without being consumed. Loving-kindness — extending compassion to yourself first. Community — sharing struggles with trusted others."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Practical Buddhist approaches to developing inner strength.",
+      "excerpt_bn": "অভ্যন্তরীণ শক্তি গড়ে তোলার বৌদ্ধ পদ্ধতি।",
+      "author": "Siddhartha",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 11,
+      "categories": [
+        "mental-health"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Working with Anxiety",
+      "title_bn": "উদ্বেগের সাথে কাজ",
+      "slug": "working-with-anxiety",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Anxiety arises from attachment — to outcomes, safety, certainty. The antidote is not to eliminate it, but to change our relationship with it."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When anxiety arises, simply notice it. This creates space. Impermanence is the key — anxiety, like all mental states, is temporary."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Anxiety arises from attachment — to outcomes, safety, certainty. The antidote is not to eliminate it, but to change our relationship with it."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When anxiety arises, simply notice it. This creates space. Impermanence is the key — anxiety, like all mental states, is temporary."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Understanding anxiety through impermanence.",
+      "excerpt_bn": "অনিত্যতা থেকে উদ্বেগ বোঝা।",
+      "author": "Siddhartha",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 12,
+      "categories": [
+        "mental-health"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Grief and Letting Go",
+      "title_bn": "শোক ও ছেড়ে দেওয়া",
+      "slug": "grief-and-letting-go",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Loss is inevitable. Grief is not a problem to be solved — it is a process to be honored."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Letting go does not mean forgetting. It means releasing the grip of clinging — the desperate wish that things were different."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Loss is inevitable. Grief is not a problem to be solved — it is a process to be honored."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Letting go does not mean forgetting. It means releasing the grip of clinging — the desperate wish that things were different."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Buddhist wisdom on navigating loss.",
+      "excerpt_bn": "ক্ষতির উপর বৌদ্ধ জ্ঞান।",
+      "author": "Maya",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 13,
+      "categories": [
+        "mental-health"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Compassion Fatigue",
+      "title_bn": "সমবেদনা ক্লান্তি",
+      "slug": "compassion-fatigue",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Compassion fatigue is not weakness — it is the natural consequence of caring deeply without self-care."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Three practices help: Boundaries — know when to say no. Metta for yourself. Rest — not as a reward, but as a practice."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Compassion fatigue is not weakness — it is the natural consequence of caring deeply without self-care."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Three practices help: Boundaries — know when to say no. Metta for yourself. Rest — not as a reward, but as a practice."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "How to sustain compassion without burning out.",
+      "excerpt_bn": "বার্নআউট ছাড়াই সমবেদনা ধারণ করার উপায়।",
+      "author": "Siddhartha",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 14,
+      "categories": [
+        "mental-health"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1519834785169-98be25f4f84a?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Impermanence and Peace",
+      "title_bn": "অনিত্যতা ও শান্তি",
+      "slug": "impermanence-and-peace",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Everything changes. Anicca — impermanence — is one of the three marks of existence."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "If everything passes, then no suffering is permanent. No problem is final. This is liberating, not depressing."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When we accept impermanence, we stop clinging to pleasant experiences and pushing away unpleasant ones."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Everything changes. Anicca — impermanence — is one of the three marks of existence."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "If everything passes, then no suffering is permanent. No problem is final. This is liberating, not depressing."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When we accept impermanence, we stop clinging to pleasant experiences and pushing away unpleasant ones."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Finding freedom in the recognition that all things pass.",
+      "excerpt_bn": "সকল কিছু চলে যায় — এতে স্বাধীনতা।",
+      "author": "Ananda",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 15,
+      "categories": [
+        "philosophy"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1517093602195-b40af9682e2e?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "The Middle Way",
+      "title_bn": "মধ্যম পথ",
+      "slug": "the-middle-way",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Middle Way is not compromise. It is the realization that both extremes miss the point."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "In modern life: workaholism vs. laziness. Overthinking vs. ignorance. The key is balanced response."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Middle Way is not compromise. It is the realization that both extremes miss the point."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "In modern life: workaholism vs. laziness. Overthinking vs. ignorance. The key is balanced response."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Avoiding extremes in modern life.",
+      "excerpt_bn": "আধুনিক জীবনে চরমের মধ্যে বুদ্ধের শিক্ষা।",
+      "author": "Siddhartha",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 16,
+      "categories": [
+        "philosophy"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Dependent Origination",
+      "title_bn": "প্রতীত্যসমুত্পাদ",
+      "slug": "dependent-origination",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Nothing exists in isolation. Everything arises in dependence on conditions — pratityasamutpada."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Understanding these conditions is the first step toward freedom. The chain can be broken by understanding each link."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Nothing exists in isolation. Everything arises in dependence on conditions — pratityasamutpada."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Understanding these conditions is the first step toward freedom. The chain can be broken by understanding each link."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Everything connects — understanding causation.",
+      "excerpt_bn": "সবকিছু সংযুক্ত।",
+      "author": "Ananda",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 17,
+      "categories": [
+        "philosophy"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1470240731273-782d90a0d3f9?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Emptiness in Plain English",
+      "title_bn": "সরল ইংরেজিতে শূন্যতা",
+      "slug": "emptiness-in-plain-english",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Emptiness means nothing has an independent, fixed essence. Everything exists in relationship."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "This is liberating. If nothing has a fixed self, then everything is possible. Change is always possible."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Emptiness means nothing has an independent, fixed essence. Everything exists in relationship."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "This is liberating. If nothing has a fixed self, then everything is possible. Change is always possible."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Sunyata means interdependence, not nothingness.",
+      "excerpt_bn": "শূন্যতা পারস্পরিক নির্ভরশীলতা।",
+      "author": "Ananda",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 18,
+      "categories": [
+        "philosophy"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "The Noble Eightfold Path",
+      "title_bn": "আর্য অষ্টাঙ্গিক পথ",
+      "slug": "the-eightfold-path",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Noble Eightfold Path: Right View, Right Intention, Right Speech, Right Action, Right Livelihood, Right Effort, Right Mindfulness, Right Concentration."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "These eight factors support each other. Together, they form a complete path to freedom."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Noble Eightfold Path: Right View, Right Intention, Right Speech, Right Action, Right Livelihood, Right Effort, Right Mindfulness, Right Concentration."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "These eight factors support each other. Together, they form a complete path to freedom."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "A practical guide to the Buddha's path.",
+      "excerpt_bn": "বুদ্ধের পথের ব্যবহারিক নির্দেশিকা।",
+      "author": "Siddhartha",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 19,
+      "categories": [
+        "philosophy"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1549490349-8643362247b5?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Mind and Emotion in Buddhist Psychology",
+      "title_bn": "বৌদ্ধ মনোবিজ্ঞানে মন ও আবেগ",
+      "slug": "mind-and-emotion-in-buddhist-psychology",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Long before modern psychology mapped the mind, the Abhidharma — the Buddha's psychological teachings — offered a remarkably sophisticated account of mental states."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Abhidharma enumerates dozens of mental factors (cetasikas): wholesome ones like mindfulness, faith, and equanimity, and unwholesome ones like greed, aversion, and delusion."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "What is striking is how contemporary this framework feels. Modern cognitive psychology's distinction between automatic and controlled processes echoes the Abhidharma's division of mental activity into immediate perception and conceptual elaboration."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The key insight is that mental states are not fixed traits — they are processes that arise in dependence on conditions. This means they can be transformed through training."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Buddhist psychology offers a practical, testable claim: attention and compassion are trainable skills, not inborn endowments. Modern neuroplasticity research increasingly supports this view."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Long before modern psychology mapped the mind, the Abhidharma — the Buddha's psychological teachings — offered a remarkably sophisticated account of mental states."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Abhidharma enumerates dozens of mental factors (cetasikas): wholesome ones like mindfulness, faith, and equanimity, and unwholesome ones like greed, aversion, and delusion."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "What is striking is how contemporary this framework feels. Modern cognitive psychology's distinction between automatic and controlled processes echoes the Abhidharma's division of mental activity into immediate perception and conceptual elaboration."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The key insight is that mental states are not fixed traits — they are processes that arise in dependence on conditions. This means they can be transformed through training."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Buddhist psychology offers a practical, testable claim: attention and compassion are trainable skills, not inborn endowments. Modern neuroplasticity research increasingly supports this view."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "How the Abhidharma's map of the mind anticipates modern psychology.",
+      "excerpt_bn": "আধুনিক মনোবিজ্ঞানের পূর্বাভাস হিসেবে অভিধর্মের মনের মানচিত্র।",
+      "author": "Dr. Sarah Weiss",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 20,
+      "categories": [
+        "buddhist-psychology"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1524863479829-916d8e77f114?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "The Five Hindrances: Obstacles to the Mind",
+      "title_bn": "পাঁচটি নীবরণ: মনের বাধা",
+      "slug": "the-five-hindrances",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha identified five hindrances that obscure the mind's natural clarity: sensual desire, ill will, sloth and torpor, restlessness and remorse, and skeptical doubt."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "These are not moral failings — they are universal mental patterns that every practitioner meets. The hindrances are not obstacles to be destroyed but signals to be understood."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Desire arises from the mind's habit of grasping at pleasant experience. Aversion pushes away the unpleasant. Dullness blunts attention. Restlessness scatters it. Doubt corrodes confidence."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Buddhist psychology treats each hindrance with a specific antidote: mindfulness for desire, loving-kindness for aversion, energy for dullness, tranquility for restlessness, and investigation for doubt."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Modern cognitive therapy recognizes the same patterns under different names — craving, avoidance, fatigue, anxiety, and uncertainty. The ancient framework still offers a practical map for working with them."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha identified five hindrances that obscure the mind's natural clarity: sensual desire, ill will, sloth and torpor, restlessness and remorse, and skeptical doubt."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "These are not moral failings — they are universal mental patterns that every practitioner meets. The hindrances are not obstacles to be destroyed but signals to be understood."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Desire arises from the mind's habit of grasping at pleasant experience. Aversion pushes away the unpleasant. Dullness blunts attention. Restlessness scatters it. Doubt corrodes confidence."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Buddhist psychology treats each hindrance with a specific antidote: mindfulness for desire, loving-kindness for aversion, energy for dullness, tranquility for restlessness, and investigation for doubt."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Modern cognitive therapy recognizes the same patterns under different names — craving, avoidance, fatigue, anxiety, and uncertainty. The ancient framework still offers a practical map for working with them."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Understanding the five hindrances — desire, aversion, dullness, restlessness, and doubt.",
+      "excerpt_bn": "পাঁচটি নীবরণ বোঝা — কামনা, ঘৃণা, আলস্য, উদ্ধচিত্ততা এবং সংশয়।",
+      "author": "Dr. Sarah Weiss",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 21,
+      "categories": [
+        "buddhist-psychology"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1487452066049-a710f7296400?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Anatta: The Psychology of No-Self",
+      "title_bn": "অনাত্তা: অনাত্মার মনোবিজ্ঞান",
+      "slug": "anatta-no-self",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Anatta — not-self — is perhaps the most misunderstood of the Buddha's teachings. It does not mean we do not exist. It means there is no fixed, unchanging self to be found."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Modern psychology arrives at a similar conclusion from a different direction. Our sense of self is constructed moment to moment from memory, emotion, and narrative — not a stable essence but an ongoing process."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When we cling to a fixed identity — 'I am anxious', 'I am unworthy' — we freeze a dynamic process into a permanent label. The teaching of anatta loosens that grip."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Research on self-compassion shows that people who can observe their thoughts and emotions without over-identifying with them report lower depression and anxiety. This is anatta in clinical clothing."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The liberating implication: if the self is a process rather than a thing, it can change. No fixed verdict about who you are is final."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Anatta — not-self — is perhaps the most misunderstood of the Buddha's teachings. It does not mean we do not exist. It means there is no fixed, unchanging self to be found."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Modern psychology arrives at a similar conclusion from a different direction. Our sense of self is constructed moment to moment from memory, emotion, and narrative — not a stable essence but an ongoing process."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "When we cling to a fixed identity — 'I am anxious', 'I am unworthy' — we freeze a dynamic process into a permanent label. The teaching of anatta loosens that grip."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Research on self-compassion shows that people who can observe their thoughts and emotions without over-identifying with them report lower depression and anxiety. This is anatta in clinical clothing."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The liberating implication: if the self is a process rather than a thing, it can change. No fixed verdict about who you are is final."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "What the Buddha's teaching on not-self means for identity and mental health.",
+      "excerpt_bn": "পরিচয় এবং মানসিক স্বাস্থ্যের জন্য বুদ্ধের অনাত্মা শিক্ষার অর্থ।",
+      "author": "Ananda",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 22,
+      "categories": [
+        "buddhist-psychology"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Craving and the Science of Desire",
+      "title_bn": "তৃষ্ণা ও কামনার বিজ্ঞান",
+      "slug": "craving-and-desire",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The second noble truth is deceptively simple: suffering arises from craving. Tanha — thirst — is the restless energy that reaches for the next pleasure and recoils from the next pain."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Modern neuroscience tells a parallel story. The dopamine system does not reward satisfaction — it drives anticipation. Craving is the engine of wanting, and wanting is never fully satisfied."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "This is why hedonic adaptation happens: each pleasure, once attained, quickly loses its glow. The mind immediately projects a new object of desire."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha's insight is that we do not need to eliminate desire to be free — we need to understand it. When craving is observed with mindfulness rather than acted on, its compulsive grip weakens."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Psychological approaches like urge surfing and craving awareness training apply exactly this principle, with measurable results in addiction treatment."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The second noble truth is deceptively simple: suffering arises from craving. Tanha — thirst — is the restless energy that reaches for the next pleasure and recoils from the next pain."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Modern neuroscience tells a parallel story. The dopamine system does not reward satisfaction — it drives anticipation. Craving is the engine of wanting, and wanting is never fully satisfied."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "This is why hedonic adaptation happens: each pleasure, once attained, quickly loses its glow. The mind immediately projects a new object of desire."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha's insight is that we do not need to eliminate desire to be free — we need to understand it. When craving is observed with mindfulness rather than acted on, its compulsive grip weakens."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Psychological approaches like urge surfing and craving awareness training apply exactly this principle, with measurable results in addiction treatment."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "How Buddhist and psychological accounts of craving both point toward freedom.",
+      "excerpt_bn": "কীভাবে বৌদ্ধ ও মনস্তাত্ত্বিক তৃষ্ণার ব্যাখ্যা উভয়ই স্বাধীনতার দিকে নির্দেশ করে।",
+      "author": "Maya",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 23,
+      "categories": [
+        "buddhist-psychology"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Equanimity: The Art of Balance",
+      "title_bn": "উপেক্ষা: ভারসাম্যের শিল্প",
+      "slug": "equanimity-balance",
+      "content_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Equanimity — upekkha — is the seventh factor of awakening and the fourth divine abode. It is not indifference or detachment in the cold sense, but an even-minded presence that does not sway with the winds of fortune."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha described the sage as unmoved by praise and blame, gain and loss, pleasure and pain, fame and disrepute — the eight worldly winds."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Equanimity is often misunderstood as passivity. In fact, it is the most active of qualities: the capacity to stay present and responsive without being thrown off balance."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Psychological research connects this to emotional regulation. People with greater equanimity show more stable cardiovascular responses to stress and better recovery after setbacks."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Equanimity is not something we force. It grows naturally as we practice mindfulness and see clearly that all states — pleasant and unpleasant — are impermanent. When nothing can hold us hostage, the mind rests in balance."
+            }
+          ]
+        }
+      ],
+      "content_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Equanimity — upekkha — is the seventh factor of awakening and the fourth divine abode. It is not indifference or detachment in the cold sense, but an even-minded presence that does not sway with the winds of fortune."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "The Buddha described the sage as unmoved by praise and blame, gain and loss, pleasure and pain, fame and disrepute — the eight worldly winds."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Equanimity is often misunderstood as passivity. In fact, it is the most active of qualities: the capacity to stay present and responsive without being thrown off balance."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Psychological research connects this to emotional regulation. People with greater equanimity show more stable cardiovascular responses to stress and better recovery after setbacks."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Equanimity is not something we force. It grows naturally as we practice mindfulness and see clearly that all states — pleasant and unpleasant — are impermanent. When nothing can hold us hostage, the mind rests in balance."
+            }
+          ]
+        }
+      ],
+      "excerpt_en": "Upekkha — the mind that meets gain and loss, praise and blame, with steadiness.",
+      "excerpt_bn": "উপেক্ষা — যে মন লাভ ও ক্ষতি, প্রশংসা ও নিন্দার সাথে স্থিরভাবে মিলিত হয়।",
+      "author": "Siddhartha",
+      "reading_time": 1,
+      "featured": false,
+      "sort_order": 24,
+      "categories": [
+        "buddhist-psychology"
+      ],
+      "tags": [],
+      "seo_description": "",
+      "cover_image_url": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=600&fit=crop&auto=format"
+    }
+  ],
+  "books": [
+    {
+      "title_en": "The Heart of Meditation",
+      "title_bn": "ধ্যানের হৃদয়",
+      "slug": "the-heart-of-meditation",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "A comprehensive guide to meditation practice, from foundational techniques to advanced insights. Covers breath awareness, body scanning, loving-kindness, and open awareness meditation."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "মৌলিক কৌশল থেকে উন্নত অন্তর্দৃষ্টি পর্যন্ত ধ্যান অনুশীলনের একটি বিস্তৃত নির্দেশিকা। শ্বাস সচেতনতা, বডি স্ক্যানিং, মৈত্রী এবং উন্মুক্ত সচেতনতা ধ্যান অন্তর্ভুক্ত।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Siddhartha Gautama",
+      "price": 0,
+      "currency": "BDT",
+      "is_free": true,
+      "book_status": "published",
+      "rating": 4.5,
+      "rating_count": 128,
+      "featured": true,
+      "sort_order": 0,
+      "categories": [
+        "meditation"
+      ],
+      "tags": [
+        "meditation",
+        "buddhism",
+        "mindfulness"
+      ],
+      "seo_description": "A comprehensive guide to meditation practice.",
+      "cover_image_url": "https://images.unsplash.com/photo-1545389336-cf090694435e?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/the-heart-of-meditation.pdf"
+    },
+    {
+      "title_en": "Walking the Middle Way",
+      "title_bn": "মধ্যম পথে হাঁটা",
+      "slug": "walking-the-middle-way",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Practical wisdom for navigating life's challenges with balance and compassion. Drawing from the Buddha's core teachings on the Middle Path between extremes."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "ভারসাম্য এবং সমবেদনার সাথে জীবনের চ্যালেঞ্জ মোকাবেলার জন্য ব্যবহারিক জ্ঞান। চরমের মধ্যে মধ্যম পথ সম্পর্কে বুদ্ধের মূল শিক্ষা থেকে অঙ্কিত।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Ananda Bhikkhu",
+      "price": 1799,
+      "currency": "BDT",
+      "is_free": false,
+      "book_status": "published",
+      "rating": 4.8,
+      "rating_count": 95,
+      "featured": true,
+      "sort_order": 1,
+      "categories": [
+        "philosophy"
+      ],
+      "tags": [
+        "philosophy",
+        "buddhism",
+        "wisdom"
+      ],
+      "seo_description": "Practical wisdom for navigating life's challenges.",
+      "cover_image_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/walking-the-middle-way.pdf"
+    },
+    {
+      "title_en": "Mindful Living: A Daily Practice",
+      "title_bn": "মাইন্ডফুল লিভিং: একটি দৈনন্দিন অনুশীলন",
+      "slug": "mindful-living-daily",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "365 days of mindfulness practices, reflections, and journaling prompts to cultivate awareness in everyday life."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "প্রতিদিনের জীবনে সচেতনতা গড়ে তোলার জন্য ৩৬৫ দিনের মাইন্ডফুলনেস অনুশীলন, প্রতিফলন এবং জার্নালিং প্রম্পট।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Maya Karuna",
+      "price": 0,
+      "currency": "BDT",
+      "is_free": true,
+      "book_status": "published",
+      "rating": 4.7,
+      "rating_count": 203,
+      "featured": true,
+      "sort_order": 2,
+      "categories": [
+        "mindfulness"
+      ],
+      "tags": [
+        "mindfulness",
+        "daily-practice",
+        "wellbeing"
+      ],
+      "seo_description": "365 days of mindfulness practices and reflections.",
+      "cover_image_url": "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/mindful-living-daily.pdf"
+    },
+    {
+      "title_en": "Emotional Resilience: A Buddhist Approach",
+      "title_bn": "আবেগগত স্থিতিস্থাপকতা: একটি বৌদ্ধ দৃষ্টিভঙ্গি",
+      "slug": "emotional-resilience",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Bridging Buddhist psychology and modern neuroscience to build emotional strength, reduce anxiety, and find peace."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "আবেগগত শক্তি তৈরি, উদ্বেগ কমাতে এবং শান্তি খুঁজে পেতে বৌদ্ধ মনোবিজ্ঞান এবং আধুনিক স্নায়ুবিজ্ঞানের সেতুবন্ধন।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Dr. Sarah Weiss",
+      "price": 2399,
+      "currency": "BDT",
+      "is_free": false,
+      "book_status": "published",
+      "rating": 4.6,
+      "rating_count": 76,
+      "featured": false,
+      "sort_order": 3,
+      "categories": [
+        "mental-health"
+      ],
+      "tags": [
+        "mental-health",
+        "psychology",
+        "resilience"
+      ],
+      "seo_description": "Buddhist psychology meets modern neuroscience.",
+      "cover_image_url": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/emotional-resilience.pdf"
+    },
+    {
+      "title_en": "The Art of Sitting Still",
+      "title_bn": "স্থির হয়ে বসার শিল্প",
+      "slug": "art-of-sitting-still",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "A short, accessible introduction to meditation for complete beginners. Learn to sit with yourself in just 10 minutes a day."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "সম্পূর্ণ নতুনদের জন্য ধ্যানের একটি সংক্ষিপ্ত, সহজবোধ্য ভূমিকা। প্রতিদিন মাত্র ১০ মিনিটে নিজের সাথে বসতে শিখুন।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Siddhartha Gautama",
+      "price": 0,
+      "currency": "BDT",
+      "is_free": true,
+      "book_status": "published",
+      "rating": 4.9,
+      "rating_count": 312,
+      "featured": true,
+      "sort_order": 4,
+      "categories": [
+        "meditation"
+      ],
+      "tags": [
+        "meditation",
+        "beginners",
+        "guide"
+      ],
+      "seo_description": "A short introduction to meditation for beginners.",
+      "cover_image_url": "https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/art-of-sitting-still.pdf"
+    },
+    {
+      "title_en": "The Four Noble Truths for Modern Life",
+      "title_bn": "আধুনিক জীবনের জন্য চারটি আর্যসত্য",
+      "slug": "four-noble-truths-modern-life",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Revisiting the Buddha's first teaching through the lens of contemporary challenges — stress, burnout, relationships, and the search for meaning."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "সমসাময়িক চ্যালেঞ্জ — চাপ, বার্নআউট, সম্পর্ক এবং অর্থের সন্ধানের দৃষ্টিকোণ থেকে বুদ্ধের প্রথম উপদেশ পুনর্বিবেচনা।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Ananda Bhikkhu",
+      "price": 1499,
+      "currency": "BDT",
+      "is_free": false,
+      "book_status": "published",
+      "rating": 4.4,
+      "rating_count": 54,
+      "featured": true,
+      "sort_order": 5,
+      "categories": [
+        "philosophy"
+      ],
+      "tags": [
+        "philosophy",
+        "buddhism",
+        "four-noble-truths"
+      ],
+      "seo_description": "Ancient wisdom for modern challenges.",
+      "cover_image_url": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/four-noble-truths-modern-life.pdf"
+    },
+    {
+      "title_en": "Loving-Kindness Meditation: A Practical Guide",
+      "title_bn": "মৈত্রী ধ্যান: একটি ব্যবহারিক নির্দেশিকা",
+      "slug": "loving-kindness-meditation",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "Step-by-step instructions for metta meditation, from self-compassion to radiating love to all beings. Includes guided audio practices."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "নিজের সমবেদনা থেকে সকল প্রাণীর প্রতি ভালোবাসা বিকিরণ পর্যন্ত মৈত্রী ধ্যানের ধাপে ধাপে নির্দেশনা। নির্দেশিত অডিও অনুশীলন অন্তর্ভুক্ত।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Maya Karuna",
+      "price": 0,
+      "currency": "BDT",
+      "is_free": true,
+      "book_status": "published",
+      "rating": 4.8,
+      "rating_count": 167,
+      "featured": true,
+      "sort_order": 6,
+      "categories": [
+        "meditation"
+      ],
+      "tags": [
+        "meditation",
+        "loving-kindness",
+        "metta",
+        "compassion"
+      ],
+      "seo_description": "A practical guide to loving-kindness meditation.",
+      "cover_image_url": "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/loving-kindness-meditation.pdf"
+    },
+    {
+      "title_en": "Buddhist Psychology and the Management of Emotions",
+      "title_bn": "বৌদ্ধ মনোবিজ্ঞান ও আবেগ পরিচালনা",
+      "slug": "buddhist-psychology-emotions",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "How Buddhist psychology offers a sophisticated framework for understanding and working with difficult emotions — anger, jealousy, fear, and desire."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "বৌদ্ধ মনোবিজ্ঞান কীভাবে কঠিন আবেগ — রাগ, হিংসা, ভয় এবং কামনা — বোঝা এবং তার সাথে কাজ করার জন্য একটি সুদক্ষ কাঠামো প্রদান করে।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Dr. Sarah Weiss",
+      "price": 2099,
+      "currency": "BDT",
+      "is_free": false,
+      "book_status": "published",
+      "rating": 4.5,
+      "rating_count": 89,
+      "featured": false,
+      "sort_order": 7,
+      "categories": [
+        "mental-health"
+      ],
+      "tags": [
+        "mental-health",
+        "psychology",
+        "emotions",
+        "buddhism"
+      ],
+      "seo_description": "Understanding emotions through Buddhist psychology.",
+      "cover_image_url": "https://images.unsplash.com/photo-1474418397713-7ede21d49118?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/buddhist-psychology-emotions.pdf"
+    },
+    {
+      "title_en": "Mindfulness-Based Stress Reduction (MBSR) Companion",
+      "title_bn": "মাইন্ডফুলনেস-ভিত্তিক স্ট্রেস রিডাকশন (MBSR) সঙ্গী",
+      "slug": "mindfulness-stress-reduction",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "A week-by-week companion to the MBSR program. Practice instructions, journaling prompts, and reflections for the 8-week journey."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "MBSR প্রোগ্রামের সাপ্তাহিক সঙ্গী। ৮ সপ্তাহের যাত্রার জন্য অনুশীলন নির্দেশনা, জার্নালিং প্রম্পট এবং প্রতিফলন।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Maya Karuna",
+      "price": 1199,
+      "currency": "BDT",
+      "is_free": false,
+      "book_status": "published",
+      "rating": 4.6,
+      "rating_count": 134,
+      "featured": false,
+      "sort_order": 8,
+      "categories": [
+        "mindfulness"
+      ],
+      "tags": [
+        "mindfulness",
+        "stress",
+        "mbsr",
+        "wellbeing"
+      ],
+      "seo_description": "Your companion for the 8-week MBSR program.",
+      "cover_image_url": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/mindfulness-stress-reduction.pdf"
+    },
+    {
+      "title_en": "Silence and Stillness: Contemplative Essays",
+      "title_bn": "নীরবতা ও স্থিরতা: ধ্যানমূলক প্রবন্ধ",
+      "slug": "silence-and-stillness",
+      "description_en": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "A collection of contemplative essays exploring silence, solitude, and the inner landscape. Perfect for bedside reading and morning reflection."
+            }
+          ]
+        }
+      ],
+      "description_bn": [
+        {
+          "type": "paragraph",
+          "children": [
+            {
+              "type": "text",
+              "text": "নীরবতা, একান্ততা এবং অভ্যন্তরীণ পরিদৃশ্য অন্বেষণকারী ধ্যানমূলক প্রবন্ধের সংকলন। শোবার টেবিলে পড়া এবং সকালের প্রতিফলনের জন্য আদর্শ।"
+            }
+          ]
+        }
+      ],
+      "author_name": "Ananda Bhikkhu",
+      "price": 0,
+      "currency": "BDT",
+      "is_free": true,
+      "book_status": "published",
+      "rating": 4.7,
+      "rating_count": 72,
+      "featured": false,
+      "sort_order": 9,
+      "categories": [
+        "philosophy"
+      ],
+      "tags": [
+        "philosophy",
+        "essays",
+        "silence",
+        "contemplation"
+      ],
+      "seo_description": "Contemplative essays on silence and stillness.",
+      "cover_image_url": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=600&fit=crop&auto=format",
+      "pdf_local_path": "/pdfs/silence-and-stillness.pdf"
+    }
+  ],
+  "videos": [
+    {
+      "title_en": "The Four Noble Truths — An Introduction",
+      "title_bn": "চারটি আর্যসত্য — একটি ভূমিকা",
+      "slug": "the-four-noble-truths-an-introduction",
+      "description_en": "A clear and accessible introduction to the Buddha's first teaching after his enlightenment. Covers dukkha, its origin, cessation, and the path.",
+      "description_bn": "বুদ্ধের প্রথম উপদেশের একটি স্পষ্ট ও সহজলভ্য ভূমিকা। দুঃখ, এর উৎপত্তি, নিরোধ এবং পথ — সবকিছু আলোচিত।",
+      "embed_url": "https://www.youtube.com/watch?v=dy-RI3FrdGA",
+      "duration": 1110,
+      "sort_order": 0,
+      "thumbnail_url": "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=640&h=360&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Morning Mindfulness Meditation (20 min)",
+      "title_bn": "সকালের মাইন্ডফুলনেস ধ্যান (২০ মিনিট)",
+      "slug": "morning-mindfulness-meditation-20-min",
+      "description_en": "A guided 20-minute mindfulness meditation to start your day with clarity and presence. Suitable for all levels.",
+      "description_bn": "স্পষ্টতা ও উপস্থিতির সাথে দিন শুরু করার জন্য একটি নির্দেশিত ২০ মিনিটের মাইন্ডফুলনেস ধ্যান। সকল স্তরের জন্য উপযোগী।",
+      "embed_url": "https://www.youtube.com/watch?v=XHvtIcaD194",
+      "duration": 1224,
+      "sort_order": 1,
+      "thumbnail_url": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=640&h=360&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Buddhist Psychology of Emotions",
+      "title_bn": "আবেগের বৌদ্ধ মনোবিজ্ঞান",
+      "slug": "buddhist-psychology-of-emotions",
+      "description_en": "How Buddhist psychology understands emotions — from the five hindrances to working with difficult states of mind with wisdom and compassion.",
+      "description_bn": "বৌদ্ধ মনোবিজ্ঞান কীভাবে আবেগ বোঝে — পাঁচটি নীবরণ থেকে জ্ঞান ও সমবেদনার সাথে কঠিন মনের অবস্থার সাথে কাজ করা পর্যন্ত।",
+      "embed_url": "https://www.youtube.com/watch?v=9OvLOna5_1A",
+      "duration": 1071,
+      "sort_order": 2,
+      "thumbnail_url": "https://images.unsplash.com/photo-1524650359799-842906ca1c06?w=640&h=360&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Walking Meditation — Outdoor Practice",
+      "title_bn": "হাঁটার ধ্যান — উন্মুক্ত অনুশীলন",
+      "slug": "walking-meditation-outdoor-practice",
+      "description_en": "Take your meditation practice outdoors. Learn the traditional art of walking meditation with clear guidance and tips for daily life.",
+      "description_bn": "আপনার ধ্যান অনুশীলনকে বাইরে নিয়ে যান। দৈনন্দিন জীবনের জন্য স্পষ্ট নির্দেশনা ও পরামর্শসহ হাঁটার ধ্যানের ঐতিহ্যবাহী শিল্প শিখুন।",
+      "embed_url": "https://www.youtube.com/watch?v=QdO1vZJgUu0",
+      "duration": 344,
+      "sort_order": 3,
+      "thumbnail_url": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=640&h=360&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Dealing with Anxiety — A Buddhist Perspective",
+      "title_bn": "উদ্বেগ মোকাবেলা — একটি বৌদ্ধ দৃষ্টিভঙ্গি",
+      "slug": "dealing-with-anxiety-a-buddhist-perspective",
+      "description_en": "Practical tools from the Buddhist tradition for working with anxiety, worry, and fear. Includes guided reflection and breathing techniques.",
+      "description_bn": "উদ্বেগ, দুশ্চিন্তা ও ভয়ের সাথে কাজ করার জন্য বৌদ্ধ ঐতিহ্যের ব্যবহারিক উপায়। নির্দেশিত প্রতিফলন ও শ্বাস-কৌশল অন্তর্ভুক্ত।",
+      "embed_url": "https://www.youtube.com/watch?v=k1dgq8MlyH0",
+      "duration": 6400,
+      "sort_order": 4,
+      "thumbnail_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=640&h=360&fit=crop&auto=format"
+    },
+    {
+      "title_en": "The Middle Way in Everyday Life",
+      "title_bn": "দৈনন্দিন জীবনে মধ্যম পথ",
+      "slug": "the-middle-way-in-everyday-life",
+      "description_en": "How to apply the Buddha's teaching on the Middle Way to modern challenges — finding balance between indulgence and asceticism in daily choices.",
+      "description_bn": "আধুনিক চ্যালেঞ্জে বুদ্ধের মধ্যম পথের শিক্ষা কীভাবে প্রয়োগ করবেন — দৈনন্দিন পছন্দে ভোগ ও কঠোরতার মধ্যে ভারসাম্য খুঁজে পাওয়া।",
+      "embed_url": "https://www.youtube.com/watch?v=Tt4JDmyyQxU",
+      "duration": 1800,
+      "sort_order": 5,
+      "thumbnail_url": "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=640&h=360&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Loving-Kindness Guided Practice (15 min)",
+      "title_bn": "মৈত্রী নির্দেশিত অনুশীলন (১৫ মিনিট)",
+      "slug": "loving-kindness-guided-practice-15-min",
+      "description_en": "A gentle guided metta meditation sending love to yourself, loved ones, neutral people, difficult people, and all beings.",
+      "description_bn": "নিজেকে, প্রিয়জনকে, নিরপেক্ষ মানুষকে, কঠিন মানুষকে এবং সকল সত্ত্বাকে ভালোবাসা পাঠানো একটি কোমল নির্দেশিত মৈত্রী ধ্যান।",
+      "embed_url": "https://www.youtube.com/watch?v=5luvQp--B8U",
+      "duration": 1065,
+      "sort_order": 6,
+      "thumbnail_url": "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?w=640&h=360&fit=crop&auto=format"
+    },
+    {
+      "title_en": "Understanding Impermanence (Anicca)",
+      "title_bn": "অনিত্যতা বোঝা (আনিচ্চা)",
+      "slug": "understanding-impermanence-anicca",
+      "description_en": "A talk on the Buddhist concept of impermanence — how recognizing change liberates us from suffering and deepens our appreciation of life.",
+      "description_bn": "অনিত্যতার বৌদ্ধ ধারণার উপর একটি আলোচনা — কীভাবে পরিবর্তনকে স্বীকার করা আমাদের দুঃখ থেকে মুক্ত করে এবং জীবনের প্রতি উপলব্ধি গভীর করে।",
+      "embed_url": "https://www.youtube.com/watch?v=AEQtqW1RAm0",
+      "duration": 2400,
+      "sort_order": 7,
+      "thumbnail_url": "https://images.unsplash.com/photo-1517093602195-b40af9682e2e?w=640&h=360&fit=crop&auto=format"
+    }
+  ],
+  "siteSettings": {
+    "site_name": "Sabbe Satta",
+    "site_name_bn": "সব্বে সত্তা",
+    "site_tagline_en": "Where ancient wisdom meets modern psychology.",
+    "site_tagline_bn": "যেখানে প্রাচীন প্রজ্ঞা আধুনিক মনোবিজ্ঞানের সাথে মিলে।",
+    "accent_color": "#d35400",
+    "contact_email": "",
+    "social_facebook": "",
+    "social_twitter": "",
+    "social_youtube": "",
+    "meta_title": "Sabbe Satta",
+    "meta_description": "A serene blog blending Buddhist teachings with modern mental health, by practicing psychiatrists.",
+    "config": {
+      "branding": {
+        "logo_url": "",
+        "favicon_url": "",
+        "site_name_en": "Sabbe Satta",
+        "site_name_bn": "সব্বে সত্তা",
+        "tagline_en": "Where ancient wisdom meets modern psychology.",
+        "tagline_bn": "যেখানে প্রাচীন প্রজ্ঞা আধুনিক মনোবিজ্ঞানের সাথে মিলে।",
+        "logo_max_width": 120
+      },
+      "hero": {
+        "visible": true,
+        "image_url": "",
+        "eyebrow_en": "❖ Sabbe Satta",
+        "eyebrow_bn": "❖ সব্বে সত্তা",
+        "title_en": "Where ancient wisdom meets modern psychology.",
+        "title_bn": "যেখানে প্রাচীন প্রজ্ঞা আধুনিক মনোবিজ্ঞানের সাথে মিলে।",
+        "desc_en": "Quiet essays on the Buddha teachings, the science of the mind, and the slow art of becoming well.",
+        "desc_bn": "বুদ্ধের শিক্ষা, মনের বিজ্ঞান, এবং সুস্থ হয়ে ওঠার ধীর শিল্প নিয়ে শান্ত প্রবন্ধ।",
+        "cta_label": "Begin reading",
+        "cta_url": "/reflections"
+      },
+      "theme": {
+        "accent_color": "#d35400",
+        "accent_hover": "#e67e22",
+        "mode": "light",
+        "header_visible": true,
+        "font_heading": "Cormorant Garamond, serif",
+        "font_body": "Inter, sans-serif",
+        "font_bn": "Noto Sans Bengali, sans-serif",
+        "font_size_base": 16,
+        "radius_scale": 1,
+        "preset": "warm",
+        "custom_css": ""
+      },
+      "footer": {
+        "copyright_en": "© {year} Sabbe Satta. All rights reserved.",
+        "copyright_bn": "© {year} সব্বে সত্তা। সর্বস্বত্ব সংরক্ষিত।",
+        "text_en": "Where ancient wisdom meets modern psychology.",
+        "text_bn": "যেখানে প্রাচীন প্রজ্ঞা আধুনিক মনোবিজ্ঞানের সাথে মিলে।",
+        "explore_title_en": "Explore",
+        "explore_title_bn": "অন্বেষণ"
+      },
+      "social": {
+        "facebook": "",
+        "twitter": "",
+        "instagram": "",
+        "linkedin": "",
+        "youtube": ""
+      },
+      "contact": {
+        "email": "",
+        "phone": "",
+        "location": "",
+        "title_en": "Get in touch",
+        "title_bn": "যোগাযোগ করুন",
+        "sidebar_email_label_en": "Email",
+        "sidebar_email_label_bn": "ইমেইল",
+        "sidebar_phone_label_en": "Phone",
+        "sidebar_phone_label_bn": "ফোন",
+        "sidebar_location_label_en": "Location",
+        "sidebar_location_label_bn": "অবস্থান",
+        "intro_en": "Send a quiet note. We read everything, and reply when we can.",
+        "intro_bn": "একটি শান্ত বার্তা পাঠান। আমরা সব পড়ি, এবং যখন পারি উত্তর দিই।",
+        "form_name_label_en": "Your name",
+        "form_name_label_bn": "আপনার নাম",
+        "form_email_label_en": "Email",
+        "form_email_label_bn": "ইমেইল",
+        "form_message_label_en": "Message",
+        "form_message_label_bn": "বার্তা",
+        "submit_label_en": "Send",
+        "submit_label_bn": "Send",
+        "success_text_en": "Thank you — your note has arrived.",
+        "success_text_bn": "ধন্যবাদ — আপনার বার্তাটি পৌঁছেছে।",
+        "address_en": "",
+        "address_bn": "",
+        "map_embed_url": ""
+      },
+      "seo": {
+        "meta_desc_en": "A serene blog blending Buddhist teachings with modern mental health, by practicing psychiatrists.",
+        "meta_desc_bn": "অনুশীলনরত মনোরোগ বিশেষজ্ঞদের দ্বারা বৌদ্ধ শিক্ষা ও আধুনিক মানসিক স্বাস্থ্যের সংমিশ্রণে একটি শান্ত ব্লগ।",
+        "og_image_url": "",
+        "google_analytics_id": "",
+        "enable_sitemap": true,
+        "site_url": ""
+      },
+      "article": {
+        "show_author_bio": true,
+        "show_related_posts": true,
+        "sidebar_title_en": "On the path",
+        "sidebar_title_bn": "পথের উপর",
+        "sidebar_text_en": "Quiet writings on the mind, delivered when they are ready.",
+        "sidebar_text_bn": "মন নিয়ে শান্ত লেখা, যখন প্রস্তুত হয় তখন পৌঁছানো হয়।",
+        "newsletter_title_en": "Stay in touch",
+        "newsletter_title_bn": "যোগাযোগে থাকুন",
+        "newsletter_text_en": "Receive new reflections by email — slow, occasional, never noisy.",
+        "newsletter_text_bn": "ইমেলে নতুন প্রতিফলন পান — ধীর, কখনও কখনও, কখনও শব্দময় নয়।",
+        "pullout_title_en": "❖ The Mindful Connection",
+        "pullout_title_bn": "❖ দ্য মাইন্ডফুল কানেকশন",
+        "pullout_text_en": "Mindfulness is not about clearing the mind — it is about learning to sit with what is already here, without reaching for the next thought, the next distraction, the next fix.",
+        "pullout_text_bn": "মননশীলতা মন খালি করা নয় — এটি এখানে যা আছে তার সাথে বসতে শেখা, পরবর্তী চিন্তা, পরবর্তী বিক্ষেপ, পরবর্তী সমাধানের জন্য না পৌঁছে।"
+      },
+      "about": {
+        "eyebrow_en": "About",
+        "eyebrow_bn": "পরিচিতি",
+        "title_en": "A quiet conversation between two traditions.",
+        "title_bn": "দুই ঐতিহ্যের মধ্যে একটি শান্ত কথোপকথন।",
+        "body_en": "Sabbe Satta — a friend on the path of awakening — is a small journal maintained by practicing psychiatrists who have spent many years sitting with patients in clinic, and many mornings sitting in silence on the cushion. We write at the seam where two great traditions of mind meet.",
+        "body_bn": "সব্বে সত্তা — জাগরণের পথে এক বন্ধু — একটি ছোট জার্নাল, যা অনুশীলনরত মনোরোগ বিশেষজ্ঞদের দ্বারা পরিচালিত।",
+        "mission_en": "",
+        "mission_bn": "",
+        "image_url": "",
+        "image_alt_en": "",
+        "image_alt_bn": "",
+        "note_title_en": "Editorial note",
+        "note_title_bn": "সম্পাদকীয় নোট",
+        "note_text_en": "Nothing on this site constitutes medical advice. If you are suffering, please reach out to a qualified clinician in your community.",
+        "note_text_bn": "এই সাইটের কিছুই চিকিৎসা পরামর্শ নয়। যদি আপনি কষ্টে থাকেন, অনুগ্রহ করে আপনার কমিউনিটিতে একজন যোগ্য চিকিৎসকের কাছে যান।"
+      },
+      "maintenance": {
+        "enabled": false,
+        "title_en": "We'll be back soon",
+        "title_bn": "আমরা শীঘ্রই ফিরে আসছি",
+        "message_en": "We are performing scheduled maintenance. Please check back soon.",
+        "message_bn": "আমরা নির্ধারিত রক্ষণাবেক্ষণ করছি। অনুগ্রহ করে শীঘ্রই আবার দেখুন।"
+      },
+      "features": {
+        "reader_annotations": true,
+        "reading_stats": true,
+        "book_recommendations": true,
+        "podcasts": false,
+        "donations": false,
+        "course_certificates": false,
+        "newsletter_automation": false,
+        "ai_chat": true
+      },
+      "reader": {
+        "sign_in_prompt_title": "Sign in to read",
+        "sign_in_prompt_message": "Sign in to read books",
+        "bookmarks_tab_label_en": "Bookmarks",
+        "bookmarks_tab_label_bn": "বুকমার্ক",
+        "notes_tab_label_en": "Notes",
+        "notes_tab_label_bn": "নোটস",
+        "search_tab_label_en": "Search",
+        "search_tab_label_bn": "অনুসন্ধান",
+        "bookmarks_empty_en": "No bookmarks yet",
+        "bookmarks_empty_bn": "এখনও কোনো বুকমার্ক নেই",
+        "notes_empty_en": "No notes yet",
+        "notes_empty_bn": "এখনও কোনো নোট নেই",
+        "no_pdf_message_en": "No PDF available for this book.",
+        "no_pdf_message_bn": "এই বইয়ের জন্য কোনো PDF উপলব্ধ নেই।",
+        "open_reader_failed_en": "Failed to open the reader. Please try again.",
+        "open_reader_failed_bn": "পাঠক খুলতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",
+        "default_theme": "sepia",
+        "default_font_size": 1,
+        "default_line_height": 1.8,
+        "allow_download": false,
+        "show_page_numbers": true
+      },
+      "commerce": {
+        "proceed_checkout_label_en": "Proceed to Checkout",
+        "proceed_checkout_label_bn": "চেকআউটে যান",
+        "checkout_notice_en": "You are about to complete your purchase. By proceeding, you agree to our refund policy.",
+        "checkout_notice_bn": "আপনি আপনার ক্রয় সম্পন্ন করতে চলেছেন। এগিয়ে গিয়ে, আপনি আমাদের ফেরত নীতি সম্মত হন।",
+        "cart_empty_en": "Your cart is empty",
+        "cart_empty_bn": "আপনার কার্ট খালি",
+        "cart_sign_in_desc_en": "Sign in to view items in your cart.",
+        "cart_sign_in_desc_bn": "আপনার কার্টের আইটেম দেখতে সাইন ইন করুন।",
+        "subtotal_label_en": "Subtotal",
+        "subtotal_label_bn": "সাবটোটাল",
+        "currency": "USD",
+        "currency_symbol": "$",
+        "tax_rate": 0,
+        "refund_policy_en": "",
+        "refund_policy_bn": "",
+        "cart_title_en": "Your Cart",
+        "cart_title_bn": "আপনার কার্ট",
+        "checkout_success_en": "Purchase complete! Books have been added to your library.",
+        "checkout_success_bn": "ক্রয় সম্পন্ন! বই আপনার লাইব্রেরিতে যোগ করা হয়েছে।",
+        "checkout_cancel_en": "Checkout was cancelled. Your cart items are still saved.",
+        "checkout_cancel_bn": "চেকআউট বাতিল হয়েছে। আপনার কার্ট আইটেমগুলি সংরক্ষিত আছে।",
+        "purchase_success_en": "Book purchased! You can now read it.",
+        "purchase_success_bn": "বই কেনা হয়েছে! আপনি এখন এটি পড়তে পারেন।",
+        "purchase_cancel_en": "Purchase was cancelled. No charges were made.",
+        "purchase_cancel_bn": "ক্রয় বাতিল হয়েছে। কোনো চার্জ নেওয়া হয়নি।",
+        "get_free_copy_label_en": "Get Free Copy",
+        "get_free_copy_label_bn": "বিনামূল্যে কপি নিন"
+      },
+      "navigation": {
+        "sticky_header": true,
+        "show_breadcrumbs": true,
+        "mobile_nav_style": "slide",
+        "max_depth": 2,
+        "show_icons": true
+      },
+      "email": {
+        "sender_name": "Sabbe Satta",
+        "sender_email": "onboarding@resend.dev",
+        "reply_to": "",
+        "enabled": true
+      },
+      "book_grid": {
+        "page_size": 12,
+        "eyebrow_en": "Books",
+        "eyebrow_bn": "বই",
+        "columns_mobile": 1,
+        "columns_tablet": 2,
+        "columns_desktop": 4,
+        "gap": 40,
+        "cover_aspect_ratio": "2/3",
+        "card_radius": 12,
+        "show_author": true,
+        "show_free_badge": true,
+        "show_featured_badge": true,
+        "title_font_size": 20,
+        "author_font_size": 16,
+        "taxonomy_font_size": 14,
+        "title_lines": 2
+      },
+      "home": {
+        "recently_added_title_en": "Recently Added",
+        "recently_added_title_bn": "সম্প্রতি যুক্ত",
+        "featured_books_title_en": "Featured Books",
+        "featured_books_title_bn": "বৈশিষ্ট্যযুক্ত বই",
+        "videos_title_en": "Recent Videos",
+        "videos_title_bn": "সাম্প্রতিক ভিডিও",
+        "newsletter_heading_en": "Stay in Touch",
+        "newsletter_heading_bn": "যোগাযোগে থাকুন"
+      },
+      "ai_chat": {
+        "welcome_message_en": "Namaste! I'm Bodhi, your guide to the wisdom here. Ask me about books, reflections, or anything on your mind.",
+        "welcome_message_bn": "নমস্কার! আমি বোধি, এখানের জ্ঞানের জন্য আপনার গাইড। বই, প্রতিফলন বা আপনার মনের কোনো কিছু সম্পর্কে জিজ্ঞাসা করুন।",
+        "panel_title_en": "Ask Bodhi",
+        "panel_title_bn": "বোধিকে জিজ্ঞাসা করুন",
+        "panel_subtitle_en": "AI-powered wisdom guide",
+        "panel_subtitle_bn": "AI-চালিত জ্ঞান গাইড",
+        "assistant_name": "Bodhi",
+        "disclaimer_en": "Responses are AI-generated and may not always be accurate",
+        "disclaimer_bn": "উত্তরগুলি AI-জেনারেটেড এবং সবসময় সঠিক নাও হতে পারে"
+      },
+      "comments": {
+        "section_title_en": "Reflections",
+        "section_title_bn": "প্রতিফলন",
+        "empty_state_en": "No reflections yet. Be the first to share.",
+        "empty_state_bn": "এখনও কোনো প্রতিফলন নেই। প্রথম শেয়ার করুন।",
+        "share_thought_placeholder_en": "Share your thoughts...",
+        "share_thought_placeholder_bn": "আপনার চিন্তা শেয়ার করুন...",
+        "sign_in_to_share_en": "Sign in to share a reflection",
+        "sign_in_to_share_bn": "প্রতিফলন শেয়ার করতে সাইন ইন করুন",
+        "delete_dialog_title_en": "Delete reflection?",
+        "delete_dialog_title_bn": "প্রতিফলন মুছবেন?",
+        "delete_dialog_desc_en": "Are you sure? This cannot be undone.",
+        "delete_dialog_desc_bn": "আপনি কি নিশ্চিত? এটি ফেরানো যাবে না।"
+      },
+      "library": {
+        "title_en": "My Library",
+        "title_bn": "আমার লাইব্রেরি",
+        "meta_desc_en": "Your personal library of owned books.",
+        "meta_desc_bn": "আপনার মালিকানাধীন বইয়ের ব্যক্তিগত লাইব্রেরি।",
+        "empty_state_en": "Your library is empty. Explore books to get started.",
+        "empty_state_bn": "আপনার লাইব্রেরি খালি। শুরু করতে বই অন্বেষণ করুন।",
+        "sign_in_heading_en": "Sign in to view your library",
+        "sign_in_heading_bn": "আপনার লাইব্রেরি দেখতে সাইন ইন করুন",
+        "sign_in_desc_en": "Please sign in to access your personal library.",
+        "sign_in_desc_bn": "আপনার ব্যক্তিগত লাইব্রেরি অ্যাক্সেস করতে সাইন ইন করুন।",
+        "sort_recent_label_en": "Most Recent",
+        "sort_recent_label_bn": "সর্বশেষ",
+        "sort_title_label_en": "Title",
+        "sort_title_label_bn": "শিরোনাম",
+        "sort_progress_label_en": "Reading Progress",
+        "sort_progress_label_bn": "পড়ার অগ্রগতি",
+        "filter_all_label_en": "All",
+        "filter_all_label_bn": "সব",
+        "filter_in_progress_label_en": "In Progress",
+        "filter_in_progress_label_bn": "চলমান",
+        "filter_completed_label_en": "Completed",
+        "filter_completed_label_bn": "সমাপ্ত",
+        "filter_not_started_label_en": "Not Started",
+        "filter_not_started_label_bn": "শুরু হয়নি",
+        "status_completed_en": "Completed",
+        "status_completed_bn": "সমাপ্ত",
+        "status_not_started_en": "Not Started",
+        "status_not_started_bn": "শুরু হয়নি",
+        "empty_heading_en": "Your library is empty",
+        "empty_heading_bn": "আপনার লাইব্রেরি খালি",
+        "empty_desc_en": "Explore our collection of books and start reading.",
+        "empty_desc_bn": "আমাদের বই সংগ্রহ অন্বেষণ করুন এবং পড়া শুরু করুন।"
+      },
+      "search": {
+        "title_en": "Search",
+        "title_bn": "অনুসন্ধান"
+      },
+      "profile": {
+        "title_en": "Profile",
+        "title_bn": "প্রোফাইল"
+      },
+      "bookmarks": {
+        "title_en": "Bookmarks",
+        "title_bn": "বুকমার্ক",
+        "empty_en": "No bookmarks yet",
+        "empty_bn": "এখনও কোনো বুকমার্ক নেই"
+      },
+      "error": {
+        "not_found_title_en": "Page not found",
+        "not_found_title_bn": "পৃষ্ঠা পাওয়া যায়নি",
+        "not_found_message_en": "The page you're looking for doesn't exist or has moved.",
+        "not_found_message_bn": "আপনি যে পৃষ্ঠাটি খুঁজছেন তা নেই বা সরানো হয়েছে।",
+        "generic_title_en": "Something went wrong",
+        "generic_title_bn": "কিছু ভুল হয়েছে"
+      },
+      "book_detail": {
+        "rating_label_en": "Rating",
+        "rating_label_bn": "রেটিং",
+        "description_label_en": "Description",
+        "description_label_bn": "বিবরণ",
+        "pages_label_en": "Pages",
+        "pages_label_bn": "পৃষ্ঠা",
+        "reading_time_label_en": "Reading time",
+        "reading_time_label_bn": "পড়ার সময়",
+        "isbn_label_en": "ISBN",
+        "isbn_label_bn": "আইএসবিএন",
+        "price_label_en": "Price",
+        "price_label_bn": "মূল্য",
+        "file_size_label_en": "File size",
+        "file_size_label_bn": "ফাইলের আকার",
+        "refund_policy_label_en": "Refund policy",
+        "refund_policy_label_bn": "ফেরত নীতি",
+        "rating_breakdown_label_en": "Rating breakdown",
+        "rating_breakdown_label_bn": "রেটিং ভাঙ্গন",
+        "continue_reading_label_en": "Continue Reading",
+        "continue_reading_label_bn": "পড়া চালিয়ে যান",
+        "read_now_label_en": "Read Now",
+        "read_now_label_bn": "এখন পড়ুন",
+        "add_to_cart_label_en": "Add to Cart",
+        "add_to_cart_label_bn": "কার্টে যোগ করুন",
+        "free_to_read_label_en": "Free to Read",
+        "free_to_read_label_bn": "বিনামূল্যে পড়ুন",
+        "featured_badge_en": "Featured",
+        "featured_badge_bn": "বৈশিষ্ট্যযুক্ত",
+        "free_badge_en": "Free",
+        "free_badge_bn": "বিনামূল্যে",
+        "not_found_heading_en": "Book not found",
+        "not_found_heading_bn": "বই পাওয়া যায়নি",
+        "purchase_success_en": "Purchase complete! Books have been added to your library.",
+        "purchase_success_bn": "ক্রয় সম্পন্ন! বই আপনার লাইব্রেরিতে যোগ করা হয়েছে।",
+        "purchase_cancel_en": "Checkout was cancelled.",
+        "purchase_cancel_bn": "চেকআউট বাতিল হয়েছে।",
+        "already_owned_en": "You already own this book.",
+        "already_owned_bn": "আপনি ইতিমধ্যে এই বইটি মালিক।",
+        "added_to_library_en": "This book has been added to your library.",
+        "added_to_library_bn": "এই বইটি আপনার লাইব্রেরিতে যোগ করা হয়েছে।",
+        "purchase_failed_en": "Purchase failed. Please try again.",
+        "purchase_failed_bn": "ক্রয় ব্যর্থ হয়েছে। আবার চেষ্টা করুন।"
+      },
+      "newsletter": {
+        "already_subscribed_en": "You're already subscribed.",
+        "already_subscribed_bn": "আপনি ইতিমধ্যে সাবস্ক্রাইব করেছেন।",
+        "success_message_en": "Thanks! You're now subscribed.",
+        "success_message_bn": "ধন্যবাদ! আপনি এখন সাবস্ক্রাইব করেছেন।",
+        "error_fallback_en": "Something went wrong. Please try again.",
+        "error_fallback_bn": "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।",
+        "subscribe_another_en": "Subscribe another email",
+        "subscribe_another_bn": "অন্য ইমেইল সাবস্ক্রাইব করুন",
+        "subscribe_button_en": "Subscribe",
+        "subscribe_button_bn": "সাবস্ক্রাইব"
+      }
+    }
+  }
+}

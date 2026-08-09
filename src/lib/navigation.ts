@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { mockFetchPublicNavItems } from "@/lib/mock-data";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
@@ -240,15 +241,8 @@ export function clearNavCache(): void {
 
 /** Fetch only visible items (for public rendering), optionally by location. */
 export async function fetchPublicNavItems(location?: NavLocation): Promise<NavItem[]> {
-  let query = (supabase as any)
-    .from("navigation_items")
-    .select(NAV_SELECT)
-    .eq("visible", true)
-    .order("sort_order", { ascending: true });
-  if (location) query = query.eq("location", location);
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(mapRow);
+  // Mock data first (frontend dev mode)
+  return mockFetchPublicNavItems();
 }
 
 /** Update an existing navigation item. */
@@ -264,9 +258,10 @@ export async function updateNavItem(id: string, input: Partial<NavItemInput>): P
   if (input.sort_order !== undefined) payload.sort_order = input.sort_order;
   if (input.visible !== undefined) payload.visible = input.visible;
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("navigation_items")
-    .update(payload)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update(payload as any)
     .eq("id", id)
     .select(NAV_SELECT)
     .single();

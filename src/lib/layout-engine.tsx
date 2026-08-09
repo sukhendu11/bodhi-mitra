@@ -135,12 +135,12 @@ function defaultLayout(): LayoutState {
         })),
       },
     ],
-    brandName: "Bodhi Mitra",
+    brandName: "Sabbe Satta",
     logoUrl: "",
     logoMaxWidth: 120,
     faviconUrl: "",
     footerText: "Where ancient wisdom meets modern psychology.",
-    copyright: "\u00a9 Bodhi Mitra. All rights reserved.",
+    copyright: "\u00a9 Sabbe Satta. All rights reserved.",
     contactEmail: "",
     contactPhone: "",
     social: { ...EMPTY_SOCIAL },
@@ -157,7 +157,12 @@ function pickLocalized(valEn: string, valBn: string | null | undefined, lang: "e
   return lang === "bn" && valBn?.trim() ? valBn.trim() : valEn;
 }
 
-function buildFooterSections(navTree: NavTreeNode[], lang: "en" | "bn"): FooterSection[] {
+function buildFooterSections(
+  navTree: NavTreeNode[],
+  lang: "en" | "bn",
+  exploreTitleEn = "Explore",
+  exploreTitleBn = "\u0985\u09a8\u09cd\u09ac\u09c7\u09b7\u09a3",
+): FooterSection[] {
   const dropdownGroups = navTree.filter((n) => n.type === "dropdown");
   const topLevelLinks = navTree.filter((n) => n.type !== "dropdown");
 
@@ -172,7 +177,7 @@ function buildFooterSections(navTree: NavTreeNode[], lang: "en" | "bn"): FooterS
       })),
     })),
     {
-      title: lang === "bn" ? "\u0985\u09a8\u09cd\u09ac\u09c7\u09b7\u09a3" : "Explore",
+      title: lang === "bn" ? exploreTitleBn : exploreTitleEn,
       links: topLevelLinks.map((n) => ({
         key: n.id,
         to: n.type === "external" ? n.url : n.slug || "/",
@@ -196,16 +201,21 @@ function normalizeLayout(
 
   const brandName =
     pickLocalized(settings.branding.site_name_en, settings.branding.site_name_bn, lang) ||
-    "Bodhi Mitra";
+    "Sabbe Satta";
   const footerText = pickLocalized(settings.footer.text_en, settings.footer.text_bn, lang);
   const copyrightTpl =
     pickLocalized(settings.footer.copyright_en, settings.footer.copyright_bn, lang) ||
-    "\u00a9 Bodhi Mitra. All rights reserved.";
+    "\u00a9 Sabbe Satta. All rights reserved.";
   const copyright = copyrightTpl.replace("{year}", String(new Date().getFullYear()));
 
   const dropdownGroups = effectiveNav.filter((n) => n.type === "dropdown");
   const mobileItems = effectiveNav.filter((n) => n.type !== "dropdown");
-  const footerSections = buildFooterSections(effectiveNav, lang);
+  const footerSections = buildFooterSections(
+    effectiveNav,
+    lang,
+    settings.footer.explore_title_en,
+    settings.footer.explore_title_bn,
+  );
 
   return {
     navTree: effectiveNav,

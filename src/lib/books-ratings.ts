@@ -1,4 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
+import { isMockMode } from "@/lib/data-source";
+import {
+  mockGetUserRating,
+  mockGetRatingAggregates,
+  mockSubmitRating as mockSubmit,
+  mockDeleteRating as mockDelete,
+} from "@/lib/mock-ratings";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
@@ -37,8 +44,15 @@ export async function submitRating(input: RatingSubmission): Promise<BookRating>
     throw new Error("Rating must be between 1 and 5");
   }
 
+  // Mock mode (M3 E3.2) — upsert into the mock ratings store; aggregates
+  // recompute from the store (mirrors the DB trigger in JS).
+  if (isMockMode()) {
+    const row = await mockSubmit(input);
+    return row as unknown as BookRating;
+  }
+
   // Check if user already rated this book — if so, update instead of insert
-  const { data: existing } = await (supabase as any)
+  const { data: existing } = await supabase
     .from("book_ratings")
     .select("id, rating")
     .eq("user_id", input.userId)
@@ -47,7 +61,7 @@ export async function submitRating(input: RatingSubmission): Promise<BookRating>
 
   if (existing) {
     // Update existing rating
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("book_ratings")
       .update({ rating: input.rating, updated_at: new Date().toISOString() })
       .eq("id", existing.id)
@@ -59,7 +73,7 @@ export async function submitRating(input: RatingSubmission): Promise<BookRating>
   }
 
   // Insert new rating
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("book_ratings")
     .insert({
       user_id: input.userId,
@@ -81,7 +95,12 @@ export async function getUserRating(
 ): Promise<number | null> {
   if (!userId) return null;
 
-  const { data, error } = await (supabase as any)
+  // Mock mode (M3 E3.2) — from the mock ratings store.
+  if (isMockMode()) {
+    return mockGetUserRating(userId, bookId);
+  }
+
+  const { data, error } = await supabase
     .from("book_ratings")
     .select("rating")
     .eq("user_id", userId)
@@ -95,14 +114,19 @@ export async function getUserRating(
 /* ─── Get rating aggregates for a book ─────────────────────────── */
 
 export async function getBookRatingAggregates(bookId: string): Promise<RatingAggregate> {
-  const { data: book } = await (supabase as any)
+  // Mock mode (M3 E3.2) — recompute from the mock ratings store.
+  if (isMockMode()) {
+    return mockGetRatingAggregates(bookId);
+  }
+
+  const { data: book } = await supabase
     .from("books")
     .select("avg_rating, total_ratings")
     .eq("id", bookId)
     .maybeSingle();
 
   // Get rating distribution
-  const { data: ratings } = await (supabase as any)
+  const { data: ratings } = await supabase
     .from("book_ratings")
     .select("rating")
     .eq("book_id", bookId);
@@ -124,7 +148,13 @@ export async function getBookRatingAggregates(bookId: string): Promise<RatingAgg
 /* ─── Delete user's rating for a book ──────────────────────────── */
 
 export async function deleteRating(userId: string, bookId: string): Promise<void> {
-  const { error } = await (supabase as any)
+  // Mock mode (M3 E3.2) — from the mock ratings store.
+  if (isMockMode()) {
+    await mockDelete(userId, bookId);
+    return;
+  }
+
+  const { error } = await supabase
     .from("book_ratings")
     .delete()
     .eq("user_id", userId)

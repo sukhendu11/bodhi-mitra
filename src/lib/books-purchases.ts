@@ -1,6 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/lib/permissions";
+import { requireAuthOrMock } from "@/lib/mock-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { isMockMode } from "@/lib/data-source";
+import { mockFetchPublishedBooks } from "@/lib/mock-data";
+import {
+  mockGetPurchases,
+  mockHasPurchase,
+  mockPurchaseBook,
+} from "@/lib/mock-commerce";
+import { DEMO_ACCOUNTS } from "@/lib/mock-session";
+import { mockGetUserProgress } from "@/lib/mock-progress";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
@@ -39,8 +48,21 @@ export async function canAccessPdf(
     return { canAccess: false, reason: "unauthenticated" };
   }
 
+  // Mock mode (M2 E2.3) — resolve access from mock purchases.
+  if (isMockMode()) {
+    const { data } = await mockFetchPublishedBooks(1, 100);
+    const book = data.find((b) => b.id === bookId);
+    if (!book) return { canAccess: false, reason: "not_purchased" };
+    if (book.is_free) return { canAccess: true, reason: "free" };
+    if (userId === DEMO_ACCOUNTS.admin.id) return { canAccess: true, reason: "admin" };
+    if (await mockHasPurchase(userId, bookId)) {
+      return { canAccess: true, reason: "owned" };
+    }
+    return { canAccess: false, reason: "not_purchased" };
+  }
+
   // Check if it's a free book (all authenticated users can view free books)
-  const { data: book } = await (supabase as any)
+  const { data: book } = await supabase
     .from("books")
     .select("is_free, status")
     .eq("id", bookId)
@@ -55,7 +77,7 @@ export async function canAccessPdf(
   }
 
   // Check admin/editor access
-  const { data: roleRow } = await (supabase as any)
+  const { data: roleRow } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
@@ -67,7 +89,7 @@ export async function canAccessPdf(
   }
 
   // Check if user has purchased this book
-  const { data: purchase } = await (supabase as any)
+  const { data: purchase } = await supabase
     .from("purchases")
     .select("id")
     .eq("user_id", userId)
@@ -114,8 +136,25 @@ export async function purchaseBook(
   bookId: string,
   amountPaid = 0,
 ): Promise<PurchaseResult> {
+  // Mock mode (M2 E2.2) — idempotent mock purchase.
+  if (isMockMode()) {
+    const result = await mockPurchaseBook(userId, bookId, amountPaid);
+    const purchase: Purchase | undefined = result.purchase
+      ? {
+          id: result.purchase.id,
+          user_id: result.purchase.userId,
+          book_id: result.purchase.bookId,
+          amount_paid: result.purchase.amountPaid,
+          purchase_date: result.purchase.purchaseDate,
+          created_at: result.purchase.createdAt,
+          updated_at: result.purchase.updatedAt,
+        }
+      : undefined;
+    return { alreadyOwned: result.alreadyOwned, purchase };
+  }
+
   // Check if already owned (idempotency guard)
-  const { data: existing } = await (supabase as any)
+  const { data: existing } = await supabase
     .from("purchases")
     .select("id, user_id, book_id, amount_paid, purchase_date, created_at, updated_at")
     .eq("user_id", userId)
@@ -127,7 +166,7 @@ export async function purchaseBook(
   }
 
   // Create the purchase
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("purchases")
     .insert({
       user_id: userId,
@@ -161,8 +200,17 @@ export async function checkOwnership(
 ): Promise<boolean> {
   if (!userId) return false;
 
+  // Mock mode (M2 E2.3) — resolve from mock purchases.
+  if (isMockMode()) {
+    if (userId === DEMO_ACCOUNTS.admin.id) return true;
+    const { data } = await mockFetchPublishedBooks(1, 100);
+    const book = data.find((b) => b.id === bookId);
+    if (book?.is_free) return true;
+    return mockHasPurchase(userId, bookId);
+  }
+
   // Free books are "owned" by everyone authenticated
-  const { data: book } = await (supabase as any)
+  const { data: book } = await supabase
     .from("books")
     .select("is_free")
     .eq("id", bookId)
@@ -170,7 +218,7 @@ export async function checkOwnership(
 
   if (book?.is_free) return true;
 
-  const { data: purchase } = await (supabase as any)
+  const { data: purchase } = await supabase
     .from("purchases")
     .select("id")
     .eq("user_id", userId)
@@ -183,7 +231,21 @@ export async function checkOwnership(
 /* ─── Get all purchases for the current user ───────────────────── */
 
 export async function getUserPurchases(userId: string): Promise<Purchase[]> {
-  const { data, error } = await (supabase as any)
+  // Mock mode (M2 E2.4) — purchases history from the mock store.
+  if (isMockMode()) {
+    const rows = await mockGetPurchases(userId);
+    return rows.map((p) => ({
+      id: p.id,
+      user_id: p.userId,
+      book_id: p.bookId,
+      amount_paid: p.amountPaid,
+      purchase_date: p.purchaseDate,
+      created_at: p.createdAt,
+      updated_at: p.updatedAt,
+    })) as Purchase[];
+  }
+
+  const { data, error } = await supabase
     .from("purchases")
     .select("*")
     .eq("user_id", userId)
@@ -199,7 +261,7 @@ export async function getBookPurchaseStats(bookId: string): Promise<{
   totalPurchases: number;
   totalRevenue: number;
 }> {
-  const db = supabase as any;
+  const db = supabase;
 
   const { count } = await db
     .from("purchases")
@@ -242,10 +304,48 @@ export interface LibraryResult {
 }
 
 export const getMyLibrary = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    const db = supabase as any;
+  .middleware([requireAuthOrMock])
+  .handler(async ({ context, data }) => {
+    const { supabase, userId: ctxUserId } = context;
+    const input = (data ?? {}) as { userId?: string };
+    // Mock trust boundary: no real JWT in mock mode, so the client passes
+    // the demo userId for attribution. Real mode uses the validated JWT.
+    const userId = ctxUserId ?? input.userId ?? "";
+    if (!userId) return { books: [] } as LibraryResult;
+
+    if (isMockMode()) {
+      const purchases = await mockGetPurchases(userId);
+      if (!purchases.length) return { books: [] } as LibraryResult;
+
+      const { data: books } = await mockFetchPublishedBooks(1, 100);
+      const bookMap = new Map(books.map((b) => [b.id, b]));
+      // M3 E3.1 — join reading progress so library progress bars render.
+      const progressRows = await mockGetUserProgress(userId);
+      const progressMap = new Map(progressRows.map((pr) => [pr.book_id, pr]));
+
+      const result: LibraryBook[] = purchases.map((p) => {
+        const book = bookMap.get(p.bookId);
+        const prog = progressMap.get(p.bookId);
+        return {
+          bookId: p.bookId,
+          titleEn: book?.title_en ?? null,
+          titleBn: book?.title_bn ?? null,
+          slug: book?.slug ?? "",
+          coverImage: book?.cover_image ?? null,
+          author: book?.author_name ?? null,
+          isFree: !!book?.is_free,
+          purchaseDate: p.purchaseDate,
+          progressPct: prog?.progress_pct ?? 0,
+          completed: prog?.completed ?? false,
+          lastPage: prog?.last_page ?? 0,
+          totalPages: prog?.total_pages ?? book?.pages ?? 0,
+          updatedAt: prog?.updated_at ?? null,
+        };
+      });
+      return { books: result } as LibraryResult;
+    }
+
+    const db = supabase;
 
     const { data: purchases } = await db
       .from("purchases")

@@ -1,197 +1,71 @@
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+const DEFAULT_SITE_URL = "https://sabbesatta.com";
+const DEFAULT_OG_IMAGE = "/og-default.png";
 
-/* ─── Check if sitemap generation is enabled ──────────────────── */
-
-/** Fetch site settings and check if the sitemap toggle is on. Defaults to true on error. */
-export async function isSitemapEnabled(): Promise<boolean> {
-  try {
-    const { data } = await (supabaseAdmin as any)
-      .from("site_settings")
-      .select("config")
-      .eq("id", true)
-      .maybeSingle();
-    return data?.config?.seo?.enable_sitemap !== false;
-  } catch (e) {
-    console.error("[sitemap] Failed to check sitemap setting:", e);
-    return true;
-  }
+interface SeoOptions {
+  title: string;
+  description: string;
+  path: string;
+  ogImage?: string;
+  ogType?: string;
+  noIndex?: boolean;
+  siteName?: string;
+  siteUrl?: string;
+  scripts?: Array<{ type: string; JSON: unknown }>;
 }
 
-/* ─── Static URLs that are always present ───────────────────────── */
+export function seoHead(opts: SeoOptions) {
+  const siteName = opts.siteName || "Sabbe Satta";
+  const siteUrl = opts.siteUrl || DEFAULT_SITE_URL;
+  const canonical = `${siteUrl}${opts.path}`;
+  const fullTitle = `${opts.title} — ${siteName}`;
 
-const STATIC_ROUTES = [
-  { path: "/", changefreq: "daily", priority: 1.0 },
-  { path: "/buddhist-psychology", changefreq: "weekly", priority: 0.9 },
-  { path: "/wisdom", changefreq: "weekly", priority: 0.8 },
-  { path: "/satsang", changefreq: "weekly", priority: 0.8 },
-  { path: "/about", changefreq: "monthly", priority: 0.7 },
-  { path: "/contact", changefreq: "monthly", priority: 0.6 },
-  { path: "/books", changefreq: "weekly", priority: 0.6 },
-] as const;
+  const links: Record<string, string>[] = [
+    { rel: "canonical", href: canonical },
+    { rel: "alternate", hrefLang: "en", href: canonical },
+    { rel: "alternate", hrefLang: "bn", href: canonical },
+    { rel: "alternate", hrefLang: "x-default", href: canonical },
+  ];
 
-/* ─── XML helpers ───────────────────────────────────────────────── */
+  const meta: Record<string, string>[] = [
+    { title: fullTitle },
+    { name: "description", content: opts.description },
+    { property: "og:title", content: opts.title },
+    { property: "og:description", content: opts.description },
+    { property: "og:url", content: canonical },
+    { property: "og:type", content: opts.ogType || "website" },
+    { property: "og:site_name", content: siteName },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: opts.title },
+    { name: "twitter:description", content: opts.description },
+  ];
 
-function xmlUrl({
-  loc,
-  lastmod,
-  changefreq,
-  priority,
-}: {
-  loc: string;
-  lastmod?: string;
-  changefreq?: string;
-  priority?: number;
-}): string {
-  const parts = [`    <url>`, `      <loc>${escapeXml(loc)}</loc>`];
-  if (lastmod) parts.push(`      <lastmod>${lastmod}</lastmod>`);
-  if (changefreq) parts.push(`      <changefreq>${changefreq}</changefreq>`);
-  if (priority !== undefined) parts.push(`      <priority>${priority.toFixed(1)}</priority>`);
-  parts.push(`    </url>`);
-  return parts.join("\n");
-}
-
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return new Date().toISOString().slice(0, 10);
-  return iso.slice(0, 10);
-}
-
-/* ─── Generate sitemap XML ──────────────────────────────────────── */
-
-export async function generateSitemapXml(baseUrl: string): Promise<string> {
-  const urls: string[] = [];
-
-  for (const route of STATIC_ROUTES) {
-    urls.push(
-      xmlUrl({
-        loc: `${baseUrl}${route.path}`,
-        changefreq: route.changefreq,
-        priority: route.priority,
-      }),
+  if (opts.ogImage) {
+    meta.push(
+      { property: "og:image", content: opts.ogImage },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: opts.ogImage },
+    );
+  } else {
+    // Always have a fallback OG image for social sharing
+    meta.push(
+      { property: "og:image", content: `${siteUrl}${DEFAULT_OG_IMAGE}` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: `${siteUrl}${DEFAULT_OG_IMAGE}` },
     );
   }
 
-  try {
-    const { data: posts } = await (supabaseAdmin as any)
-      .from("posts")
-      .select("slug, updated_at, created_at")
-      .eq("status", "published");
-    if (posts) {
-      for (const post of posts) {
-        urls.push(
-          xmlUrl({
-            loc: `${baseUrl}/posts/${post.slug}`,
-            lastmod: formatDate(post.updated_at || post.created_at),
-            changefreq: "monthly",
-            priority: 0.6,
-          }),
-        );
-      }
-    }
-  } catch (e) {
-    console.error("[sitemap] Failed to fetch posts:", e);
+  if (opts.noIndex) {
+    meta.push({ name: "robots", content: "noindex, nofollow" });
   }
 
-  try {
-    const { data: books } = await (supabaseAdmin as any)
-      .from("books")
-      .select("slug, updated_at, created_at")
-      .eq("status", "published");
-    if (books) {
-      for (const book of books) {
-        if (book.slug) {
-          urls.push(
-            xmlUrl({
-              loc: `${baseUrl}/books/${book.slug}`,
-              lastmod: formatDate(book.updated_at || book.created_at),
-              changefreq: "monthly",
-              priority: 0.7,
-            }),
-          );
-        }
-      }
-    }
-  } catch (e) {
-    console.error("[sitemap] Failed to fetch books:", e);
+  const result: { meta: Record<string, string>[]; links: Record<string, string>[]; scripts?: Array<{ type: string; JSON: unknown }> } = { meta, links };
+  if (opts.scripts?.length) {
+    result.scripts = opts.scripts;
   }
-
-  try {
-    const { data: pages } = await (supabaseAdmin as any)
-      .from("pages")
-      .select("slug, updated_at, created_at")
-      .eq("visible", true);
-    if (pages) {
-      for (const page of pages) {
-        if (page.slug) {
-          urls.push(
-            xmlUrl({
-              loc: `${baseUrl}/pages/${page.slug}`,
-              lastmod: formatDate(page.updated_at || page.created_at),
-              changefreq: "monthly",
-              priority: 0.7,
-            }),
-          );
-        }
-      }
-    }
-  } catch (e) {
-    console.error("[sitemap] Failed to fetch pages:", e);
-  }
-
-  try {
-    const { data: courses } = await (supabaseAdmin as any)
-      .from("courses")
-      .select("slug, updated_at, created_at")
-      .eq("published", true);
-    if (courses) {
-      for (const course of courses) {
-        if (course.slug) {
-          urls.push(
-            xmlUrl({
-              loc: `${baseUrl}/courses/${course.slug}`,
-              lastmod: formatDate(course.updated_at || course.created_at),
-              changefreq: "monthly",
-              priority: 0.6,
-            }),
-          );
-        }
-      }
-    }
-  } catch (e) {
-    console.error("[sitemap] Failed to fetch courses:", e);
-  }
-
-  return [
-    `<?xml version="1.0" encoding="UTF-8"?>`,
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
-    urls.join("\n"),
-    `</urlset>`,
-  ].join("\n");
+  return result;
 }
 
-/* ─── Generate robots.txt ───────────────────────────────────────── */
-
-export function generateRobotsTxt(baseUrl: string): string {
-  return [
-    `User-agent: *`,
-    `Allow: /`,
-    ``,
-    `# Disallow admin and auth pages`,
-    `Disallow: /admin/`,
-    `Disallow: /login`,
-    `Disallow: /onboarding`,
-    `Disallow: /api/`,
-    ``,
-    `# Sitemap`,
-    `Sitemap: ${baseUrl}/sitemap.xml`,
-    ``,
-  ].join("\n");
-}
+/* Server-side SEO helpers (sitemap, robots.txt) live in seo.server.ts —
+   they touch supabaseAdmin and must never be imported by client code. */

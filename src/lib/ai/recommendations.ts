@@ -14,7 +14,7 @@ import type { Book } from "@/lib/books";
 /* ─── Types ────────────────────────────────────────────────────── */
 
 export interface ContentRecommendation {
-  contentType: "book" | "post" | "course" | "video";
+  contentType: "book" | "post" | "video";
   contentId: string;
   title: string;
   slug: string;
@@ -109,11 +109,6 @@ async function enrichRecommendations(
         break;
       case "post":
         table = "posts";
-        titleField = "title_en";
-        imageField = "cover_image";
-        break;
-      case "course":
-        table = "courses";
         titleField = "title_en";
         imageField = "cover_image";
         break;

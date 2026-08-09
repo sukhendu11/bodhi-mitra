@@ -535,11 +535,11 @@ function FormRenderer({ node }: RendererProps) {
             {field.type === "textarea" ? (
               <textarea
                 placeholder={field.placeholder}
-                className="w-full px-3 py-2 text-sm border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40"
+                className="w-full px-3 py-2 text-sm border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200"
                 rows={3}
               />
             ) : field.type === "select" ? (
-              <select className="w-full px-3 py-2 text-sm border border-border/60 rounded-lg bg-background focus:outline-none">
+              <select className="w-full px-3 py-2 text-sm border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200">
                 <option value="">{field.placeholder}</option>
               </select>
             ) : field.type === "checkbox" ? (
@@ -551,7 +551,7 @@ function FormRenderer({ node }: RendererProps) {
               <input
                 type={field.type === "email" ? "email" : "text"}
                 placeholder={field.placeholder}
-                className="w-full px-3 py-2 text-sm border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40"
+                className="w-full px-3 py-2 text-sm border border-border/60 rounded-lg bg-background focus:outline-none focus:border-foreground/40 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200"
               />
             )}
           </div>

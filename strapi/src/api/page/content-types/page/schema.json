@@ -1,0 +1,53 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pages",
+  "info": {
+    "singularName": "page",
+    "pluralName": "pages",
+    "displayName": "Pages",
+    "description": "Bilingual pages with sections"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title_en": {
+      "type": "string",
+      "required": true
+    },
+    "title_bn": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title_en"
+    },
+    "content_en": {
+      "type": "blocks"
+    },
+    "content_bn": {
+      "type": "blocks"
+    },
+    "sections": {
+      "type": "json"
+    },
+    "banner_url": {
+      "type": "string"
+    },
+    "visible": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    },
+    "seo_title": {
+      "type": "string"
+    },
+    "seo_description": {
+      "type": "text",
+      "maxLength": 160
+    }
+  }
+}

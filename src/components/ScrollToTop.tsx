@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 export function ScrollToTop() {
   const [visible, setVisible] = useState(false);
+  const [clicked, setClicked] = useState(false);
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
@@ -19,15 +20,19 @@ export function ScrollToTop() {
     };
   }, []);
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
+    setClicked(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    setTimeout(() => setClicked(false), 600);
+  }, []);
 
   return (
     <button
       onClick={scrollToTop}
       aria-label="Scroll to top"
-      className={`fixed bottom-6 right-6 z-50 w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border/50 bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-background hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 transition-all duration-300 ${
+      className={`fixed bottom-20 right-6 z-50 w-10 h-10 flex items-center justify-center rounded-full border border-border/50 bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-background hover:shadow-md active:translate-y-0 transition-all duration-300 ${
+        clicked ? "-translate-y-1 scale-90" : "hover:-translate-y-0.5"
+      } ${
         visible
           ? "opacity-100 translate-y-0 pointer-events-auto"
           : "opacity-0 translate-y-3 pointer-events-none"

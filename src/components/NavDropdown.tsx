@@ -1,91 +1,147 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useRef, useState } from "react";
 
 interface DropdownItem {
   to: string;
   label: string;
   external?: boolean;
+  children?: DropdownItem[];
 }
 
 interface NavDropdownProps {
   triggerLabel: string;
+  to?: string;
   items: DropdownItem[];
 }
 
-export function NavDropdown({ triggerLabel, items }: NavDropdownProps) {
+function DropdownSubItem({ item }: { item: DropdownItem }) {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined as any);
 
-  const handleMouseEnter = () => {
+  const hasChildren = item.children && item.children.length > 0;
+
+  const handleEnter = () => {
     clearTimeout(timeoutRef.current);
     setOpen(true);
   };
 
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setOpen(false);
-    }, 150);
+  const handleLeave = () => {
+    timeoutRef.current = setTimeout(() => setOpen(false), 150);
   };
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
+  if (hasChildren) {
+    return (
+      <div
+        className="relative"
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+      >
+        {/* Parent item — clickable link + hover opens submenu */}
+        <div className="flex items-center justify-between">
+          <Link
+            to={item.to as any}
+            className="flex-1 rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-300"
+          >
+            {item.label}
+          </Link>
+          <button
+            onMouseEnter={handleEnter}
+            className="px-2 py-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            tabIndex={-1}
+          >
+            <ChevronRight className="h-3 w-3 opacity-50" />
+          </button>
+        </div>
+        {/* Flyout submenu */}
+        {open && (
+          <div
+            className="absolute top-0 left-full z-50 ml-1 w-48 rounded-md border border-border/60 bg-popover text-popover-foreground p-1.5 shadow-xl animate-in fade-in-0 zoom-in-95 slide-in-from-left-1 duration-150"
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+          >
+            {item.children!.map((child) => (
+              <DropdownLink key={child.to} item={child} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return <DropdownLink item={item} />;
+}
+
+function DropdownLink({ item }: { item: DropdownItem }) {
+  if (item.external) {
+    return (
+      <a
+        href={item.to}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-300"
+      >
+        {item.label}
+      </a>
+    );
+  }
+  return (
+    <Link
+      to={item.to as any}
+      className="block w-full rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-300"
+    >
+      {item.label}
+    </Link>
+  );
+}
+
+export function NavDropdown({ triggerLabel, to, items }: NavDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined as any);
+
+  const handleEnter = () => {
+    clearTimeout(timeoutRef.current);
+    setOpen(true);
+  };
+
+  const handleLeave = () => {
+    timeoutRef.current = setTimeout(() => setOpen(false), 100);
+  };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="inline-flex">
-        <DropdownMenuTrigger asChild>
-          <button className="group relative inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-200 cursor-pointer">
-            {triggerLabel}
-            <ChevronDown className="h-3 w-3 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-            <span className="absolute -bottom-1 left-0 h-px w-full bg-foreground/50 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left" />
-          </button>
-        </DropdownMenuTrigger>
-      </div>
-      <DropdownMenuContent
-        align="start"
-        sideOffset={8}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="w-56 rounded-md border border-border/60 bg-background/95 backdrop-blur-md p-1.5 shadow-lg
-          data-[state=open]:animate-in data-[state=closed]:animate-out
-          data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0
-          data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95
-          data-[state=open]:slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2
-          duration-200"
-      >
-        {items.map((item) => (
-          <DropdownMenuItem key={item.to} asChild className="p-0">
-            {item.external ? (
-              <a
-                href={item.to}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
-              >
-                {item.label}
-              </a>
-            ) : (
-              <Link
-                to={item.to}
-                className="block w-full rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-200"
-                activeProps={{ className: "text-foreground bg-secondary/40" }}
-              >
-                {item.label}
-              </Link>
-            )}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div
+      className="relative group"
+      data-state={open ? "open" : "closed"}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
+      {/* Trigger */}
+      {to ? (
+        <Link
+          to={to}
+          className="group relative inline-flex items-center gap-1 text-base text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-300"
+          activeOptions={{ exact: to === "/" }}
+        >
+          {triggerLabel}
+          <ChevronDown className="h-3 w-3 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          <span className="absolute -bottom-1 left-0 h-px w-full bg-foreground/50 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out origin-left" />
+        </Link>
+      ) : (
+        <button className="group relative inline-flex items-center gap-1 text-base text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-300 cursor-pointer">
+          {triggerLabel}
+          <ChevronDown className="h-3 w-3 transition-transform duration-300 group-data-[state=open]:rotate-180" />
+          <span className="absolute -bottom-1 left-0 h-px w-full bg-foreground/50 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out origin-left" />
+        </button>
+      )}
+
+      {/* Dropdown panel */}
+      {open && (
+        <div className="absolute top-full left-0 z-50 mt-2 w-56 rounded-md border border-border/60 bg-popover text-popover-foreground p-1.5 shadow-xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
+          {items.map((item) => (
+            <DropdownSubItem key={item.to} item={item} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

@@ -3,7 +3,7 @@ import { getServerSiteUrl } from "@/lib/site-url";
 /** Shared email HTML layout with BM branding */
 export function emailLayout(bodyContent: string, options?: { preheader?: string; brandName?: string; tagline?: string }): string {
   const preheader = options?.preheader || "";
-  const brandName = options?.brandName || "Bodhi Mitra";
+  const brandName = options?.brandName || "Sabbe Satta";
   const tagline = options?.tagline || "Where ancient wisdom meets modern psychology";
   const siteUrl = getServerSiteUrl();
   return `

@@ -1,113 +1,124 @@
+/**
+ * Orders / receipts — user-facing order history (mock-first seam).
+ *
+ * The `orders` table does not exist in the Supabase schema yet (mock is the
+ * source of truth for receipts, per mock-first dev). In mock mode this reads
+ * `mockGetOrders`; in real mode it derives per-purchase receipts from the
+ * `purchases` table until a dedicated `orders` table lands (documented in
+ * ARCHITECTURE.md Adapter Contract).
+ */
+import { createServerFn } from "@tanstack/react-start";
+import { requireAuthOrMock } from "@/lib/mock-auth";
+import { isMockMode } from "@/lib/data-source";
+import { mockGetOrders, type MockOrder } from "@/lib/mock-commerce";
 import { supabase } from "@/integrations/supabase/client";
 
-/* ─── Types ──────────────────────────────────────────────────────── */
+/* ─── Public receipt shape ─────────────────────────────────────── */
 
-export interface OrderData {
+export interface OrderReceiptItem {
+  bookId: string;
+  titleEn: string | null;
+  titleBn: string | null;
+  price: number;
+}
+
+export interface OrderReceipt {
   id: string;
-  user_id: string;
-  book_id: string;
-  amount_paid: number;
-  purchase_date: string;
-  created_at: string;
-  updated_at: string;
-  /** Joined from books table */
-  book_title_en?: string;
-  book_title_bn?: string;
-  book_slug?: string;
-  /** Joined from profiles table */
-  user_email?: string;
-  user_display_name?: string;
+  createdAt: string;
+  items: OrderReceiptItem[];
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
 }
 
-export interface OrderStats {
-  totalOrders: number;
-  totalRevenue: number;
-  freeOrders: number;
-  paidOrders: number;
-}
+/* ─── Mappers ──────────────────────────────────────────────────── */
 
-/* ─── Fetch orders with joins ────────────────────────────────────── */
-
-export async function fetchOrders(
-  page = 1,
-  pageSize = 20,
-  options?: { search?: string },
-): Promise<{ data: OrderData[]; total: number }> {
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-
-  const db = supabase as any;
-
-  // Fetch purchases with book and profile joins
-  let query = db
-    .from("purchases")
-    .select(
-      `
-      *,
-      books!inner(title_en, title_bn, slug),
-      profiles!inner(email, display_name)
-    `,
-      { count: "exact" },
-    )
-    .order("purchase_date", { ascending: false })
-    .range(from, to);
-
-  if (options?.search?.trim()) {
-    const q = options.search.trim().replace(/[%_]/g, "");
-    if (q) {
-      query = query.or(
-        `books.title_en.ilike.*${q}*,books.title_bn.ilike.*${q}*,profiles.email.ilike.*${q}*,profiles.display_name.ilike.*${q}*`,
-      );
-    }
-  }
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  const orders: OrderData[] = (data ?? []).map((row: any) => ({
-    id: row.id,
-    user_id: row.user_id,
-    book_id: row.book_id,
-    amount_paid: row.amount_paid,
-    purchase_date: row.purchase_date,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    book_title_en: row.books?.title_en,
-    book_title_bn: row.books?.title_bn,
-    book_slug: row.books?.slug,
-    user_email: row.profiles?.email,
-    user_display_name: row.profiles?.display_name,
-  }));
-
-  return { data: orders, total: count ?? 0 };
-}
-
-/* ─── Order stats for admin dashboard ────────────────────────────── */
-
-export async function getOrderStats(): Promise<OrderStats> {
-  const db = supabase as any;
-
-  const [
-    { count: totalOrders },
-    { count: freeOrders },
-    { count: paidOrders },
-    { data: revenueData },
-  ] = await Promise.all([
-    db.from("purchases").select("*", { count: "exact", head: true }),
-    db.from("purchases").select("*", { count: "exact", head: true }).eq("amount_paid", 0),
-    db.from("purchases").select("*", { count: "exact", head: true }).gt("amount_paid", 0),
-    db.from("purchases").select("amount_paid").gt("amount_paid", 0),
-  ]);
-
-  const totalRevenue = (revenueData ?? []).reduce(
-    (sum: number, p: { amount_paid: number }) => sum + Number(p.amount_paid ?? 0),
-    0,
-  );
-
+function mockToReceipt(order: MockOrder): OrderReceipt {
+  const subtotal = order.items.reduce((sum, i) => sum + i.price, 0);
   return {
-    totalOrders: totalOrders ?? 0,
-    totalRevenue,
-    freeOrders: freeOrders ?? 0,
-    paidOrders: paidOrders ?? 0,
+    id: order.id,
+    createdAt: order.createdAt,
+    items: order.items.map((i) => ({
+      bookId: i.bookId,
+      titleEn: i.titleEn,
+      titleBn: i.titleBn,
+      price: i.price,
+    })),
+    subtotal,
+    discount: order.discount ?? 0,
+    tax: order.tax ?? 0,
+    total: order.total,
   };
 }
+
+/* ─── Server fn ────────────────────────────────────────────────── */
+
+export const getOrders = createServerFn({ method: "POST" })
+  .middleware([requireAuthOrMock])
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { userId: string | null; supabase: any };
+      data: unknown;
+    }) => {
+      const { supabase: sb, userId: ctxUserId } = context;
+      const input = (data ?? {}) as { userId?: string };
+      // Mock trust boundary: no real JWT in mock mode, so the client passes the
+      // demo userId for attribution. Real mode uses the validated JWT.
+      const userId = ctxUserId ?? input.userId ?? "";
+      if (!userId) return [] as OrderReceipt[];
+
+      if (isMockMode()) {
+        const orders = await mockGetOrders(userId);
+        return orders.map(mockToReceipt);
+      }
+
+      // Real mode — no `orders` table yet; derive one-item receipts from the
+      // `purchases` table. Swap for the real orders query when the table lands.
+      const { data: purchases, error } = await sb
+        .from("purchases")
+        .select("id, book_id, amount_paid, purchase_date")
+        .eq("user_id", userId)
+        .order("purchase_date", { ascending: false });
+
+      if (error) throw error;
+      const rows = (purchases ?? []) as {
+        id: string;
+        book_id: string;
+        amount_paid: number;
+        purchase_date: string;
+      }[];
+      if (!rows.length) return [] as OrderReceipt[];
+
+      const bookIds = rows.map((p) => p.book_id);
+      const { data: books } = await sb
+        .from("books")
+        .select("id, title_en, title_bn")
+        .in("id", bookIds);
+      const bookMap = new Map((books ?? []).map((b: any) => [b.id, b]));
+
+      return rows.map((row): OrderReceipt => {
+        const book = (bookMap.get(row.book_id) ?? {}) as { title_en?: string; title_bn?: string };
+        const price = Number(row.amount_paid);
+        return {
+          id: row.id,
+          createdAt: row.purchase_date,
+          items: [
+            {
+              bookId: row.book_id,
+              titleEn: book.title_en ?? null,
+              titleBn: book.title_bn ?? null,
+              price,
+            },
+          ],
+          subtotal: price,
+          discount: 0,
+          tax: 0,
+          total: price,
+        };
+      });
+    },
+  );

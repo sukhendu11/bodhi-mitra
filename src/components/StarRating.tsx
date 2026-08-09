@@ -55,17 +55,17 @@ export function StarRating({
                 if (isInteractive) setHovered(0);
               }}
               className={cn(
-                "transition-all duration-150",
+                "transition-all duration-200",
                 isInteractive ? "cursor-pointer hover:scale-110 active:scale-90" : "cursor-default",
                 disabled && "opacity-60",
               )}
               aria-label={`${starValue} star${starValue > 1 ? "s" : ""}`}
             >
               <svg
-                className={cn(size, "transition-colors duration-150")}
+                className={cn(size, "transition-colors duration-200")}
                 viewBox="0 0 24 24"
-                fill={filled || halfFilled ? "currentColor" : "none"}
-                stroke="currentColor"
+                fill={filled || halfFilled ? "var(--color-saffron)" : "none"}
+                stroke={filled || halfFilled ? "var(--color-saffron)" : "currentColor"}
                 strokeWidth={1.5}
               >
                 <path
@@ -84,7 +84,7 @@ export function StarRating({
         </span>
       )}
       {totalRatings !== undefined && totalRatings > 0 && (
-        <span className="text-[0.55rem] text-muted-foreground/60 ml-0.5">({totalRatings})</span>
+        <span className="text-xs text-muted-foreground/60 ml-0.5">({totalRatings})</span>
       )}
     </div>
   );
@@ -115,7 +115,7 @@ export function RatingBreakdown({ distribution, totalRatings, avgRating }: Ratin
         <span className="text-3xl font-bold font-serif">{avgRating.toFixed(1)}</span>
         <div>
           <StarRating value={Math.round(avgRating)} size="h-5 w-5" />
-          <p className="text-[0.55rem] text-muted-foreground/60 mt-0.5">
+          <p className="text-xs text-muted-foreground/60 mt-0.5">
             {totalRatings} rating{totalRatings !== 1 ? "s" : ""}
           </p>
         </div>
@@ -131,7 +131,7 @@ export function RatingBreakdown({ distribution, totalRatings, avgRating }: Ratin
               <span className="w-8 text-right text-muted-foreground">{star}★</span>
               <div className="flex-1 h-2 bg-secondary/60 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-foreground/60 rounded-full transition-all duration-500"
+                  className="h-full bg-[var(--color-saffron)] rounded-full transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>

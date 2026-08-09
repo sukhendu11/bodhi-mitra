@@ -1,58 +1,85 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPublishedVideos, getYoutubeId, type Video } from "@/lib/videos";
+import { fetchPublishedVideos } from "@/lib/videos";
 import { fetchSiteSettings } from "@/lib/siteSettings";
 import { fetchPageBySlug } from "@/lib/pages";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Video as VideoIcon } from "lucide-react";
 import { useLang, pickLocalized } from "@/lib/i18n";
+import { SearchBar } from "@/components/SearchBar";
+import { EditorialHeader } from "@/components/EditorialHeader";
 import { Reveal } from "@/components/Reveal";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { VideoCard } from "@/components/VideoCard";
+import { BackLink } from "@/components/BackLink";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/videos")({
   loader: async () => {
-    const [settings, page] = await Promise.all([fetchSiteSettings(), fetchPageBySlug("videos")]);
+    const [settings, page] = await Promise.all([
+      fetchSiteSettings(),
+      fetchPageBySlug("videos").catch(() => null),
+    ]);
     return { settings, page };
   },
   head: ({ loaderData }) => {
     const settings = loaderData?.settings;
     const page = loaderData?.page;
-    const siteName = settings?.branding?.site_name_en || "Bodhi Mitra";
     const metaDesc =
       page?.meta_description_en ||
       "Curated video collection on Buddhist psychology, mindfulness, and the examined life.";
     const pageTitle = page?.title_en || "Videos";
-    return {
-      meta: [
-        { title: `${pageTitle} — ${siteName}` },
-        { name: "description", content: metaDesc },
-        { property: "og:title", content: `${pageTitle} — ${siteName}` },
-        { property: "og:description", content: metaDesc },
-      ],
-    };
+    return seoHead({
+      title: pageTitle,
+      description: metaDesc,
+      path: "/videos",
+      siteName: settings?.branding?.site_name_en,
+      siteUrl: settings?.seo?.site_url,
+    });
   },
   component: VideosPage,
 });
 
 function VideosPage() {
   const { lang } = useLang();
-  const [page, setPage] = useState(1);
-  const pageSize = 12;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeVideo, setActiveVideo] = useState<{ id: string; title: string } | null>(null);
 
-  const { data: pageData, isLoading: pageLoading } = useQuery({
+  const { data: pageData } = useQuery({
     queryKey: ["public-page", "videos"],
     queryFn: () => fetchPageBySlug("videos"),
     staleTime: 60_000,
   });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["public-videos", page],
-    queryFn: () => fetchPublishedVideos(page, pageSize),
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["public-videos"],
+    queryFn: () => fetchPublishedVideos(1, 100),
     staleTime: 60_000,
   });
 
-  const videos = data?.data ?? [];
-  const total = data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const allVideos = data?.data ?? [];
+
+  if (isError) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-20 md:py-28 text-center">
+        <p className="text-sm text-muted-foreground">{lang === "bn" ? "ভিডিও লোড করা যায়নি। পরে আবার চেষ্টা করুন।" : "Failed to load videos. Please try again later."}</p>
+      </div>
+    );
+  }
+
+  const videos = useMemo(() => {
+    if (!searchQuery.trim()) return allVideos;
+    const q = searchQuery.toLowerCase();
+    return allVideos.filter((v) =>
+      [v.title, v.title_en, v.title_bn, v.description, v.description_en, v.description_bn]
+        .filter(Boolean)
+        .some((s) => String(s).toLowerCase().includes(q)),
+    );
+  }, [allVideos, searchQuery]);
+
+  const handlePlay = useCallback((ytId: string, title: string) => {
+    setActiveVideo({ id: ytId, title });
+  }, []);
 
   const header = pickLocalized(
     pageData?.header_en || "Videos",
@@ -61,158 +88,122 @@ function VideosPage() {
     "Videos",
   );
   const description = pickLocalized(
-    pageData?.body_en || "Curated talks, guided meditations, and reflections on the dharma path.",
+    pageData?.body_en ||
+      "Curated talks, guided meditations, and reflections on the dharma path.",
     pageData?.body_bn || "নির্বাচিত আলোচনা, নির্দেশিত ধ্যান, এবং ধর্ম পথের প্রতিফলন।",
     lang,
     "",
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-14 md:py-20">
-      {/* Page header */}
-      <div className="mb-12 text-center">
-        {pageLoading ? (
-          <>
-            <div className="h-8 w-48 bg-secondary/60 animate-pulse rounded mx-auto mb-3" />
-            <div className="h-4 w-96 max-w-full bg-secondary/30 animate-pulse rounded mx-auto" />
-          </>
-        ) : (
-          <>
-            <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight">
-              {header}
-            </h1>
-            {description && (
-              <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                {description}
-              </p>
-            )}
-          </>
-        )}
+    <div className="mx-auto max-w-6xl px-6 py-12 md:py-20">
+      <BackLink to="/" label={lang === "bn" ? "হোম" : "Home"} />
+
+      {/* Page header — shared editorial treatment (matches Books/Reflections) */}
+      <div className="mb-12">
+        <EditorialHeader
+          title={header}
+          description={description || undefined}
+        />
       </div>
+
+      {/* Search */}
+      <Reveal delay={0.1}>
+        <div className="mb-10 max-w-md mx-auto">
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={lang === "bn" ? "ভিডিও অনুসন্ধান..." : "Search videos..."}
+          />
+        </div>
+      </Reveal>
 
       {/* Video grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-secondary/10 rounded-xl border border-border/60 animate-pulse"
-            >
-              <div className="aspect-video rounded-t-xl bg-secondary/30" />
-              <div className="p-4 space-y-2">
-                <div className="h-4 bg-secondary/30 rounded w-3/4" />
-                <div className="h-3 bg-secondary/20 rounded w-full" />
+            <div key={i} style={{ animationDelay: `${i * 75}ms` }}>
+              <div className="aspect-video rounded-xl skeleton-shimmer" />
+              <div className="mt-4 px-0.5 space-y-2">
+                <div className="h-3 skeleton-shimmer rounded w-1/4" />
+                <div className="h-4 skeleton-shimmer rounded w-4/5" />
+                <div className="h-3 skeleton-shimmer rounded w-3/5" />
               </div>
             </div>
           ))}
         </div>
       ) : videos.length === 0 ? (
-        <div className="text-center py-20">
-          <VideoIcon className="h-10 w-10 mx-auto text-muted-foreground/30 mb-4" />
-          <p className="text-sm text-muted-foreground">No videos published yet.</p>
+        <div className="text-center py-24">
+          <div className="w-16 h-16 rounded-full bg-secondary/40 flex items-center justify-center mx-auto mb-4">
+            <VideoIcon className="h-8 w-8 text-muted-foreground/30" />
+          </div>
+          <p className="text-sm text-muted-foreground mb-1">
+            {searchQuery
+              ? lang === "bn"
+                ? "কোন ভিডিও পাওয়া যায়নি।"
+                : "No videos match your search."
+              : lang === "bn"
+                ? "কোন ভিডিও প্রকাশিত হয়নি।"
+                : "No videos published yet."}
+          </p>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="text-xs text-primary hover:underline mt-2"
+            >
+              {lang === "bn" ? "অনুসন্ধান মুছুন" : "Clear search"}
+            </button>
+          )}
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videos.map((video) => {
-              const ytId = getYoutubeId(video.youtube_url);
-              const thumbnail =
-                video.thumbnail_url ||
-                (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : "");
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+          {videos.map((video) => (
+            <VideoCard key={video.id} video={video} onPlay={handlePlay} />
+          ))}
+        </div>
+      )}
 
-              return (
-                <a
-                  key={video.id}
-                  href={video.youtube_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block bg-white dark:bg-zinc-900 rounded-xl border border-border/60 overflow-hidden hover:border-foreground/30 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
-                >
-                  {/* Thumbnail */}
-                  <div className="aspect-video bg-secondary/20 relative overflow-hidden">
-                    {thumbnail ? (
-                      <img
-                        src={thumbnail}
-                        alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <VideoIcon className="h-10 w-10 text-muted-foreground/20" />
-                      </div>
-                    )}
+      {/* Video player popup */}
+      <Dialog
+        open={!!activeVideo}
+        onOpenChange={(open) => {
+          if (!open) setActiveVideo(null);
+        }}
+      >
+        <DialogContent className="max-w-4xl p-0 gap-0 bg-zinc-950 overflow-hidden rounded-xl shadow-2xl border-0 [&>button]:hidden">
+          {activeVideo && (
+            <div className="relative">
+              <button
+                onClick={() => setActiveVideo(null)}
+                className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white/70 hover:text-white hover:bg-black/80 transition-colors"
+                aria-label="Close player"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
 
-                    {/* Play button overlay */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg group-hover:scale-110">
-                        <svg
-                          className="w-6 h-6 text-foreground ml-0.5"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      </div>
-                    </div>
+              <div className="aspect-video w-full bg-black">
+                <iframe
+                  src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&rel=0&modestbranding=1`}
+                  title={activeVideo.title}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
 
-                    <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/60 text-[0.5rem] text-white/90 font-medium">
-                      YouTube
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4">
-                    <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors">
-                      {video.title}
-                    </h3>
-                    {video.description && (
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
-                        {video.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-3">
-                      <svg
-                        className="w-3.5 h-3.5 text-red-500"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                      </svg>
-                      <span className="text-[0.6rem] text-muted-foreground">Watch on YouTube</span>
-                    </div>
-                  </div>
-                </a>
-              );
-            })}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-10">
-              <p className="text-xs text-muted-foreground">
-                Page {page} of {totalPages}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="px-4 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                >
-                  ← Previous
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  className="px-4 py-2 text-xs font-medium border border-border/60 rounded-lg hover:bg-secondary/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                >
-                  Next →
-                </button>
+              <div className="px-3 py-3 bg-zinc-950 flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white/80 font-medium line-clamp-1">
+                    {activeVideo.title}
+                  </p>
+                </div>
               </div>
             </div>
           )}
-        </>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

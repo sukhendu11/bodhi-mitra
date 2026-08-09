@@ -2,13 +2,13 @@
 
 > **A modern digital platform for wisdom, mindfulness, learning, and compassionate living.**
 
-Sabbe Satta is a full-stack platform for publishing, digital reading, multimedia learning, community engagement, and digital commerce. Built with TanStack Start and Supabase, it delivers a premium experience for readers, learners, creators, and administrators.
+Sabbe Satta is a full-stack platform for publishing, digital reading, multimedia learning, community engagement, and digital commerce. Built with Strapi v5 CMS, React 19 + TanStack Start frontend, and Supabase services.
 
 ---
 
-# Features
+## Features
 
-## Public Platform
+### Public Platform
 
 - Bilingual (English & Bangla)
 - Responsive modern interface
@@ -31,197 +31,165 @@ Sabbe Satta is a full-stack platform for publishing, digital reading, multimedia
 - Contact & About Pages
 - Maintenance Mode
 
----
+### Administration (Strapi v5)
 
-## Administration
-
-- Secure Admin Dashboard
+- Admin Dashboard
 - Content Management System (CMS)
 - Post Management
 - Page Management (with Visual Page Builder)
 - Book Management
-- Media Library (full DAM with folders, tags, favorites)
-- Navigation Builder (drag-and-drop)
-- Theme Builder (6 presets, typography, colors, custom CSS)
-- Homepage Builder
-- SEO Settings
+- Media Library
 - User & Role Management
-- Analytics Configuration
-- Site-wide Configuration (13 settings tabs)
+- Site-wide Configuration
 - Feature Flags
-- Maintenance Mode Toggle
-- Commerce Settings (currency, tax, refund policy)
+- REST & GraphQL APIs
+- Internationalization (500+ locales)
+- Draft & Publish
+- Role-Based Access Control (RBAC)
 
 ---
 
-# Technology Stack
+## Technology Stack
 
-| Layer | Technology |
-|--------|------------|
-| Framework | TanStack Start |
-| UI | React 19 |
-| Routing | TanStack Router |
-| Styling | Tailwind CSS v4 |
-| Components | shadcn/ui |
-| Rich Text Editor | TipTap |
-| Data Fetching | TanStack Query |
-| Database | Supabase PostgreSQL |
-| Authentication | Supabase Auth |
-| Storage | Supabase Storage |
-| Deployment | Vercel (Free Tier) |
-| Package Manager | npm / Bun |
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| CMS / Admin | Strapi v5 (self-hosted) | Content management, admin panel, REST/GraphQL APIs |
+| Frontend | React 19 + TanStack Start | Public website, reader, commerce |
+| Routing | TanStack Router | File-based, type-safe routing |
+| Styling | Tailwind CSS v4 | Utility-first CSS |
+| Components | shadcn/ui | Accessible primitives |
+| Rich Text | TipTap | WYSIWYG editor |
+| Forms | React Hook Form + Zod | Schema-driven validation |
+| Database | SQLite (dev) → PostgreSQL (prod) | Strapi database |
+| Auth | Supabase Auth | Frontend auth |
+| Storage | Supabase Storage | File uploads |
+| Hosting | VPS (Hostinger/Namecheap) + Vercel | Backend + Frontend |
+| Package Manager | npm / Bun | Package management |
 
 ---
 
-# Getting Started
+## Getting Started
 
-## Requirements
+### Requirements
 
-- Node.js 18+
+- Node.js 22+
 - npm or Bun
-- Supabase Project
-- Vercel Account (free tier)
+- Docker (optional, for containerized setup)
+- Supabase Project (for Auth and Storage)
 
----
-
-## Installation
+### Installation
 
 ```bash
 git clone https://github.com/sukhendu11/bodhi-mitra.git
-
 cd bodhi-mitra
-
 npm install
 ```
 
----
+### Strapi CMS Setup
 
-## Environment Variables
-
-Create a `.env` file in the project root.
-
-```env
-VITE_SUPABASE_URL=
-
-VITE_SUPABASE_PUBLISHABLE_KEY=
-
-SUPABASE_URL=
-
-SUPABASE_PUBLISHABLE_KEY=
-
-SUPABASE_SERVICE_ROLE_KEY=
+```bash
+cd strapi
+npm install
+npm run develop
 ```
 
----
+Strapi admin panel: http://localhost:1337/admin
 
-## Database
-
-Apply all migrations inside:
-
-```text
-supabase/migrations/
-```
-
----
-
-## Development
+### Frontend Setup
 
 ```bash
 npm run dev
 ```
 
-Default development server:
+Frontend: http://localhost:5173
+
+---
+
+## Environment Variables
+
+### Frontend (.env)
+
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+### Strapi (strapi/.env)
+
+```env
+HOST=0.0.0.0
+PORT=1337
+APP_KEYS=key1,key2
+API_TOKEN_SALT=salt
+ADMIN_JWT_SECRET=secret
+JWT_SECRET=secret
+TRANSFER_TOKEN_SALT=salt
+DATABASE_CLIENT=sqlite
+DATABASE_FILENAME=.tmp/data.db
+NODE_ENV=development
+```
+
+---
+
+## Project Structure
 
 ```text
-http://localhost:5173
+bodhi-mitra/
+├── src/                    # Frontend (React + TanStack)
+├── strapi/                 # CMS (Strapi v5)
+│   ├── config/             # Strapi configuration
+│   ├── src/api/            # Content types & APIs
+│   ├── public/uploads/     # Media uploads
+│   └── docker-compose.yml  # Docker setup
+├── supabase/               # Database migrations
+├── research/               # Research & evaluation docs
+├── design-references/      # Shared design research library (awesome-design-md)
+├── public/                 # Static assets
+├── DESIGN.md               # Canonical UI design system (single source of truth)
+├── AGENTS.md               # Development agent instructions
+├── PROJECT.md              # Architecture & roadmap
+├── RULES.md                # Engineering standards
+├── CHANGELOG.md            # Change history
+└── README.md               # This file
 ```
 
 ---
 
-## Production Build
+## Deployment
 
-```bash
-npm run build
-```
+### Frontend (Vercel)
 
-Preview production build:
+1. Push to GitHub
+2. Import into [Vercel](https://vercel.com/new)
+3. Configure environment variables
+4. Deploy
 
-```bash
-npm run preview
-```
+### Backend (VPS on Hostinger/Namecheap)
 
----
-
-# Available Scripts
-
-| Command | Description |
-|----------|-------------|
-| npm run dev | Start development server |
-| npm run build | Build for production |
-| npm run preview | Preview production build |
-| npm run lint | Run ESLint |
-| npm run format | Format code (Prettier) — requires Prettier to be installed |
+1. Buy VPS (4GB RAM minimum)
+2. Install Docker
+3. Deploy Strapi + PostgreSQL via Docker Compose
+4. Configure Nginx reverse proxy + SSL
 
 ---
 
-# Documentation
-
-Project documentation is organized as follows.
+## Documentation
 
 | File | Purpose |
 |------|---------|
 | README.md | Project overview and setup |
-| RULES.md | Engineering standards and development workflow |
-| PROJECT.md | Architecture, roadmap, modules, and active development |
-| CHANGELOG.md | Completed changes and release history |
+| DESIGN.md | Canonical UI design system — colors, typography, layout, components, reader design |
+| RULES.md | Engineering standards and workflow |
+| PROJECT.md | Architecture + roadmap in one doc (technical blueprint in §28 — formerly ARCHITECTURE.md) |
+| CHANGELOG.md | Completed changes and history |
+| AGENTS.md | Development agent instructions (incl. Shared Design Research Library rule) |
+| strapi/README.md | Strapi CMS setup guide |
 
 ---
 
-# Project Structure
-
-```text
-src/
-supabase/
-public/
-docs/
-
-README.md
-RULES.md
-PROJECT.md
-CHANGELOG.md
-```
-
----
-
-# Deployment
-
-The recommended deployment platform is **Vercel (Free Tier)**.
-
-Vercel provides a generous free tier with SSR support, automatic HTTPS, and global CDN.
-
-The project is already configured for Vercel via `nitro.config.ts` (`preset: "vercel"`).
-
-1. Push the repository to GitHub.
-2. Import the project into [Vercel](https://vercel.com/new).
-3. Configure the required environment variables.
-4. Deploy.
-
-Every push to the main branch triggers an automated deployment.
-
----
-
-# Contributing
-
-Contributions are welcome.
-
-Please read the project documentation before submitting significant changes.
-
-- Follow `RULES.md`
-- Review `PROJECT.md`
-- Update `CHANGELOG.md` for completed work
-
----
-
-# License
+## License
 
 MIT License

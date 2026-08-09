@@ -1,4 +1,4 @@
-# Bodhi Mitra Engineering Rules
+# Sabbe Satta Engineering Rules
 
 ## 1. Purpose
 
@@ -89,6 +89,10 @@ Plan
 
 ↓
 
+Frontend First
+
+↓
+
 Implement
 
 ↓
@@ -106,6 +110,8 @@ Document
 ↓
 
 Complete
+
+**Frontend First** — polish UI and UX using mock data before connecting any backend (Strapi, Supabase). Mock data lives in `src/lib/mock-data.ts`. Every service file follows: try Strapi → try Supabase → return mock data. Only switch to live backend after the frontend is fully verified.
 
 Never skip steps.
 
@@ -362,6 +368,8 @@ Maintain a premium reading experience.
 
 ## 14. Design System
 
+> **The canonical design language is [`DESIGN.md`](./DESIGN.md)** (colors, typography, layout, components, bilingual rules). `src/styles.css` holds the exact token values. These rules below are the engineering constraints.
+
 Use design tokens.
 
 Never hardcode:
@@ -390,6 +398,25 @@ Reuse existing:
 Create new components only when necessary.
 
 Update shared components instead of creating duplicates.
+
+### Button Color Conventions
+
+Use theme-aware `bg-foreground text-background` as the **default** for generic action buttons. This pattern inverts automatically in dark mode and keeps the interface consistent.
+
+Reserve **brand-colored buttons** (saffron/`var(--color-saffron)` background with `text-white`, or the saffron gradient) for primary brand calls-to-action that must stand out and stay visually branded in both themes.
+
+Deciding between the two:
+
+- Use `bg-foreground text-background` when the button is a generic, secondary, or theme-neutral action — e.g. *Add to Cart*, *Save*, *Continue*, *Clear all*, pagination, tab switches, dismiss actions.
+- Use a brand-colored button when the action is the page's primary brand conversion — e.g. *Sign in / Sign up*, *Subscribe*, *Donate*, *Checkout*, *Send* in the AI chat, and admin's *Back to site*.
+- Use fixed colors (`text-white` on dark/translucent backgrounds) for **overlay elements** that sit on top of imagery — e.g. video play buttons, duration/age badges, icon buttons over cards, gradient count badges. These need constant contrast against the image, not theme inversion.
+
+Rules of thumb:
+
+- Never use `text-white` with an unthemed or theme-neutral background; it breaks in dark mode.
+- Never invent a new brand-colored button when a theme-aware `bg-foreground text-background` button already exists for the same role.
+- When in doubt, prefer the theme-aware pattern — it is the dominant convention across the codebase.
+- Icons and micro-labels inside a button inherit the button's foreground color (`currentColor`); do not hardcode icon colors.
 
 ---
 
@@ -654,6 +681,33 @@ Avoid unnecessary packages.
 Build custom solutions only when existing libraries cannot satisfy project requirements.
 
 Never replace stable dependencies without engineering justification.
+
+### Free Tools Priority
+
+Always prefer fully free and open-source tools over free tiers, trial versions, or freemium services.
+
+Priority order:
+
+1. Fully free open-source tools (MIT, Apache 2.0, ISC licenses)
+2. Free tiers with no usage caps or vendor lock-in
+3. Combine free tools with custom hooks/libraries/raw code
+4. Paid tools only as last resort with documented justification
+
+Never use:
+
+- Free tier services with hard limits that block growth
+- Trial versions that expire
+- Freemium services that require paid plans for essential features
+- Any tool that creates vendor lock-in or migration risk
+
+When no fully free solution exists:
+
+- Combine multiple free tools to cover the gap
+- Write custom hooks or libraries to bridge missing features
+- Use raw code for simple integrations
+- Document the tradeoff and migration path
+
+Example: Strapi (MIT) + Supabase (free tier, no caps) + custom React hooks = fully free stack.
 
 ---
 

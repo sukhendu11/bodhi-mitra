@@ -1,14 +1,7 @@
 import { Link, useMatches } from "@tanstack/react-router";
 import { useLang } from "@/lib/i18n";
 import { useSiteSettings } from "@/lib/siteSettings";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { ChevronRight, Home } from "lucide-react";
 
 interface BreadcrumbEntry {
   label: string;
@@ -19,26 +12,20 @@ const ROUTE_LABELS: Record<string, Record<string, string>> = {
   en: {
     books: "Books",
     posts: "Reflections",
+    reflections: "Reflections",
     pages: "Pages",
     videos: "Videos",
-    courses: "Courses",
     about: "About",
     contact: "Contact",
-    wisdom: "Wisdom",
-    satsang: "Satsang",
-    "buddhist-psychology": "Buddhist Psychology",
   },
   bn: {
     books: "বই",
     posts: "প্রতিফলন",
+    reflections: "প্রতিফলন",
     pages: "পৃষ্ঠা",
     videos: "ভিডিও",
-    courses: "কোর্স",
     about: "পরিচিতি",
     contact: "যোগাযোগ",
-    wisdom: "প্রজ্ঞা",
-    satsang: "সতসঙ্গ",
-    "buddhist-psychology": "বৌদ্ধ মনোবিজ্ঞান",
   },
 };
 
@@ -46,12 +33,16 @@ function labelFor(segment: string, lang: "en" | "bn"): string {
   return ROUTE_LABELS[lang]?.[segment] ?? segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// URL overrides for segments that redirect (e.g., /posts → /reflections)
+const URL_OVERRIDES: Record<string, string> = {
+  posts: "/reflections",
+};
+
 export function PublicBreadcrumbs() {
   const { lang } = useLang();
   const config = useSiteSettings();
   const matches = useMatches();
 
-  // Check if breadcrumbs are enabled
   if (!config.navigation.show_breadcrumbs) return null;
 
   const entries: BreadcrumbEntry[] = [];
@@ -71,14 +62,14 @@ export function PublicBreadcrumbs() {
 
       entries.push({
         label: labelFor(seg, lang),
-        to: i < segments.length - 1 ? builtPath : undefined,
+        to: i < segments.length - 1 ? (URL_OVERRIDES[seg] || builtPath) : undefined,
       });
     }
   }
 
   const seen = new Set<string>();
   const unique = entries.filter((e) => {
-    const key = e.label + (e.to || "");
+    const key = e.label;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -87,28 +78,33 @@ export function PublicBreadcrumbs() {
   if (unique.length <= 1) return null;
 
   return (
-    <Breadcrumb className="mb-6">
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <Link to="/" className="transition-colors hover:text-foreground">
-            {lang === "bn" ? "হোম" : "Home"}
+    <nav aria-label="breadcrumb" className="mb-8 pt-6">
+      <ol className="flex items-center gap-1 text-xs text-foreground/60">
+        <li>
+          <Link
+            to="/"
+            className="flex items-center gap-1 hover:text-foreground transition-colors duration-300"
+          >
+            <Home className="h-3 w-3" />
+            <span>{lang === "bn" ? "হোম" : "Home"}</span>
           </Link>
-        </BreadcrumbItem>
+        </li>
         {unique.map((entry, i) => (
-          <span key={i}>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              {entry.to ? (
-                <Link to={entry.to} className="transition-colors hover:text-foreground">
-                  {entry.label}
-                </Link>
-              ) : (
-                <BreadcrumbPage>{entry.label}</BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
-          </span>
+          <li key={i} className="flex items-center gap-1">
+            <ChevronRight className="h-3 w-3 text-foreground/30" />
+            {entry.to ? (
+              <Link
+                to={entry.to}
+                className="hover:text-foreground transition-colors duration-300"
+              >
+                {entry.label}
+              </Link>
+            ) : (
+              <span className="text-foreground font-medium">{entry.label}</span>
+            )}
+          </li>
         ))}
-      </BreadcrumbList>
-    </Breadcrumb>
+      </ol>
+    </nav>
   );
 }

@@ -17,7 +17,7 @@ export async function sendPurchaseConfirmation(
 ): Promise<{ sent: boolean; reason?: string; error?: string }> {
   // Fetch user profile and book details (use supabaseAdmin for server-side RLS bypass)
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const db = supabaseAdmin as any;
+  const db = supabaseAdmin;
 
   const [userResult, bookResult] = await Promise.all([
     db
@@ -52,7 +52,6 @@ export async function sendPurchaseConfirmation(
   const baseUrl = siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`;
 
   const readerUrl = `${baseUrl}/reader/${input.bookId}`;
-  const libraryUrl = `${baseUrl}/books/library`;
   const bookUrl = `${baseUrl}/books/${book.slug || input.bookId}`;
 
   const result = await sendEmail({
@@ -64,7 +63,6 @@ export async function sendPurchaseConfirmation(
       amountPaid: input.amountPaid,
       isFree: input.isFree,
       readerUrl,
-      libraryUrl,
       bookUrl,
     },
   });

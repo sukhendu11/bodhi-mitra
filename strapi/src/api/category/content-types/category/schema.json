@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "categories",
+  "info": {
+    "singularName": "category",
+    "pluralName": "categories",
+    "displayName": "Categories",
+    "description": "Bilingual content categories"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name_en": {
+      "type": "string",
+      "required": true
+    },
+    "name_bn": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name_en"
+    },
+    "description_en": {
+      "type": "text"
+    },
+    "description_bn": {
+      "type": "text"
+    },
+    "color": {
+      "type": "string",
+      "default": "#6B7280"
+    },
+    "visible": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    },
+    "posts": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::post.post",
+      "mappedBy": "categories"
+    },
+    "books": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::book.book",
+      "mappedBy": "categories"
+    }
+  }
+}

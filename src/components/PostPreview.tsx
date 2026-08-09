@@ -73,7 +73,7 @@ export function PostPreview({
               {tags.map((tg) => (
                 <span
                   key={tg}
-                  className="text-[0.7rem] uppercase tracking-[0.14em] border border-border/50 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full hover:bg-secondary/90"
+                  className="text-xs uppercase tracking-[0.14em] border border-border/50 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full hover:bg-secondary/90"
                 >
                   {tg}
                 </span>

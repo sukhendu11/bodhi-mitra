@@ -14,7 +14,7 @@ export const postSchema = z.object({
     .min(1, "Slug is required")
     .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
   cover_image: z.string().default(""),
-  category: z.enum(["Buddhist Psychology", "Wisdom", "Books"]),
+  category: z.string().min(1, "Category is required"),
   author_name: z.string().default(""),
   author_image: z.string().default(""),
   status: z.enum(["draft", "published"]),

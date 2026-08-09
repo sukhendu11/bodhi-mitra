@@ -9,24 +9,27 @@ const PAGE_SIZE = 9;
 
 export function PostGrid({
   category,
+  categories,
   searchQuery,
   pageSize = PAGE_SIZE,
 }: {
   category?: PostCategory;
+  categories?: string[];
   searchQuery?: string;
   pageSize?: number;
 }) {
   const { t } = useLang();
   const [page, setPage] = useState(1);
 
-  // Reset to page 1 when category or search changes
   useEffect(() => {
     setPage(1);
-  }, [category, searchQuery]);
+  }, [category, categories, searchQuery]);
+
+  const effectiveCategory = categories && categories.length > 0 ? categories[0] : category;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["posts", category ?? "all", page, searchQuery ?? ""],
-    queryFn: () => fetchPosts(category, page, pageSize, searchQuery),
+    queryKey: ["posts", effectiveCategory ?? "all", page, searchQuery ?? "", categories?.join(",") ?? ""],
+    queryFn: () => fetchPosts(effectiveCategory, page, pageSize, searchQuery, categories),
     staleTime: 60_000,
   });
 
@@ -36,7 +39,7 @@ export function PostGrid({
 
   if (isLoading) {
     return (
-      <div className="grid gap-x-10 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16">
         {Array.from({ length: 6 }).map((_, i) => (
           <PostCardSkeleton key={i} />
         ))}
@@ -53,7 +56,7 @@ export function PostGrid({
       {posts.length === 0 ? (
         <p className="text-sm text-muted-foreground italic">{t("no_posts")}</p>
       ) : (
-        <div className="grid gap-x-10 gap-y-16 md:grid-cols-2 lg:grid-cols-3" key={page}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16" key={page}>
           {posts.map((post, i) => (
             <div key={post.id} className="stagger-enter" style={{ animationDelay: `${i * 0.06}s` }}>
               <PostCard post={post} />
@@ -70,7 +73,7 @@ export function PostGrid({
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="border border-border px-5 py-3 md:px-4 md:py-2 uppercase tracking-[0.15em] text-xs hover:bg-foreground hover:text-background disabled:opacity-30 disabled:pointer-events-none transition-colors min-h-[44px]"
+            className="border border-border px-5 py-3 md:px-4 md:py-2 uppercase tracking-[0.15em] text-xs hover:bg-foreground hover:text-background disabled:opacity-50 disabled:pointer-events-none transition-colors min-h-[44px]"
           >
             ← {t("prev_page")}
           </button>
@@ -80,7 +83,7 @@ export function PostGrid({
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-            className="border border-border px-5 py-3 md:px-4 md:py-2 uppercase tracking-[0.15em] text-xs hover:bg-foreground hover:text-background disabled:opacity-30 disabled:pointer-events-none transition-colors min-h-[44px]"
+            className="border border-border px-5 py-3 md:px-4 md:py-2 uppercase tracking-[0.15em] text-xs hover:bg-foreground hover:text-background disabled:opacity-50 disabled:pointer-events-none transition-colors min-h-[44px]"
           >
             {t("next_page")} →
           </button>

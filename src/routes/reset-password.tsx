@@ -3,14 +3,21 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSiteName } from "@/lib/siteSettings";
+import { seoHead } from "@/lib/seo";
 import { Lock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { BrandCtaButton } from "@/components/BrandCtaButton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/reset-password")({
   loader: () => getSiteName(),
-  head: ({ loaderData }) => ({ meta: [{ title: `Reset Password — ${loaderData}` }] }),
+  head: ({ loaderData }) => seoHead({
+    title: "Reset Password",
+    description: "Reset your Sabbe Satta account password.",
+    path: "/reset-password",
+    siteName: loaderData,
+    noIndex: true,
+  }),
   component: ResetPasswordPage,
 });
 
@@ -140,8 +147,8 @@ function ResetPasswordPage() {
         <p className="text-sm text-muted-foreground leading-relaxed mb-8">{error}</p>
         <Link
           to="/forgot-password"
-          search={{} as any}
-          params={{} as any}
+          search={{}}
+          params={{}}
           className="text-xs text-foreground hover:underline underline-offset-2"
         >
           Request a new reset link →
@@ -220,14 +227,13 @@ function ResetPasswordPage() {
           </div>
         </label>
 
-        <Button
+        <BrandCtaButton
           type="submit"
           disabled={submitting || !password || !confirmPassword}
-          variant="outline"
-          className="w-full px-6 py-3 text-sm tracking-wide border-foreground hover:bg-foreground hover:text-background"
+          className="w-full px-6 py-3 tracking-wide"
         >
           {submitting ? "Updating…" : "Update password"}
-        </Button>
+        </BrandCtaButton>
       </form>
     </div>
   );

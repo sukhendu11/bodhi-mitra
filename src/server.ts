@@ -1,5 +1,5 @@
 import { consumeLastCapturedError, renderErrorPage } from "./lib/errors";
-import { generateSitemapXml, generateRobotsTxt, isSitemapEnabled } from "./lib/seo";
+import { generateSitemapXml, generateRobotsTxt, isSitemapEnabled } from "./lib/seo.server";
 import { lookupRedirect } from "./lib/redirects";
 
 type ServerEntry = {

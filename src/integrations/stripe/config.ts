@@ -6,7 +6,7 @@ export const STRIPE_WEBHOOK_SECRET = () => {
   return secret;
 };
 
-export const STRIPE_PRICE_CURRENCY = "usd";
+export const STRIPE_PRICE_CURRENCY = "bdt";
 
 export const CHECKOUT_SUCCESS_URL = (bookSlug: string) =>
   `${getBaseUrl()}/books/${bookSlug}?purchase=success`;
@@ -14,11 +14,11 @@ export const CHECKOUT_SUCCESS_URL = (bookSlug: string) =>
 export const CHECKOUT_CANCEL_URL = (bookSlug: string) =>
   `${getBaseUrl()}/books/${bookSlug}?purchase=cancel`;
 
-// Cart checkout redirects to /cart with status params
-export const CHECKOUT_CART_SUCCESS_URL = (bookSlug: string) =>
-  `${getBaseUrl()}/cart?checkout=success`;
+// Cart checkout redirects to dedicated success page
+export const CHECKOUT_CART_SUCCESS_URL = (_bookSlug: string) =>
+  `${getBaseUrl()}/checkout/success`;
 
-export const CHECKOUT_CART_CANCEL_URL = (bookSlug: string) =>
+export const CHECKOUT_CART_CANCEL_URL = (_bookSlug: string) =>
   `${getBaseUrl()}/cart?checkout=cancel`;
 
 function getBaseUrl(): string {

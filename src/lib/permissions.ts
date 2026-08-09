@@ -11,7 +11,7 @@ export interface AuthContext {
   role?: AppRole;
 }
 
-const HARDCODED_ADMIN_EMAIL = "admin@bodhimitra.test";
+const HARDCODED_ADMIN_EMAIL = "admin@sabbesatta.test";
 
 function getRoleLevel(role: string | null | undefined): number {
   if (!role) return 0;

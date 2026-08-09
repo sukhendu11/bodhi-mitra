@@ -3,7 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { fetchComments, type Comment } from "@/lib/comments";
 import { addCommentFn, updateCommentFn, deleteCommentFn } from "@/lib/comment-functions";
+import { callFn } from "@/lib/call-fn";
 import { useAuthSession, useIsAdmin } from "@/hooks/useAuth";
+import { useSiteSettings } from "@/lib/siteSettings";
+import { useLang, pickLocalized } from "@/lib/i18n";
 import { LetterAvatar } from "@/components/LetterAvatar";
 import { AuthModal } from "@/components/AuthModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -17,6 +20,8 @@ export function Comments({ postId }: { postId: string }) {
   const { user } = useAuthSession();
   const { data: isAdmin = false } = useIsAdmin(user);
   const queryClient = useQueryClient();
+  const cfg = useSiteSettings();
+  const { lang } = useLang();
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [replyText, setReplyText] = useState("");
@@ -65,23 +70,23 @@ export function Comments({ postId }: { postId: string }) {
 
   const postMutation = useMutation({
     mutationFn: async (payload: { text: string; parent_id: string | null }) => {
-      return (addCommentFn as any)({
-        data: {
+      return callFn(addCommentFn, {
           post_id: postId,
           user_name: userDisplayName(),
           comment_text: payload.text.trim(),
           parent_id: payload.parent_id,
-        },
-      });
+          // Used for attribution in mock mode (real mode uses the session JWT)
+          userId: user?.id ?? undefined,
+        });
     },
     onSuccess: (_d, vars) => {
       if (vars.parent_id) {
         setReplyText("");
         setReplyTo(null);
-        toast.success("Reply posted");
+        toast.success(lang === "bn" ? "উত্তর পোস্ট করা হয়েছে" : "Reply posted");
       } else {
         setText("");
-        toast.success("Comment posted");
+        toast.success(lang === "bn" ? "মন্তব্য পোস্ট করা হয়েছে" : "Comment posted");
       }
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
@@ -90,11 +95,11 @@ export function Comments({ postId }: { postId: string }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return (deleteCommentFn as any)({ data: { id } });
+      return callFn(deleteCommentFn, { id, userId: user?.id ?? undefined });
     },
     onSuccess: () => {
       setDeleteTarget(null);
-      toast.success("Comment deleted");
+      toast.success(lang === "bn" ? "মন্তব্য মুছে ফেলা হয়েছে" : "Comment deleted");
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -102,12 +107,16 @@ export function Comments({ postId }: { postId: string }) {
 
   const editMutation = useMutation({
     mutationFn: async (vars: { id: string; text: string }) => {
-      return (updateCommentFn as any)({ data: { id: vars.id, comment_text: vars.text.trim() } });
+      return callFn(updateCommentFn, {
+        id: vars.id,
+        comment_text: vars.text.trim(),
+        userId: user?.id ?? undefined,
+      });
     },
     onSuccess: () => {
       setEditingId(null);
       setEditingText("");
-      toast.success("Comment updated");
+      toast.success(lang === "bn" ? "মন্তব্য আপডেট করা হয়েছে" : "Comment updated");
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -134,7 +143,7 @@ export function Comments({ postId }: { postId: string }) {
               <p className="font-serif text-base">
                 {c.user_name}
                 {isReply && (
-                  <span className="ml-2 text-[0.6rem] uppercase tracking-[0.18em] bg-foreground text-background px-1.5 py-0.5 align-middle">
+                  <span className="ml-2 text-xs uppercase tracking-[0.18em] bg-foreground text-background px-1.5 py-0.5 align-middle">
                     {isAdmin ? "Admin" : "Reply"}
                   </span>
                 )}
@@ -174,7 +183,7 @@ export function Comments({ postId }: { postId: string }) {
                   onChange={(e) => setEditingText(e.target.value)}
                   rows={3}
                   maxLength={2000}
-                  className="w-full border border-border bg-background px-3 py-2 text-sm font-sans focus:outline-none focus:border-foreground/60 resize-y"
+                  className="w-full border border-border bg-background px-3 py-2 text-sm font-sans focus:outline-none focus:border-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200 resize-y"
                 />
                 <div className="flex gap-3 justify-end">
                   <button
@@ -183,14 +192,14 @@ export function Comments({ postId }: { postId: string }) {
                       setEditingId(null);
                       setEditingText("");
                     }}
-                    className="px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.2em] border border-border hover:border-foreground/60"
+                    className="px-3 py-1.5 text-xs uppercase tracking-[0.2em] border border-border hover:border-foreground/60"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={editMutation.isPending || editingText.trim().length === 0}
-                    className="px-4 py-1.5 text-[0.65rem] uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-40"
+                    className="px-4 py-1.5 text-xs uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-50"
                   >
                     {editMutation.isPending ? "Saving…" : "Save"}
                   </button>
@@ -251,17 +260,17 @@ export function Comments({ postId }: { postId: string }) {
                 <textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Write a reply…"
+                  placeholder={lang === "bn" ? "উত্তর লিখুন…" : "Write a reply…"}
                   rows={3}
                   maxLength={2000}
                   autoFocus
-                  className="w-full border border-border bg-background px-3 py-2 text-sm font-sans focus:outline-none focus:border-foreground/60 resize-y"
+                  className="w-full border border-border bg-background px-3 py-2 text-sm font-sans placeholder:text-muted-foreground/50 dark:placeholder:text-muted-foreground/75 focus:outline-none focus:border-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200 resize-y"
                 />
                 <div className="flex justify-end">
                   <button
                     type="submit"
                     disabled={postMutation.isPending || replyText.trim().length === 0}
-                    className="px-4 py-1.5 text-[0.65rem] uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-40"
+                    className="px-4 py-1.5 text-xs uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-50"
                   >
                     {postMutation.isPending ? "Posting…" : "Reply"}
                   </button>
@@ -297,24 +306,24 @@ export function Comments({ postId }: { postId: string }) {
 
   return (
     <section className="mt-20 pt-12 border-t border-border">
-      <h2 className="font-serif text-2xl mb-8 text-center">Reflections</h2>
+      <h2 className="font-serif text-2xl mb-8 text-center">{pickLocalized(cfg.comments.section_title_en, cfg.comments.section_title_bn, lang, "Reflections")}</h2>
 
       {isLoading && comments.length === 0 ? (
-        <div className="space-y-6 mb-12 animate-pulse">
+        <div className="space-y-6 mb-12">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-start gap-3 pb-6 border-b border-border/60">
-              <div className="w-9 h-9 rounded-full bg-secondary shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="h-3 w-24 bg-secondary rounded" />
-                <div className="h-3 w-full bg-secondary/60 rounded" />
-                <div className="h-3 w-3/4 bg-secondary/60 rounded" />
+            <div key={i} className="flex items-start gap-3 pb-6 border-b border-border/60" style={{ animationDelay: `${i * 80}ms` }}>
+              <div className="w-9 h-9 rounded-full skeleton-shimmer shrink-0" />
+              <div className="flex-1 space-y-2.5">
+                <div className="h-3 w-24 skeleton-shimmer rounded" />
+                <div className="h-3 w-full skeleton-shimmer rounded" />
+                <div className="h-3 w-3/4 skeleton-shimmer rounded" />
               </div>
             </div>
           ))}
         </div>
       ) : roots.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground italic mb-10">
-          No reflections yet. Be the first to share.
+          {pickLocalized(cfg.comments.empty_state_en, cfg.comments.empty_state_bn, lang, "No reflections yet. Be the first to share.")}
         </p>
       ) : (
         <ul className="space-y-8 mb-12">{roots.map((c) => renderComment(c))}</ul>
@@ -332,17 +341,17 @@ export function Comments({ postId }: { postId: string }) {
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Share a thought…"
+            placeholder={lang === "bn" ? "একটি চিন্তা শেয়ার করুন…" : "Share a thought…"}
             rows={4}
             maxLength={2000}
-            className="w-full border border-border bg-background px-4 py-3 text-sm font-sans focus:outline-none focus:border-foreground/60 resize-y"
+            className="w-full border border-border bg-background px-4 py-3 text-sm font-sans placeholder:text-muted-foreground/50 dark:placeholder:text-muted-foreground/75 focus:outline-none focus:border-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200 resize-y"
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">Signed in as {user.email}</p>
             <button
               type="submit"
               disabled={postMutation.isPending || text.trim().length === 0}
-              className="px-6 py-2 text-xs uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-40"
+              className="px-6 py-2 text-xs uppercase tracking-[0.2em] bg-foreground text-background hover:opacity-90 disabled:opacity-50"
             >
               {postMutation.isPending ? "Commenting…" : "Comment"}
             </button>
@@ -354,16 +363,16 @@ export function Comments({ postId }: { postId: string }) {
             readOnly
             onClick={() => setAuthOpen(true)}
             onFocus={() => setAuthOpen(true)}
-            placeholder="Sign in to share a reflection…"
+            placeholder={lang === "bn" ? "একটি প্রতিফলন শেয়ার করতে সাইন ইন করুন…" : "Sign in to share a reflection…"}
             rows={3}
-            className="w-full border border-border bg-background px-4 py-3 text-sm font-sans opacity-60 cursor-pointer focus:outline-none focus:border-foreground/60 resize-y"
+            className="w-full border border-border bg-background px-4 py-3 text-sm font-sans opacity-60 cursor-pointer placeholder:text-muted-foreground/50 dark:placeholder:text-muted-foreground/75 focus:outline-none focus:border-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200 resize-y"
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               <button
                 type="button"
                 onClick={() => setAuthOpen(true)}
-                className="hover:text-foreground underline"
+                className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
               >
                 Sign in
               </button>{" "}

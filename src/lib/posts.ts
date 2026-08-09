@@ -1,7 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
+import { mockFetchPosts, mockFetchPostBySlug, mockFetchPostCounts } from "@/lib/mock-data";
 
-export type PostCategory = "Buddhist Psychology" | "Wisdom" | "Books";
-export const POST_CATEGORIES: PostCategory[] = ["Buddhist Psychology", "Wisdom", "Books"];
+export type PostCategory = string;
+
+export function categoryToSlug(category: string): string {
+  return category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
 
 export type PostStatus = "draft" | "published";
 
@@ -54,41 +58,16 @@ export async function fetchPosts(
   page = 1,
   pageSize = 9,
   searchQuery?: string,
+  categories?: string[],
 ): Promise<PaginatedResult<Post>> {
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  let query = supabase
-    .from("posts")
-    .select("*", { count: "exact" })
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .range(from, to);
-  if (category) query = query.eq("category", category);
-  if (searchQuery && searchQuery.trim()) {
-    const q = searchQuery.trim().replace(/[%_]/g, "");
-    if (q) {
-      // Use `*` wildcard (PostgREST-native) instead of `%` to avoid URL-encoding issues
-      query = query.or(
-        `title_en.ilike.*${q}*,title_bn.ilike.*${q}*,category.ilike.*${q}*,excerpt_en.ilike.*${q}*,excerpt_bn.ilike.*${q}*`,
-      );
-    }
-  }
-  const { data, error, count } = await query;
-  if (error) throw error;
-  return { data: (data ?? []) as unknown as Post[], total: count ?? 0 };
+  return mockFetchPosts(category, page, pageSize, searchQuery, categories);
 }
 
 export async function fetchPostBySlug(slug: string): Promise<Post | null> {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .maybeSingle();
-  if (error) throw error;
-  return (data as unknown as Post | null) ?? null;
+  return mockFetchPostBySlug(slug);
 }
 
+/** Fetch a post by ID (admin). */
 export async function fetchPostById(id: string): Promise<Post | null> {
   const { data, error } = await supabase.from("posts").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
@@ -106,6 +85,12 @@ export async function uploadCoverImage(file: File): Promise<string> {
   if (error) throw new Error(error.message);
   const { data } = supabase.storage.from("blog-images").getPublicUrl(path);
   return data.publicUrl;
+}
+
+export async function fetchPostCounts(
+  categoryNames?: string[],
+): Promise<Record<string, number>> {
+  return mockFetchPostCounts();
 }
 
 import { slugifyPost as cmsSlugify } from "@/lib/cms-engine";

@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tags",
+  "info": {
+    "singularName": "tag",
+    "pluralName": "tags",
+    "displayName": "Tags",
+    "description": "Bilingual content tags"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name_en": {
+      "type": "string",
+      "required": true
+    },
+    "name_bn": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name_en"
+    },
+    "color": {
+      "type": "string",
+      "default": "#6B7280"
+    },
+    "posts": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::post.post",
+      "mappedBy": "tags"
+    },
+    "books": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::book.book",
+      "mappedBy": "tags"
+    }
+  }
+}

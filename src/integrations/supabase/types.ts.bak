@@ -331,7 +331,7 @@ export type Database = {
       };
     };
     Enums: {
-      post_category: "Buddhist Psychology" | "Wisdom" | "Books";
+      post_category: string;
       post_status: "draft" | "published";
     };
     CompositeTypes: {

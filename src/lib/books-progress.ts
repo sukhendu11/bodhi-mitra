@@ -1,4 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
+import { isMockMode } from "@/lib/data-source";
+import {
+  mockGetProgress,
+  mockGetUserProgress,
+  mockUpsertProgress,
+  mockDeleteProgress,
+  mockMarkBookCompleted,
+} from "@/lib/mock-progress";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
@@ -29,7 +37,13 @@ export async function getReadingProgress(
 ): Promise<ReadingProgress | null> {
   if (!userId) return null;
 
-  const { data, error } = await (supabase as any)
+  // Mock mode (M3 E3.1) — read from the mock progress store.
+  if (isMockMode()) {
+    const row = await mockGetProgress(userId, bookId);
+    return row ? (row as unknown as ReadingProgress) : null;
+  }
+
+  const { data, error } = await supabase
     .from("reading_progress")
     .select("*")
     .eq("user_id", userId)
@@ -49,10 +63,16 @@ export async function getReadingProgress(
 export async function upsertProgress(input: ProgressUpdate): Promise<ReadingProgress> {
   const { userId, bookId, lastPage, totalPages } = input;
 
+  // Mock mode (M3 E3.1) — upsert into the mock progress store.
+  if (isMockMode()) {
+    const row = await mockUpsertProgress(input);
+    return row as unknown as ReadingProgress;
+  }
+
   // Get total_pages from the book if not provided
   let total = totalPages ?? 0;
   if (total <= 0) {
-    const { data: book } = await (supabase as any)
+    const { data: book } = await supabase
       .from("books")
       .select("pages")
       .eq("id", bookId)
@@ -68,7 +88,7 @@ export async function upsertProgress(input: ProgressUpdate): Promise<ReadingProg
   const existing = await getReadingProgress(userId, bookId);
 
   if (existing) {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("reading_progress")
       .update({
         last_page: lastPage,
@@ -86,7 +106,7 @@ export async function upsertProgress(input: ProgressUpdate): Promise<ReadingProg
   }
 
   // Create new progress record
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("reading_progress")
     .insert({
       user_id: userId,
@@ -107,6 +127,10 @@ export async function upsertProgress(input: ProgressUpdate): Promise<ReadingProg
 /* ─── Mark a book as completed ─────────────────────────────────── */
 
 export async function markBookCompleted(userId: string, bookId: string): Promise<ReadingProgress> {
+  if (isMockMode()) {
+    const row = await mockMarkBookCompleted(userId, bookId);
+    return row as unknown as ReadingProgress;
+  }
   return upsertProgress({
     userId,
     bookId,
@@ -122,7 +146,16 @@ export async function getUserProgress(
 ): Promise<
   (ReadingProgress & { book_slug: string; book_title_en: string; book_title_bn: string })[]
 > {
-  const { data, error } = await (supabase as any)
+  // Mock mode (M3 E3.1) — from the mock progress store (book info joined).
+  if (isMockMode()) {
+    return (await mockGetUserProgress(userId)) as unknown as (ReadingProgress & {
+      book_slug: string;
+      book_title_en: string;
+      book_title_bn: string;
+    })[];
+  }
+
+  const { data, error } = await supabase
     .from("reading_progress")
     .select("*, books!inner(slug, title_en, title_bn)")
     .eq("user_id", userId)
@@ -141,7 +174,13 @@ export async function getUserProgress(
 /* ─── Delete reading progress ──────────────────────────────────── */
 
 export async function deleteProgress(userId: string, bookId: string): Promise<void> {
-  const { error } = await (supabase as any)
+  // Mock mode (M3 E3.1) — from the mock progress store.
+  if (isMockMode()) {
+    await mockDeleteProgress(userId, bookId);
+    return;
+  }
+
+  const { error } = await supabase
     .from("reading_progress")
     .delete()
     .eq("user_id", userId)

@@ -18,7 +18,7 @@ describe("postSchema", () => {
     content_en: "Content here",
     content_bn: "কন্টেন্ট এখানে",
     slug: "test-post",
-    category: "Wisdom" as const,
+    category: "Wisdom",
     status: "draft" as const,
   };
 
@@ -32,8 +32,8 @@ describe("postSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects invalid category", () => {
-    const result = postSchema.safeParse({ ...validPost, category: "Invalid" });
+  it("rejects empty category", () => {
+    const result = postSchema.safeParse({ ...validPost, category: "" });
     expect(result.success).toBe(false);
   });
 
@@ -166,7 +166,7 @@ describe("navItemSchema", () => {
 /* ─── Category Schema ───────────────────────────────────────────── */
 
 describe("categorySchema", () => {
-  const valid = { slug: "buddhist-psychology", name_en: "Buddhist Psychology" };
+  const valid = { slug: "meditation", name_en: "Meditation" };
 
   it("validates a correct category", () => {
     const result = categorySchema.safeParse(valid);

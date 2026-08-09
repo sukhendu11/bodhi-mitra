@@ -33,6 +33,16 @@ vi.mock("@/lib/stripe-checkout", () => ({
   ),
 }));
 
+/* ─── Mock cart fallback (passthrough — re-throws so tests can verify error paths) ── */
+
+vi.mock("@/lib/mock-cart", () => ({
+  mockAddToCart: vi.fn(),
+  mockRemoveFromCart: vi.fn(),
+  mockClearCart: vi.fn(),
+  mockGetCart: vi.fn(),
+  mockGetCartCount: vi.fn(),
+}));
+
 /* ─── Helper: build thenable chain mock ─────────────────────────── */
 
 function makeChainable() {
@@ -152,6 +162,9 @@ describe("addToCart", () => {
   });
 
   it("throws error when book is free", async () => {
+    const { mockAddToCart } = await import("@/lib/mock-cart");
+    (mockAddToCart as any).mockRejectedValue(new Error("Free books are automatically accessible. Use the Read button instead."));
+
     const supabase = createMockSupabase();
     const chain = makeChainable();
     chain.__setResult({ data: { id: "free-book", is_free: true, price: 0 }, error: null });
@@ -167,6 +180,9 @@ describe("addToCart", () => {
 
   // Success path — throws on cart creation error
   it("throws on cart creation error", async () => {
+    const { mockAddToCart } = await import("@/lib/mock-cart");
+    (mockAddToCart as any).mockRejectedValue(new Error("relation not found"));
+
     const supabase = createMockSupabase();
     const chains = [makeChainable(), makeChainable(), makeChainable()];
 
@@ -526,7 +542,7 @@ describe("getCartCount", () => {
    ════════════════════════════════════════════════════════════════════ */
 
 describe("checkoutCart", () => {
-  it("creates a Stripe Checkout Session with paid items", async () => {
+  it("creates a pending order and returns a simulated payment (default provider)", async () => {
     const supabase = createMockSupabase();
     const chains = [makeChainable(), makeChainable(), makeChainable()];
 
@@ -547,7 +563,11 @@ describe("checkoutCart", () => {
     supabase.from.mockImplementation(() => chains[callIdx++]);
 
     const result = await checkoutCart({ context: { userId: "user-1", supabase } });
-    expect(result).toEqual({ url: "https://checkout.stripe.com/session_123" });
+
+    // Simulated provider — inline payment, orderId + amount returned.
+    expect(result.simulated).toBe(true);
+    expect(result.orderId).toBeTruthy();
+    expect(result.amount).toBeCloseTo(24.98);
   });
 
   it("throws error when cart is empty (no cart)", async () => {
@@ -618,5 +638,48 @@ describe("checkoutCart", () => {
     await expect(
       checkoutCart({ context: { userId: "user-1", supabase } }),
     ).rejects.toThrow("No valid books in cart.");
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   completeMockCheckout
+   ════════════════════════════════════════════════════════════════════ */
+
+describe("completeMockCheckout", () => {
+  it("throws when the active provider is not simulated", async () => {
+    // Force the env so getPaymentProvider returns piprapay (unconfigured —
+    // createPayment would fail, but the simulated-guard throws first).
+    const prev = process.env.PAYMENT_PROVIDER;
+    process.env.PAYMENT_PROVIDER = "piprapay";
+    try {
+      const { completeMockCheckout } = (await import("../cart")) as any;
+      await expect(
+        completeMockCheckout({ context: { supabase: null, userId: "user-1" }, data: { orderId: "x" } }),
+      ).rejects.toThrow(/payment gateway/);
+    } finally {
+      process.env.PAYMENT_PROVIDER = prev;
+    }
+  });
+
+  it("fulfills an existing pending order (simulated provider)", async () => {
+    const { completeMockCheckout } = (await import("../cart")) as any;
+    const { mockCreatePendingOrder, mockGetPurchases } = await import("@/lib/mock-commerce");
+    const order = await mockCreatePendingOrder(
+      "user-1",
+      [{ bookId: "book-2", titleEn: "Paid Book", titleBn: null, price: 9.99 }],
+      0,
+      0,
+      { provider: "simulated" },
+    );
+
+    const result = await completeMockCheckout({
+      context: { supabase: null, userId: "user-1" },
+      data: { orderId: order.id },
+    });
+
+    expect(result.order.status).toBe("paid");
+    expect(result.itemCount).toBe(1);
+    const purchases = await mockGetPurchases("user-1");
+    expect(purchases.some((p) => p.bookId === "book-2")).toBe(true);
   });
 });

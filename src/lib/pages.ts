@@ -1,4 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getPageBySlug as strapiGetPageBySlug, getPages as strapiGetPages } from "@/lib/strapi-client";
+import type { Page as StrapiPage } from "@/lib/strapi-client";
+import { isMockMode } from "@/lib/data-source";
+import { mockFetchPages, mockFetchPageBySlug } from "@/lib/mock-data";
 
 /* ─── Section Types ───────────────────────────────────────────── */
 
@@ -51,9 +55,47 @@ export interface Page {
   updated_at: string;
 }
 
-/** Fetch a single page by slug. */
+/** Map a Strapi Page to the app's Page type */
+function mapStrapiPage(sp: StrapiPage): Page {
+  return {
+    id: String(sp.documentId),
+    slug: sp.slug,
+    title_en: sp.title_en,
+    title_bn: sp.title_bn || "",
+    header_en: sp.content_en ? JSON.stringify(sp.content_en) : "",
+    header_bn: sp.content_bn ? JSON.stringify(sp.content_bn) : "",
+    body_en: sp.content_en ? JSON.stringify(sp.content_en) : "",
+    body_bn: sp.content_bn ? JSON.stringify(sp.content_bn) : "",
+    banner_url: sp.banner_url || "",
+    meta_description_en: sp.seo_description || "",
+    meta_description_bn: "",
+    visible: sp.visible ?? true,
+    sort_order: sp.sort_order || 0,
+    sections: Array.isArray(sp.sections) ? sp.sections as PageSection[] : [],
+    created_at: sp.createdAt,
+    updated_at: sp.updatedAt,
+  };
+}
+
+/**
+ * Fetch a single page by slug.
+ * Mock mode reads from the mock pages store directly; otherwise tries
+ * Strapi API first, falls back to Supabase, then mock pages.
+ */
 export async function fetchPageBySlug(slug: string): Promise<Page | null> {
-  const { data, error } = await (supabase as any)
+  if (isMockMode()) return mockFetchPageBySlug(slug);
+
+  // Try Strapi first
+  try {
+    const strapiRes = await strapiGetPageBySlug(slug);
+    const items = Array.isArray(strapiRes.data) ? strapiRes.data : [strapiRes.data];
+    return items[0] ? mapStrapiPage(items[0]) : null;
+  } catch {
+    // Strapi unavailable — fall through to Supabase
+  }
+
+  // Fallback to Supabase
+  const { data, error } = await supabase
     .from("pages")
     .select("*")
     .eq("slug", slug)

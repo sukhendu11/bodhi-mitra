@@ -1,0 +1,99 @@
+{
+  "kind": "singleType",
+  "collectionName": "site_settings",
+  "info": {
+    "singularName": "sitesetting",
+    "pluralName": "sitesettings",
+    "displayName": "Site Settings",
+    "description": "Global site configuration"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "site_name": {
+      "type": "string",
+      "default": "Sabbe Satta"
+    },
+    "site_name_bn": {
+      "type": "string"
+    },
+    "site_tagline_en": {
+      "type": "string"
+    },
+    "site_tagline_bn": {
+      "type": "string"
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "favicon": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "accent_color": {
+      "type": "string",
+      "default": "#92400E"
+    },
+    "dark_mode": {
+      "type": "boolean",
+      "default": false
+    },
+    "maintenance_mode": {
+      "type": "boolean",
+      "default": false
+    },
+    "maintenance_message_en": {
+      "type": "text"
+    },
+    "maintenance_message_bn": {
+      "type": "text"
+    },
+    "meta_title": {
+      "type": "string"
+    },
+    "meta_description": {
+      "type": "text",
+      "maxLength": 160
+    },
+    "og_image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "google_analytics_id": {
+      "type": "string"
+    },
+    "social_facebook": {
+      "type": "string"
+    },
+    "social_twitter": {
+      "type": "string"
+    },
+    "social_youtube": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "email"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "contact_address": {
+      "type": "text"
+    },
+    "config": {
+      "type": "json"
+    }
+  }
+}

@@ -311,7 +311,7 @@ export const SECTION_TEMPLATES: Array<{ name: string; desc: string; tree: Builde
           name: "Hero Heading",
           visible: true, locked: false, children: [],
           styles: { fontSize: "3rem", textAlign: "center", fontWeight: "700" },
-          props: { content: "Welcome to Bodhi Mitra", level: 1 },
+          props: { content: "Welcome to Sabbe Satta", level: 1 },
         },
         {
           id: generateId(),

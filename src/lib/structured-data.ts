@@ -50,6 +50,8 @@ export function generateArticleSchema(options: {
   dateModified?: string;
   authorName: string;
   siteName: string;
+  wordCount?: number;
+  timeRequired?: string;
 }): JsonLdBase {
   return {
     "@context": "https://schema.org",
@@ -68,6 +70,8 @@ export function generateArticleSchema(options: {
       "@type": "Organization",
       name: options.siteName,
     },
+    ...(options.wordCount ? { wordCount: options.wordCount } : {}),
+    ...(options.timeRequired ? { timeRequired: options.timeRequired } : {}),
   };
 }
 

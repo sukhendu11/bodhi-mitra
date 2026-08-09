@@ -3,9 +3,10 @@ import type { HeadingItem } from "@/lib/headings";
 
 interface TableOfContentsProps {
   headings: HeadingItem[];
+  sidebar?: boolean;
 }
 
-export function TableOfContents({ headings }: TableOfContentsProps) {
+export function TableOfContents({ headings, sidebar }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -66,28 +67,53 @@ export function TableOfContents({ headings }: TableOfContentsProps) {
     <>
       {/* Desktop: sticky sidebar */}
       <nav aria-label="Table of contents" className="hidden lg:block">
-        <div className="sticky top-28">
-          <p className="text-[0.65rem] uppercase tracking-[0.15em] font-medium text-muted-foreground/50 mb-4">
-            On this page
-          </p>
-          <ul className="space-y-1.5 border-l border-border/40">
-            {headings.map((h) => (
-              <li key={h.id}>
-                <button
-                  onClick={() => handleClick(h.id)}
-                  className={`block text-left w-full text-sm leading-snug py-1.5 transition-all duration-200 border-l -ml-px ${
-                    activeId === h.id
-                      ? "border-foreground text-foreground font-medium"
-                      : "border-transparent text-muted-foreground/60 hover:text-muted-foreground hover:border-muted-foreground/30"
-                  }`}
-                  style={{ paddingLeft: `${8 + (h.level - 1) * 12}px` }}
-                >
-                  {h.text}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {sidebar ? (
+          <>
+            <p className="text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground/50 mb-4">
+              On this page
+            </p>
+            <ul className="space-y-1.5 border-l border-border/40">
+              {headings.map((h) => (
+                <li key={h.id}>
+                  <button
+                    onClick={() => handleClick(h.id)}
+                    className={`block text-left w-full text-sm leading-snug py-1.5 transition-all duration-200 border-l -ml-px ${
+                      activeId === h.id
+                        ? "border-foreground text-foreground font-medium"
+                        : "border-transparent text-muted-foreground/60 hover:text-muted-foreground hover:border-muted-foreground/30"
+                    }`}
+                    style={{ paddingLeft: `${8 + (h.level - 1) * 12}px` }}
+                  >
+                    {h.text}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <div className="sticky top-28">
+            <p className="text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground/50 mb-4">
+              On this page
+            </p>
+            <ul className="space-y-1.5 border-l border-border/40">
+              {headings.map((h) => (
+                <li key={h.id}>
+                  <button
+                    onClick={() => handleClick(h.id)}
+                    className={`block text-left w-full text-sm leading-snug py-1.5 transition-all duration-200 border-l -ml-px ${
+                      activeId === h.id
+                        ? "border-foreground text-foreground font-medium"
+                        : "border-transparent text-muted-foreground/60 hover:text-muted-foreground hover:border-muted-foreground/30"
+                    }`}
+                    style={{ paddingLeft: `${8 + (h.level - 1) * 12}px` }}
+                  >
+                    {h.text}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </nav>
 
       {/* Mobile: collapsible */}

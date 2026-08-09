@@ -25,7 +25,7 @@ export async function sendEmail<T extends EmailTemplate>(
   // Get email settings from config
   const config = await fetchSiteSettings();
   const emailConfig = config.email;
-  const brandName = config.branding.site_name_en || "Bodhi Mitra";
+  const brandName = config.branding.site_name_en || "Sabbe Satta";
 
   // Sender address — configured or fallback to Resend dev
   const senderName = emailConfig.sender_name || brandName;

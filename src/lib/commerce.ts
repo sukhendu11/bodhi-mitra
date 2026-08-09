@@ -9,9 +9,8 @@ export async function getCurrency(): Promise<string> {
 /** Get currency symbol from site settings */
 export async function getCurrencySymbol(): Promise<string> {
   const config = await fetchSiteSettings();
-  return config.commerce.currency_symbol || "$";
+  return config.commerce.currency_symbol || "BDT";
 }
-
 /** Get tax rate from site settings (0-100) */
 export async function getTaxRate(): Promise<number> {
   const config = await fetchSiteSettings();
@@ -24,9 +23,18 @@ export async function getRefundPolicy(lang: "en" | "bn" = "en"): Promise<string>
   return lang === "bn" ? config.commerce.refund_policy_bn : config.commerce.refund_policy_en;
 }
 
-/** Format price with currency symbol */
-export function formatPrice(amount: number, symbol: string = "$"): string {
-  return `${symbol}${amount.toFixed(2)}`;
+/** Format price with currency symbol using Intl.NumberFormat */
+export function formatPrice(amount: number, currency: string = "BDT"): string {
+  try {
+    return new Intl.NumberFormat("en-BD", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `BDT ${amount.toFixed(2)}`;
+  }
 }
 
 /** Calculate tax amount */

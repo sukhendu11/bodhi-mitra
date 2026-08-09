@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
+import { setMockModeOverride } from "@/lib/data-source";
 
 /* ─── Mock Supabase client ─────────────────────────────────────── */
 
@@ -64,6 +65,13 @@ function makeChainable() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Force the REAL Supabase path — these tests exercise the DB-backed
+  // implementation (vitest loads .env, which sets VITE_DATA_SOURCE=mock).
+  setMockModeOverride(false);
+});
+
+afterAll(() => {
+  setMockModeOverride(null);
 });
 
 /* ─── Import functions after mocks are set up ──────────────────── */

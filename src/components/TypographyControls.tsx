@@ -1,68 +1,133 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, type CSSProperties } from "react";
 import { ChevronDown, Type, ArrowUpDown } from "lucide-react";
+import { useLang } from "@/lib/i18n";
+import { cn, ACTION_PILL_CLS } from "@/lib/utils";
 
-type FontSize = "sm" | "md" | "lg" | "xl";
-type LineHeight = "tight" | "normal" | "relaxed";
+export type FontSize = "sm" | "md" | "lg" | "xl";
+export type LineHeight = "tight" | "normal" | "relaxed" | "wide";
 
-const STORAGE_KEY = "bodhi-mitra-typo";
-
-interface TypoSettings {
+export interface TypoSettings {
   fontSize: FontSize;
   lineHeight: LineHeight;
 }
 
+const STORAGE_KEY = "sabbe-satta-typo";
+
 const defaults: TypoSettings = { fontSize: "md", lineHeight: "normal" };
 
-const fontSizes: { key: FontSize; label: string; px: number }[] = [
-  { key: "sm", label: "S", px: 14 },
-  { key: "md", label: "M", px: 16 },
-  { key: "lg", label: "L", px: 18 },
-  { key: "xl", label: "XL", px: 20 },
+const fontSizes: { key: FontSize; label: string; label_bn: string; px: number }[] = [
+  { key: "sm", label: "S", label_bn: "ছোট", px: 14 },
+  { key: "md", label: "M", label_bn: "মাঝারি", px: 16 },
+  { key: "lg", label: "L", label_bn: "বড়", px: 18 },
+  { key: "xl", label: "XL", label_bn: "অতি বড়", px: 20 },
 ];
 
-const lineHeights: { key: LineHeight; label: string }[] = [
-  { key: "tight", label: "Tight" },
-  { key: "normal", label: "Normal" },
-  { key: "relaxed", label: "Relaxed" },
+const lineHeights: { key: LineHeight; label: string; label_bn: string }[] = [
+  { key: "tight", label: "Tight", label_bn: "আঁট" },
+  { key: "normal", label: "Normal", label_bn: "স্বাভাবিক" },
+  { key: "relaxed", label: "Relaxed", label_bn: "প্রশস্ত" },
+  { key: "wide", label: "Wide", label_bn: "বিস্তৃত" },
 ];
 
-function loadSettings(): TypoSettings {
+/**
+ * Map the profile reading preferences (settings page) onto this control's
+ * values so saved preferences actually affect article reading. Returns
+ * undefined when the preferences are absent/invalid.
+ */
+export function mapReadingPrefs(prefs?: {
+  font_size?: "sm" | "md" | "lg";
+  line_spacing?: "normal" | "relaxed" | "wide";
+}): Partial<TypoSettings> | undefined {
+  if (!prefs) return undefined;
+  const seed: Partial<TypoSettings> = {};
+  if (prefs.font_size === "sm" || prefs.font_size === "md" || prefs.font_size === "lg") {
+    seed.fontSize = prefs.font_size;
+  }
+  if (
+    prefs.line_spacing === "normal" ||
+    prefs.line_spacing === "relaxed" ||
+    prefs.line_spacing === "wide"
+  ) {
+    seed.lineHeight = prefs.line_spacing;
+  }
+  return Object.keys(seed).length > 0 ? seed : undefined;
+}
+
+/** stored (per-article manual choice) always wins over the user-preference seed. */
+function loadSettings(userSeed?: Partial<TypoSettings>): TypoSettings {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return { ...defaults, ...JSON.parse(stored) };
+    if (stored) return { ...defaults, ...userSeed, ...JSON.parse(stored) };
   } catch {
     /* noop */
   }
-  return defaults;
+  return { ...defaults, ...userSeed };
 }
 
-const fontSizeMap: Record<FontSize, string> = {
-  sm: "text-sm",
-  md: "text-base",
-  lg: "text-lg",
-  xl: "text-xl",
+/* Article typography is applied via CSS custom properties that `.prose-mitra`
+   reads (--article-font-size / --article-line-height). Tailwind text/leading
+   utilities on a wrapper do NOT work here: `.prose-mitra` sets explicit
+   font-size/line-height, which always beats inherited wrapper styles. */
+const fontSizeVar: Record<FontSize, string> = {
+  sm: "0.95rem",
+  md: "1.18rem",
+  lg: "1.4rem",
+  xl: "1.6rem",
 };
 
-const lineHeightMap: Record<LineHeight, string> = {
-  tight: "leading-tight",
-  normal: "leading-normal",
-  relaxed: "leading-relaxed",
+const lineHeightVar: Record<LineHeight, string> = {
+  tight: "1.6",
+  normal: "1.85",
+  relaxed: "2.05",
+  wide: "2.25",
 };
 
-export function useTypography() {
-  const [settings, setSettings] = useState<TypoSettings>(loadSettings);
+/**
+ * Article typography with an optional user-preference seed (from the
+ * profile's saved reading preferences). The seed applies until the reader
+ * makes an explicit per-article choice (localStorage override or a manual
+ * adjustment), which then wins.
+ */
+export function useTypography(userSeed?: Partial<TypoSettings>) {
+  const [settings, setSettings] = useState<TypoSettings>(() => loadSettings(userSeed));
+  const manualOverride = useRef(false);
 
+  // A stored override or a manual adjustment freezes the seed out.
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      manualOverride.current = !!localStorage.getItem(STORAGE_KEY);
     } catch {
       /* noop */
     }
-  }, [settings]);
+  }, []);
 
-  const typoClass = `${fontSizeMap[settings.fontSize]} ${lineHeightMap[settings.lineHeight]}`;
+  // Apply the preference seed whenever it loads/changes — but never fight
+  // an explicit per-article choice made via the controls.
+  useEffect(() => {
+    if (userSeed && !manualOverride.current) {
+      setSettings((s) => ({ ...s, ...userSeed }));
+    }
+  }, [userSeed]);
 
-  return { settings, setSettings, typoClass };
+  // Persist ONLY explicit per-article choices. Seed-applied settings must NOT
+  // be written to localStorage — otherwise the next mount would treat them as
+  // an override and future preference changes on /settings would be ignored.
+  const setSettingsWithOverride = useCallback((next: TypoSettings) => {
+    manualOverride.current = true;
+    setSettings(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  const typoStyle = {
+    "--article-font-size": fontSizeVar[settings.fontSize],
+    "--article-line-height": lineHeightVar[settings.lineHeight],
+  } as CSSProperties;
+
+  return { settings, setSettings: setSettingsWithOverride, typoStyle };
 }
 
 interface TypographyControlsProps {
@@ -71,28 +136,46 @@ interface TypographyControlsProps {
 }
 
 export function TypographyControls({ settings, onChange }: TypographyControlsProps) {
+  const { lang } = useLang();
+  const bn = lang === "bn";
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleClickOutside = useCallback((e: PointerEvent) => {
+    if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      setOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("pointerdown", handleClickOutside);
+      return () => document.removeEventListener("pointerdown", handleClickOutside);
+    }
+  }, [open, handleClickOutside]);
 
   return (
-    <div className="relative">
+    <div ref={menuRef} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground transition-colors"
-        title="Typography settings"
+        className={cn(
+          ACTION_PILL_CLS,
+          open ? "text-foreground border-foreground/40 bg-secondary/70 shadow-sm" : "",
+        )}
+        title={bn ? "টাইপোগ্রাফি সেটিংস" : "Typography settings"}
       >
         <Type className="h-3.5 w-3.5" />
-        <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
+        <span className="hidden sm:inline">{bn ? "লেখা" : "Text"}</span>
+        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 w-64 border border-border/60 bg-background shadow-lg">
+        <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-xl border border-border/80 bg-popover text-popover-foreground shadow-2xl ring-1 ring-foreground/5 animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="p-4 space-y-4">
               {/* Font Size */}
               <div>
-                <p className="text-[0.6rem] uppercase tracking-[0.15em] font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <Type className="h-3 w-3" /> Font Size
+                <p className="text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <Type className="h-3 w-3" /> {bn ? "ফন্টের আকার" : "Font Size"}
                 </p>
                 <div className="flex gap-1">
                   {fontSizes.map((fs) => (
@@ -105,7 +188,7 @@ export function TypographyControls({ settings, onChange }: TypographyControlsPro
                           : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/40"
                       }`}
                     >
-                      {fs.label}
+                      {bn ? fs.label_bn : fs.label}
                     </button>
                   ))}
                 </div>
@@ -113,8 +196,8 @@ export function TypographyControls({ settings, onChange }: TypographyControlsPro
 
               {/* Line Height */}
               <div>
-                <p className="text-[0.6rem] uppercase tracking-[0.15em] font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <ArrowUpDown className="h-3 w-3" /> Line Height
+                <p className="text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <ArrowUpDown className="h-3 w-3" /> {bn ? "লাইনের ব্যবধান" : "Line Height"}
                 </p>
                 <div className="flex gap-1">
                   {lineHeights.map((lh) => (
@@ -127,14 +210,13 @@ export function TypographyControls({ settings, onChange }: TypographyControlsPro
                           : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/40"
                       }`}
                     >
-                      {lh.label}
+                      {bn ? lh.label_bn : lh.label}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-        </>
       )}
     </div>
   );

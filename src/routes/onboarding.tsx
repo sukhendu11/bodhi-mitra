@@ -1,15 +1,25 @@
 import { getSiteName } from "@/lib/siteSettings";
+import { seoHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { useAuthSession } from "@/hooks/useAuth";
+import { useAuthSession, signOut } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { isMockMode } from "@/lib/data-source";
+import { signInWithMock } from "@/lib/mock-session";
 import { getAdminClaimStatus, claimAdminRole } from "@/lib/onboarding.functions";
+import { BrandCtaButton } from "@/components/BrandCtaButton";
 
 export const Route = createFileRoute("/onboarding")({
   loader: () => getSiteName(),
-  head: ({ loaderData }) => ({ meta: [{ title: `Get started — ${loaderData}` }] }),
+  head: ({ loaderData }) => seoHead({
+    title: "Get Started",
+    description: "Set up your Sabbe Satta account.",
+    path: "/onboarding",
+    siteName: loaderData,
+    noIndex: true,
+  }),
   component: OnboardingPage,
 });
 
@@ -33,6 +43,12 @@ function OnboardingPage() {
 
   useEffect(() => {
     if (loading || !user) return;
+    // Mock mode — derive admin state from the mock session (demo admin exists)
+    if (isMockMode()) {
+      const role = (user.app_metadata as Record<string, unknown> | undefined)?.role;
+      setStatus({ state: "ready", adminExists: true, isAdmin: role === "super_admin" });
+      return;
+    }
     setStatus({ state: "loading" });
     fetchStatus()
       .then((r) =>
@@ -46,7 +62,7 @@ function OnboardingPage() {
   }, [user, loading, fetchStatus]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     setStatus({ state: "idle" });
   };
 
@@ -57,6 +73,13 @@ function OnboardingPage() {
     setAuthBusy(true);
     try {
       if (authMode === "signin") {
+        if (isMockMode()) {
+          const { error } = signInWithMock(trimmed, password);
+          if (error) throw new Error(error);
+          toast.success("Signed in");
+          setAuthBusy(false);
+          return;
+        }
         const { error } = await supabase.auth.signInWithPassword({
           email: trimmed,
           password,
@@ -64,6 +87,11 @@ function OnboardingPage() {
         if (error) throw error;
         toast.success("Signed in");
       } else {
+        if (isMockMode()) {
+          toast.error("Account creation is disabled in demo mode — use the demo accounts on /login.");
+          setAuthBusy(false);
+          return;
+        }
         const { data, error } = await supabase.auth.signUp({
           email: trimmed,
           password,
@@ -100,9 +128,14 @@ function OnboardingPage() {
         Get started in two steps: sign in with your email, then claim admin access for this journal.
       </p>
 
+      <div className="mx-auto mb-10 h-0.5 w-16 rounded-full bg-gradient-to-r from-saffron/60 to-saffron/20" />
+
       {/* Step 1: sign in */}
-      <section className="border border-border/60 p-6 mb-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">Step 1</p>
+      <section className="rounded-xl border border-border/50 bg-card p-6 mb-6 shadow-sm">
+        <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-saffron-500)] to-[var(--color-saffron-gold)] text-[10px] font-semibold text-white">1</span>
+          Step 1
+        </p>
         <h2 className="font-serif text-lg mb-4">
           {authMode === "signin" ? "Sign in" : "Create account"}
         </h2>
@@ -129,7 +162,7 @@ function OnboardingPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground/60"
+              className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200"
             />
             <input
               type="password"
@@ -139,15 +172,15 @@ function OnboardingPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground/60"
+              className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200"
             />
-            <button
+            <BrandCtaButton
               type="submit"
               disabled={authBusy}
-              className="w-full px-6 py-3 text-sm tracking-wide border border-foreground hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
+              className="w-full px-6 py-3 tracking-wide"
             >
               {authBusy ? "Please wait…" : authMode === "signin" ? "Sign in" : "Create account"}
-            </button>
+            </BrandCtaButton>
             <button
               type="button"
               onClick={() => setAuthMode(authMode === "signin" ? "signup" : "signin")}
@@ -162,8 +195,11 @@ function OnboardingPage() {
       </section>
 
       {/* Step 2: claim admin */}
-      <section className="border border-border/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">Step 2</p>
+      <section className="rounded-xl border border-border/50 bg-card p-6 shadow-sm">
+        <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-saffron-500)] to-[var(--color-saffron-gold)] text-[10px] font-semibold text-white">2</span>
+          Step 2
+        </p>
         <h2 className="font-serif text-lg mb-4">Claim admin access</h2>
 
         {!user ? (
@@ -175,12 +211,9 @@ function OnboardingPage() {
         ) : status.isAdmin ? (
           <div className="space-y-4">
             <p className="text-sm text-foreground">You already have admin access.</p>
-            <Link
-              to="/admin"
-              className="inline-block w-full text-center px-6 py-3 text-sm tracking-wide border border-foreground hover:bg-foreground hover:text-background transition-colors"
-            >
-              Go to Admin
-            </Link>
+            <BrandCtaButton asChild className="w-full px-6 py-3 tracking-wide">
+              <Link to="/admin" className="w-full">Go to Admin</Link>
+            </BrandCtaButton>
           </div>
         ) : status.adminExists ? (
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -192,13 +225,13 @@ function OnboardingPage() {
             <p className="text-sm text-muted-foreground leading-relaxed">
               No admin exists yet. Claim admin access now to manage posts and site settings.
             </p>
-            <button
+            <BrandCtaButton
               onClick={handleClaim}
               disabled={submitting}
-              className="w-full px-6 py-3 text-sm tracking-wide border border-foreground hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
+              className="w-full px-6 py-3 tracking-wide"
             >
               {submitting ? "Granting…" : "Grant me admin access"}
-            </button>
+            </BrandCtaButton>
           </div>
         )}
       </section>

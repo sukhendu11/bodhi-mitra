@@ -72,6 +72,19 @@
   --color-saffron-800: #522100;
   --color-saffron-900: #271000;
 
+  /* Deep gold for saffron→gold brand gradients (AA-compliant with white text ≥4.5:1) */
+  --color-saffron-gold: #8b6914;
+
+  /* ── Buddhist Flag Colors ────────────────────────────────────── */
+  /* Blue = loving-kindness | Yellow = middle path | Red = blessings */
+  /* White = purity | Orange = wisdom | Mixed = all truths */
+  --color-buddha-blue: #1a3a6b;
+  --color-buddha-yellow: #d4a017;
+  --color-buddha-red: #b91c1c;
+  --color-buddha-white: #fafaf8;
+  --color-buddha-orange: #c2410c;
+  --color-buddha-mixed: #7c3aed;
+
   /* ── Neutral Scale ───────────────────────────────────────────── */
   --color-neutral-50: oklch(0.985 0 0);
   --color-neutral-100: oklch(0.97 0 0);
@@ -89,7 +102,7 @@
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-bn: "Hind Siliguri", "Inter", system-ui, sans-serif;
+  --font-bn: "Noto Sans Bengali", "Inter", system-ui, sans-serif;
 
   /* ── Font Sizes (type scale) ─────────────────────────────────── */
   --font-size-xxs: 0.625rem;   /* 10px */
@@ -209,16 +222,9 @@
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* ── Animation Keyframes ─────────────────────────────────────── */
-  --animate-fade-in: fade-in 0.2s ease-out;
-  --animate-fade-out: fade-out 0.15s ease-in;
-  --animate-slide-in: slide-in 0.2s ease-out;
-  --animate-slide-out: slide-out 0.15s ease-in;
-  --animate-scale-in: scale-in 0.15s ease-out;
-  --animate-scale-out: scale-out 0.1s ease-in;
-  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
-  --animate-spin-slow: spin 3s linear infinite;
-  --animate-bounce-subtle: bounce-subtle 1s ease-in-out infinite;
-  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
+  /* NOTE: Tailwind's built-in animate-spin/pulse/bounce cover most cases.
+     Custom keyframes (shimmer, page-enter, card-enter) are referenced
+     directly by classes below — no --animate-* tokens needed. */
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -235,47 +241,61 @@
   --card: oklch(0.98 0.008 80);
   --card-foreground: oklch(0.25 0.012 60);
 
-  --popover: oklch(0.985 0.008 80);
+  /* Popover = elevated surface, deliberately brighter than --background
+     so dropdown panels read as solid, distinct cards (not see-through). */
+  --popover: oklch(0.995 0.006 85);
   --popover-foreground: oklch(0.25 0.012 60);
 
   /* ── Brand / Interactive ─────────────────────────────────────── */
-  --primary: oklch(0.45 0.06 50);
-  --primary-foreground: oklch(0.985 0.008 80);
+  /* Primary = Saffron (wisdom) — buttons, links, active states.
+     Tracks --color-saffron so the admin accent applies. In dark mode
+     (.dark) it becomes --primary-light (lighter saffron) with a dark
+     --primary-foreground — never pin these at runtime. */
+  --primary: var(--color-saffron, #d35400);
+  --primary-foreground: oklch(0.99 0.003 80);
 
-  --secondary: oklch(0.94 0.015 75);
-  --secondary-foreground: oklch(0.3 0.015 60);
+  /* Secondary = Indigo-blue (lovers-kindness) — subtle fills, borders */
+  --secondary: oklch(0.95 0.02 260);
+  --secondary-foreground: oklch(0.25 0.01 60);
 
-  --muted: oklch(0.95 0.012 78);
-  --muted-foreground: oklch(0.5 0.018 60);
+  /* Muted = warm off-white (purity) — disabled, placeholder */
+  --muted: oklch(0.96 0.008 75);
+  --muted-foreground: oklch(0.45 0.01 60);
 
-  --accent: oklch(0.88 0.03 70);
-  --accent-foreground: oklch(0.28 0.015 60);
+  /* Accent = Gold-yellow (middle path) — highlights, badges */
+  --accent: oklch(0.82 0.06 85);
+  --accent-foreground: oklch(0.22 0.01 60);
 
   /* ── Status Colors ───────────────────────────────────────────── */
-  --destructive: oklch(0.55 0.18 25);
-  --destructive-foreground: oklch(0.985 0.008 80);
+  /* Red = blessings — destructive/error states */
+  --destructive: oklch(0.50 0.17 25);
+  --destructive-foreground: oklch(0.99 0.003 80);
 
+  /* Green = growth/compassion — success */
   --success: oklch(0.55 0.14 145);
-  --success-foreground: oklch(0.985 0.008 80);
+  --success-foreground: oklch(0.99 0.003 80);
 
-  --warning: oklch(0.68 0.14 70);
-  --warning-foreground: oklch(0.15 0.01 60);
+  /* Yellow-gold = middle path — warnings */
+  --warning: oklch(0.72 0.12 85);
+  --warning-foreground: oklch(0.18 0.01 60);
 
-  --info: oklch(0.55 0.08 240);
-  --info-foreground: oklch(0.985 0.008 80);
+  /* Blue = loving-kindness — info */
+  --info: oklch(0.50 0.10 255);
+  --info-foreground: oklch(0.99 0.003 80);
 
   /* ── Borders & Rings ─────────────────────────────────────────── */
-  --border: oklch(0.9 0.012 75);
-  --input: oklch(0.9 0.012 75);
-  --ring: oklch(0.5 0.04 60);
+  --border: oklch(0.91 0.01 75);
+  --input: oklch(0.91 0.01 75);
+  --ring: oklch(0.55 0.14 45);
 
   /* ── Sidebar (admin) ─────────────────────────────────────────── */
-  --sidebar: oklch(0.12 0.005 60);
-  --sidebar-foreground: oklch(0.7 0.01 60);
-  --sidebar-accent: oklch(0.2 0.01 60);
-  --sidebar-accent-foreground: oklch(0.85 0.01 60);
-  --sidebar-border: oklch(0.18 0.005 60);
-  --sidebar-ring: oklch(0.4 0.04 60);
+  /* Deep indigo-blue — contemplative, focused */
+  --sidebar: oklch(0.15 0.025 260);
+  --sidebar-foreground: oklch(0.80 0.01 260);
+  --sidebar-accent: oklch(0.22 0.03 260);
+  --sidebar-accent-foreground: oklch(0.90 0.01 260);
+  --sidebar-border: oklch(0.20 0.02 260);
+  --sidebar-ring: oklch(0.55 0.14 45);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -283,25 +303,27 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 .dark {
-  --background: oklch(0.12 0.008 280);
+  /* Public surfaces — dark charcoal with warm-indigo tint (not pure black) */
+  --background: oklch(0.16 0.01 280);
   --foreground: oklch(0.92 0.008 280);
 
-  --card: oklch(0.14 0.008 280);
+  --card: oklch(0.18 0.01 280);
   --card-foreground: oklch(0.92 0.008 280);
 
-  --popover: oklch(0.14 0.008 280);
+  /* Popover = elevated surface, deliberately lighter than --background */
+  --popover: oklch(0.22 0.012 280);
   --popover-foreground: oklch(0.92 0.008 280);
 
   --primary: var(--primary-light, oklch(0.65 0.12 50));
   --primary-foreground: oklch(0.15 0.008 280);
 
-  --secondary: oklch(0.2 0.008 280);
+  --secondary: oklch(0.23 0.01 280);
   --secondary-foreground: oklch(0.85 0.008 280);
 
-  --muted: oklch(0.18 0.008 280);
+  --muted: oklch(0.21 0.01 280);
   --muted-foreground: oklch(0.55 0.008 280);
 
-  --accent: oklch(0.22 0.008 280);
+  --accent: oklch(0.25 0.01 280);
   --accent-foreground: oklch(0.9 0.008 280);
 
   --destructive: oklch(0.45 0.15 25);
@@ -316,10 +338,11 @@
   --info: oklch(0.5 0.08 240);
   --info-foreground: oklch(0.95 0.008 280);
 
-  --border: oklch(0.22 0.008 280);
-  --input: oklch(0.22 0.008 280);
+  --border: oklch(0.26 0.01 280);
+  --input: oklch(0.26 0.01 280);
   --ring: oklch(0.65 0.08 50);
 
+  /* Admin sidebar — intentionally deeper, kept as-is */
   --sidebar: oklch(0.08 0.005 60);
   --sidebar-foreground: oklch(0.65 0.01 60);
   --sidebar-accent: oklch(0.15 0.01 60);
@@ -332,49 +355,9 @@
    KEYFRAMES
    ═══════════════════════════════════════════════════════════════════ */
 
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-@keyframes slide-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slide-out {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(4px); }
-}
-
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes scale-out {
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0; transform: scale(0.95); }
-}
-
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
-}
-
-@keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
-}
-
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -386,10 +369,15 @@
     border-color: var(--color-border);
   }
 
+  a, button, [role="button"], input[type="submit"], input[type="button"], select, label[for] {
+    cursor: pointer;
+  }
+
   html {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -473,9 +461,12 @@
 
 @layer components {
   .prose-mitra {
-    font-family: var(--font-serif);
-    font-size: 1.18rem;
-    line-height: 1.85;
+    font-family: var(--font-sans);
+    /* Font size & line-height come from the article typography controls
+       (set on the wrapper as --article-font-size / --article-line-height);
+       fall back to the classic editorial defaults when unset. */
+    font-size: var(--article-font-size, 1.18rem);
+    line-height: var(--article-line-height, 1.85);
     color: var(--color-foreground);
   }
   .prose-mitra p { margin-bottom: 1.4em; }
@@ -521,4 +512,134 @@
     border-radius: 0.2em;
     font-size: 0.9em;
   }
+
+  /* ── Book Grid (client-configurable) ─────────────────────────── */
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--book-grid-cols-mobile, 1), 1fr);
+    gap: var(--book-grid-gap, 40px);
+  }
+  @media (min-width: 768px) {
+    .book-grid {
+      grid-template-columns: repeat(var(--book-grid-cols-tablet, 2), 1fr);
+    }
+  }
+  @media (min-width: 1024px) {
+    .book-grid {
+      grid-template-columns: repeat(var(--book-grid-cols-desktop, 3), 1fr);
+    }
+  }
+  .book-card {
+    width: 100%;
+  }
+  .book-card {
+    border-radius: var(--book-grid-card-radius, 12px);
+    overflow: hidden;
+  }
+  .book-card-cover {
+    aspect-ratio: var(--book-grid-cover-aspect-ratio, 4/3);
+    border-radius: var(--book-grid-card-radius, 12px);
+    overflow: hidden;
+  }
+  .book-card-author {
+    display: var(--book-grid-show-author, block);
+    font-size: var(--book-grid-author-font-size, 13px);
+  }
+  .book-card-free-badge {
+    display: var(--book-grid-show-free-badge, flex);
+    font-size: 10px;
+  }
+  .book-card-featured-badge {
+    display: var(--book-grid-show-featured-badge, flex);
+    font-size: 10px;
+  }
+  .book-card-title {
+    font-size: var(--book-grid-title-font-size, 18px);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--book-grid-title-lines, 2);
+    overflow: hidden;
+  }
+  .book-card-metadata {
+    font-size: var(--book-grid-taxonomy-font-size, 13px);
+  }
+
+  /* ── PDF Viewer Thumbnail Strip ─────────────────────────────── */
+  /* Hide the scrollbar for a clean edge-to-edge thumbnail rail */
+  .thumbnail-scroll {
+    scrollbar-width: none;    /* Firefox */
+    -ms-overflow-style: none; /* legacy Edge */
+  }
+  .thumbnail-scroll::-webkit-scrollbar {
+    display: none;            /* Chrome / Safari */
+  }
+
+  /* ── PDF Viewer Canvas Shadow ────────────────────────────── */
+  /* Drop shadow around the rendered page canvas */
+  .reader-page-shadow {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
+  }
+}
+
+/* ── Sonner Toasts (design-token theming) ──────────────────────────
+   The SiteToaster component (src/components/SiteToaster.tsx) renders the
+   single app-wide <Toaster>. Its colors are mapped here to Sabbe Satta
+   tokens: warm card surface, hairline border, foreground text, and the
+   status tokens (success/destructive/info/warning) for the tinted
+   richColors variants. `!important` is required because Sonner injects its
+   own stylesheet late (tie-breaks would otherwise go to Sonner's defaults
+   like pure white / pure black backgrounds). */
+[data-sonner-toaster][data-sonner-theme] {
+  --width: 360px !important;
+  --border-radius: 0.75rem !important;
+  --normal-bg: var(--card) !important;
+  --normal-border: var(--border) !important;
+  --normal-text: var(--foreground) !important;
+  --normal-bg-hover: var(--muted) !important;
+  --normal-border-hover: var(--border) !important;
+  /* richColors tints — token color at ~10-12% over the card surface */
+  --success-bg: color-mix(in oklab, var(--success) 12%, var(--card)) !important;
+  --success-border: color-mix(in oklab, var(--success) 35%, var(--card)) !important;
+  --success-text: var(--foreground) !important;
+  --error-bg: color-mix(in oklab, var(--destructive) 10%, var(--card)) !important;
+  --error-border: color-mix(in oklab, var(--destructive) 30%, var(--card)) !important;
+  --error-text: var(--foreground) !important;
+  --info-bg: color-mix(in oklab, var(--info) 10%, var(--card)) !important;
+  --info-border: color-mix(in oklab, var(--info) 30%, var(--card)) !important;
+  --info-text: var(--foreground) !important;
+  --warning-bg: color-mix(in oklab, var(--warning) 12%, var(--card)) !important;
+  --warning-border: color-mix(in oklab, var(--warning) 32%, var(--card)) !important;
+  --warning-text: var(--foreground) !important;
+  font-family: var(--font-sans), system-ui, sans-serif !important;
+}
+
+/* Bangla — switch toast type to Noto Sans Bengali with the rest of the UI */
+html[data-lang="bn"] [data-sonner-toaster] {
+  font-family: var(--font-bn) !important;
+  letter-spacing: 0 !important;
+}
+
+/* Semantic icon colors — Lucide icons passed via the `icons` prop */
+[data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-type="success"] [data-icon] {
+  color: var(--success) !important;
+}
+[data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-type="error"] [data-icon] {
+  color: var(--destructive) !important;
+}
+[data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-type="info"] [data-icon] {
+  color: var(--info) !important;
+}
+[data-sonner-toaster][data-sonner-theme] [data-sonner-toast][data-type="warning"] [data-icon] {
+  color: var(--warning) !important;
+}
+
+/* Description + close button — muted, matching the site's secondary text */
+[data-sonner-toaster][data-sonner-theme] [data-sonner-toast] [data-description] {
+  color: var(--muted-foreground) !important;
+}
+[data-sonner-toaster][data-sonner-theme] [data-sonner-toast] [data-close-button] {
+  color: var(--muted-foreground) !important;
+  border-color: var(--border) !important;
+  background: var(--card) !important;
 }

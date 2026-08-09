@@ -9,10 +9,11 @@ import { BuilderPreview, deserializeTree } from "@/components/admin/page-builder
 import { generateHoverCss, generateResponsiveCss } from "@/lib/page-builder/utils";
 import type { BuilderComponentNode } from "@/lib/page-builder/types";
 import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/pages/$slug")({
   loader: async ({ params }) => {
-    const [page, siteName] = await Promise.all([fetchPageBySlug(params.slug), getSiteName()]);
+    const [page, siteName] = await Promise.all([fetchPageBySlug(params.slug).catch(() => null), getSiteName()]);
     if (!page) throw notFound();
     return { page, siteName };
   },
@@ -25,43 +26,44 @@ export const Route = createFileRoute("/pages/$slug")({
             meta_description_en?: string | null;
             meta_description_bn?: string | null;
             banner_url?: string | null;
+            slug?: string | null;
           };
           siteName: string;
         }
       | undefined;
     const p = ld?.page;
-    const name = ld?.siteName ?? "Bodhi Mitra";
     const pageTitle = p?.title_en || p?.title_bn || "Page";
     const desc = p?.meta_description_en || p?.meta_description_bn || "";
-    return {
-      meta: [
-        { title: `${pageTitle} — ${name}` },
-        { name: "description", content: desc },
-        { property: "og:title", content: `${pageTitle} — ${name}` },
-        { property: "og:description", content: desc },
-        { property: "og:image", content: p?.banner_url || "" },
-      ],
-    };
+    return seoHead({
+      title: pageTitle,
+      description: desc,
+      path: `/pages/${p?.slug || ""}`,
+      ogImage: p?.banner_url || undefined,
+      siteName: ld?.siteName,
+    });
   },
   component: PublicPage,
-  notFoundComponent: () => (
-    <div className="mx-auto max-w-2xl px-6 py-32 text-center">
-      <h1 className="font-serif text-3xl">Page not found</h1>
-      <Link
-        to="/"
-        className="mt-6 inline-block border-b border-foreground/40 pb-0.5 text-sm hover:border-foreground"
-      >
-        Return home
-      </Link>
-    </div>
-  ),
+  notFoundComponent: () => {
+    const { lang } = useLang();
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-32 text-center">
+        <h1 className="font-serif text-3xl">{lang === "bn" ? "পৃষ্ঠা পাওয়া যায়নি" : "Page not found"}</h1>
+        <Link
+          to="/"
+          className="mt-6 inline-block border-b border-foreground/40 pb-0.5 text-sm hover:border-foreground"
+        >
+          {lang === "bn" ? "হোমে ফিরুন" : "Return home"}
+        </Link>
+      </div>
+    );
+  },
 });
 
 function PublicPage() {
   const { slug } = Route.useParams();
   const { lang } = useLang();
 
-  const { data: page, isLoading } = useQuery({
+  const { data: page, isLoading, isError } = useQuery({
     queryKey: ["public-page", slug],
     queryFn: async () => {
       const p = await fetchPageBySlug(slug);
@@ -75,13 +77,21 @@ function PublicPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-2xl px-6 py-20 md:py-28">
-        <div className="h-8 w-48 bg-secondary/60 animate-pulse rounded mb-6" />
-        <div className="h-4 w-96 bg-secondary/40 animate-pulse rounded mb-12" />
+        <div className="h-8 w-48 skeleton-shimmer rounded mb-6" />
+        <div className="h-4 w-96 skeleton-shimmer rounded mb-12" />
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-secondary/30 animate-pulse rounded" />
+            <div key={i} className="h-24 skeleton-shimmer rounded" style={{ animationDelay: `${i * 80}ms` }} />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-20 md:py-28 text-center">
+        <p className="text-sm text-muted-foreground">{lang === "bn" ? "এই পৃষ্ঠাটি লোড করা যায়নি। পরে আবার চেষ্টা করুন।" : "Failed to load this page. Please try again later."}</p>
       </div>
     );
   }

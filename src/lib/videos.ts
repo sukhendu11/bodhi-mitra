@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { mockFetchPublishedVideos } from "@/lib/mock-data";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
@@ -8,8 +9,15 @@ export interface Video {
   id: string;
   title: string;
   description: string;
+  /** Bilingual parity with posts/books — optional (legacy/Strapi rows may only have `title`). */
+  title_en?: string;
+  title_bn?: string;
+  description_en?: string;
+  description_bn?: string;
   thumbnail_url: string;
   youtube_url: string;
+  duration?: number;
+  category?: string;
   sort_order: number;
   status: VideoStatus;
   created_at: string;
@@ -21,6 +29,8 @@ export interface VideoInput {
   description?: string;
   thumbnail_url?: string;
   youtube_url: string;
+  duration?: number;
+  category?: string;
   sort_order?: number;
   status?: VideoStatus;
 }
@@ -30,7 +40,33 @@ export interface PaginatedVideos {
   total: number;
 }
 
-/* ─── Public ────────────────────────────────────────────────────── */
+/* ─── YouTube oEmbed ────────────────────────────────────────────── */
+
+export interface YouTubeMetadata {
+  title: string;
+  author_name: string;
+  author_url: string;
+  thumbnail_url: string;
+  thumbnail_width: number;
+  thumbnail_height: number;
+}
+
+/**
+ * Fetch video metadata from YouTube's public oEmbed API.
+ * No API key required. In production, proxy through a server function
+ * to avoid CORS issues; in dev, falls back gracefully.
+ */
+export async function fetchYouTubeOEmbed(youtubeUrl: string): Promise<YouTubeMetadata | null> {
+  try {
+    const res = await fetch(
+      `https://www.youtube.com/oembed?url=${encodeURIComponent(youtubeUrl)}&format=json`,
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
 
 /* ─── YouTube URL helpers ───────────────────────────────────────── */
 
@@ -50,21 +86,21 @@ export function getYoutubeId(url: string): string | null {
   return null;
 }
 
-/** Fetch published videos for public display, ordered by sort_order. */
+/**
+ * Format seconds into "MM:SS" or "H:MM:SS" display string.
+ */
+export function formatDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 export async function fetchPublishedVideos(page = 1, pageSize = 12): Promise<PaginatedVideos> {
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-
-  const { data, error, count } = await (supabase as any)
-    .from("videos")
-    .select("*", { count: "exact" })
-    .eq("status", "published")
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) throw error;
-  return { data: (data ?? []) as Video[], total: count ?? 0 };
+  return mockFetchPublishedVideos(page, pageSize);
 }
 
 /* ─── Admin CRUD ────────────────────────────────────────────────── */
@@ -75,10 +111,11 @@ export async function fetchAllVideos(
   pageSize = 20,
   options?: { status?: VideoStatus; search?: string },
 ): Promise<PaginatedVideos> {
+  // Admin reads still go to Supabase (until Phase 2 admin transition)
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  let query = (supabase as any)
+  let query = supabase
     .from("videos")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
@@ -95,9 +132,9 @@ export async function fetchAllVideos(
   return { data: (data ?? []) as Video[], total: count ?? 0 };
 }
 
-/** Fetch a single video by ID. */
+/** Fetch a single video by ID (admin — remains in Supabase until Phase 2). */
 export async function fetchVideoById(id: string): Promise<Video | null> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("videos")
     .select("*")
     .eq("id", id)
@@ -108,16 +145,17 @@ export async function fetchVideoById(id: string): Promise<Video | null> {
 
 /** Create a new video. */
 export async function createVideo(input: VideoInput): Promise<Video> {
-  const { data, error } = await (supabase as any).from("videos").insert(input).select().single();
+  const { data, error } = await supabase.from("videos").insert(input as any).select().single();
   if (error) throw error;
   return data as Video;
 }
 
 /** Update an existing video. */
 export async function updateVideo(id: string, input: Partial<VideoInput>): Promise<Video> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("videos")
-    .update(input)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update(input as any)
     .eq("id", id)
     .select()
     .single();
@@ -127,7 +165,7 @@ export async function updateVideo(id: string, input: Partial<VideoInput>): Promi
 
 /** Delete a video. */
 export async function deleteVideo(id: string): Promise<void> {
-  const { error } = await (supabase as any).from("videos").delete().eq("id", id);
+  const { error } = await supabase.from("videos").delete().eq("id", id);
   if (error) throw error;
 }
 
@@ -137,7 +175,7 @@ export async function getVideoStats(): Promise<{
   published: number;
   draft: number;
 }> {
-  const db = supabase as any;
+  const db = supabase;
 
   const { count: total } = await db.from("videos").select("*", { count: "exact", head: true });
   const { count: published } = await db

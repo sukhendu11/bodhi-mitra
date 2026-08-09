@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
+import { setMockModeOverride } from "@/lib/data-source";
 
 /* ─── Mock Supabase client ─────────────────────────────────────── */
 
@@ -65,6 +66,13 @@ function makeChainable() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Force the REAL Supabase path — these tests exercise the DB-backed
+  // implementation (vitest loads .env, which sets VITE_DATA_SOURCE=mock).
+  setMockModeOverride(false);
+});
+
+afterAll(() => {
+  setMockModeOverride(null);
 });
 
 /* ─── Import after mocks are set up ────────────────────────────── */
@@ -108,14 +116,14 @@ describe("getReaderBookmarks", () => {
     mockFrom.mockReturnValue(chain);
 
     const result = await getReaderBookmarks({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555" },
     });
 
     expect(result).toHaveLength(2);
     expect(mockFrom).toHaveBeenCalledWith("reader_bookmarks");
     expect(chain.eq).toHaveBeenCalledWith("user_id", "user-1");
-    expect(chain.eq).toHaveBeenCalledWith("book_id", "book-123");
+    expect(chain.eq).toHaveBeenCalledWith("book_id", "11111111-2222-3333-4444-555555555555");
     expect(chain.order).toHaveBeenCalledWith("page_number", { ascending: true });
   });
 
@@ -125,8 +133,8 @@ describe("getReaderBookmarks", () => {
     mockFrom.mockReturnValue(chain);
 
     const result = await getReaderBookmarks({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555" },
     });
 
     expect(result).toEqual([]);
@@ -140,7 +148,10 @@ describe("getReaderBookmarks", () => {
     mockFrom.mockReturnValue(chain);
 
     await expect(
-      getReaderBookmarks({ context: { userId: "user-1" }, data: { bookId: "book-123" } }),
+      getReaderBookmarks({
+        context: { supabase: { from: mockFrom }, userId: "user-1" },
+        data: { bookId: "11111111-2222-3333-4444-555555555555" },
+      }),
     ).rejects.toThrow("DB failure");
   });
 });
@@ -170,15 +181,15 @@ describe("addReaderBookmark", () => {
     }));
 
     const result = await addReaderBookmark({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123", pageNumber: 10, label: "Key insight" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555", pageNumber: 10, label: "Key insight" },
     });
 
     expect(result).toEqual(expectedBookmark);
     expect(mockFrom).toHaveBeenCalledWith("reader_bookmarks");
     expect(chain.insert).toHaveBeenCalledWith({
       user_id: "user-1",
-      book_id: "book-123",
+      book_id: "11111111-2222-3333-4444-555555555555",
       page_number: 10,
       label: "Key insight",
     });
@@ -203,14 +214,14 @@ describe("addReaderBookmark", () => {
     }));
 
     const result = await addReaderBookmark({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123", pageNumber: 1 },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555", pageNumber: 1 },
     });
 
     expect(result.label).toBe("");
     expect(chain.insert).toHaveBeenCalledWith({
       user_id: "user-1",
-      book_id: "book-123",
+      book_id: "11111111-2222-3333-4444-555555555555",
       page_number: 1,
       label: "",
     });
@@ -235,8 +246,8 @@ describe("addReaderBookmark", () => {
     }));
 
     const result = await addReaderBookmark({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123", pageNumber: 5, label: "Duplicate" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555", pageNumber: 5, label: "Duplicate" },
     });
 
     expect(result).toEqual({ alreadyExists: true });
@@ -262,8 +273,8 @@ describe("addReaderBookmark", () => {
 
     await expect(
       addReaderBookmark({
-        context: { userId: "user-1" },
-        data: { bookId: "book-123", pageNumber: 5, label: "Error" },
+        context: { supabase: { from: mockFrom }, userId: "user-1" },
+        data: { bookId: "11111111-2222-3333-4444-555555555555", pageNumber: 5, label: "Error" },
       }),
     ).rejects.toThrow();
   });
@@ -280,13 +291,13 @@ describe("removeReaderBookmark", () => {
     mockFrom.mockReturnValue(chain);
 
     const result = await removeReaderBookmark({
-      context: { userId: "user-1" },
-      data: { id: "bm-1" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { id: "11111111-2222-3333-4444-555555555555" },
     });
 
     expect(result).toEqual({ success: true });
     expect(mockFrom).toHaveBeenCalledWith("reader_bookmarks");
-    expect(chain.eq).toHaveBeenCalledWith("id", "bm-1");
+    expect(chain.eq).toHaveBeenCalledWith("id", "11111111-2222-3333-4444-555555555555");
     expect(chain.eq).toHaveBeenCalledWith("user_id", "user-1");
     expect(chain.delete).toHaveBeenCalled();
   });
@@ -297,8 +308,8 @@ describe("removeReaderBookmark", () => {
     mockFrom.mockReturnValue(chain);
 
     await removeReaderBookmark({
-      context: { userId: "other-user" },
-      data: { id: "bm-1" },
+      context: { supabase: { from: mockFrom }, userId: "other-user" },
+      data: { id: "11111111-2222-3333-4444-555555555555" },
     });
 
     expect(chain.eq).toHaveBeenCalledWith("user_id", "other-user");
@@ -311,7 +322,10 @@ describe("removeReaderBookmark", () => {
     mockFrom.mockReturnValue(chain);
 
     await expect(
-      removeReaderBookmark({ context: { userId: "user-1" }, data: { id: "bm-1" } }),
+      removeReaderBookmark({
+        context: { supabase: { from: mockFrom }, userId: "user-1" },
+        data: { id: "11111111-2222-3333-4444-555555555555" },
+      }),
     ).rejects.toThrow("Delete failed");
   });
 });
@@ -350,14 +364,14 @@ describe("getReaderNotes", () => {
     mockFrom.mockReturnValue(chain);
 
     const result = await getReaderNotes({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555" },
     });
 
     expect(result).toHaveLength(2);
     expect(mockFrom).toHaveBeenCalledWith("reader_notes");
     expect(chain.eq).toHaveBeenCalledWith("user_id", "user-1");
-    expect(chain.eq).toHaveBeenCalledWith("book_id", "book-123");
+    expect(chain.eq).toHaveBeenCalledWith("book_id", "11111111-2222-3333-4444-555555555555");
     expect(chain.order).toHaveBeenCalledWith("page_number", { ascending: true });
   });
 
@@ -367,8 +381,8 @@ describe("getReaderNotes", () => {
     mockFrom.mockReturnValue(chain);
 
     const result = await getReaderNotes({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555" },
     });
 
     expect(result).toEqual([]);
@@ -381,7 +395,10 @@ describe("getReaderNotes", () => {
     mockFrom.mockReturnValue(chain);
 
     await expect(
-      getReaderNotes({ context: { userId: "user-1" }, data: { bookId: "book-123" } }),
+      getReaderNotes({
+        context: { supabase: { from: mockFrom }, userId: "user-1" },
+        data: { bookId: "11111111-2222-3333-4444-555555555555" },
+      }),
     ).rejects.toThrow("Query failed");
   });
 });
@@ -412,15 +429,15 @@ describe("addReaderNote", () => {
     }));
 
     const result = await addReaderNote({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123", pageNumber: 7, text: "Profound teaching on impermanence" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555", pageNumber: 7, text: "Profound teaching on impermanence" },
     });
 
     expect(result).toEqual(expectedNote);
     expect(mockFrom).toHaveBeenCalledWith("reader_notes");
     expect(chain.insert).toHaveBeenCalledWith({
       user_id: "user-1",
-      book_id: "book-123",
+      book_id: "11111111-2222-3333-4444-555555555555",
       page_number: 7,
       text: "Profound teaching on impermanence",
       color: "#fef08a",
@@ -448,8 +465,8 @@ describe("addReaderNote", () => {
     }));
 
     const result = await addReaderNote({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123", pageNumber: 2, text: "Simple note" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555", pageNumber: 2, text: "Simple note" },
     });
 
     expect(result.color).toBe("#fef08a");
@@ -479,8 +496,8 @@ describe("addReaderNote", () => {
     }));
 
     const result = await addReaderNote({
-      context: { userId: "user-1" },
-      data: { bookId: "book-123", pageNumber: 4, text: "Green note", color: "#86efac" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { bookId: "11111111-2222-3333-4444-555555555555", pageNumber: 4, text: "Green note", color: "#86efac" },
     });
 
     expect(result.color).toBe("#86efac");
@@ -509,8 +526,8 @@ describe("addReaderNote", () => {
 
     await expect(
       addReaderNote({
-        context: { userId: "user-1" },
-        data: { bookId: "nonexistent", pageNumber: 1, text: "Error test" },
+        context: { supabase: { from: mockFrom }, userId: "user-1" },
+        data: { bookId: "11111111-2222-3333-4444-555555555555", pageNumber: 1, text: "Error test" },
       }),
     ).rejects.toThrow();
   });
@@ -527,13 +544,13 @@ describe("deleteReaderNote", () => {
     mockFrom.mockReturnValue(chain);
 
     const result = await deleteReaderNote({
-      context: { userId: "user-1" },
-      data: { id: "note-1" },
+      context: { supabase: { from: mockFrom }, userId: "user-1" },
+      data: { id: "11111111-2222-3333-4444-555555555555" },
     });
 
     expect(result).toEqual({ success: true });
     expect(mockFrom).toHaveBeenCalledWith("reader_notes");
-    expect(chain.eq).toHaveBeenCalledWith("id", "note-1");
+    expect(chain.eq).toHaveBeenCalledWith("id", "11111111-2222-3333-4444-555555555555");
     expect(chain.eq).toHaveBeenCalledWith("user_id", "user-1");
     expect(chain.delete).toHaveBeenCalled();
   });
@@ -544,8 +561,8 @@ describe("deleteReaderNote", () => {
     mockFrom.mockReturnValue(chain);
 
     await deleteReaderNote({
-      context: { userId: "specific-user" },
-      data: { id: "note-1" },
+      context: { supabase: { from: mockFrom }, userId: "specific-user" },
+      data: { id: "11111111-2222-3333-4444-555555555555" },
     });
 
     expect(chain.eq).toHaveBeenCalledWith("user_id", "specific-user");
@@ -558,7 +575,10 @@ describe("deleteReaderNote", () => {
     mockFrom.mockReturnValue(chain);
 
     await expect(
-      deleteReaderNote({ context: { userId: "user-1" }, data: { id: "note-1" } }),
+      deleteReaderNote({
+        context: { supabase: { from: mockFrom }, userId: "user-1" },
+        data: { id: "11111111-2222-3333-4444-555555555555" },
+      }),
     ).rejects.toThrow("Delete failed");
   });
 });

@@ -3,25 +3,25 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useServerFn } from "@tanstack/react-start";
+import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 import { getSiteName, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { Reveal } from "@/components/Reveal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { BrandCtaButton } from "@/components/BrandCtaButton";
 import { sendContactNotification } from "@/lib/contact-notification";
+import { submitContactMessage } from "@/lib/contact-messages";
 import { contactFormSchema, type ContactFormValues } from "@/lib/schemas/contact";
+import { seoHead } from "@/lib/seo";
+import { callFn } from "@/lib/call-fn";
 
 export const Route = createFileRoute("/contact")({
   loader: () => getSiteName(),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `Contact — ${loaderData}` },
-      { name: "description", content: `Get in touch with ${loaderData}.` },
-      { property: "og:title", content: `Contact — ${loaderData}` },
-      { property: "og:description", content: `Get in touch with ${loaderData}.` },
-    ],
+  head: ({ loaderData }) => seoHead({
+    title: "Contact",
+    description: `Get in touch with ${loaderData}.`,
+    path: "/contact",
   }),
   component: ContactPage,
 });
@@ -34,6 +34,7 @@ function ContactPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const doSendNotification = useServerFn(sendContactNotification);
+  const doSubmitContact = useServerFn(submitContactMessage);
 
   const title = pickLocalized(c.title_en, c.title_bn, lang, "Contact");
   const intro = pickLocalized(c.intro_en, c.intro_bn, lang, "");
@@ -54,17 +55,11 @@ function ContactPage() {
     setErrorMsg("");
 
     try {
-      // Store the message in the database
-      const { error } = await (supabase as any).from("contact_messages").insert({
-        name: values.name,
-        email: values.email,
-        message: values.message,
-      });
-
-      if (error) throw error;
+      // Store the message (Supabase first, mock fallback offline)
+      await callFn(doSubmitContact, values);
 
       // Send notification email server-side (best-effort)
-      (doSendNotification as any)({ data: values })
+      callFn(doSendNotification, values)
         .then((result: any) => {
           if (!result.sent) {
             console.warn("[contact] Email notification not sent:", result.reason);
@@ -84,8 +79,9 @@ function ContactPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-20 md:py-28">
+      <PublicBreadcrumbs />
       <Reveal delay={0}>
-        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">Contact</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-5">{pickLocalized(c.title_en, c.title_bn, lang, "Contact")}</p>
       </Reveal>
       <Reveal delay={0.1}>
         <h1 className="font-serif text-4xl md:text-5xl leading-tight">{title}</h1>
@@ -107,6 +103,7 @@ function ContactPage() {
                 {...form.register("name")}
                 disabled={status === "sending"}
                 aria-invalid={!!form.formState.errors.name}
+                className="aria-invalid:border-destructive/70 aria-invalid:focus-visible:ring-destructive/40"
               />
               {form.formState.errors.name && (
                 <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
@@ -121,6 +118,7 @@ function ContactPage() {
                 type="email"
                 disabled={status === "sending"}
                 aria-invalid={!!form.formState.errors.email}
+                className="aria-invalid:border-destructive/70 aria-invalid:focus-visible:ring-destructive/40"
               />
               {form.formState.errors.email && (
                 <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
@@ -135,19 +133,30 @@ function ContactPage() {
                 rows={6}
                 disabled={status === "sending"}
                 aria-invalid={!!form.formState.errors.message}
+                className="aria-invalid:border-destructive/70 aria-invalid:focus-visible:ring-destructive/40"
               />
               {form.formState.errors.message && (
                 <p className="text-xs text-destructive">{form.formState.errors.message.message}</p>
               )}
             </div>
             {status === "sent" ? (
-              <p className="text-sm text-muted-foreground">{successText}</p>
+              <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+                <p className="text-sm text-foreground leading-relaxed">{successText}</p>
+              </div>
             ) : (
               <div>
-                <Button type="submit" disabled={status === "sending"}>
-                  {status === "sending" ? "Sending…" : submitLabel}
-                </Button>
-                {status === "error" && <p className="mt-2 text-sm text-destructive">{errorMsg}</p>}
+                <BrandCtaButton
+                  type="submit"
+                  disabled={status === "sending"}
+                  className="px-6 py-2.5"
+                >
+                  {status === "sending"
+                    ? (lang === "bn" ? "পাঠানো হচ্ছে…" : "Sending…")
+                    : submitLabel}
+                </BrandCtaButton>
+                {status === "error" && (
+                  <p className="mt-2 text-sm text-destructive">{errorMsg}</p>
+                )}
               </div>
             )}
           </form>

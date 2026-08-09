@@ -1,0 +1,57 @@
+{
+  "kind": "collectionType",
+  "collectionName": "courses",
+  "info": {
+    "singularName": "course",
+    "pluralName": "courses",
+    "displayName": "Courses",
+    "description": "Bilingual courses with lessons"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title_en": {
+      "type": "string",
+      "required": true
+    },
+    "title_bn": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title_en"
+    },
+    "description_en": {
+      "type": "blocks"
+    },
+    "description_bn": {
+      "type": "blocks"
+    },
+    "cover_image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "price": {
+      "type": "decimal",
+      "default": 0
+    },
+    "is_free": {
+      "type": "boolean",
+      "default": true
+    },
+    "course_status": {
+      "type": "enumeration",
+      "enum": ["draft", "published", "archived"],
+      "default": "draft"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    },
+    "lessons": {
+      "type": "json"
+    }
+  }
+}

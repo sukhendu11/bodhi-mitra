@@ -1,0 +1,47 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 333 >>
+stream
+BT
+/F1 20 Tf
+72 740 Td
+(Silence and Stillness: Contemplative Essays) Tj
+0 -30 Td
+/F1 12 Tf
+(by Ananda Bhikkhu) Tj
+0 -22 Td
+(A sample of the free edition from Sabbe Satta.) Tj
+0 -22 Td
+() Tj
+0 -22 Td
+(This is a low-size demo PDF generated for local development.) Tj
+0 -22 Td
+(Replace it with the full manuscript when available.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000625 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+695
+%%EOF

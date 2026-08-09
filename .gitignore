@@ -28,6 +28,13 @@ supabase/.temp/
 textureAtlas.png
 nul
 
+# pdfjs-dist static assets copied into public/ by the vite config plugin
+public/pdfjs-assets/
+
+# Shared design research library (3rd-party reference repo — not app code)
+# Re-clone with: git clone --depth 1 https://github.com/VoltAgent/awesome-design-md.git design-references/awesome-design-md
+design-references/
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

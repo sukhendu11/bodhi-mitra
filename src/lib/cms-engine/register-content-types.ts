@@ -116,26 +116,4 @@ const videosDefinition: ContentTypeDefinition = {
 
 registerContentType(videosDefinition);
 
-/* ─── Courses ─────────────────────────────────────────────────────── */
 
-const coursesDefinition: ContentTypeDefinition = {
-  name: "course",
-  table: "courses",
-  label: "Course",
-  labelPlural: "Courses",
-  description: "Structured courses with sequential lessons",
-  slug: { sourceFields: ["title_en"], unique: true, maxLength: 80 },
-  fields: [...BILINGUAL_TITLE_FIELDS, ...BILINGUAL_DESCRIPTION_FIELDS, ...TIMESTAMP_FIELDS],
-  routes: {
-    public: "/courses/:slug",
-    adminList: "/admin/courses",
-    adminEdit: "/admin/courses/$id",
-  },
-  hasSeo: true,
-  defaultSortField: "sort_order",
-  defaultSortOrder: "asc",
-};
-
-registerContentType(coursesDefinition);
-
-registerRelationships("course", [childrenRelationship("course_lesson", "course_id", "Lessons")]);

@@ -262,7 +262,7 @@ export const MARKETPLACE_SECTIONS: MarketplaceSection[] = [
           name: "Section Title",
           visible: true, locked: false, children: [],
           styles: { textAlign: "center", marginBottom: "0.5rem" },
-          props: { content: "Why Bodhi Mitra?", level: 2 },
+          props: { content: "Why Sabbe Satta?", level: 2 },
         },
         {
           id: generateId(),
@@ -672,7 +672,7 @@ export const MARKETPLACE_SECTIONS: MarketplaceSection[] = [
                   name: "Info Card",
                   visible: true, locked: false,
                   children: [
-                    { id: generateId(), type: "text", name: "Email Line", visible: true, locked: false, children: [], styles: { fontSize: "0.875rem" }, props: { content: "✉ hello@bodhimitra.com", html: false } },
+                    { id: generateId(), type: "text", name: "Email Line", visible: true, locked: false, children: [], styles: { fontSize: "0.875rem" }, props: { content: "✉ hello@sabbesatta.com", html: false } },
                     { id: generateId(), type: "text", name: "Social Line", visible: true, locked: false, children: [], styles: { fontSize: "0.875rem", marginTop: "0.75rem" }, props: { content: "Follow us on social media for daily wisdom and updates.", html: false } },
                   ],
                   styles: { padding: "2rem", borderRadius: "0.75rem", backgroundColor: "oklch(0.97 0.005 275)", border: "1px solid oklch(0.9 0.01 275)" },
@@ -718,7 +718,7 @@ export const MARKETPLACE_SECTIONS: MarketplaceSection[] = [
               name: "Brand Column",
               visible: true, locked: false,
               children: [
-                { id: generateId(), type: "heading", name: "Brand Name", visible: true, locked: false, children: [], styles: { fontSize: "1.25rem", fontWeight: "700" }, props: { content: "Bodhi Mitra", level: 3 } },
+                { id: generateId(), type: "heading", name: "Brand Name", visible: true, locked: false, children: [], styles: { fontSize: "1.25rem", fontWeight: "700" }, props: { content: "Sabbe Satta", level: 3 } },
                 { id: generateId(), type: "text", name: "Brand Tagline", visible: true, locked: false, children: [], styles: { fontSize: "0.875rem", color: "oklch(0.55 0 0)", marginTop: "0.5rem" }, props: { content: "Ancient wisdom for modern minds.", html: false } },
               ],
               styles: { flex: "1.5 1 30%" },
@@ -732,8 +732,8 @@ export const MARKETPLACE_SECTIONS: MarketplaceSection[] = [
               children: [
                 { id: generateId(), type: "text", name: "Link Header 1", visible: true, locked: false, children: [], styles: { fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.75rem" }, props: { content: "Content", html: false } },
                 { id: generateId(), type: "text", name: "Link 1a", visible: true, locked: false, children: [], styles: { fontSize: "0.875rem", color: "oklch(0.5 0 0)", marginTop: "0.375rem", cursor: "pointer" }, props: { content: "Books", html: false } },
-                { id: generateId(), type: "text", name: "Link 1b", visible: true, locked: false, children: [], styles: { fontSize: "0.875rem", color: "oklch(0.5 0 0)", marginTop: "0.375rem", cursor: "pointer" }, props: { content: "Courses", html: false } },
-                { id: generateId(), type: "text", name: "Link 1c", visible: true, locked: false, children: [], styles: { fontSize: "0.875rem", color: "oklch(0.5 0 0)", marginTop: "0.375rem", cursor: "pointer" }, props: { content: "Blog", html: false } },
+                { id: generateId(), type: "text", name: "Link 1b", visible: true, locked: false, children: [], styles: { fontSize: "0.875rem", color: "oklch(0.5 0 0)", marginTop: "0.375rem", cursor: "pointer" }, props: { content: "Videos", html: false } },
+                { id: generateId(), type: "text", name: "Link 1c", visible: true, locked: false, children: [], styles: { fontSize: "0.875rem", color: "oklch(0.5 0 0)", marginTop: "0.375rem", cursor: "pointer" }, props: { content: "Reflections", html: false } },
               ],
               styles: { flex: "1 1 20%" },
               props: {},
@@ -764,7 +764,7 @@ export const MARKETPLACE_SECTIONS: MarketplaceSection[] = [
           styles: { marginTop: "2rem", marginBottom: "1.5rem" },
           props: { style: "solid", thickness: "1px", color: "oklch(0.85 0 0)", width: "100%" },
         },
-        { id: generateId(), type: "text", name: "Copyright", visible: true, locked: false, children: [], styles: { fontSize: "0.75rem", textAlign: "center", color: "oklch(0.6 0 0)" }, props: { content: "© 2026 Bodhi Mitra. All rights reserved.", html: false } },
+        { id: generateId(), type: "text", name: "Copyright", visible: true, locked: false, children: [], styles: { fontSize: "0.75rem", textAlign: "center", color: "oklch(0.6 0 0)" }, props: { content: "© 2026 Sabbe Satta. All rights reserved.", html: false } },
       ],
       styles: { padding: "3rem 2rem 1.5rem", maxWidth: "1100px", marginLeft: "auto", marginRight: "auto", borderTop: "1px solid oklch(0.85 0 0)" },
       props: {},

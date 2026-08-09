@@ -62,7 +62,7 @@ beforeEach(() => {
 
 /* ─── Import after mocks are set up ────────────────────────────── */
 
-const { subscribeToNewsletter } = (await import("../newsletter")) as any;
+const { subscribeToNewsletter, unsubscribeFromNewsletter } = (await import("../newsletter")) as any;
 
 /* ════════════════════════════════════════════════════════════════════
    subscribeToNewsletter
@@ -115,11 +115,11 @@ describe("subscribeToNewsletter", () => {
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("throws a generic error for non-23505 database errors", async () => {
+  it("throws a generic error for real database errors (e.g. foreign key violation)", async () => {
     const chain = makeChainable();
     chain.__setResult({
       data: null,
-      error: { code: "42P01", message: "relation not found", details: "", hint: "" },
+      error: { code: "23503", message: "foreign key violation", details: "", hint: "" },
     });
     mockFrom.mockReturnValue(chain);
 
@@ -128,16 +128,95 @@ describe("subscribeToNewsletter", () => {
     ).rejects.toThrow("Something went wrong. Please try again later.");
   });
 
-  it("throws on database insert error with no code", async () => {
+  it("throws on database insert error with no code (real RLS/permission error)", async () => {
     const chain = makeChainable();
     chain.__setResult({
       data: null,
-      error: { code: "", message: "connection failed", details: "", hint: "" },
+      error: { code: "42501", message: "new row violates row-level security policy", details: "", hint: "" },
     });
     mockFrom.mockReturnValue(chain);
 
     await expect(
       subscribeToNewsletter({ data: { email: "test@example.com" } }),
     ).rejects.toThrow("Something went wrong. Please try again later.");
+  });
+
+  /* ─── Mock fallback (Supabase unavailable → offline subscribe) ─── */
+
+  it("falls back to mock subscribe when the table is missing (42P01)", async () => {
+    const chain = makeChainable();
+    chain.__setResult({
+      data: null,
+      error: { code: "42P01", message: "relation does not exist", details: "", hint: "" },
+    });
+    mockFrom.mockReturnValue(chain);
+
+    const result = await subscribeToNewsletter({ data: { email: "offline-42p01@example.com" } });
+    expect(result).toEqual({ subscribed: true, alreadySubscribed: false });
+  });
+
+  it("falls back to mock subscribe when Supabase env vars are missing", async () => {
+    mockFrom.mockImplementation(() => {
+      throw new Error(
+        "Missing Supabase environment variable(s): SUPABASE_URL. Connect Supabase in Lovable Cloud.",
+      );
+    });
+
+    const result = await subscribeToNewsletter({ data: { email: "offline-env@example.com" } });
+    expect(result).toEqual({ subscribed: true, alreadySubscribed: false });
+  });
+
+  it("falls back to mock subscribe on network failure", async () => {
+    mockFrom.mockImplementation(() => {
+      throw new TypeError("fetch failed");
+    });
+
+    const result = await subscribeToNewsletter({ data: { email: "offline-net@example.com" } });
+    expect(result).toEqual({ subscribed: true, alreadySubscribed: false });
+  });
+
+  it("returns alreadySubscribed for a duplicate email in mock mode", async () => {
+    mockFrom.mockImplementation(() => {
+      throw new TypeError("fetch failed");
+    });
+
+    const first = await subscribeToNewsletter({ data: { email: "dup@example.com" } });
+    expect(first).toEqual({ subscribed: true, alreadySubscribed: false });
+
+    const second = await subscribeToNewsletter({ data: { email: "dup@example.com" } });
+    expect(second).toEqual({ subscribed: true, alreadySubscribed: true });
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   unsubscribeFromNewsletter (mock path)
+   ════════════════════════════════════════════════════════════════════ */
+
+describe("unsubscribeFromNewsletter mock path", () => {
+  it("unsubscribes a mock subscriber by token offline", async () => {
+    mockFrom.mockImplementation(() => {
+      throw new TypeError("fetch failed");
+    });
+
+    await subscribeToNewsletter({ data: { email: "unsub-offline@example.com" } });
+    const result = await unsubscribeFromNewsletter({
+      data: { token: "mock-unsub-offline@example.com" },
+    });
+    expect(result).toEqual({ success: true, alreadyUnsubscribed: false });
+
+    // Unsubscribing again reports alreadyUnsubscribed
+    const again = await unsubscribeFromNewsletter({
+      data: { token: "mock-unsub-offline@example.com" },
+    });
+    expect(again).toEqual({ success: true, alreadyUnsubscribed: true });
+  });
+
+  it("returns invalid unsubscribe link for an unknown mock token", async () => {
+    mockFrom.mockImplementation(() => {
+      throw new TypeError("fetch failed");
+    });
+
+    const result = await unsubscribeFromNewsletter({ data: { token: "mock-nope@example.com" } });
+    expect(result).toEqual({ success: false, error: "Invalid unsubscribe link." });
   });
 });

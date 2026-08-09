@@ -3,14 +3,21 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSiteName } from "@/lib/siteSettings";
+import { seoHead } from "@/lib/seo";
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { BrandCtaButton } from "@/components/BrandCtaButton";
 
 export const Route = createFileRoute("/forgot-password")({
   validateSearch: () => ({}) as Record<string, never>,
   loader: () => getSiteName(),
-  head: ({ loaderData }) => ({ meta: [{ title: `Forgot Password — ${loaderData}` }] }),
+  head: ({ loaderData }) => seoHead({
+    title: "Forgot Password",
+    description: "Reset your Sabbe Satta account password.",
+    path: "/forgot-password",
+    siteName: loaderData,
+    noIndex: true,
+  }),
   component: ForgotPasswordPage,
 });
 
@@ -103,14 +110,13 @@ function ForgotPasswordPage() {
           </div>
         </label>
 
-        <Button
+        <BrandCtaButton
           type="submit"
           disabled={submitting || !email.trim()}
-          variant="outline"
-          className="w-full px-6 py-3 text-sm tracking-wide border-foreground hover:bg-foreground hover:text-background"
+          className="w-full px-6 py-3 tracking-wide"
         >
           {submitting ? "Sending…" : "Send reset link"}
-        </Button>
+        </BrandCtaButton>
       </form>
     </div>
   );

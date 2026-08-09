@@ -7,15 +7,13 @@ interface BookSkeletonProps {
 
 export function BookSkeleton({ count = 8 }: BookSkeletonProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+    <div className="book-grid">
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="bg-white dark:bg-zinc-900 rounded-xl border border-border/50 overflow-hidden"
+          className="book-card bg-card border border-border/50 overflow-hidden"
         >
-          {/* Cover placeholder */}
-          <Skeleton className="aspect-[3/4] skeleton-shimmer rounded-none" />
-          {/* Info */}
+          <Skeleton className="book-card-cover skeleton-shimmer rounded-none" />
           <div className="p-4 space-y-2">
             <Skeleton className="h-4 w-3/4 skeleton-shimmer" />
             <Skeleton className="h-3 w-1/2 skeleton-shimmer" />

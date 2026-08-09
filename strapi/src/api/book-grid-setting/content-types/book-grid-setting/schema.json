@@ -1,0 +1,115 @@
+{
+  "kind": "singleType",
+  "collectionName": "book_grid_settings",
+  "info": {
+    "singularName": "book-grid-setting",
+    "pluralName": "book-grid-settings",
+    "displayName": "Book Grid Settings",
+    "description": "Book card grid layout configuration"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "page_size": {
+      "type": "integer",
+      "min": 4,
+      "max": 48,
+      "default": 12,
+      "required": true
+    },
+    "eyebrow_en": {
+      "type": "string",
+      "default": "Books"
+    },
+    "eyebrow_bn": {
+      "type": "string",
+      "default": "বই"
+    },
+    "columns_mobile": {
+      "type": "integer",
+      "min": 1,
+      "max": 2,
+      "default": 2,
+      "required": true
+    },
+    "columns_tablet": {
+      "type": "integer",
+      "min": 2,
+      "max": 4,
+      "default": 3,
+      "required": true
+    },
+    "columns_desktop": {
+      "type": "integer",
+      "min": 2,
+      "max": 5,
+      "default": 4,
+      "required": true
+    },
+    "gap": {
+      "type": "integer",
+      "min": 0,
+      "max": 80,
+      "default": 40,
+      "required": true
+    },
+    "cover_aspect_ratio": {
+      "type": "enumeration",
+      "enum": ["portrait_3_4", "portrait_2_3", "square_1_1", "landscape_4_3"],
+      "default": "portrait_2_3",
+      "required": true
+    },
+    "card_radius": {
+      "type": "integer",
+      "min": 0,
+      "max": 32,
+      "default": 12,
+      "required": true
+    },
+    "show_author": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    },
+    "show_free_badge": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    },
+    "show_featured_badge": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    },
+    "title_font_size": {
+      "type": "integer",
+      "min": 10,
+      "max": 24,
+      "default": 20,
+      "required": true
+    },
+    "author_font_size": {
+      "type": "integer",
+      "min": 8,
+      "max": 20,
+      "default": 16,
+      "required": true
+    },
+    "taxonomy_font_size": {
+      "type": "integer",
+      "min": 8,
+      "max": 18,
+      "default": 14,
+      "required": true
+    },
+    "title_lines": {
+      "type": "integer",
+      "min": 1,
+      "max": 3,
+      "default": 2,
+      "required": true
+    }
+  }
+}

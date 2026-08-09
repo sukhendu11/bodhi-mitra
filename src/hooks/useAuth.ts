@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isMockMode } from "@/lib/data-source";
+import {
+  MOCK_AUTH_EVENT,
+  MOCK_SESSION_KEY,
+  getMockSession,
+  getMockUserRole,
+  mockSessionToSupabaseSession,
+  signOutMock,
+} from "@/lib/mock-session";
 
 export type AppRole = "super_admin" | "admin" | "editor" | "author" | "moderator" | "user";
 
@@ -21,6 +30,41 @@ export function useAuthSession() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // Mock mode — session comes from the mock store (localStorage), with
+    // reactivity via a custom event (same tab) + the storage event (other tabs).
+    if (isMockMode()) {
+      if (typeof window === "undefined") {
+        setSession(mockSessionToSupabaseSession(getMockSession()));
+        setLoading(false);
+        return;
+      }
+
+      const invalidateUserData = () => {
+        queryClient.invalidateQueries({ queryKey: ["is-admin"] });
+        queryClient.invalidateQueries({ queryKey: ["comments"] });
+        queryClient.invalidateQueries({ queryKey: ["user-role"] });
+        queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      };
+
+      const refresh = () => {
+        setSession(mockSessionToSupabaseSession(getMockSession()));
+        setLoading(false);
+        invalidateUserData();
+      };
+
+      refresh();
+      const onStorage = (e: StorageEvent) => {
+        if (e.key === MOCK_SESSION_KEY) refresh();
+      };
+      window.addEventListener(MOCK_AUTH_EVENT, refresh);
+      window.addEventListener("storage", onStorage);
+      return () => {
+        window.removeEventListener(MOCK_AUTH_EVENT, refresh);
+        window.removeEventListener("storage", onStorage);
+      };
+    }
+
+    // Real Supabase path (unchanged)
     let cancelled = false;
     let signedOut = false;
 
@@ -63,7 +107,7 @@ export function useAuthSession() {
   return { session, user: session?.user ?? null, loading };
 }
 
-const HARDCODED_ADMIN_EMAIL = "admin@bodhimitra.test";
+const HARDCODED_ADMIN_EMAIL = "admin@sabbe-satta.test";
 
 /**
  * Hardcoded admin bypass for demo/development.
@@ -82,6 +126,8 @@ export function useUserRole(user: User | null) {
     queryFn: async () => {
       if (!user) return null;
       if (isHardcodedAdmin(user)) return "super_admin";
+      // Mock mode — resolve the role from the mock session
+      if (isMockMode()) return getMockUserRole();
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -102,6 +148,11 @@ export function useIsAdmin(user: User | null) {
       if (!user) return false;
       // Hardcoded admin bypass — no database row needed
       if (isHardcodedAdmin(user)) return true;
+      // Mock mode — resolve from the mock session role
+      if (isMockMode()) {
+        const role = getMockUserRole();
+        return role === "admin" || role === "super_admin";
+      }
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -123,6 +174,8 @@ export function useCanManageUsers(user: User | null) {
     queryFn: async () => {
       if (!user) return false;
       if (isHardcodedAdmin(user)) return true;
+      // Mock mode — resolve from the mock session role
+      if (isMockMode()) return getMockUserRole() === "super_admin";
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
@@ -143,6 +196,10 @@ export function canManageUsers(role: string | null | undefined): boolean {
 }
 
 export async function signOut() {
+  if (isMockMode()) {
+    signOutMock();
+    return { error: null };
+  }
   const result = await supabase.auth.signOut();
   if (result.error) return result;
   await supabase.auth.getSession();

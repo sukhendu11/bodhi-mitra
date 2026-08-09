@@ -1,15 +1,20 @@
 import { getSiteName } from "@/lib/siteSettings";
+import { seoHead } from "@/lib/seo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { MailCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuth";
-import { logLoginEvent } from "@/lib/admin.functions";
+import { isMockMode } from "@/lib/data-source";
+import { signInWithMock, signInAsDemo, getMockSession, DEMO_ACCOUNTS } from "@/lib/mock-session";
+import { mockEnsureWelcome } from "@/lib/mock-notifications";
+import { logLoginEvent } from "@/lib/admin-access";
+import { callFn } from "@/lib/call-fn";
 import { useServerFn } from "@tanstack/react-start";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { BrandCtaButton } from "@/components/BrandCtaButton";
 
 // Clear Supabase auth tokens from localStorage synchronously (no DOM needed).
 // Defined at module level so the function reference is stable across renders,
@@ -29,7 +34,13 @@ export const Route = createFileRoute("/login")({
     redirect: (search.redirect as string) || "/",
   }),
   loader: () => getSiteName(),
-  head: ({ loaderData }) => ({ meta: [{ title: `Sign in — ${loaderData}` }] }),
+  head: ({ loaderData }) => seoHead({
+    title: "Sign in",
+    description: "Sign in to your Sabbe Satta account.",
+    path: "/login",
+    siteName: loaderData,
+    noIndex: true,
+  }),
   component: LoginPage,
 });
 
@@ -48,13 +59,11 @@ function LoginPage() {
   const doLogLogin = useServerFn(logLoginEvent);
 
   const recordLogin = (email: string, method: string) => {
-    (doLogLogin as any)({
-      data: {
+    callFn(doLogLogin, {
         email,
         user_agent: navigator.userAgent,
         sign_in_method: method,
-      },
-    }).catch(() => {});
+      }).catch(() => {});
   };
 
 
@@ -108,6 +117,22 @@ function LoginPage() {
     setSubmitting(true);
 
     if (mode === "signin") {
+      // Mock mode — validate against the demo accounts
+      if (isMockMode()) {
+        const { error } = signInWithMock(trimmedEmail, password);
+        setSubmitting(false);
+        if (error) {
+          toast.error(error);
+          return;
+        }
+        // Welcome goes to whoever actually signed in (user OR admin via form)
+        const signedIn = getMockSession();
+        if (signedIn) mockEnsureWelcome(signedIn.user.id);
+        toast.success("Welcome back");
+        ensureSessionGuard();
+        recordLogin(trimmedEmail, "mock");
+        return;
+      }
       const { error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
         password,
@@ -120,6 +145,13 @@ function LoginPage() {
       toast.success("Welcome back");
       ensureSessionGuard();
       recordLogin(trimmedEmail, "email");
+      return;
+    }
+
+    // Account creation is not available in mock mode
+    if (isMockMode()) {
+      setSubmitting(false);
+      toast.error("Account creation is disabled in demo mode — use the demo accounts below.");
       return;
     }
 
@@ -195,6 +227,8 @@ function LoginPage() {
           : "Create an account to begin."}
       </p>
 
+      <div className="mx-auto mb-10 h-0.5 w-16 rounded-full bg-gradient-to-r from-saffron/60 to-saffron/20" />
+
       {message && (
         <div className="border border-border/60 bg-secondary/20 py-6 px-6 mb-8 text-center">
           {message.includes("Check your email") || message.includes("confirm") ? (
@@ -209,7 +243,7 @@ function LoginPage() {
                     toast.success("Email confirmed! You can now sign in.");
                   }
                 }}
-                className="mt-3 text-[0.55rem] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                className="mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
               >
                 Need another confirmation email?{" "}
                 <span
@@ -234,6 +268,45 @@ function LoginPage() {
           ) : (
             <p className="text-sm text-foreground leading-relaxed">{message}</p>
           )}
+        </div>
+      )}
+
+      {isMockMode() && (
+        <div className="rounded-xl border border-border/50 bg-secondary/20 p-5 mb-8">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
+            Demo mode
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <BrandCtaButton
+              type="button"
+              onClick={() => {
+                signInAsDemo("user");
+                mockEnsureWelcome(DEMO_ACCOUNTS.user.id);
+                ensureSessionGuard();
+                recordLogin("demo@sabbe-satta.test", "mock-demo");
+                toast.success("Signed in as demo user");
+              }}
+              className="px-4 py-2.5 text-sm"
+            >
+              Continue as demo user
+            </BrandCtaButton>
+            <button
+              type="button"
+              onClick={() => {
+                signInAsDemo("admin");
+                mockEnsureWelcome(DEMO_ACCOUNTS.admin.id);
+                ensureSessionGuard();
+                recordLogin("admin@sabbe-satta.test", "mock-demo");
+                toast.success("Signed in as demo admin");
+              }}
+              className="px-4 py-2.5 text-sm font-medium rounded-lg border border-border/60 bg-background/60 hover:border-foreground/30 hover:bg-secondary/40 transition-all duration-200"
+            >
+              Continue as demo admin
+            </button>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground/70 leading-relaxed">
+            demo@sabbe-satta.test / demo1234 · admin@sabbe-satta.test / admin1234
+          </p>
         </div>
       )}
 
@@ -268,44 +341,48 @@ function LoginPage() {
             Google sign-in failed
           </p>
           <p className="text-sm text-foreground leading-relaxed break-words">{oauthError}</p>
-          <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
             Open the browser console for the full error payload and request URL.
           </p>
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={handleGoogle}
-        disabled={submitting}
-        className="w-full mb-6 px-6 py-3 text-sm tracking-wide border border-border hover:bg-secondary transition-colors disabled:opacity-40 flex items-center justify-center gap-3"
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-          <path
-            fill="#4285F4"
-            d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
-          />
-          <path
-            fill="#34A853"
-            d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
-          />
-          <path
-            fill="#FBBC05"
-            d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"
-          />
-          <path
-            fill="#EA4335"
-            d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"
-          />
-        </svg>
-        Continue with Google
-      </button>
+      {!isMockMode() && (
+        <>
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={submitting}
+            className="w-full mb-6 px-6 py-3 text-sm tracking-wide border border-border hover:bg-secondary transition-colors disabled:opacity-50 flex items-center justify-center gap-3"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              <path
+                fill="#4285F4"
+                d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+              />
+              <path
+                fill="#34A853"
+                d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"
+              />
+              <path
+                fill="#EA4335"
+                d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"
+              />
+            </svg>
+            Continue with Google
+          </button>
 
-      <div className="flex items-center gap-3 mb-6 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-        <span className="flex-1 h-px bg-border" />
-        or
-        <span className="flex-1 h-px bg-border" />
-      </div>
+          <div className="flex items-center gap-3 mb-6 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="flex-1 h-px bg-border" />
+            or
+            <span className="flex-1 h-px bg-border" />
+          </div>
+        </>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block">
@@ -349,11 +426,10 @@ function LoginPage() {
           </label>
         )}
 
-        <Button
+        <BrandCtaButton
           type="submit"
           disabled={submitting}
-          variant="outline"
-          className="w-full px-6 py-3 text-sm tracking-wide border-foreground hover:bg-foreground hover:text-background"
+          className="w-full px-6 py-3 tracking-wide"
         >
           {submitting
             ? mode === "signin"
@@ -362,15 +438,15 @@ function LoginPage() {
             : mode === "signin"
               ? "Sign in"
               : "Create account"}
-        </Button>
+        </BrandCtaButton>
       </form>
 
       {mode === "signin" && (
         <p className="mt-6 text-xs text-center">
           <Link
             to="/forgot-password"
-            search={{} as any}
-            params={{} as any}
+            search={{}}
+            params={{}}
             className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
           >
             Forgot password?
@@ -379,7 +455,7 @@ function LoginPage() {
       )}
 
       {mode === "signup" && (
-        <p className="mt-6 text-[0.55rem] text-muted-foreground/60 leading-relaxed text-center">
+        <p className="mt-6 text-xs text-muted-foreground/60 leading-relaxed text-center">
           We'll send you a confirmation email to verify your account.
         </p>
       )}
