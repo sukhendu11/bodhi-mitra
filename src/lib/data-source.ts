@@ -32,10 +32,24 @@ export function isMockMode(): boolean {
   if (_mockModeOverride !== null) return _mockModeOverride;
   if (DATA_SOURCE === "mock") return true;
   if (DATA_SOURCE !== "auto") return false;
-  // "auto" = mock-first unless real Supabase credentials are configured
+  // "auto" = mock-first unless real Supabase credentials are configured.
+  // Placeholder values (copied from .env.example, e.g. your-project / your-anon-key)
+  // count as NOT configured — otherwise a GitHub-backed Vercel deploy with the
+  // example env still present would silently leave demo mode (and hide the
+  // "Continue as demo user/admin" buttons on /login).
   const url = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   const key =
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_PUBLISHABLE_KEY;
-  return !url || !key;
+  return !url || !key || isPlaceholder(url) || isPlaceholder(key);
+}
+
+// Anchored to the exact .env.example placeholders — broad substrings like
+// `your-` or `xxx` could theoretically match a real base64 key, so keep the
+// detection to the concrete values users actually copy from the template.
+const PLACEHOLDER_RE = /your-project\.supabase\.co|your-anon-key|example\.com|^your-|^xxx/i;
+
+function isPlaceholder(value: string | undefined): boolean {
+  if (!value) return true;
+  return PLACEHOLDER_RE.test(value);
 }
