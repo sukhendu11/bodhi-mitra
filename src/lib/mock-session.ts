@@ -49,6 +49,7 @@ export interface MockSession {
     email: string;
     role: string;
     display_name: string;
+    avatar_url: string | null;
     created_at: string;
   };
 }
@@ -105,6 +106,7 @@ function makeMockSession(account: DemoAccount): MockSession {
       email: account.email,
       role: account.role,
       display_name: account.displayName,
+      avatar_url: null,
       created_at: "2026-01-01T00:00:00Z",
     },
   };
@@ -144,6 +146,21 @@ export function signOutMock() {
   emitMockAuthChange();
 }
 
+/**
+ * Update the signed-in mock user's avatar (mirrors `supabase.auth.updateUser`
+ * in real mode). The header reads `user.user_metadata.avatar_url`, so keeping
+ * the session store in sync is what propagates a newly uploaded avatar to the
+ * header + mobile nav. Emits the auth-change event to refresh useAuthSession.
+ * No-op if the given userId isn't the current signed-in user.
+ */
+export function mockSetSessionAvatar(userId: string, avatarUrl: string | null) {
+  const session = getMockSession();
+  if (!session || session.user.id !== userId) return;
+  session.user = { ...session.user, avatar_url: avatarUrl };
+  writeRawSession(session);
+  emitMockAuthChange();
+}
+
 /* ─── Session → Supabase shape ─────────────────────────────────── */
 
 /** Convert a mock session into a Supabase-compatible Session object. */
@@ -169,7 +186,10 @@ export function mockSessionToSupabaseSession(session: MockSession | null): Sessi
       updated_at: user.created_at,
       identities: [],
       app_metadata: { provider: "mock", role: user.role },
-      user_metadata: { display_name: user.display_name },
+      user_metadata: {
+        display_name: user.display_name,
+        ...(user.avatar_url ? { avatar_url: user.avatar_url } : {}),
+      },
     } as User,
   } as Session;
 }
