@@ -19,8 +19,8 @@ const dict = {
     en: "Quiet essays on the Buddha's teachings, the science of the mind, and the slow art of becoming well.",
     bn: "বুদ্ধের শিক্ষা, মনের বিজ্ঞান, এবং সুস্থ হয়ে ওঠার ধীর শিল্প নিয়ে শান্ত প্রবন্ধ।",
   },
-  // CTA / action — English only
-  home_cta: { en: "Begin reading →", bn: "Begin reading →" },
+  // CTA / action — bilingual (hero link localizes in Bangla mode)
+  home_cta: { en: "Begin reading →", bn: "পড়া শুরু করুন →" },
   recent_reflections: { en: "Recent reflections", bn: "সাম্প্রতিক প্রতিফলন" },
   filter_all: { en: "All", bn: "All" },
 
@@ -193,6 +193,29 @@ export function timeAgo(iso: string, lang: Lang): string {
     month: "short",
     day: "numeric",
   });
+}
+
+/**
+ * Format an ISO date for a UI language.
+ * - EN: "en-US" locale, Latin digits
+ * - BN: "bn-BD" locale AND the result is passed through `toBanglaDigits` so
+ *   numerals are guaranteed Bengali regardless of the runtime's ICU data
+ *   (Node/SSR and browsers both render `bn-BD`, but the explicit pass keeps
+ *   it consistent everywhere).
+ */
+export function formatDate(
+  iso: string,
+  lang: Lang,
+  options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  },
+): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const formatted = d.toLocaleDateString(lang === "bn" ? "bn-BD" : "en-US", options);
+  return lang === "bn" ? toBanglaDigits(formatted) : formatted;
 }
 
 /**

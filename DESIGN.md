@@ -153,6 +153,19 @@ Conventions: **no arbitrary `text-[0.xxrem]`** — use the scale sizes (`text-xs
 - **Spacing scale:** Tailwind standard 0.5→96 (2px→384px). Generous section padding — `py-20 md:py-28` for major sections, consistent `border-t border-border/40` section separators.
 - **Z-index ladder:** `--z-dropdown: 100` · `sticky: 200` · `banner: 300` · `drawer: 400` · `modal: 500` · `popover: 600` · `tooltip: 700` · `toast: 800`.
 
+### 4.1 Responsive Program (M1–M7, 2026-08-10/11)
+
+Every route/component is designed mobile-first and verified **non-browser** via source-level contract tests (`src/lib/__tests__/responsive-contract.test.ts` — jsdom does no layout, so the suite asserts the *class strings* that encode each guarantee). Milestone audit notes and fixes live in `PROJECT.md §17`; these are the standing design rules:
+
+- **Grids collapse** — never a fixed row on phones: 1→2→3 col progression site-wide (e.g. `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`), stat grids `grid-cols-2 md:grid-cols-4`, money grids at 3+ cols stack to 1 col below `sm` (shared `StatCard`/`StatGrid` in `src/components/StatCard.tsx` encode this).
+- **Every `justify-between` row must handle wrap** — either `flex-wrap`/`flex-col`, or the row is on the audited allowlist in the contract suite (`SAFE_UNWRAPPED_JUSTIFY_BETWEEN`, 40 rows / 25 files). **Adding any new unwrapped row fails CI**; regenerate the allowlist with `node scripts/gen-responsive-allowlist.mjs` only after a 320px overflow audit.
+- **Money at large sizes** — `text-xl sm:text-2xl leading-tight` (via `StatCard money`); `BDT 1,000.00` / `১,০০০.০০ টাকা` overflows ~48px columns, so money grids stack on phones.
+- **Long text truncates** — `min-w-0` + `truncate` on flex children (emails, titles, subtitles); never let a label crush a sibling.
+- **Scrollable strips hide the scrollbar** — `thumbnail-scroll` utility (settings chips, stats streak, category pills).
+- **Desktop-only elements ship a mobile alternative** — sidebar ↔ scroll-spy chips (`settings`), desktop ToC ↔ `lg:hidden` mobile ToC (`posts.$slug`), horizontal-scroll sidebar ↔ full sidebar (`admin`).
+- **Touch targets** — compact chips keep a `py-2` (32px) floor (homepage filter pills); icon buttons ≥ 32px via `iconBtn`; hover-only actions get a mobile-visible fallback.
+- **Filter/chip language (slim outlined pills, 2026-08-11)** — `px-3 py-2 text-xs font-medium uppercase tracking-[0.08em] rounded-full border`; inactive `border-border/40 text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:border-foreground/20`, active `bg-foreground text-background border-transparent shadow-sm` + `aria-pressed`. (Homepage reflections pills; the `/reflections` hub pills may follow.)
+
 ## 5. Components & Patterns
 
 ### 5.1 Buttons
@@ -219,6 +232,14 @@ Per `RULES.md §14`:
 - **Design tokens, not Sonner defaults** — colors are mapped in `styles.css` under `[data-sonner-toaster][data-sonner-theme]` (with `!important`, because Sonner injects its stylesheet late): `--normal-bg: var(--card)`, `--normal-border: var(--border)`, `--normal-text: var(--foreground)`, radius 0.75rem, width 360px. `richColors` variants use **tinted token surfaces** (`color-mix(in oklab, var(--success|destructive|info|warning) ~10%, var(--card))` bg + ~30% border) with `--foreground` text for readability — never Sonner's pure white/black or its own green/red.
 - **Lucide icons only** — the `icons` prop passes `CheckCircle2` / `AlertCircle` / `Info` / `TriangleAlert` (h-4 w-4); the `[data-icon]` color is set to the semantic token per `data-type` via CSS. Description text = `--muted-foreground`.
 - **Bilingual** — every user-facing toast is EN + BN (`lang === "bn" ? … : …`). Backend `error.message` strings pass through as-is. Auth/settings *pages* are EN-only system pages (§6) — their toasts stay English to match the page until the page itself is localized.
+
+### 5.7 Account Navigation Grouping (2026-08-12)
+
+- **One shared config** — `src/lib/profile-menu.ts` is the single source of truth for account navigation: `PROFILE_MENU_ITEMS` (with optional `group`) + `PROFILE_MENU_GROUP_LABELS`. Order = action frequency: Profile · My Books (standalone) → **Financial** (Orders & Receipts · Cart · Wishlist · Bookmarks) → **Stats** (Reading Stats) → **Settings** → Admin (admin-only).
+- **Grouped rendering** — the avatar dropdown shows a small uppercase section header (`text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/60`) at each group boundary, with separators only at boundaries (into/out of a group, between standalone items) — never a divider between every entry. The mobile drawer's ACCOUNT section mirrors the same sections using the same labels, so desktop and mobile cannot drift.
+- **Settings page uses the same pattern** — `SettingsSectionDef.group` buckets sections into **Account** / **Reading & Appearance** / **Privacy & Help**, with group headers in the sticky sidebar and mobile chips; deep links (`/settings#appearance`, `/settings#reading`) scroll into view via `scroll-mt-28` + a `useLocation` hash effect.
+- **Icons** — My Books=BookOpen · Orders=ShoppingBag · Cart=ShoppingCart · Wishlist=Heart · Bookmarks=Bookmark · Reading Stats=BarChart3 · Settings=Settings · Admin=Shield — identical across dropdown and mobile.
+- A future admin backend can reorder/rename/hide these items by swapping `profile-menu.ts` for a CMS-driven fetch (same `sort_order` pattern as site navigation).
 
 ## 6. Bilingual (EN ↔ BN) Rules
 

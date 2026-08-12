@@ -45,7 +45,16 @@ function DonatePage() {
       <Reveal delay={0}>
         <div className="flex items-center gap-3 mb-6">
           <LotusIcon size={20} className="opacity-60" />
-          <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          {/* Bangla alignment — same measured fix as the mobile donate CTA:
+              Noto Sans Bengali ink rides ~2.3px high of its box center at
+              14px; scaled to this text-xs (12px) label that is ~2px, so nudge
+              the Bangla word down with a translate (line-height alone cannot
+              shift the ink). leading-[20px] matches the 20px icon. */}
+          <p
+            className={`text-xs uppercase tracking-[0.25em] text-muted-foreground leading-[20px] ${
+              lang === "bn" ? "translate-y-[2px]" : ""
+            }`}
+          >
             {lang === "bn" ? "দান" : "Donate"}
           </p>
         </div>

@@ -194,4 +194,11 @@ describe("formatDuration", () => {
     expect(formatDuration(3 * 3_600_000)).toBe("3h");
     expect(formatDuration(3 * 3_600_000 + 12 * 60_000)).toBe("3h 12m");
   });
+
+  it("renders Bengali units and numerals in BN mode", () => {
+    expect(formatDuration(0, "bn")).toBe("০ মিনিট");
+    expect(formatDuration(5 * 60_000, "bn")).toBe("৫ মিনিট");
+    expect(formatDuration(3 * 3_600_000, "bn")).toBe("৩ ঘণ্টা");
+    expect(formatDuration(3 * 3_600_000 + 12 * 60_000, "bn")).toBe("৩ ঘণ্টা ১২ মিনিট");
+  });
 });

@@ -425,6 +425,20 @@
       transform: none !important;
     }
   }
+
+  /* User-controlled reduced motion (Settings → Appearance → Reduced motion).
+     The Settings page sets data-reduced-motion="true" on <html> from the
+     saved preference; this mirrors the OS-level kill-switch above so every
+     animation/transition on the page is suppressed immediately. */
+  html[data-reduced-motion="true"],
+  html[data-reduced-motion="true"] *,
+  html[data-reduced-motion="true"] *::before,
+  html[data-reduced-motion="true"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @keyframes page-enter {

@@ -83,6 +83,20 @@ const lineHeightVar: Record<LineHeight, string> = {
 };
 
 /**
+ * CSS custom properties consumed by `.prose-mitra` for article typography.
+ * Shared between the article reader (useTypography) and the live reading
+ * preview on /settings so both surfaces render identically.
+ */
+export function typoCssVars(
+  settings: Pick<TypoSettings, "fontSize" | "lineHeight">,
+): CSSProperties {
+  return {
+    "--article-font-size": fontSizeVar[settings.fontSize],
+    "--article-line-height": lineHeightVar[settings.lineHeight],
+  } as CSSProperties;
+}
+
+/**
  * Article typography with an optional user-preference seed (from the
  * profile's saved reading preferences). The seed applies until the reader
  * makes an explicit per-article choice (localStorage override or a manual
@@ -122,10 +136,7 @@ export function useTypography(userSeed?: Partial<TypoSettings>) {
     }
   }, []);
 
-  const typoStyle = {
-    "--article-font-size": fontSizeVar[settings.fontSize],
-    "--article-line-height": lineHeightVar[settings.lineHeight],
-  } as CSSProperties;
+  const typoStyle = typoCssVars(settings);
 
   return { settings, setSettings: setSettingsWithOverride, typoStyle };
 }

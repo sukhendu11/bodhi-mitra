@@ -364,6 +364,19 @@ Never sacrifice usability for visual effects.
 
 Maintain a premium reading experience.
 
+### 13.1 Responsive Rules (M5–M7 contract, 2026-08-11)
+
+The site is verified mobile-first by **source-level contract tests** (`src/lib/__tests__/responsive-contract.test.ts` — jsdom does no layout, so class strings are asserted instead). Treat these as standing rules when editing any route or component:
+
+- **Grids must collapse** — use the 1→2→3 progression (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`); never a fixed 2/3/4-col row on phones. Reuse the shared `StatGrid`/`StatCard` (`src/components/StatCard.tsx`) for stats — it encodes the money-grid stacking rule.
+- **Never add an unwrapped `justify-between` row** — every such row must contain `flex-wrap` or `flex-col`, OR be added to `SAFE_UNWRAPPED_JUSTIFY_BETWEEN` in the contract suite after a 320px overflow audit. The guard fails CI on new unlisted rows. Regenerate the allowlist with `node scripts/gen-responsive-allowlist.mjs`.
+- **Money typography** — use the `money` prop on `StatCard` (`text-xl sm:text-2xl leading-tight`); long `BDT`/`টাকা` strings overflow narrow columns.
+- **Truncation guards** — add `min-w-0` + `truncate` to flex children holding emails/titles/subtitles.
+- **Scrollable strips** — add the `thumbnail-scroll` utility (hides the scrollbar) to `overflow-x-auto` rows.
+- **Desktop-only elements need a mobile alternative** — sidebar ↔ chips, desktop ToC ↔ mobile ToC, etc.
+- **Touch targets** — keep compact chips at a `py-2` (32px) floor; don't shrink below the pre-existing sizes when restyling.
+- **Taxonomy counters are removed** — no `({count})` post-count badges on category pills/cards (homepage, `/reflections` hub, post cards). `fetchPostCounts`/`mockFetchPostCounts` are deleted; do not reintroduce.
+
 ---
 
 ## 14. Design System

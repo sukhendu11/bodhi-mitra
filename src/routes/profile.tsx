@@ -1,11 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
 import {
   getUserBookmarks,
   getUserBookmarksClient,
@@ -13,7 +11,7 @@ import {
 } from "@/lib/bookmarks";
 import { callFn } from "@/lib/call-fn";
 import { isMockMode } from "@/lib/data-source";
-import { mockGetProfile, mockUpsertProfile } from "@/lib/mock-session";
+import { mockGetProfile } from "@/lib/mock-session";
 import { mockCountUserComments } from "@/lib/mock-comments";
 import { mockGetPurchases } from "@/lib/mock-commerce";
 import { mockGetUserProgress } from "@/lib/mock-progress";
@@ -23,11 +21,10 @@ import {
   type ReadingHistoryBook,
 } from "@/lib/reading-history";
 import { getSiteName } from "@/lib/siteSettings";
-import { useLang, timeAgo } from "@/lib/i18n";
+import { useLang, timeAgo, toBanglaDigits, formatDate } from "@/lib/i18n";
 import { seoHead } from "@/lib/seo";
 import { ErrorPage } from "@/components/error-page";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
-import { toast } from "sonner";
 import {
   User,
   Mail,
@@ -40,10 +37,12 @@ import {
   Pencil,
   Heart,
   Bookmark,
+  BookMarked,
   Receipt,
   ChevronRight,
+  Bell,
+  CheckCheck,
 } from "lucide-react";
-import { profileFormSchema, type ProfileFormValues } from "@/lib/schemas/profile";
 
 export const Route = createFileRoute("/profile")({
   loader: () => getSiteName(),
@@ -62,18 +61,8 @@ function ProfilePage() {
   const { user, loading } = useAuthSession();
   const { lang } = useLang();
   const doGetBookmarks = useServerFn(getUserBookmarks);
-  const [editingName, setEditingName] = useState(false);
-  const [editingBio, setEditingBio] = useState(false);
-  const [savingName, setSavingName] = useState(false);
-  const [savingBio, setSavingBio] = useState(false);
 
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: { display_name: "", bio: "" },
-    mode: "onBlur",
-  });
-
-  const { data: profile, refetch } = useQuery({
+  const { data: profile } = useQuery({
     queryKey: ["user-profile", user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -86,13 +75,12 @@ function ProfilePage() {
           avatar_url: p.avatar_url,
           bio: p.bio,
           created_at: p.created_at,
-          preferences: p.preferences,
         };
       }
       const db = supabase;
       const { data } = await db
         .from("profiles")
-        .select("*")
+        .select("display_name, avatar_url, bio, created_at")
         .eq("user_id", user.id)
         .maybeSingle();
       return data as {
@@ -100,20 +88,11 @@ function ProfilePage() {
         avatar_url: string | null;
         bio: string | null;
         created_at: string;
-        preferences: Record<string, unknown> | null;
       } | null;
     },
     enabled: !!user,
     staleTime: 30_000,
   });
-
-  // Hydrate form when profile loads
-  useEffect(() => {
-    if (profile) {
-      form.setValue("display_name", profile.display_name || "");
-      form.setValue("bio", profile.bio || "");
-    }
-  }, [profile, form]);
 
   const { data: commentCount } = useQuery({
     queryKey: ["user-comment-count", user?.id],
@@ -130,7 +109,15 @@ function ProfilePage() {
     enabled: !!user,
   });
 
-  /* ── Bookmarks (E3.3 — shown on profile) ────────────────────── */
+  /* ── Notifications (latest, topic-gated like the header bell) ── */
+  const {
+    visible: visibleNotifications,
+    unread: unreadNotifications,
+    markRead,
+    markAllRead,
+  } = useNotifications(user?.id ?? null);
+
+  /* ── Bookmarks (posts + books) ─────────────────────────────── */
   const { data: bookmarks = [] } = useQuery({
     queryKey: ["user-bookmarks", user?.id],
     queryFn: () =>
@@ -221,70 +208,6 @@ function ProfilePage() {
     staleTime: 30_000,
   });
 
-  const handleSaveName = async () => {
-    const valid = await form.trigger("display_name");
-    if (!valid || !user) return;
-
-    setSavingName(true);
-    if (isMockMode()) {
-      mockUpsertProfile(user.id, {
-        display_name: form.getValues("display_name").trim(),
-      });
-      setSavingName(false);
-      setEditingName(false);
-      toast.success(lang === "bn" ? "প্রদর্শনের নাম আপডেট হয়েছে" : "Display name updated");
-      refetch();
-      return;
-    }
-    const db = supabase as any;
-    const { error } = await db.from("profiles").upsert({
-      user_id: user.id,
-      display_name: form.getValues("display_name").trim(),
-      updated_at: new Date().toISOString(),
-    });
-    setSavingName(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setEditingName(false);
-    toast.success(lang === "bn" ? "প্রদর্শনের নাম আপডেট হয়েছে" : "Display name updated");
-    refetch();
-  };
-
-  const handleSaveBio = async () => {
-    const valid = await form.trigger("bio");
-    if (!valid || !user) return;
-
-    setSavingBio(true);
-    const bioVal = (form.getValues("bio") || "").trim();
-    if (isMockMode()) {
-      mockUpsertProfile(user.id, { bio: bioVal || null });
-      setSavingBio(false);
-      setEditingBio(false);
-      toast.success(lang === "bn" ? "বায়ো আপডেট হয়েছে" : "Bio updated");
-      refetch();
-      return;
-    }
-    const db = supabase as any;
-    const { error } = await db.from("profiles").upsert({
-      user_id: user.id,
-      bio: bioVal || null,
-      updated_at: new Date().toISOString(),
-    });
-    setSavingBio(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setEditingBio(false);
-    toast.success(lang === "bn" ? "বায়ো আপডেট হয়েছে" : "Bio updated");
-    refetch();
-  };
-
-  const inputCls =
-    "w-full border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground/40 focus-visible:ring-1 focus-visible:ring-primary/40 transition-colors duration-200";
-
   // Gate on session loading so SSR guest-render never flashes before hydration
   if (loading) {
     return (
@@ -339,14 +262,8 @@ function ProfilePage() {
     .charAt(0)
     .toUpperCase();
   const memberSince = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString(
-        lang === "bn" ? "bn-BD" : "en-US",
-        { year: "numeric", month: "long" }
-      )
+    ? formatDate(profile.created_at, lang, { year: "numeric", month: "long" })
     : "N/A";
-
-  const nameError = form.formState.errors.display_name?.message;
-  const bioError = form.formState.errors.bio?.message;
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-20 md:py-28">
@@ -358,199 +275,157 @@ function ProfilePage() {
       </Link>
 
       <div className="mt-8 space-y-5">
-        {/* ── Identity Card ─────────────────────────────────────── */}
+        {/* ── Identity Card (display only — editing moved to /settings) ── */}
         <div className="rounded-2xl border border-border/50 bg-card p-6 md:p-8 shadow-sm">
-        {/* ── Avatar + Identity ──────────────────────────────────── */}
-        <div className="flex items-start gap-6">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-saffron-100)] to-[var(--color-saffron-200)] dark:from-saffron-900 dark:to-saffron-800 flex items-center justify-center text-xl font-medium text-[var(--color-saffron-700)] dark:text-[var(--color-saffron-300)] shrink-0 ring-2 ring-[var(--color-saffron)]/20">
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={profile.display_name || "Profile avatar"}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              initials
-            )}
-          </div>
-
-          <div className="flex-1 min-w-0">
-            {editingName ? (
-              <div className="space-y-3">
-                <input
-                  {...form.register("display_name")}
-                  placeholder={lang === "bn" ? "আপনার প্রদর্শনের নাম" : "Your display name"}
-                  className={inputCls + (nameError ? " border-destructive" : "")}
-                  autoFocus
+          <div className="flex items-start gap-6">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-saffron-100)] to-[var(--color-saffron-200)] dark:from-saffron-900 dark:to-saffron-800 flex items-center justify-center text-xl font-medium text-[var(--color-saffron-700)] dark:text-[var(--color-saffron-300)] shrink-0 ring-2 ring-[var(--color-saffron)]/20">
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.display_name || "Profile avatar"}
+                  className="w-full h-full rounded-full object-cover"
                 />
-                {nameError && (
-                  <p className="text-xs text-destructive">{nameError}</p>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSaveName}
-                    disabled={savingName}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-50"
-                  >
-                    {savingName
-                      ? lang === "bn" ? "সংরক্ষণ হচ্ছে…" : "Saving…"
-                      : lang === "bn" ? "সংরক্ষণ" : "Save"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      form.setValue("display_name", profile?.display_name || "");
-                      form.clearErrors("display_name");
-                      setEditingName(false);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium border border-border text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {lang === "bn" ? "বাতিল" : "Cancel"}
-                  </button>
-                </div>
-              </div>
-            ) : (
+              ) : (
+                initials
+              )}
+            </div>
+
+            <div className="flex-1 min-w-0">
               <div className="space-y-1">
                 <h1 className="text-xl font-semibold">
                   {profile?.display_name || (lang === "bn" ? "বেনামী" : "Anonymous")}
                 </h1>
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Mail className="h-3.5 w-3.5" />
-                  {user.email}
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
+                  <Mail className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{user.email}</span>
                 </div>
               </div>
+
+              {/* Bio (read-only here) */}
+              {profile?.bio && (
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {profile.bio}
+                </p>
+              )}
+
+              {/* Edit profile → /settings */}
+              <Link
+                to="/settings"
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+              >
+                <Pencil className="h-3 w-3" />
+                {lang === "bn" ? "প্রোফাইল সম্পাদনা করুন" : "Edit profile"}
+              </Link>
+            </div>
+          </div>
+
+          {/* ── Stats Grid ─────────────────────────────────────────── */}
+          <div className="mt-6 pt-6 border-t border-border/40 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
+              <div>
+                <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground font-medium">
+                  {lang === "bn" ? "সদস্য হয়েছেন" : "Member since"}
+                </p>
+                <p className="text-sm">{memberSince}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <MessageSquare className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
+              <div>
+                <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground font-medium">
+                  {lang === "bn" ? "মন্তব্য" : "Comments"}
+                </p>
+                <p className="text-sm">{lang === "bn" ? toBanglaDigits(commentCount ?? 0) : commentCount ?? 0}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <BookOpen className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
+              <div>
+                <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground font-medium">
+                  {lang === "bn" ? "পড়া বই" : "Books read"}
+                </p>
+                <p className="text-sm">{lang === "bn" ? toBanglaDigits(readingStats?.completedBooks ?? 0) : readingStats?.completedBooks ?? 0}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
+              <div>
+                <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground font-medium">
+                  {lang === "bn" ? "গড় অগ্রগতি" : "Avg progress"}
+                </p>
+                <p className="text-sm">{lang === "bn" ? toBanglaDigits(readingStats?.avgProgress ?? 0) : readingStats?.avgProgress ?? 0}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Notifications (latest — mirror of the header bell) ── */}
+        <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-sm text-foreground mb-3">
+            <Bell className="h-4 w-4 text-[var(--color-saffron)]/70" />
+            <span className="font-medium">{lang === "bn" ? "বিজ্ঞপ্তি" : "Notifications"}</span>
+            {unreadNotifications > 0 && (
+              <button
+                type="button"
+                onClick={markAllRead}
+                className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <CheckCheck className="h-3 w-3" />
+                {lang === "bn" ? "সব পড়া হয়েছে" : "Mark all read"}
+              </button>
             )}
           </div>
-        </div>
-
-        {!editingName && (
-          <button
-            type="button"
-            onClick={() => {
-              form.setValue("display_name", profile?.display_name || "");
-              form.clearErrors("display_name");
-              setEditingName(true);
-            }}
-            className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Pencil className="h-3 w-3" /> {lang === "bn" ? "নাম সম্পাদনা করুন" : "Edit display name"}
-          </button>
-        )}
-
-        {/* ── Bio ────────────────────────────────────────────────── */}
-        <div className="mt-6 pt-6 border-t border-border/40">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              {editingBio ? (
-                <div className="space-y-3">
-                  <textarea
-                    {...form.register("bio")}
-                    placeholder={lang === "bn" ? "নিজের সম্পর্কে একটি ছোট বায়ো লিখুন…" : "Write a short bio about yourself..."}
-                    rows={3}
-                    className={inputCls + " resize-none" + (bioError ? " border-destructive" : "")}
-                  />
-                  {bioError && (
-                    <p className="text-xs text-destructive">{bioError}</p>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handleSaveBio}
-                      disabled={savingBio}
-                      className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                      {savingBio
-                        ? lang === "bn" ? "সংরক্ষণ হচ্ছে…" : "Saving…"
-                        : lang === "bn" ? "বায়ো সংরক্ষণ" : "Save bio"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        form.setValue("bio", profile?.bio || "");
-                        form.clearErrors("bio");
-                        setEditingBio(false);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium border border-border text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {lang === "bn" ? "বাতিল" : "Cancel"}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground font-medium mb-1.5">
-                    {lang === "bn" ? "পরিচিতি" : "About"}
-                  </p>
-                  {profile?.bio ? (
-                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {profile.bio}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground/50 italic">
-                      {lang === "bn" ? "এখনো কোনো বায়ো নেই।" : "No bio yet."}
-                    </p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      form.setValue("bio", profile?.bio || "");
-                      form.clearErrors("bio");
-                      setEditingBio(true);
-                    }}
-                    className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          {visibleNotifications.length === 0 ? (
+            <p className="text-sm text-muted-foreground/70">
+              {lang === "bn" ? "এখনো কোনো বিজ্ঞপ্তি নেই।" : "No notifications yet."}
+            </p>
+          ) : (
+            <ul className="space-y-0.5">
+              {visibleNotifications.slice(0, 5).map((n) => {
+                const row = (
+                  <span
+                    className={`-mx-2 flex w-full items-start gap-2.5 rounded-md px-2 py-2 text-left ${
+                      n.read ? "opacity-60" : ""
+                    }`}
                   >
-                    <Pencil className="h-3 w-3" />{" "}
-                    {profile?.bio
-                      ? lang === "bn" ? "বায়ো সম্পাদনা করুন" : "Edit bio"
-                      : lang === "bn" ? "বায়ো যোগ করুন" : "Add bio"}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+                    <span
+                      className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${
+                        n.read ? "bg-transparent" : "bg-destructive"
+                      }`}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm">{n.message}</span>
+                    <span className="shrink-0 text-[10px] uppercase tracking-[0.06em] text-muted-foreground/50">
+                      {timeAgo(n.createdAt, lang)}
+                    </span>
+                  </span>
+                );
+                return (
+                  <li key={n.id}>
+                    {n.link ? (
+                      <Link
+                        to={n.link}
+                        onClick={() => markRead(n.id)}
+                        className="block rounded-md transition-colors hover:bg-secondary/30"
+                      >
+                        {row}
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => markRead(n.id)}
+                        className="block w-full rounded-md transition-colors hover:bg-secondary/30"
+                      >
+                        {row}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
-
-        {/* ── Stats Grid ─────────────────────────────────────────── */}
-        <div className="mt-6 pt-6 border-t border-border/40 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-3">
-            <Calendar className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
-            <div>
-              <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground font-medium">
-                {lang === "bn" ? "সদস্য হয়েছেন" : "Member since"}
-              </p>
-              <p className="text-sm">{memberSince}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <MessageSquare className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
-            <div>
-              <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground font-medium">
-                {lang === "bn" ? "মন্তব্য" : "Comments"}
-              </p>
-              <p className="text-sm">{commentCount ?? 0}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <BookOpen className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
-            <div>
-              <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground font-medium">
-                {lang === "bn" ? "পড়া বই" : "Books read"}
-              </p>
-              <p className="text-sm">{readingStats?.completedBooks ?? 0}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <TrendingUp className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
-            <div>
-              <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground font-medium">
-                {lang === "bn" ? "গড় অগ্রগতি" : "Avg progress"}
-              </p>
-              <p className="text-sm">{readingStats?.avgProgress ?? 0}%</p>
-            </div>
-          </div>
-        </div>
-        </div>{/* end identity card */}
 
         {/* ── Bookmarks (posts + books) ──────────────────────────── */}
         {(bookmarks as BookmarkedItem[]).length > 0 && (
@@ -559,7 +434,7 @@ function ProfilePage() {
               <Bookmark className="h-4 w-4 text-[var(--color-saffron)]/70" />
               <span className="font-medium">{lang === "bn" ? "বুকমার্ক" : "Bookmarks"}</span>
               <span className="text-xs text-muted-foreground">
-                {(bookmarks as BookmarkedItem[]).length}
+                {lang === "bn" ? toBanglaDigits((bookmarks as BookmarkedItem[]).length) : (bookmarks as BookmarkedItem[]).length}
               </span>
               <Link
                 to="/bookmarks"
@@ -601,37 +476,57 @@ function ProfilePage() {
           </div>
         )}
 
-        {/* ── Library Summary ────────────────────────────────────── */}
+        {/* ── Library Summary — responsive icon cards. On mobile they
+               stack full-width with a leading icon; sm+ lays them 3-across. ── */}
         <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-sm">
           <div className="flex items-center gap-2 text-sm text-foreground mb-4">
             <Heart className="h-4 w-4 text-[var(--color-saffron)]/70" />
             <span className="font-medium">{lang === "bn" ? "লাইব্রেরি" : "Library"}</span>
+            <Link
+              to="/purchases"
+              className="ml-auto inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {lang === "bn" ? "সব দেখুন" : "View all"}
+              <ChevronRight className="h-3 w-3" />
+            </Link>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-secondary/30 rounded-lg p-4 text-center">
-              <p className="text-2xl font-semibold">
-                {readingStats?.totalPurchased ?? 0}
-              </p>
-              <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground mt-1">
-                {lang === "bn" ? "ক্রয়" : "Purchased"}
-              </p>
-            </div>
-            <div className="bg-secondary/30 rounded-lg p-4 text-center">
-              <p className="text-2xl font-semibold">
-                {readingStats?.inProgress ?? 0}
-              </p>
-              <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground mt-1">
-                {lang === "bn" ? "চলমান" : "In progress"}
-              </p>
-            </div>
-            <div className="bg-secondary/30 rounded-lg p-4 text-center">
-              <p className="text-2xl font-semibold">
-                {readingStats?.completedBooks ?? 0}
-              </p>
-              <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground mt-1">
-                {lang === "bn" ? "সম্পন্ন" : "Completed"}
-              </p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link
+              to="/purchases"
+              className="group flex items-center gap-3 rounded-xl border border-border/40 bg-secondary/20 hover:border-[var(--color-saffron)]/40 hover:bg-secondary/40 p-4 transition-all duration-200 min-w-0"
+            >
+              <span className="w-9 h-9 shrink-0 rounded-full bg-[var(--color-saffron)]/10 text-[var(--color-saffron)] flex items-center justify-center">
+                <BookOpen className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-lg font-semibold leading-none tabular-nums">{lang === "bn" ? toBanglaDigits(readingStats?.totalPurchased ?? 0) : readingStats?.totalPurchased ?? 0}</span>
+                <span className="block mt-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground truncate">{lang === "bn" ? "ক্রয়কৃত" : "Purchased"}</span>
+              </span>
+            </Link>
+            <Link
+              to="/stats"
+              className="group flex items-center gap-3 rounded-xl border border-border/40 bg-secondary/20 hover:border-[var(--color-saffron)]/40 hover:bg-secondary/40 p-4 transition-all duration-200 min-w-0"
+            >
+              <span className="w-9 h-9 shrink-0 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-lg font-semibold leading-none tabular-nums">{lang === "bn" ? toBanglaDigits(readingStats?.inProgress ?? 0) : readingStats?.inProgress ?? 0}</span>
+                <span className="block mt-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground truncate">{lang === "bn" ? "চলমান" : "In progress"}</span>
+              </span>
+            </Link>
+            <Link
+              to="/stats"
+              className="group flex items-center gap-3 rounded-xl border border-border/40 bg-secondary/20 hover:border-[var(--color-saffron)]/40 hover:bg-secondary/40 p-4 transition-all duration-200 min-w-0"
+            >
+              <span className="w-9 h-9 shrink-0 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center">
+                <BookMarked className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-lg font-semibold leading-none tabular-nums">{lang === "bn" ? toBanglaDigits(readingStats?.completedBooks ?? 0) : readingStats?.completedBooks ?? 0}</span>
+                <span className="block mt-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground truncate">{lang === "bn" ? "সম্পন্ন" : "Completed"}</span>
+              </span>
+            </Link>
           </div>
         </div>
 
@@ -660,7 +555,7 @@ function ProfilePage() {
                         {lang === "bn" ? book!.title_bn : book!.title_en}
                       </span>
                       <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground/60">
-                        p.{entry.page}/{entry.totalPages} · {entry.progressPct}%
+                        p.{lang === "bn" ? toBanglaDigits(entry.page) : entry.page}/{lang === "bn" ? toBanglaDigits(entry.totalPages) : entry.totalPages} · {lang === "bn" ? toBanglaDigits(entry.progressPct) : entry.progressPct}%
                       </span>
                       <span className="w-14 shrink-0 text-right text-[10px] uppercase tracking-[0.06em] text-muted-foreground/50">
                         {timeAgo(entry.timestamp, lang)}
@@ -698,10 +593,10 @@ function ProfilePage() {
                         {lang === "bn" ? book!.title_bn : book!.title_en}
                       </span>
                       <span className="ml-auto text-xs tabular-nums text-muted-foreground/60 shrink-0">
-                        {entry.progressPct}%
+                        {lang === "bn" ? toBanglaDigits(entry.progressPct) : entry.progressPct}%
                       </span>
                       <span className="hidden sm:block text-[10px] uppercase tracking-[0.08em] text-muted-foreground/50 shrink-0">
-                        p.{entry.page}/{entry.totalPages}
+                        p.{lang === "bn" ? toBanglaDigits(entry.page) : entry.page}/{lang === "bn" ? toBanglaDigits(entry.totalPages) : entry.totalPages}
                       </span>
                     </Link>
                   </li>
@@ -728,17 +623,18 @@ function ProfilePage() {
           >
             <Receipt className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
             <span className="text-sm font-medium">
-              {lang === "bn" ? "অর্ডারের ইতিহাস" : "Order history"}
+              {lang === "bn" ? "অর্ডার ও রসিদ" : "Orders & receipts"}
             </span>
             <ArrowLeft className="h-3 w-3 rotate-180 ml-auto text-muted-foreground/40 group-hover:text-[var(--color-saffron)] transition-colors" />
           </Link>
           <Link
             to="/settings"
+            hash="appearance"
             className="group flex items-center gap-3 rounded-xl border border-border/40 bg-secondary/20 hover:border-[var(--color-saffron)]/40 hover:bg-secondary/40 p-4 transition-all duration-200"
           >
             <Settings className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
             <span className="text-sm font-medium">
-              {lang === "bn" ? "পছন্দ ও অ্যাকাউন্ট" : "Preferences & account"}
+              {lang === "bn" ? "চেহারা ও পছন্দ" : "Appearance & preferences"}
             </span>
             <ArrowLeft className="h-3 w-3 rotate-180 ml-auto text-muted-foreground/40 group-hover:text-[var(--color-saffron)] transition-colors" />
           </Link>

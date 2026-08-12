@@ -112,6 +112,11 @@ export function AiChatPanel() {
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  // Scroll-aware FAB: hidden while the user scrolls DOWN so it never sits on
+  // top of content (reading-history details, book rows…) on small screens;
+  // reappears on scroll-up or when near the top. Never hides while the chat
+  // is open (the FAB is the close control).
+  const [fabHidden, setFabHidden] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef(messages);
@@ -120,6 +125,24 @@ export function AiChatPanel() {
 
   // Abort fetch on unmount
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  // FAB auto-hide on scroll direction
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < 96) {
+        setFabHidden(false);
+      } else if (y > lastY + 8) {
+        setFabHidden(true);
+      } else if (y < lastY - 8) {
+        setFabHidden(false);
+      }
+      lastY = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -310,18 +333,32 @@ export function AiChatPanel() {
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* Floating Action Button — smaller on mobile, tucked right of the
+          scroll-to-top button without crowding it (scroll-top sits at
+          right-6 / bottom-20). z-[46]: sits BELOW the mobile-menu sheet
+          overlay (z-50) so it never shows on top of the open menu, but above
+          the chat backdrop (z-[45]) so it stays clickable while the chat is
+          open on desktop. */}
       <button
         onClick={() => (isOpen ? handleClose() : setIsOpen(true))}
-        className="fixed bottom-6 right-24 z-50 w-14 h-14 rounded-full shadow-lg shadow-[var(--color-saffron)]/20 hover:shadow-xl hover:shadow-[var(--color-saffron)]/30 hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-out flex items-center justify-center group"
+        className={`fixed bottom-6 right-24 z-[46] w-14 h-14 rounded-full shadow-lg shadow-[var(--color-saffron)]/20 hover:shadow-xl hover:shadow-[var(--color-saffron)]/30 hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-out motion-reduce:transition-none motion-reduce:hover:translate-y-0 flex items-center justify-center group max-sm:w-12 max-sm:h-12 max-sm:right-20 ${
+          fabHidden && !isOpen
+            ? "opacity-0 translate-y-3 pointer-events-none"
+            : "opacity-100 translate-y-0 pointer-events-auto"
+        }`}
         style={{ backgroundColor: "var(--color-saffron)" }}
         aria-label={isOpen ? "Close chat" : "Ask Bodhi"}
+        // Hidden state: pull from tab order too — pointer-events-none alone
+        // leaves the invisible button keyboard-focusable (and aria-hidden on
+        // a focusable element is invalid).
+        tabIndex={fabHidden && !isOpen ? -1 : 0}
+        aria-hidden={fabHidden && !isOpen}
       >
         {isOpen ? (
-          <X className="h-6 w-6 text-white" />
+          <X className="h-6 w-6 text-white max-sm:h-5 max-sm:w-5" />
         ) : (
           <>
-            <MessageCircle className="h-6 w-6 text-white" />
+            <MessageCircle className="h-6 w-6 text-white max-sm:h-5 max-sm:w-5" />
             {/* Subtle pulse ring */}
             <span className="absolute inset-0 rounded-full animate-ping opacity-20"
               style={{ backgroundColor: "var(--color-saffron)" }}
@@ -330,10 +367,23 @@ export function AiChatPanel() {
         )}
       </button>
 
+      {/* Click-outside overlay — closes the chat when tapping the backdrop.
+          All chat chrome sits BELOW the mobile-menu sheet + scroll-to-top
+          (z-50) so the open menu always covers the chat. Within the chat
+          stack the backdrop (z-[45]) stays above page content but below the
+          FAB + panel (z-[46]) so they remain interactive. */}
+      {(isOpen || isClosing) && (
+        <div
+          className="fixed inset-0 z-[45] cursor-default"
+          onClick={handleClose}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Chat Panel */}
       {(isOpen || isClosing) && (
         <div
-          className={`fixed z-50 bottom-24 right-24 w-[400px] max-w-[calc(100vw-1.5rem)] h-[580px] max-h-[calc(100vh-8rem)]
+          className={`fixed z-[46] bottom-24 right-24 w-[400px] max-w-[calc(100vw-1.5rem)] h-[580px] max-h-[calc(100vh-8rem)]
             rounded-2xl border border-border/50 shadow-2xl
             bg-popover/95 backdrop-blur-xl
             flex flex-col overflow-hidden
@@ -341,7 +391,7 @@ export function AiChatPanel() {
             ${isClosing ? "opacity-0 translate-y-4 scale-[0.97]" : "opacity-100 translate-y-0 scale-100"}
             md:w-[400px]
             sm:bottom-24 sm:right-24
-            max-sm:bottom-0 max-sm:right-0 max-sm:w-full max-sm:max-w-full max-sm:h-[85vh] max-sm:rounded-b-none max-sm:rounded-t-2xl`}
+            max-sm:bottom-0 max-sm:right-0 max-sm:w-full max-sm:max-w-full max-sm:h-[72vh] max-sm:rounded-b-none max-sm:rounded-t-2xl`}
           role="dialog"
           aria-label="Ask Bodhi chat"
         >
@@ -378,6 +428,18 @@ export function AiChatPanel() {
                 <RefreshCw className="h-4 w-4" />
               </button>
             )}
+
+            {/* Explicit close button — the FAB morphs to ✕ on desktop, but on
+                mobile the FAB is tucked behind the bottom sheet, so the header
+                always carries its own close affordance. */}
+            <button
+              onClick={handleClose}
+              className="relative z-10 p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/10 hover:scale-110 active:scale-95 transition-all duration-200"
+              title="Close chat"
+              aria-label="Close chat"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Messages */}
@@ -431,8 +493,9 @@ export function AiChatPanel() {
                         {!isUser && msg.content && !(isStreaming && isLastAssistant) && (
                           <button
                             onClick={() => handleCopy(msg.content, msg.id)}
-                            className="opacity-0 group-hover/message:opacity-100 transition-opacity duration-200 p-0.5 rounded text-muted-foreground/50 hover:text-foreground"
+                            className="opacity-100 sm:opacity-0 sm:group-hover/message:opacity-100 transition-opacity duration-200 p-1 rounded text-muted-foreground/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                             title="Copy message"
+                            aria-label="Copy message"
                           >
                             {copiedId === msg.id ? (
                               <Check className="h-3 w-3 text-green-500" />
@@ -496,6 +559,7 @@ export function AiChatPanel() {
                   ref={inputRef}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
+                  aria-label={lang === "bn" ? "চ্যাট বার্তা" : "Chat message"}
                   placeholder={
                     lang === "bn"
                       ? "জ্ঞান, বই বা ধ্যান সম্পর্কে জিজ্ঞাসা করুন..."

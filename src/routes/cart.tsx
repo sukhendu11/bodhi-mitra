@@ -171,8 +171,8 @@ function CartPage() {
         search={{ search: "", page: 1 }}
       />
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      {/* Header — wraps so the Clear button drops below a long (Bangla) subtitle */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
         <div className="flex items-center gap-3">
           <span className="text-[var(--color-saffron)]">
             <GiftBoxIcon className="h-5 w-5" />

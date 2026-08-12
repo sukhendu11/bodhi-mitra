@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useLang, toBanglaDigits } from "@/lib/i18n";
 
 interface StarRatingProps {
   /** Current rating value (0-5, supports half stars) */
@@ -27,6 +28,7 @@ export function StarRating({
   totalRatings,
   disabled = false,
 }: StarRatingProps) {
+  const { lang } = useLang();
   const [hovered, setHovered] = useState(0);
   const isInteractive = !!onChange && !disabled;
 
@@ -55,7 +57,9 @@ export function StarRating({
                 if (isInteractive) setHovered(0);
               }}
               className={cn(
-                "transition-all duration-200",
+                "-m-1 p-1 transition-all duration-200",
+                // Invisible padding enlarges the touch target (16px star → ≥24px)
+                // without shifting the star layout (negative margin cancels it).
                 isInteractive ? "cursor-pointer hover:scale-110 active:scale-90" : "cursor-default",
                 disabled && "opacity-60",
               )}
@@ -80,11 +84,13 @@ export function StarRating({
       </div>
       {showValue && displayValue > 0 && (
         <span className="text-xs font-medium text-muted-foreground ml-1">
-          {displayValue.toFixed(1)}
+          {lang === "bn"
+            ? toBanglaDigits(displayValue.toFixed(1))
+            : displayValue.toFixed(1)}
         </span>
       )}
       {totalRatings !== undefined && totalRatings > 0 && (
-        <span className="text-xs text-muted-foreground/60 ml-0.5">({totalRatings})</span>
+        <span className="text-xs text-muted-foreground/60 ml-0.5">({lang === "bn" ? toBanglaDigits(totalRatings) : totalRatings})</span>
       )}
     </div>
   );
@@ -99,6 +105,7 @@ interface RatingBreakdownProps {
 }
 
 export function RatingBreakdown({ distribution, totalRatings, avgRating }: RatingBreakdownProps) {
+  const { lang } = useLang();
   if (totalRatings === 0) {
     return (
       <div className="text-center py-4">
@@ -112,11 +119,13 @@ export function RatingBreakdown({ distribution, totalRatings, avgRating }: Ratin
     <div className="space-y-3">
       {/* Average rating display */}
       <div className="flex items-center gap-3">
-        <span className="text-3xl font-bold font-serif">{avgRating.toFixed(1)}</span>
+        <span className="text-3xl font-bold font-serif">
+          {lang === "bn" ? toBanglaDigits(avgRating.toFixed(1)) : avgRating.toFixed(1)}
+        </span>
         <div>
           <StarRating value={Math.round(avgRating)} size="h-5 w-5" />
           <p className="text-xs text-muted-foreground/60 mt-0.5">
-            {totalRatings} rating{totalRatings !== 1 ? "s" : ""}
+            {lang === "bn" ? toBanglaDigits(totalRatings) : totalRatings} rating{totalRatings !== 1 ? "s" : ""}
           </p>
         </div>
       </div>
@@ -128,14 +137,14 @@ export function RatingBreakdown({ distribution, totalRatings, avgRating }: Ratin
           const pct = totalRatings > 0 ? (count / totalRatings) * 100 : 0;
           return (
             <div key={star} className="flex items-center gap-2 text-xs">
-              <span className="w-8 text-right text-muted-foreground">{star}★</span>
+              <span className="w-8 text-right text-muted-foreground">{lang === "bn" ? toBanglaDigits(star) : star}★</span>
               <div className="flex-1 h-2 bg-secondary/60 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[var(--color-saffron)] rounded-full transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="w-6 text-right text-muted-foreground/60">{count}</span>
+              <span className="w-6 text-right text-muted-foreground/60">{lang === "bn" ? toBanglaDigits(count) : count}</span>
             </div>
           );
         })}

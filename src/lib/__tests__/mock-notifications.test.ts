@@ -7,6 +7,7 @@ import {
   mockGetUnreadCount,
   mockMarkAllRead,
   mockMarkRead,
+  notificationTypeToTopic,
 } from "@/lib/mock-notifications";
 import { DEMO_ACCOUNTS } from "@/lib/mock-session";
 
@@ -22,6 +23,13 @@ describe("mock notifications store", () => {
 
     const admin = await mockGetNotifications(DEMO_ACCOUNTS.admin.id);
     expect(admin.some((n) => n.type === "welcome")).toBe(true);
+  });
+
+  it("seeds content + recommendation + purchase rows so the bell demonstrates the topic toggles", async () => {
+    const user = await mockGetNotifications(DEMO_ACCOUNTS.user.id);
+    expect(user.some((n) => n.type === "new_content")).toBe(true);
+    expect(user.some((n) => n.type === "recommendation")).toBe(true);
+    expect(user.some((n) => n.type === "new_purchase")).toBe(true);
   });
 
   it("is idempotent — re-seeding doesn't duplicate", async () => {
@@ -104,6 +112,17 @@ describe("mock notifications store", () => {
       message: "persisted",
     });
     expect(localStorage.getItem("sabbe-satta-mock-notifications")).toContain("persisted");
+  });
+
+  it("notificationTypeToTopic maps bell types to preference topics", () => {
+    expect(notificationTypeToTopic("new_comment")).toBe("comments");
+    expect(notificationTypeToTopic("comment_reply")).toBe("comments");
+    expect(notificationTypeToTopic("new_purchase")).toBe("orders");
+    expect(notificationTypeToTopic("new_content")).toBe("content");
+    expect(notificationTypeToTopic("recommendation")).toBe("recommendations");
+    // Account/contact rows have no topic → always visible in the bell.
+    expect(notificationTypeToTopic("welcome")).toBeNull();
+    expect(notificationTypeToTopic("contact_message")).toBeNull();
   });
 
   it("mockGetAllNotifications returns every account's rows (M5 admin)", async () => {

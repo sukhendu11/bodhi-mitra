@@ -1,5 +1,535 @@
 # Changelog
 
+## 2026-08-12
+
+### Mobile menu synced with the desktop dropdown
+
+**The mobile drawer's ACCOUNT section now mirrors the dropdown's Financial / Stats / Settings grouping.**
+
+- **New entries** — My Books (`/purchases`), Orders & Receipts (`/orders`), Reading Stats (`/stats`), and Settings (`/settings`) were missing from mobile; all four added with icons matching the dropdown (BookOpen / ShoppingBag / BarChart3 / Settings).
+- **Grouped sections** — labeled sub-headers (Financial / Stats / Settings, EN + BN from the shared `PROFILE_MENU_GROUP_LABELS`) split the account list exactly like the dropdown; group labels now share the staggered-entrance animation.
+- **Order parity** — rows follow the dropdown's `sort_order` (My Books → Orders → Cart → Wishlist → Bookmarks → Reading Stats → Settings → Admin); Wishlist BN aligned to `ইচ্ছাতালিকা`; Admin moved last with a divider, mirroring the dropdown's standalone-admin separator.
+- **Validated** — 0 TS errors, 611/611 tests, 56/56 responsive-contract guards (NavItemEntry class string reused verbatim, no new unwrapped rows), code-reviewed.
+
+### Dropdown regroup verified in both languages
+
+**New jsdom test `AvatarDropdown.test.tsx` (5 tests) — non-browser verification of the regrouped dropdown.**
+
+- **EN** — all labels + Financial / Stats / Settings section headers render; header+item share the "Settings" label (2 matches asserted).
+- **BN** — Bengali labels + headers (আর্থিক / পরিসংখ্যান / সেটিংস) verified via `LanguageProvider` hydration from `localStorage["sabbe-satta-lang"]`.
+- **Routes** — every entry links to its route (`/profile`, `/purchases`, `/orders`, `/cart`, `/wishlist`, `/bookmarks`, `/stats`, `/settings`); Admin links externally with `target="_blank"`.
+- **Boundary separators** — exactly 6 for admins (5 group boundaries + Sign out) and 5 for non-admins (Admin filtered out), guarding the group-boundary logic against regressions.
+- **Validated** — 0 TS errors, 611/611 tests (5 new), 56/56 responsive-contract guards.
+
+### Dropdown regroup — Financial / Stats / Settings sections
+
+**Avatar dropdown now groups destinations into labeled common sections.**
+
+- `profile-menu.ts` — items carry an optional `group` (finance/stats/settings); **Cart + Wishlist entries added** (were header/mobile-nav only). Order: Profile · My Books (standalone), then **Financial** — Orders & Receipts · Cart · Wishlist · Bookmarks, then **Stats** — Reading Stats, then **Settings** — Settings, then Admin (admin-only).
+- `AvatarDropdown.tsx` — labeled section headers render at group boundaries (uppercase 10px muted, matching the Settings sidebar group style); separators only appear at boundaries (between groups, into/out of a group, and between standalone items) instead of between every entry; Sign-out stays after a final separator. Group config is render-driven, so a future admin backend can reorder/hide sections.
+- **Validated** — 0 TS errors, 606/606 tests, 56/56 responsive-contract guards, code-reviewed.
+
+### Profile & Settings UX restructure (Design A + B)
+
+**Approved restructure — Settings regrouped by user goal, dropdown reordered by action frequency, Stats untouched.**
+
+- **Design A — grouped Settings** (`SettingsNav.tsx`, `settings.tsx`): the flat section list is now three labeled groups — **Account** (Profile & Account · Security · Danger Zone), **Reading & Appearance** (Reading · Appearance · Notifications), **Privacy & Help** (Privacy · Data & Account · Support & Legal). Group headers render in the sticky sidebar and mobile chips row; scroll-spy, section IDs, `scroll-mt-28`, and deep links (`#appearance`, new `#reading`) all preserved. Danger Zone icon Lock→ShieldAlert (was duplicated next to Security).
+- **NEW Reading section** (`src/components/settings/ReadingSection.tsx`): font size, line spacing, reading width, reader theme (light/sepia/dark), and save-progress — previously only configurable in-context via the article/reader toolbars; now these preferences have a home on /settings. Rows stack (label over control) to stay 320px-safe; BN toggle labels kept short (e.g. `আরাম`) for the same reason.
+- **Design B — dropdown reordered** (`profile-menu.ts`, `AvatarDropdown.tsx`): order is now Profile → My Books → Bookmarks → Reading Stats → Orders → Settings → Admin (action-frequency), with a separator between each entry per spec; Admin stays admin-only; Sign-out remains after a final separator.
+- **Stats page unchanged** per spec. No routes moved, no features removed, no duplicate destinations created; profile quick links already match the new destinations.
+- **Validated** — 0 TS errors, 606/606 tests, 56/56 responsive-contract guards, code-reviewed.
+
+
+
+### Profile-area UX restructure (approved design)
+
+**Approved: all 7 fixes from the Profile UX flow review — current flow → problems → proposed flow.**
+
+- **⚠1 Author link fixed** — the post author-card "View profile" link (which always routed to the viewer's own profile — no author pages exist) is now a static "Author of this reflection" caption (`posts.$slug.tsx`).
+- **⚠2 Back-navigation unified** — `/purchases` BackLink now returns to `/profile` (was Home), matching `/orders`, `/stats`, and `/settings`. `/profile` itself still returns Home.
+- **⚠3 Duplicate settings entry resolved** — the profile quick link now deep-links to `/settings#appearance` (labeled "Appearance & preferences"); `/settings` gained a `useLocation` hash effect that smooth-scrolls the section into view (`scroll-mt-28` keeps it clear of the sticky header). The identity card's "Edit profile" remains the /settings top entry.
+- **F8 Notifications dead-end fixed** — `/profile` gained a **Notifications card** (latest 5, topic-gated by the same /settings preferences, unread dots, mark-read on tap, "Mark all read"), so the header bell's "View all in profile" now lands somewhere real. The card renders linked notifications as navigations (reviewer-caught parity fix).
+- **F9 Orders vs Purchases clarified** — purchases retitled **"My Books"** (guest + signed-in + SEO), orders retitled **"Orders & Receipts"**; each page cross-links to the other. Profile quick link "Order history" → "Orders & receipts".
+- **F10 Dropdown parity** — the avatar dropdown gained **Orders** and **Reading stats** entries (existing `sort_order` config pattern, admin bumped to 6); "Purchases" relabeled "My Books" with a distinct BookOpen icon (adjacent Receipt icon was confusing).
+- **⚠4 Dead config cleaned** — external dropdown hrefs now resolve `item.to || strapiUrl || localhost` (was hardcoded strapiUrl), with the empty-`to` contract documented in `profile-menu.ts`.
+- **Refactor** — new `src/hooks/useNotifications.ts` shared hook (store + event subscription + topic gate + mark-read/mark-all) consumed by both the header bell and the profile card, removing duplicated logic.
+- **Kept as intentional**: wishlist/cart placement (⚠5), /onboarding (⚠6), both progress tiles → /stats (⚠7).
+- **Validated** — 0 TS errors, 606/606 tests, 56/56 responsive-contract guards, code-reviewed.
+
+
+## 2026-08-11
+
+### Avatar upload verified + camera-badge click bug fixed
+
+**Question: "does the camera upload button work?" — audited end-to-end and fixed one real bug.**
+
+- **Bug fixed** — the always-visible camera badge I added earlier painted ON TOP of the camera button and (without `pointer-events-none`) swallowed taps: clicking the badge's 24×24 corner did nothing. Added `pointer-events-none` so taps pass through to the button beneath (the actual file-picker trigger).
+- **Verified non-browser** — new `ProfileAccountSection.test.tsx` (3 tests, jsdom): (1) the camera button programmatically opens the hidden file input, the badge has `pointer-events-none`, input accepts `image/*`; (2) full upload loop — select PNG → live data-URL preview → Save → avatar persisted to BOTH the mock profiles store (profile page) and the mock session `user_metadata` (header); (3) non-image and >2 MB files are rejected without entering the preview state.
+- **Validated** — 0 TS errors, 606/606 tests (3 new), 56/56 responsive-contract guards.
+
+
+### Profile customization + chat FAB overlap fix
+
+**Avatar upload + bio already shipped in the current tree** (Settings → Profile & Account): avatar camera overlay with 2 MB image validation, preview, mock-store/Supabase-Storage persistence with header-sync, remove-avatar; editable bio shown on /profile. Two real gaps closed:
+
+- **Avatar camera badge** — the upload affordance was a hover-only overlay, which touch devices never trigger. Added an **always-visible camera badge** (`h-6 w-6`, `bg-foreground`, `ring-2 ring-card`) on the avatar's corner so mobile users see it; the inset-0 button stays the larger tap target. Bio placeholder now also invites a favorite mindfulness quote (EN/BN).
+- **Chat FAB no longer obstructs content on small screens** — the FAB (bottom-right) sat exactly over the right-aligned reading-history details (`p.X/Y · Z%`, timestamps) on /profile. The FAB is now **scroll-aware**: it fades + slides down out of the way while the user scrolls down, and reappears on scroll-up or near the top. It never hides while the chat is open (it's the close control), and the hidden state drops `tabIndex` to -1 so keyboard users can't focus an invisible button (reviewer-found a11y fix).
+- **Validated** — 0 TS errors, 603/603 tests, 56/56 responsive-contract guards.
+
+
+### Visible dropdown-toggle chip on expandable rows (Reflections)
+
+- The **Reflections** row has two distinct tap targets: the label goes to the parent page (`/reflections`) and a chevron toggles the dropdown. The chevron was a dim bare icon that read as part of the label — it's now a **visible bordered, tinted chip** (`h-8 w-8 rounded-lg`, border + `bg-secondary/20`): closed state shows a neutral chip that tints saffron on hover; the open state fills saffron with the rotated chevron. The chip size + margins match the row height exactly (no row-growth), press feedback comes from the row wrapper's scale (no compound shrink), `aria-expanded`/`aria-label`/focus rings preserved.
+- **Validated** — 0 TS errors, 56/56 responsive-contract guards (no new unwrapped `justify-between` rows).
+
+### About row icon in the mobile menu
+
+- The **About** Browse row rendered text-only (no icon) because `/about` was missing from `PATH_ICONS`. Added an `Info` icon (lucide) so it matches Home/Books/Videos and the rest of the drawer's visual language — the icon also turns saffron on hover and in the active state like every other row.
+- **Validated** — 0 TS errors, 56/56 responsive-contract guards.
+
+### Mobile menu active-state colors
+
+**Every row in the mobile drawer now shows a clear tinted background for the current page.**
+
+- **Primary nav rows** (`NavItemEntry`) — the previous faint saffron gradient became a solid `bg-primary/10` tint + saffron left accent bar, and the row icon turns saffron via `[&_svg]` when the current page matches.
+- **Submenu rows** (`SubNavLink`) — gained `activeProps` with the same `bg-primary/10` tint + saffron icon (previously no active state at all).
+- **Expandable parent row** (`ExpandableRow`, e.g. Reflections) — now watches `useRouterState` pathname and lights up the full row (bg + saffron border + saffron icon/chevron) when the current page is the parent page OR any of its children (e.g. `/reflections` and `/reflections/meditation` both highlight Reflections).
+- **Bottom profile block** (`ProfileBlock`) — the `/profile` (signed-in) and `/login` (guest) rows show the tint + a subtle saffron ring on their own pages.
+- **Hover-safe** — active rows keep their saffron tint on hover (`hover:bg-primary/15`) instead of being washed out by the base `hover:bg-secondary/30`; the conditional profile/expandable branches carry exactly one bg class each, so no Tailwind conflict.
+- **Validated** — 0 TS errors, 603/603 tests, 56/56 responsive-contract guards (no new unwrapped `justify-between` rows).
+
+
+### Mobile navigation drawer redesign (navigation above, user identity anchored below)
+
+**Full restructure of the mobile sheet into a purpose-built drawer with a pinned header, a scrollable middle, and persistent bottom controls.**
+
+- **Structure** — pinned brand header (`sticky`-independent `shrink-0` block with saffron accent hairline) holding brand + the existing hamburger→✕ morph (`MorphClose`); the middle `<nav>` is the only scrolling region (`flex-1 overflow-y-auto`); a persistent **bottom profile block** + bottom utilities row are pinned below. Sheet root is now `p-0 flex flex-col overflow-hidden` (was one big `overflow-y-auto`).
+- **Profile block** — Profile moved out of the nav entirely into a rounded tinted block near the bottom: `UserAvatar` (md) + display name + "View profile" label + chevron → `/profile`, separated from nav by a divider. Guests get a sign-in variant (`/login` with `loginSearch`). New `userDisplayName` prop (from `user_metadata.display_name`/`name`/`full_name`); `profileItems`/`profileLabel` props removed and the `getProfileMenuItems` import dropped from `__root.tsx`.
+- **Account utilities** — now rendered for **everyone** (guests reach the sign-in prompt on those pages): Admin (admin-only), Bookmarks, Wishlist, Cart (count badge). The old guest-only Wishlist row in Browse was removed as redundant. Dead `PATH_ICONS` entries (`/profile`, `/settings`, `/purchases`) and the `Settings`/`Receipt` imports pruned.
+- **Brand link closes the sheet** — the header brand is now wrapped in `SheetClose asChild` like every other nav row.
+- **Validated** — 0 TS errors, 603/603 tests, 56/56 responsive-contract guards (no new unwrapped `justify-between` rows), dev-server served source confirmed.
+
+### 9-point UI polish pass (lotus white, videos hook fix, section headers, modal X, chat panel, profile library, footer, hero CTA i18n)
+
+**Batch of visual/UX refinements across the public frontend.**
+
+- **LotusIcon white variant** — new `white` prop (`.lotus-white` forces `invert(1)` in all themes); the mobile Donate CTA now renders a white lotus on the saffron gradient instead of the black PNG silhouette.
+- **Videos page search fix** — `useMemo`/`useCallback` were declared after the `isError` early-return (Rules-of-Hooks violation → "Rendered more hooks" crash when the query flipped error/retry). Moved above the return; search filtering now safe.
+- **Homepage section headers redesigned** — new `HomeSectionHeader` component: tinted icon chip (saffron/gold/indigo per section) + gradient hairline under a serif title + pill-style View-all button with arrow slide. Applied to Recent Reflections, Featured Books, and Videos.
+- **Modal/sheet close X cleaned up** — `dialog.tsx` + `sheet.tsx` close buttons restyled to neutral circular buttons (no saffron/`data-[state=open]:bg-*` tint). `SheetContent` gained `hideClose`; `MobileNav` passes it so the hamburger→✕ morph is the single mobile close control.
+- **Chat panel (mobile)** — explicit ✕ close in the header; invisible click-outside overlay closes the chat (z-[55], above scroll-to-top; FAB + panel at z-[60]); mobile sheet lowered 85vh → 72vh; FAB smaller (w-12 h-12) and tucked to `right-20` on phones.
+- **Profile Library redesign** — dense 3-col StatGrid replaced with responsive icon link-cards (stack on mobile, 3-across sm+): Purchased → `/purchases`, In progress/Completed → `/stats`, each with tinted icon chip + count + label and `min-w-0`/truncate guards.
+- **Footer mobile layout** — Explore + Quick Links links now wrap inline on mobile (`flex flex-wrap`), reverting to 2-col grid / column on `md+`.
+- **Hero CTA i18n** — `SiteConfig.hero` gained `cta_label_bn` (default "পড়া শুরু করুন"); homepage hero renders `pickLocalized(cta_label, cta_label_bn)` so "Begin reading" shows Bangla in Bangla mode on desktop and mobile. `i18n.home_cta` bn value fixed too. Gate now checks either label.
+- **Responsive-contract test updated** — profile Library assertion now checks the new icon-card contract (`grid-cols-1 sm:grid-cols-3` + `min-w-0` + `/purchases` `/stats` links + icon-chip class).
+
+**Validation:** tsc 0 errors · 603/603 tests passing · code-reviewed (hero gate, z-order, test discrimination points applied).
+
+### 4-point mobile menu batch (chat behind menu, hamburger→✕ morph, Bangla donate alignment, menu redesign)
+
+**Follow-up polish on the mobile chrome: the chat stays behind the menu modal, the hamburger morph is now a pure-transform glide, the Bangla donate label sits on the same line as its lotus icon, and the menu got sectioned surfaces.**
+
+- **Chat behind the menu modal** — `AiChatPanel.tsx` z-stack lowered below the mobile sheet: FAB `z-[60]→z-[46]`, click-outside backdrop `z-[55]→z-[45]`, panel `z-[60]→z-[46]`. The menu overlay (z-50) now always covers the chat FAB instead of the FAB floating over the open menu's buttons. Bonus: the chat no longer floats above AuthModal / CartDrawer / PdfViewer (all z-50) either.
+- **Hamburger → ✕ morph now actually visible (root-caused)** — the previous header-trigger morph was invisible: the trigger lives in the sticky header (z-40) BELOW the sheet overlay/content (z-50), and `hideClose` had removed the only visible ✕. The morphing ✕ now lives INSIDE the sheet at the same top-right corner: new `MorphClose` component renders the pure-transform `HamburgerButton` (bars keep fixed `top-1/7/13px` positions, only `translate-y ±6px` + `rotate ±45°` around their own centers, middle bar fades + shrinks) with `open={sheetOpen && entered}` — the one-rAF `entered` flip makes it mount as a hamburger, glide into the ✕ while the menu opens, and smoothly reverse to the 3-line hamburger during the slide-out. The brand header became a `sticky top-0` bar (bg-background/95, saffron accent hairline inside) holding the brand + ✕ — sticky, not absolute, because an empirical headless test showed absolute children of the overflow-y-auto sheet scroll away with content while sticky stays pinned. Header trigger is now purely the opening hamburger (`open` optional, default false); bars respect `motion-reduce`.
+- **Bangla donate alignment (measured fix)** — headless measurement of the real rendering showed line-height is powerless here: increasing it moves the baseline and box center down *together*, so ink-vs-box-center is font-metric-fixed. Noto Sans Bengali (forced in BN mode) draws its ink above its nominal ascent, leaving "দান করুন" ~2.3px high vs the 18px lotus icon (English "Donate" is ~0.8–1.6px high). Fix: `translate-y-[2.25px]` on the Bangla label (lands within +0.2px of the icon center), `translate-y-[2px]` on the donate-page eyebrow (text-xs scale), with `leading-[18px]`/`leading-[20px]` kept to match the icon box.
+- **Mobile menu redesign** — new "Browse" section label (text-xs, matching the Account label); primary nav + guest wishlist grouped in a tinted `rounded-2xl` surface (`bg-secondary/10 dark:bg-secondary/20 p-1.5`); Account items (Admin / Profile / Bookmarks / Wishlist / Cart) wrapped in a matching surface; hamburger trigger gained a neutral border chip (`border-border/20 bg-background/60`); sheet shadow deepened (`0_16px_48px_-12px`).
+- **Validation:** tsc 0 errors · 603/603 tests passing · responsive-contract allowlist untouched · code-reviewed (`text-[11px]`→`text-xs` convention fix applied).
+
+
+### Mobile header & nav overhaul (icon parity + UX) + Vercel demo fix
+
+**Seven issues addressed in one pass — mobile header now mirrors desktop icons, and the mobile menu got a cleaner structure with clearer affordances.**
+
+#### 1–2. Mobile header icon parity (wishlist) + donate icon updated
+- `src/routes/__root.tsx` mobile header now shows: bell (signed-in) → **WishlistBadge heart** (after the bell, per request) → cart → hamburger. **No standalone donate lotus in the header row** (per follow-up: donate belongs to the menu button, not beside the cart). Tightened mobile padding (`px-5 sm:px-8 md:px-16`, `py-4 sm:py-5`) and gaps (`gap-0.5 sm:gap-2`).
+- `MobileNav.tsx` donate CTA's left icon **replaced the old inline `DonateIcon` SVG with the shared `LotusIcon`** (18px, bud→bloom hover) — one lotus icon everywhere.
+
+#### 3. Animated hamburger
+- `MobileNav.tsx` `HamburgerButton` upgraded to a classic **3-bar ↔ ✕ morph** (bars at top 1/7/13px converge to the 7px center with rotate-45/-45 and the middle bar fading) with `aria-expanded` on the trigger.
+
+#### 4. Reflections parent clickable + dropdown affordance
+- `ExpandableRow` — a **split row**: the label is a `<Link>` to the parent page (`/reflections`), the **chevron button** toggles the submenu (rotates 180°, saffron when open). No landing slug → whole row toggles (no accidental homepage link). Groups now receive `to: group.slug || undefined` from the layout.
+
+#### 5. Profile section shows what's inside
+- Signed-in Profile row is now **expandable**: avatar + "Profile" + chevron reveals Profile / Settings / Bookmarks / Purchases (from `getProfileMenuItems()`, mirroring the desktop dropdown).
+
+#### 6. Mobile menu organization
+- Consistent left-aligned icons (`PATH_ICONS` extended with profile/settings/bookmarks/purchases), saffron hover tint on all icon rows, `CollapsibleChildren` grid expand/collapse with saffron sub-menu border, sections reordered (nav → divider → guest wishlist → donate CTA → Account).
+- **Bookmarks promoted out of the Profile dropdown** (follow-up): `MobileNav.tsx` now renders Bookmarks as a top-level row beside Wishlist and Cart in the Account section (left Bookmark icon via `PATH_ICONS`); `__root.tsx` filters it from `profileItems` by stable `id` (`item.id !== "bookmarks"`), so the dropdown holds Profile / Settings / Purchases. Desktop avatar dropdown intentionally unchanged (Bookmarks stays inside there).
+
+#### 7. Demo user/admin not showing on the GitHub-backed Vercel app
+- **Root cause:** `/login` demo buttons render only when `isMockMode()`. On Vercel with `VITE_DATA_SOURCE` unset (→ `auto`), placeholder Supabase env values copied from `.env.example` (`your-project.supabase.co` / `your-anon-key`) counted as "configured" → mock mode off → demo buttons hidden and real (unconfigured) Supabase auth attempted.
+- **Fix:** `src/lib/data-source.ts` `isMockMode()` now treats **placeholder values** as NOT configured (regex anchored to the exact `.env.example` templates). Demo mode (and the login buttons) now activates on any deploy that only has template env vars.
+- **Ops note:** to *force* demo mode on Vercel regardless of env, set `VITE_DATA_SOURCE=mock` in the project's Environment Variables (build-time var — redeploy after setting).
+
+**Validation:** tsc 0 errors · **603/603 tests passing** (responsive-contract global guard updated for the `__root.tsx` header row `gap-2`) · code-reviewed (6 nits applied: dead ternary, saffron hover tint, slug fallback, tighter placeholder regex, hoisted icon lookup, mobile padding).
+
+### Responsive Program documented in DESIGN.md + RULES.md (M7 fold-in)
+
+- **`DESIGN.md` §4.1 — Responsive Program (M1–M7)** — standing design rules: grid collapse progressions, the unwrapped `justify-between` allowlist + global guard, `StatCard money` typography, `min-w-0`/`truncate` guards, `thumbnail-scroll` strips, desktop↔mobile alternatives, 32px chip touch floor, and the new slim outlined filter-pill language (`px-3 py-2` + hairline border + `aria-pressed`).
+- **`RULES.md` §13.1 — Responsive Rules (M5–M7 contract)** — the same rules phrased as enforceable engineering constraints for agents (with the taxonomy-counter removal rule: `fetchPostCounts`/`mockFetchPostCounts` deleted, do not reintroduce).
+- Both point to the contract suite (`src/lib/__tests__/responsive-contract.test.ts`) and the allowlist regenerator (`node scripts/gen-responsive-allowlist.mjs`) as the verification + maintenance mechanism.
+
+## 2026-08-11
+
+### UI/UX Completeness Program — M7: Final QA (full-site sweep + dead-hook cleanup) ✅
+
+**Swept every remaining surface — homepage, reflections (hub + category), books (catalog + detail), posts (article), reader, and the mock admin panel — via the responsive-contract pattern. Non-browser throughout: source-level assertions, no dev server, no browser.**
+
+#### Sweep findings
+- **Homepage** — featured books use the shared `book-grid`; all grids are the 1→2→3 col progression; newsletter + hero stacks cleanly. Verified responsive.
+- **Reflections** — category pills `flex-wrap` (no overflow), PostGrid 1→2→3. Verified responsive.
+- **Books** — catalog search row stacks below `sm`; detail cover stacks above the info column (`md:grid-cols-[340px_1fr]`); CTA buttons wrap. **One polish applied:** detail metadata grid `grid-cols-3 sm:grid-cols-4` → `grid-cols-2 sm:grid-cols-4` so the Price / File Size cells breathe at 320px (3-cell books render 2+1 — price alone on row 2, intentional and commented in the test).
+- **Posts article** — mobile ToC renders above the content (`mb-8 lg:hidden`), desktop sidebar is `hidden lg:block`, related posts 1→3. Verified responsive.
+- **Reader** — full-screen flex column (`h-screen flex flex-col overflow-hidden`), no page-scroll overflow. Verified responsive.
+- **Mock admin panel** — sidebar scrolls horizontally on phones (`overflow-x-auto`), data tables scroll (`overflow-x-auto` wrappers), dashboard stats 2→3 cols. Verified responsive.
+
+#### Changes
+- **Deleted `src/hooks/use-mobile.tsx`** — the `useIsMobile` hook was dead code (zero imports anywhere in `src`).
+- **`src/routes/books.$slug.tsx`** — metadata grid `grid-cols-3` → `grid-cols-2 sm:grid-cols-4` (M7 polish, above).
+- **`src/routes/index.tsx` + `src/routes/reflections.index.tsx`** — homepage reflections category pills AND the `/reflections` hub category pills lost their taxonomy counters; `fetchPostCounts` + `mockFetchPostCounts` and both `postCounts`/`counts` queries were removed as dead code (contract-guarded).
+
+#### Audit fold-in (2026-08-11): global overflow guard
+- The full-site static overflow audit (6 patterns, 116 files) classified every unwrapped `justify-between` row as safe. Its deferred "worth noting for M7" item is now a **permanent contract test**: `SAFE_UNWRAPPED_JUSTIFY_BETWEEN` — the audited allowlist of **40 unique rows across 25 files** — and a guard that scans all of `src/routes` + `src/components` and fails CI on any **new** unwrapped row not in the list (plus a reverse check that allowlisted files still exist).
+- **`scripts/gen-responsive-allowlist.mjs` (new)** — regenerates the allowlist after a fresh 320px audit; the test file comment points to it so the guard stays maintainable.
+
+#### Non-browser verification (M7)
+- **`src/lib/__tests__/responsive-contract.test.ts`** extended 38 → **56 assertions** with 5 new M7 sweep blocks (homepage, reflections, books, posts, reader + admin) + the global guard locking in every guarantee.
+
+**Validation:** tsc 0 errors · **602/602 tests passing** (39 files) · code-reviewed (nit: allowlist regeneration script + stale-entry reverse check — both applied). **UI/UX Completeness & Responsive Program M1–M7 complete.**
+
+## 2026-08-11
+
+### Shared StatCard/StatGrid — money-stat responsive rule extracted (M6 follow-up)
+
+**Extracted the ad-hoc money-stat rule (duplicated across orders/purchases after M6) into one shared component, reused across orders / purchases / profile / stats. Non-browser: static + contract tests only.**
+
+- **`src/components/StatCard.tsx` (new)** — `StatCard` with the M6 typography rule: `money` values render `text-xl sm:text-2xl leading-tight` (fit narrow phone cards, wrap without clipping) while short counts stay `text-2xl`; layouts `"centered"` (default / `variant="tint"` for profile's borderless semibold card) and `"stacked"` (stats' icon+label panel with suffix). `StatGrid` encodes the grid rule: money grids at 3+ columns stack to 1 col below `sm`, 2-col and 4-col grids keep their dense responsive columns; page-specific gap/margin pass through `className`.
+- **Refactors (byte-identical output):** `orders.tsx` → `StatGrid columns={2} money` + money `StatCard` (stays 2-col — text-xl fits); `purchases.tsx` → `StatGrid columns={3} money` (stacks on phones); `profile.tsx` Library Summary → `StatGrid columns={3}` + `variant="tint"` ×3; `stats.tsx` local `StatCard` removed in favor of the shared `layout="stacked"` + `StatGrid columns={4}`.
+- **Contract tests** — `responsive-contract.test.ts` gained a shared-component block (money typography rule, money-grid stacking, 4-col md-gating) and the orders/purchases/profile/stats assertions now target `StatGrid`/`StatCard` usage instead of in-route classes (38 assertions total).
+
+**Validation:** tsc 0 errors · **585/585 tests passing** (39 files).
+
+## 2026-08-11
+
+### UI/UX Completeness Program — M6: Commerce (responsive fixes + contract tests)
+
+**Audited cart / checkout / orders / purchases / wishlist / donate (+ `checkout.success` and `PaymentForm`). Non-browser verification throughout — source-level contract tests, no dev server, no browser.**
+
+#### Audit findings
+- **Cart / checkout / wishlist / donate / success / card form** — already mobile-safe: checkout is 1 col on phones (`md:grid-cols-5`), summary sticky only at `md:`; cart item rows shrink (`min-w-0`) with touch-visible remove buttons (`sm:`-hover-only); wishlist uses the shared responsive `book-grid`; donate preset chips wrap; `PaymentForm` expiry/CVC are 2 short columns and the pay button is full-width.
+- **Orders** — two real gaps: the order-card header (icon + title + status badge + price + chevron) was one non-wrapping row → title crushed at 320px; the "Total Spent" stat (`text-2xl` money) overflowed its 2-col card.
+- **Purchases** — stats `grid-cols-3`: "BDT 1,000.00" at `text-2xl` overflows an ~48px inner column at 320px (no font-size-only fix works — even `text-base` overflows).
+- **Cart header** — title + subtitle + Clear button had no wrap for long Bangla subtitles.
+
+#### Fixes
+- **`orders.tsx`** — order-card header `flex` → `flex flex-wrap items-center gap-x-4 gap-y-2` (badge/price/chevron wrap under the title; no desktop shift); "Total Spent" stat `text-xl sm:text-2xl leading-tight`.
+- **`purchases.tsx`** — stats `grid grid-cols-3` → `grid grid-cols-1 sm:grid-cols-3` (stacked cards on phones, matching the profile quick-links pattern).
+- **`cart.tsx`** — header `flex` → `flex flex-wrap items-center justify-between gap-3`.
+
+#### Non-browser verification (M6)
+- **`src/lib/__tests__/responsive-contract.test.ts`** extended 15 → **35 assertions**, now covering all six M6 pages + `checkout.success` + `PaymentForm` (grid collapse classes, `md:`-only stickiness, wrap guards, truncation, touch-visible controls).
+
+**Validation:** tsc 0 errors · **577/577 tests passing** (39 files). Next: M7 — Final QA (full-site breakpoint audit + `useIsMobile` dead-hook cleanup).
+
+## 2026-08-11
+
+### UI/UX Completeness Program — M5: Profile & Settings (responsive fixes + contract tests)
+
+**Audited profile.tsx / settings.tsx / stats.tsx across breakpoints. Verification was non-browser (no dev-server/browser round-trip) — jsdom does no layout, so a source-level responsive contract test suite locks in the guarantees instead.**
+
+#### Audit findings
+- **Settings** — already responsive: `hidden lg:block` sticky sidebar ↔ `lg:hidden` horizontal scroll-spy chips (`SettingsNav.tsx`); sections are mobile-safe `justify-between gap-4` toggle rows; sticky bottom save bar truncates its label. No changes needed.
+- **Profile** — grids already collapse (stats 2→4, quick links 1→3, library summary 3-col kept per M3 precedent for short numeric values). One fix: the identity-card email row could overflow with a long address.
+- **Stats** — two gaps: the "Pages read — last 14 days" header was `flex justify-between` (title + summary overflow on phones), and the 28-dot streak strip showed a native scrollbar.
+
+#### Fixes
+- **`stats.tsx`** — chart header stacks on mobile: `flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between` (summary moves below the title).
+- **`stats.tsx`** — streak strip: `thumbnail-scroll` (hidden scrollbar, consistent with settings chips) + dots `h-7 w-7 sm:h-8 sm:w-8` so more fit per 320–375px view.
+- **`profile.tsx`** — email row gains `min-w-0` + `shrink-0` icon + `truncate` span: long addresses ellipsize instead of overflowing.
+
+#### Non-browser verification (M5)
+- New **`src/lib/__tests__/responsive-contract.test.ts`** — 15 source-level assertions covering every guarantee above (grid collapse classes, mobile-nav parity, truncation guards, hidden scrollbars) so none can silently regress.
+
+**Validation:** tsc 0 errors · **562/562 tests passing** (39 files, +15). Next: M6 — Commerce.
+
+## 2026-08-10
+
+### UI/UX Completeness Program — M4: New Features audit (AI chat, reader, page sections)
+
+**User request: audit every new-feature surface for state completeness + responsive behavior.**
+
+#### Audit findings
+- **PdfViewer** — audit **clean**: every toolbar control already has `aria-label`, `focus-visible` rings, and disabled states (from earlier reader sessions).
+- **`Reveal`** — ⚠️ ignored `prefers-reduced-motion`: the slide-up entrance animation ran for every user on every section of the site.
+- **`PageSectionRenderer`** — CTA buttons (hero + CTA sections) had hover-opacity only: no keyboard focus ring (violates §5.4), no external-link `rel`; the video iframe lacked `loading="lazy"`.
+- **`AiChatPanel`** — input had no `aria-label` (placeholder only); the copy button had no focus ring; the FAB hover translate had no `motion-reduce` guard.
+
+#### Fixes
+- **`Reveal.tsx`** — new `prefers-reduced-motion` support: users with reduced motion get content instantly (no entrance animation, empty style object). Shared component → benefits every surface it wraps (homepage sections, page-builder sections, post cards).
+- **`PageSectionRenderer.tsx`** — both CTA links now get `focus-visible:ring-2 ring-primary/60 ring-offset-2`, `motion-reduce:transition-none`, and `rel="noopener noreferrer"` for external URLs; video iframe gets `loading="lazy"`.
+- **`AiChatPanel.tsx`** — input gets bilingual `aria-label` (চ্যাট বার্তা / Chat message); copy button gets `aria-label` + `focus-visible:ring-2`; FAB gets `motion-reduce` guards on the hover translate.
+
+**Validation:** tsc 0 errors · **547/547 tests passing**.
+
+## 2026-08-10
+
+### UI/UX Completeness Program — M3: Page layouts (audit — clean, no changes)
+
+**Audited every route's layout across breakpoints. Result: the layout work from earlier sessions already covers mobile/tablet/desktop — no changes needed this milestone.**
+
+Verified clean:
+- **Post page** — the `lg:`-only sidebar (ToC, newsletter, explore) is fully covered on mobile: a `lg:hidden` mobile ToC renders above the article, the footer newsletter strip serves the newsletter, and footer nav covers the explore links. Author card, comments, and related posts all live in the article flow.
+- **Content grids** — every listing grid is responsive 1→2→3 col (home, reflections, books, videos, related, book recommendations 2→3→6).
+- **Stat/metadata grids** — books.$slug metadata (`grid-cols-3 sm:grid-cols-4`), purchases + profile library stats (`grid-cols-3`) are fine at 3 cols on ≤375px: short numeric values, labels wrap gracefully.
+- **Filter/search rows** — books.index search+sort and search.tsx tabs+sort stack on mobile (`flex-col sm:flex-row` / `flex-wrap`).
+- **Modals** — PDF viewer dialogs use `sm:max-w-5xl h-[90vh]` (full-bleed on mobile), AiChatPanel collapses to a `max-sm:` full-width bottom sheet.
+
+**Validation:** none needed (no code changes).
+
+### UI/UX Completeness Program — M2: Navigation (keyboard accessibility + mobile parity)
+
+**Audited header, MobileNav, NavDropdown, and footer. Layouts were already responsive (4-section desktop header, mobile sheet, footer stacks to 1 col); the real gaps were keyboard accessibility on the hover-only dropdowns and missing focus rings on every nav link.**
+
+#### `NavDropdown.tsx` — hover-only → keyboard accessible
+- Trigger (both the link and button variants) now carries `aria-haspopup="menu"` + `aria-expanded`.
+- The dropdown opens on **focus** (Tab to the trigger) as well as hover, stays open while focus moves between the trigger and panel (`onBlur` checks `relatedTarget` inside the container), and **Esc** closes it and returns focus to the trigger.
+- The button variant (no `to` link) now also toggles on click.
+- Panel gets `role="menu"`; links get `role="menuitem"`. Sub-flyouts (`DropdownSubItem`) got the same focus-open/blur-close treatment and the chevron exposes `aria-haspopup`/`aria-expanded` (still `tabIndex={-1}` — the parent link is the tab stop).
+- Bonus: after navigating from a dropdown link, `onBlur` closes the panel instead of it lingering over the next page.
+
+#### Focus rings — the missing §5.4 keyboard treatment, added everywhere
+- Header nav links + external links (`__root.tsx` `NavLinkItem`/`linkCls`), footer links (`FooterLink`), social icons (`SocialIcon` ring-2), NavDropdown trigger + dropdown/flyout items (ring-1), MobileNav entries, group expand buttons, sub-links, profile link, and the **hamburger trigger** (all ring-2).
+
+#### Mobile parity — guest wishlist access
+- The desktop heart is `md:`-only and the MobileNav account section is signed-in only, so **signed-out mobile users had no way to reach /wishlist**. The sheet now shows a Wishlist entry for guests (bilingual, heart suffix) above the Donate CTA.
+
+**Validation:** tsc 0 errors · **547/547 tests passing** (38 files). UI-only.
+
+### UI/UX Completeness Program — M1: Shared components (touch targets + touch-visible actions)
+
+**Program kickoff: systematic audit → milestone loop across the whole surface (see PROJECT.md §17 tracker). M1 = shared components; M2 (navigation) is next.**
+
+#### Audit result
+A responsive sweep of all shared components + routes confirmed prior passes held up: grids are 1→2→3 col site-wide, books pagination has a chevron-only mobile mode, category pills scroll in a drag carousel with fade edges, AiChatPanel already collapses to a full-width `max-sm:` bottom sheet, and the FAB `right-24` deliberately clears the ScrollToTop button at `right-6`. **Real gaps found were touch-target sizing and hover-only actions invisible on touch.**
+
+#### Fixed
+- **`StarRating.tsx`** — star buttons gained an invisible enlarged tap area (`-m-1 p-1`): a 16px star is now a ≥24px touch target, with no visual/layout change (negative margin cancels the padding). Applies to every star surface (book cards, reviews, detail page).
+- **`AiChatPanel.tsx`** — the per-message **Copy** button was `opacity-0 group-hover` → invisible on touch devices. Now `opacity-100 sm:opacity-0 sm:group-hover` (always visible on mobile; hover-reveal on desktop — same pattern as the CartDrawer remove button).
+- **`SocialShare.tsx`** — popover share grid buttons `w-8 h-8` → `w-9 h-9` (32px → 36px touch target) for the 5 network links + copy-link.
+- **`CartDrawer.tsx`** — item remove button `p-1.5` → `p-2` (28px → 32px) for the mobile-first drawer.
+
+**Deliberately untouched:** header icon cluster (WishlistBadge + NotificationBell both `p-1.5`/h-5 = 32px — internally consistent; the header was tuned for icon-size parity in an earlier session).
+
+**Validation:** tsc 0 errors · **547/547 tests passing** (38 files). UI-only.
+
+### Final Latin-digit sweep — reader/stars/search digits localized AND every BN conversion gated (no Bengali numerals in EN mode)
+
+**User request: run a final Latin-digit sweep across bn-reachable UI surfaces (toFixed, {count}, Math.round renders) and localize anything left — while keeping EN mode clean.**
+
+#### Newly localized (Latin → Bengali digits in bn mode)
+- **`StarRating.tsx`** — numeric value next to the stars (`4.5` → `৪.৫`), the `(N)` rating count, the RatingBreakdown average, distribution bar `N★` labels and counts.
+- **`PdfViewer.tsx`** — zoom `%` display + preset menu labels, page-number badges (thumbnails, continuous mode), TOC chapter page numbers, `/ total` indicator, search-result count + "Page N" labels. (The page *input* stays Latin — users type ASCII digits.)
+- **`reader.$bookId.tsx`** — reading-progress `%`, TOC chapter pages, bookmark toggle labels, bookmark/note page numbers, search-result count + page labels, BN labels for bookmark/note actions.
+- **`search.tsx`** — result-count header (`মোট Nটি ফলাফল`); also fixed a visible bug where `&ldquo;`/`&rdquo;` rendered as literal text in the EN template string (now real curly quotes).
+- **`books.$slug.tsx`** — reading-progress `%` and PDF file size (`2.5 MB` → `২.৫ MB` in bn).
+
+#### Gated (regression fix — these were converting in BOTH languages)
+Previous passes had left `toBanglaDigits` ungated in several places, so **EN mode showed Bengali numerals**. All now render Latin in EN and Bengali in bn:
+- `PostGrid.tsx` page counter (+ `lang` added to the `useLang()` destructure) · `books.index.tsx` pagination buttons · `posts.$slug.tsx` reading-time · `purchases.tsx` stats + progress `%` · `bookmarks.tsx` header + tab counts · `orders.tsx` order `#ID` · `profile.tsx` all 10 stat/`p.X/Y` displays · `stats.tsx` StatCards, streak tooltip + strip cells, per-book rows, longest-streak line.
+- Verified by grep: every remaining `toBanglaDigits` display call sits inside a `lang === "bn" ?` ternary or a bn-branch template (admin panel mock excluded).
+
+#### Tests
+- `BookCard.test.tsx` — wrapped `renderCard` in `LanguageProvider` (StarRating now consumes `useLang`, matching the app tree).
+
+**Validation:** tsc 0 errors · **547/547 tests passing** (38 files). UI-only.
+
+### Bengali digits — pagination, reading-time estimates (video durations already covered)
+
+**User request: add Bengali digit conversion to the remaining site-wide surfaces — pagination buttons, video durations on the videos page, reading-time estimates.**
+
+- **Pagination buttons** — `books.index.tsx` page-number buttons now render `toBanglaDigits(p)` (`১২` instead of `12` in bn mode; the `…` ellipsis is untouched). `PostGrid.tsx`'s `{page} / {totalPages}` counter now converts both numbers. (Search prev/next already localized, no digits; PostGrid prev/next are arrow + bilingual label only.)
+- **Reading-time estimates** — `posts.$slug.tsx` header `{readingTime} min read` now converts the number in bn mode (`৫ মিনিট পড়া`); the schema.org `PT{M}M` meta stays machine-readable. `books.$slug.tsx` reading-time line now switches between `formatReadingTime(...)` (EN) and `${toBanglaDigits(pages * 250)} মিনিট পড়া` (BN) — `commerce.ts` stays a pure lib (no React import pulled into the server-side `stripe-checkout.ts` dependency chain).
+- **Video durations** — verified already localized: the only duration display on the videos page is the `VideoCard` duration badge, which converts via `toBanglaDigits` in bn mode (added in the earlier localization pass). No change needed.
+
+**Validation:** tsc 0 errors · **547/547 tests passing** (38 files). UI-only.
+
+### Stats page — remaining English-only tooltip surfaces localized
+
+**User request: localize the last English-only surfaces on /stats (chart tooltip month names, streak-strip tooltips).**
+
+- **Streak-strip tooltip** (`src/routes/stats.tsx` `StreakStrip`) — the dot `title` previously showed the raw `YYYY-MM-DD` key (Latin digits) in **both** languages. It now renders a localized short date via `formatDate` (en: `Aug 7`, bn: `আগ ৭` with forced Bengali numerals) alongside the page count, e.g. `Aug 7 — 12 pages` / `আগ ৭ — ১২ পৃষ্ঠা`. `StreakStrip`'s `lang` prop tightened to `"en" | "bn"` so the helper call type-checks.
+- **Chart axis labels + tooltip** — consolidated the two divergent code paths (bn used a hand-rolled `bn-BD` + `toBanglaDigits` re-render; en used the stored `d.label` / ECharts' `p.axisValue`) onto the single shared `formatDate` helper. `axisLabels` is now one expression for both languages, and the tooltip formatter uses `axisLabels[p.dataIndex]` in **both** branches (no more `p.axisValue` drift) — so the tooltip header and the axis under it can never disagree. EN output is byte-identical to before (en-US short date).
+
+**Validation:** tsc 0 errors · **547/547 tests passing** (38 files). UI-only.
+
+### Dead date helpers removed from `src/lib/utils.ts`
+
+**User request: remove the unused `formatDate` from `utils.ts` and scan for other dead i18n helpers.**
+
+- **`src/lib/utils.ts`** — removed **both** dead date formatters: `timeAgo(dateStr)` (EN-only relative time) and `formatDate(dateStr)` (EN-only short date). Verified via code search that neither has a single importer — every `timeAgo`/`formatDate` usage in the app imports the bilingual versions from `@/lib/i18n` (profile/bookmarks use `timeAgo`; orders/purchases/profile/comments/VideoCard/search use `formatDate`), and NotificationBell/MockAdminPanel keep their own local copies. `utils.ts` retains only live exports: `cn`, `ACTION_PILL_CLS`, `escapeHtml` (email templates), `isMockId`.
+- **Dead-helper scan of `@/lib/i18n`** — all exports are live: `LanguageProvider`/`useLang`, `pickLocalized`, `toBanglaDigits`, `localizeCartResult`, `timeAgo`, `formatDate`, `formatMoney`, and the `t()`/`dict` machinery (PostGrid, PostCard, SearchBar, posts.$slug). No removals needed.
+- `utils.test.ts` (6 `cn` tests) unchanged — it never referenced the removed helpers.
+
+**Validation:** tsc 0 errors · **547/547 tests passing** (38 files).
+
+### Bangla localization pass — Bengali numerals + dates across purchases, bookmarks, profile, stats, orders, and the whole site
+
+**User request: fix English digits/texts to translate in Bangla mode across Purchases, Bookmark settings/taxonomy counters, profile, stats, order history, and overall site-wide language issues.**
+
+#### New shared helpers (`src/lib/i18n.tsx`)
+- **`formatDate(iso, lang, options?)`** — renders dates via `bn-BD`/`en-US` AND passes the BN result through `toBanglaDigits`, so Bengali numerals are guaranteed regardless of the runtime's ICU data (Node SSR and browsers alike). Invalid dates return `""` instead of "Invalid Date".
+
+#### `formatDuration` localized (`src/lib/reading-stats.ts`)
+- New optional `lang` param (default `"en"` — existing callers/tests unchanged): BN renders `০ মিনিট` / `৫ মিনিট` / `৩ ঘণ্টা` / `৩ ঘণ্টা ১২ মিনিট` with Bengali numerals. The lib now imports `toBanglaDigits` from `@/lib/i18n` (verified client-only consumers).
+
+#### Pages fixed (digits → Bengali numerals in bn mode, dates localized)
+- **Purchases (`purchases.tsx`)** — Total Books / Purchased stat numbers, purchase-date strings (`formatDate`), and reading-progress `%`.
+- **Bookmarks (`bookmarks.tsx`)** — "N item(s) saved" header line and the All/Reflections/Books tab `(N)` counts.
+- **Profile (`profile.tsx`)** — Member-since date, comment count, books read, avg progress `%`, bookmark count, Library summary (purchased/in-progress/completed), and reading-history/recent-books `p.X/Y` + `%` values.
+- **Stats (`stats.tsx`)** — all four StatCard values, longest-streak inline numbers, streak caption, per-book rows (progress `%`, pages, sessions), and the ECharts surface: x-axis day labels re-rendered in bn-BD, y-axis labels, and the tooltip (pages + duration) all Bengali in bn mode.
+- **Orders (`orders.tsx`)** — order `#` IDs (alphanumeric — digits converted, letters kept), item count, order dates (`formatDate`), and the reorder toast count.
+- **Site-wide** — `VideoCard` date + duration badge, `Comments` dates (+ localized "(edited…)" marker), `search` result dates (was locale-less `toLocaleDateString()` → en-US-style short date, Bengali in bn). PostCard / posts.$slug / BookReviews already used `bn-BD`.
+
+#### Tests
+- `i18n-format.test.ts` — 3 new `formatDate` cases (EN long form, BN guaranteed-no-Latin-digits + day/year numerals, custom options + invalid input).
+- `reading-stats.test.ts` — 1 new `formatDuration(…, "bn")` case (৪ cases: 0m / minutes / hours / hours+minutes).
+
+**Validation:** tsc 0 errors · **547/547 tests passing** (38 files, +4).
+
+### Reading Preferences section removed from Settings
+
+**User request: remove the reading-preferences settings from the account settings page.**
+
+- **`src/routes/settings.tsx`** — dropped the whole "Reading Preferences" section: the nav entry (`{ id: "reading" … }`), the `<ReadingPrefsSection>` render, the `updateReading` handler, the import, and the now-unused `BookOpen` icon import. The sidebar now runs Profile & Account → Appearance → Notifications → Privacy → Security → Danger Zone → Support & Legal.
+- **`src/components/settings/ReadingPrefsSection.tsx`** — deleted (its only consumer was `settings.tsx`; verified via code search).
+
+**What stays intact:** the `reading.*` preference model (`font_size`, `line_spacing`, `width`, `mode`, `save_progress`) and its live-apply consumers still work off saved values/defaults — article typography seeds from the profile (per-article Text control still available in the post page), the reader still seeds its theme from `reading.mode` (with its own in-reader theme switcher), and progress saving defaults to on. Only the Settings editing UI is gone; saved prefs from before remain honored.
+
+**Validation:** tsc 0 errors · **543/543 tests passing** (38 files).
+
+### Notification toggles demonstrable in mock mode — every topic visibly gates a real surface
+
+**User request: make the six notification toggles on /settings demonstrable — e.g. disabling 'comments' suppresses comment toasts, 'orders' suppresses order toasts — so every toggle visibly does something today.**
+
+#### Shared gate
+- **`src/hooks/useNotificationGate.ts`** (new) — `useNotificationGate()` returns `canNotify(topic)`: true only when the master "Email notifications" switch AND that topic's toggle are on. Guests/signed-out users get `true` (no prefs to consult), so public surfaces are unchanged. Reads the shared `["user-preferences", user.id]` query, which the settings Save warms — toggling + saving updates every gate instantly on SPA navigation.
+- **`src/lib/user-preferences.ts`** — exported `NotificationTopic = keyof UserPreferences["notifications"]`.
+
+#### What each toggle now gates
+| Toggle | Visible effect today |
+|---|---|
+| **Comments** | comment/reply/updated success toasts suppressed in `Comments.tsx` (comment still posts; delete + errors stay) |
+| **Reviews** | "Review published" (`BookReviews.tsx`) + "Rating saved" (book page) suppressed |
+| **Orders & purchases** | purchase toasts suppressed on the homepage, Books grid, and book page (already-owned info, purchased, added-to-library, payment-redirect success/cancel) — the purchase itself still completes |
+| **Newsletter** | `NewsletterSignup` success note becomes "Subscribed — but newsletters are muted in your notification settings" (bilingual) when disabled |
+| **Content** | header **NotificationBell** hides `new_content` rows (seeded: "New reflection: The Art of Deep Listening") + drops them from the badge count |
+| **Recommendations** | bell hides `recommendation` rows (seeded: "A book matched to your taste: The Art of Sitting Still") + badge count |
+
+Orders/comments also filter the bell (the seeded `new_purchase` row + any comment rows), so the badge visibly drops as topics are turned off.
+
+#### `src/lib/mock-notifications.ts`
+- `MockNotificationType` extended with `new_content` + `recommendation`; new **`notificationTypeToTopic(type)`** maps bell types → preference topics (welcome/contact_message → null = always visible).
+- Seeding is now idempotent **per (user, type)** — existing localStorage stores pick up the two new demo rows on the next visit without duplicating; the `seedOnce` reset-on-empty guard was restored (a simplified version had broken test isolation by caching the resolved seed promise across cleared stores).
+
+#### Bell filtering (`NotificationBell.tsx`)
+- List, unread badge, "Mark all read" button, and "View all" link all operate on the topic-filtered set; the raw unread state still drives mark-all-on-close.
+
+#### Tests
+- `mock-notifications.test.ts`: 2 new cases — seeded content/recommendation/purchase rows exist for the demo user; `notificationTypeToTopic` maps all 7 types (incl. null for welcome/contact_message). File: **12 tests**.
+
+**Validation:** tsc 0 errors · **543/543 tests passing** (38 files, +2) · code-review agent glitched this session — replaced with a targeted self-audit: hook order stable in all 7 components, effect deps correct (`canNotify` memoized), guest path verified (`canNotify` → true), no unused imports.
+
+### Avatar upload — Profile & Account (client preview + mock persistence, Supabase Storage ready)
+
+**User request: add avatar upload to the Profile & Account section — client-side preview + mock store persistence now, Supabase Storage later.**
+
+#### `src/components/settings/ProfileAccountSection.tsx`
+- **Camera overlay** — the avatar circle is now a hover group: a camera badge fades in over the image (`bg-black/40`, white camera icon) and opens a hidden `accept="image/*"` file input. Clicking the avatar also works.
+- **Client preview** — on selection: validates `image/*` + **≤ 2 MB**, `FileReader` → data-URL preview replaces the avatar instantly, and a Save avatar / Cancel action row slides in (aligned under the name column via `pl-[84px]` — 64px avatar + 20px gap). Cancel clears the pending preview; the saved avatar never changes until Save.
+- **Remove avatar** — when a saved avatar exists, a destructive "Remove avatar" action sits beside "Edit display name".
+- **Save flow**:
+  - **Mock mode** — `mockUpsertProfile(user.id, { avatar_url })` + new `mockSetSessionAvatar(user.id, url)` so the **header + mobile nav avatars update immediately** (they read `user.user_metadata.avatar_url`).
+  - **Real mode (Supabase Storage-ready)** — uploads the raw `File` to the `avatars` bucket (`avatars/{userId}/{ts}-{rand}.{ext}`, mirroring the `posts.ts` blog-images pattern), stores the public URL in `profiles.avatar_url`, then `supabase.auth.updateUser({ data: { avatar_url } })` so the header session stays in sync. Guarded so a missing `avatarFile` can never fall back to uploading the data-URL text (reviewer-caught hazard).
+- Bilingual labels + toasts throughout; errors toast "Avatar upload failed" without leaving stale state.
+
+#### `src/lib/mock-session.ts`
+- `MockSession.user` gained `avatar_url: string | null` (seeded `null`); `mockSessionToSupabaseSession` maps it into `user_metadata.avatar_url` (only when set).
+- New **`mockSetSessionAvatar(userId, avatarUrl | null)`** — updates the stored session + emits `MOCK_AUTH_EVENT` so `useAuthSession` refreshes and every header surface re-renders. No-op for a non-matching userId or when signed out.
+
+#### `supabase/migrations/20260810000001_create_avatars_bucket.sql` (new)
+- Public `avatars` bucket (2 MB, image MIME types) + RLS: public read, and each authenticated user may insert/update/delete only under `avatars/{auth.uid()}/` (via `storage.foldername(name)[1]`). Ready for the fresh Supabase instance.
+
+#### Tests
+- `mock-session.test.ts` — 3 new `mockSetSessionAvatar` cases (sets + maps into `user_metadata`; clears with `null`; no-op for wrong user / signed out). File: **17 tests**.
+
+**Validation:** tsc 0 errors · **541/541 tests passing** (38 files) · code-reviewed (real-mode Blob fallback hazard removed, type import cleaned, upload now requires the raw File).
+
+## 2026-08-09
+
+### Settings restructure — 9-section account center (sidebar nav) + reading-dashboard profile
+
+**User request: rebuild /settings around what the user *controls*, keeping Library/books/progress/bookmarks/comments/reviews/stats/orders outside. Approved structure: sidebar-nav layout, /profile → reading dashboard, backend-only features hidden in mock, prefs persist + live-apply where a consumer exists.**
+
+#### New layout (`src/routes/settings.tsx`)
+- **GitHub-style sidebar + content**: sticky left nav on desktop (scroll-spy highlights the active section), horizontal scroll chips on mobile. 9-section config drives both nav and content; `backendOnly` sections are filtered out in mock mode and appear automatically once Supabase is connected.
+- **Sticky save bar** — floats at the bottom of the content column only while there are unsaved changes (Save preferences + Reset). Replaces the old in-card Save/Reset.
+- Session loading skeleton now mirrors the sidebar+content shape; guest gate unchanged.
+
+#### Sections (mock-visible 8; Data & Account hidden until real backend)
+1. **Profile & Account** — avatar, display name, email, bio editing **moved from /profile** (`ProfileAccountSection`). Verification + connected accounts are backend-only → hidden in mock.
+2. **Appearance** — theme, language, **reduced motion** (new).
+3. **Reading Preferences** — font size, line spacing (existing, live preview kept) **+ reading width (narrow/normal/wide), reading mode (light/sepia/dark), progress saving** (new). The live preview now also applies the width measure and a mode tint.
+4. **Notifications** — `email_notifications` stays as the master switch; 6 new per-topic toggles (content, recommendations, comments, reviews, orders, newsletter), topics disabled while the master is off.
+5. **Privacy** — public profile + show reading activity (migrated under `privacy.*`) + 3 new: show reviews, show comments, show recommendations.
+6. **Security** — change password (unchanged, mock-blocked). Connected providers + active sessions + sign-out-all → hidden in mock.
+7. **Danger Zone** — delete-account flow moved into its own section component (behavior unchanged).
+8. **Support & Legal** — link cards to /faq, /contact, /privacy, /terms.
+9. **Data & Account** (backend-only) — export + account management; hidden in mock mode.
+
+#### Data model (`src/lib/user-preferences.ts`)
+- `UserPreferences` extended: `reduced_motion`, `reading.width/mode/save_progress`, `notifications.*`, `privacy.*`. `DEFAULT_PREFERENCES` updated.
+- New **`migratePreferences(raw)`** — normalizes any stored payload: folds the legacy TOP-LEVEL `public_profile` / `show_reading_activity` (the old page spread them into the saved object) into `privacy.*`, fills missing subgroups with defaults, and rejects invalid values per-field. The settings hydrate, the new hook, and tests all go through it.
+
+#### Shared hook (`src/hooks/useUserPreferences.ts`)
+- One query on `["user-preferences", user.id]` (no stale window) returning **migrated** prefs — consumed by /settings, the article page, the reader, and the new `ReducedMotionController`. The settings Save warms + invalidates this exact key, so saves propagate immediately.
+
+#### Live-apply (where a consumer exists today)
+- **Reduced motion** — `ReducedMotionController` in `__root.tsx` sets `data-reduced-motion` on `<html>` from the saved pref; `styles.css` gained a kill-switch (animations/transitions → 0.01ms) mirroring the OS `prefers-reduced-motion` block.
+- **Reading width** — `posts.$slug` applies `READING_WIDTH_MAX` (`38rem` narrow / `48rem` normal / unset wide) as `maxWidth` on the article wrapper.
+- **Reading mode** — `PdfViewer` seeds its default theme from `reading.mode` (guarded by `themeTouchedRef` so a manual in-session theme change always wins).
+- **Progress saving** — `reader.$bookId` `flushProgress` skips both `upsertProgress` and `recordReadingSession` when `reading.save_progress` is off.
+- Notifications/privacy prefs persist for the real email/profile backend (no mock consumer).
+
+#### Profile page (`src/routes/profile.tsx`) → reading dashboard
+- Identity **editing removed** (form, name/bio save handlers, RHF/zod imports gone). Identity card is now display-only (avatar, name, email, bio) with an **"Edit profile"** link → /settings. Stats, bookmarks, library, reading history, recent books, quick links all preserved.
+
+#### Tests
+- `reading-preferences.test.ts`: 13 tests (7 existing + 6 new `migratePreferences` cases: empty payload → defaults, legacy top-level folding, nested-precedence, invalid-value fallback, new mode/width/save_progress acceptance).
+
+**Validation:** tsc 0 errors · **538/538 tests passing** (38 files, +6) · code-review pass attempted (reviewer agent glitched — replaced with a targeted self-audit: no legacy key references remain, profile.tsx fully clean of form code, PdfViewer race guarded, scroll-spy dep stable).
+## 2026-08-09
+
+### Reading preferences — real-time feedback + instant article application
+
+**User request: "fix Reading font size options, Line spacing options and save preferences button real time to work." The data pipeline (settings → mock profile → post page) already existed, but (a) toggling Lg/Wide on /settings showed zero visual feedback, and (b) the post page cached preferences for 30s, so a quick SPA round-trip could still show old typography. Both closed.**
+
+#### 1. Live reading preview on /settings (`src/routes/settings.tsx`)
+- New **"Reading preview"** block under the Line-spacing toggle: a real `.prose-mitra` sample (serif `<h3>` heading + paragraph) rendered with `typoCssVars(prefs.reading…)` and `transition-[font-size,line-height] duration-200` — toggling Sm/Md/Lg or Normal/Relaxed/Wide now reflows the sample **in real time**, with a bilingual caption (`Selected: Large · Wide` / `নির্বাচিত: বড় · বিস্তৃত`).
+- Preview uses a genuine `<h3>` (not a styled `<p>`) so the sample honestly reflects article heading scale; `mb-0` on the paragraph; no redundant casts (prefs values are literal subsets of the typography unions).
+
+#### 2. Saved prefs apply to articles immediately (`src/routes/posts.$slug.tsx`)
+- The `["user-preferences", user.id]` query on the post page had `staleTime: 30_000` — removed, so article typography always reflects the latest saved preferences on SPA navigation.
+- The /settings **Save** handler now warms the shared cache (`queryClient.setQueryData(["user-preferences", user.id], prefsToSave)`) **and** invalidates that key in both mock and real branches — a signed-in reader who saves Lg + Wide sees it on the next post page instantly.
+
+#### 3. Shared typography helper (`src/components/TypographyControls.tsx`)
+- Extracted `typoCssVars(settings)` as an exported helper returning the `--article-font-size` / `--article-line-height` custom properties `.prose-mitra` reads. `useTypography` now calls it, and the settings preview calls it too — one source of truth, so the preview and the real article render identically.
+
+#### Tests
+- `src/lib/__tests__/reading-preferences.test.ts` — new `typoCssVars` describe block (2 tests): maps sm/tight and lg/wide onto the exact CSS custom properties; proves settings prefs plug straight into the preview without remapping. Total file: 7 tests.
+
+**Validation:** tsc 0 errors · **532/532 tests passing** (38 files) · code-reviewed (reviewer's polish items applied: casts dropped, real `<h3>`, `mb-0`, unused import removed).
+
 ## 2026-08-09
 
 ### Book page — WishlistButton matches the bookmark pill

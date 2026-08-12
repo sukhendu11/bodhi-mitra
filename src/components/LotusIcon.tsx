@@ -53,6 +53,13 @@ const ICON_CSS = `
     filter: invert(1);
   }
 
+  /* On colored/brand backgrounds (e.g. the saffron Donate CTA) the black
+     silhouette should render white in ALL themes, not just dark mode. */
+  .lotus-white .lotus-base,
+  .lotus-white .lotus-hover {
+    filter: invert(1) !important;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .lotus-root, .lotus-base, .lotus-hover {
       transition-duration: 0ms !important;
@@ -60,10 +67,19 @@ const ICON_CSS = `
   }
 `;
 
-export function LotusIcon({ size = 28, className = "" }: { size?: number; className?: string }) {
+export function LotusIcon({
+  size = 28,
+  className = "",
+  white = false,
+}: {
+  size?: number;
+  className?: string;
+  /** Render the silhouette white in all themes — for saffron/brand backgrounds. */
+  white?: boolean;
+}) {
   return (
     <span
-      className={`relative block lotus-root ${className}`}
+      className={`relative block lotus-root ${white ? "lotus-white" : ""} ${className}`}
       style={{ width: size, height: size }}
     >
       {/* Initial icon — Flaticon lotus */}

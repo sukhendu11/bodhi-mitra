@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { searchContent, type SearchResult, type ContentType } from "@/lib/search";
 import { useSiteSettings } from "@/lib/siteSettings";
-import { useLang, pickLocalized } from "@/lib/i18n";
+import { useLang, pickLocalized, formatDate, toBanglaDigits } from "@/lib/i18n";
 import { Search, FileText, BookOpen, Video, File, Loader2, ArrowLeft, ChevronDown, Sparkles } from "lucide-react";
 import DOMPurify from "dompurify";
 import { seoHead } from "@/lib/seo";
@@ -224,8 +224,8 @@ function SearchPage() {
         <>
           <p className="text-xs text-muted-foreground mb-4">
             {lang === "bn"
-              ? `"${q}" এর জন্য মোট ${total}টি ফলাফল`
-              : `${total} result${total !== 1 ? "s" : ""} for &ldquo;${q}&rdquo;`}
+              ? `"${q}" এর জন্য মোট ${toBanglaDigits(total)}টি ফলাফল`
+              : `${total} result${total !== 1 ? "s" : ""} for “${q}”`}
           </p>
           <div className="space-y-3">
             {results.map((result) => (
@@ -301,7 +301,11 @@ function ResultCard({ result }: { result: SearchResult }) {
             {typeLabel[result.type] ?? result.type}
           </span>
           <span className="text-xs text-muted-foreground/40">
-            {new Date(result.created_at).toLocaleDateString()}
+            {formatDate(result.created_at, lang, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
           </span>
         </div>
         <h3

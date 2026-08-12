@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, PenLine, Trash2, MessageSquareQuote } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
 import { StarRating } from "@/components/StarRating";
 import { LetterAvatar } from "@/components/LetterAvatar";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
+import { useNotificationGate } from "@/hooks/useNotificationGate";
 
 interface BookReviewsProps {
   bookId: string;
@@ -40,6 +41,7 @@ function excerpt(body: string) {
 export function BookReviews({ bookId, lang, user, requireAuth }: BookReviewsProps) {
   const queryClient = useQueryClient();
   const bn = lang === "bn";
+  const { canNotify } = useNotificationGate();
 
   /* ── Data ─────────────────────────────────────────────────── */
   const { data: reviews = [], isLoading } = useQuery({
@@ -61,6 +63,26 @@ export function BookReviews({ bookId, lang, user, requireAuth }: BookReviewsProp
   const [body, setBody] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const confirmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** Cancel a pending "Confirm delete?" state and clear its auto-revert timer. */
+  const cancelDeleteConfirm = () => {
+    if (confirmTimeoutRef.current) {
+      clearTimeout(confirmTimeoutRef.current);
+      confirmTimeoutRef.current = null;
+    }
+    setConfirmingDelete(false);
+  };
+
+  // Clear any pending confirm timeout when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (confirmTimeoutRef.current) {
+        clearTimeout(confirmTimeoutRef.current);
+        confirmTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Prefill the composer when the user's existing review loads.
   useEffect(() => {
@@ -91,7 +113,9 @@ export function BookReviews({ bookId, lang, user, requireAuth }: BookReviewsProp
         authorName: user?.name || user?.email?.split("@")[0] || undefined,
       }),
     onSuccess: () => {
-      toast.success(bn ? "পর্যালোচনা সংরক্ষিত হয়েছে" : "Review published");
+      // "Reviews" preference off → suppress the notification toast (the review
+      // still publishes; only the notification is muted).
+      if (canNotify("reviews")) toast.success(bn ? "পর্যালোচনা সংরক্ষিত হয়েছে" : "Review published");
       setExpanded(false);
       invalidateAll();
     },
@@ -106,7 +130,7 @@ export function BookReviews({ bookId, lang, user, requireAuth }: BookReviewsProp
       setRating(0);
       setTitle("");
       setBody("");
-      setConfirmingDelete(false);
+      cancelDeleteConfirm();
       invalidateAll();
     },
     onError: (err: Error) => toast.error(err.message || (bn ? "মুছে ফেলা যায়নি" : "Failed to delete review")),
@@ -139,7 +163,7 @@ export function BookReviews({ bookId, lang, user, requireAuth }: BookReviewsProp
             <MessageSquareQuote className="h-3.5 w-3.5" />
             {bn ? "পাঠকের পর্যালোচনা" : "Reader Reviews"}
           </p>
-          <h2 id="book-reviews-heading" className="font-serif text-xl md:text-2xl">
+          <h2 id="book-reviews-heading" className="font-serif text-xl md:text-2xl scroll-mt-28">
             {bn ? "পাঠকরা কী বলছেন" : "What readers are saying"}
           </h2>
         </div>
@@ -174,14 +198,28 @@ export function BookReviews({ bookId, lang, user, requireAuth }: BookReviewsProp
                 {bn ? "আপনার পর্যালোচনা" : "Your review"}
               </p>
               <div className="flex items-center gap-3">
+                {confirmingDelete && (
+                  <button
+                    type="button"
+                    onClick={cancelDeleteConfirm}
+                    disabled={pending}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  >
+                    {bn ? "বাতিল করুন" : "Cancel"}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
                     if (confirmingDelete) {
+                      cancelDeleteConfirm();
                       deleteMutation.mutate();
                     } else {
                       setConfirmingDelete(true);
-                      setTimeout(() => setConfirmingDelete(false), 3500);
+                      confirmTimeoutRef.current = setTimeout(() => {
+                        confirmTimeoutRef.current = null;
+                        setConfirmingDelete(false);
+                      }, 3500);
                     }
                   }}
                   disabled={pending}

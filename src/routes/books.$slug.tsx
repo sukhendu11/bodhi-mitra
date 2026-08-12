@@ -6,7 +6,9 @@ import { fetchSiteSettings, useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized, formatMoney, toBanglaDigits, localizeCartResult } from "@/lib/i18n";
 import { localizeCategoryName, localizeAuthorName } from "@/lib/taxonomy";
 import { useAuthSession } from "@/hooks/useAuth";
+import { useNotificationGate } from "@/hooks/useNotificationGate";
 import { getBookRatingAggregates, getUserRating, submitRating } from "@/lib/books-ratings";
+import { fetchBookReviews } from "@/lib/books-reviews";
 import { getReadingProgress } from "@/lib/books-progress";
 import { getPdfReaderUrl, purchaseBookAction } from "@/lib/books-reader";
 import { checkOwnership as fetchCheckOwnership } from "@/lib/books-purchases";
@@ -27,7 +29,7 @@ import { generateBookSchema, generateBreadcrumbSchema } from "@/lib/structured-d
 import { SocialShare } from "@/components/SocialShare";
 import { useFeatureFlag } from "@/hooks/useFeatureFlags";
 import { toast } from "sonner";
-import { BookOpen, Download, Eye, Loader2, CheckCircle, Lock, ShoppingCart, Tag, ListOrdered } from "lucide-react";
+import { BookOpen, Download, Eye, Loader2, CheckCircle, Lock, ShoppingCart, Tag, ListOrdered, ChevronDown } from "lucide-react";
 import { BackLink } from "@/components/BackLink";
 import { LetterAvatar } from "@/components/LetterAvatar";
 import { Reveal } from "@/components/Reveal";
@@ -124,6 +126,7 @@ function BookDetailPage() {
   const [pdfReaderUrl, setPdfReaderUrl] = useState<string | null>(null);
   const [redirectToastShown, setRedirectToastShown] = useState(false);
   const showRecommendations = useFeatureFlag("book_recommendations");
+  const { canNotify } = useNotificationGate();
 
   const doPurchase = useServerFn(purchaseBookAction);
   const doGetPdfReaderUrl = useServerFn(getPdfReaderUrl);
@@ -151,6 +154,14 @@ function BookDetailPage() {
     staleTime: 30_000,
   });
 
+  /* ── Reader reviews (count for the rating-row summary link) ─── */
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["book-reviews", book?.id],
+    queryFn: () => fetchBookReviews(book!.id),
+    enabled: !!book,
+    staleTime: 30_000,
+  });
+
   /* ── Reading progress ────────────────────────────────────────── */
   const { data: progress } = useQuery({
     queryKey: ["book-progress", book?.id, user?.id],
@@ -173,15 +184,16 @@ function BookDetailPage() {
     const params = new URLSearchParams(window.location.search);
     const purchase = params.get("purchase");
     if (purchase === "success") {
-      toast.success(lang === "bn" ? "ক্রয় সম্পন্ন! আপনি এখন এই বইটির মালিক।" : "Purchase complete! You now own this book.");
+      // "Orders & purchases" preference off → suppress the order toast.
+      if (canNotify("orders")) toast.success(lang === "bn" ? "ক্রয় সম্পন্ন! আপনি এখন এই বইটির মালিক।" : "Purchase complete! You now own this book.");
       window.history.replaceState({}, "", window.location.pathname);
       setRedirectToastShown(true);
     } else if (purchase === "cancel") {
-      toast.info(lang === "bn" ? "ক্রয় বাতিল হয়েছে। কোনো চার্জ নেওয়া হয়নি।" : "Purchase was cancelled. No charges were made.");
+      if (canNotify("orders")) toast.info(lang === "bn" ? "ক্রয় বাতিল হয়েছে। কোনো চার্জ নেওয়া হয়নি।" : "Purchase was cancelled. No charges were made.");
       window.history.replaceState({}, "", window.location.pathname);
       setRedirectToastShown(true);
     }
-  }, [redirectToastShown]);
+  }, [redirectToastShown, canNotify]);
 
   /* ── Auth callback (non-recursive) ───────────────────────────── */
   const handleUnauthenticatedAction = useCallback((actionName: string) => {
@@ -226,7 +238,8 @@ function BookDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["book-user-rating", book!.id] });
       queryClient.invalidateQueries({ queryKey: ["book-rating-agg", book!.id] });
       queryClient.invalidateQueries({ queryKey: ["public-books"] });
-      toast.success(lang === "bn" ? "রেটিং সংরক্ষিত হয়েছে" : "Rating saved");
+      // "Reviews" preference off → suppress the rating-saved toast.
+      if (canNotify("reviews")) toast.success(lang === "bn" ? "রেটিং সংরক্ষিত হয়েছে" : "Rating saved");
     },
   });
 
@@ -236,6 +249,12 @@ function BookDetailPage() {
       return;
     }
     ratingMutation.mutate(rating);
+  };
+
+  /** Smooth-scroll to the Reader Reviews section (shared query key keeps one fetch). */
+  const scrollToReviews = () => {
+    if (typeof document === "undefined") return;
+    document.getElementById("book-reviews-heading")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   /* ── Add to cart mutation ─────────────────────────────────── */
@@ -265,9 +284,10 @@ function BookDetailPage() {
       if (result.url) {
         window.location.href = result.url;
       } else if (result.alreadyOwned) {
-        toast.info(lang === "bn" ? "আপনি ইতিমধ্যে এই বইটির মালিক।" : "You already own this book.");
+        // "Orders & purchases" preference off → suppress the order toast.
+        if (canNotify("orders")) toast.info(lang === "bn" ? "আপনি ইতিমধ্যে এই বইটির মালিক।" : "You already own this book.");
       } else {
-        toast.success(lang === "bn" ? "বইটি আপনার লাইব্রেরিতে যোগ হয়েছে!" : "Book added to your library!");
+        if (canNotify("orders")) toast.success(lang === "bn" ? "বইটি আপনার লাইব্রেরিতে যোগ হয়েছে!" : "Book added to your library!");
         // Mark owned instantly so the Purchase → Read Now CTA flips immediately
         // (covers both mock purchases and direct free/paid completions).
         queryClient.setQueryData(["book-owned", book!.id, user?.id], true);
@@ -386,7 +406,7 @@ function BookDetailPage() {
             <div className="mt-4 p-3 rounded-lg bg-secondary/30 border border-border/40">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                 <span>{lang === "bn" ? "পড়ার অগ্রগতি" : "Reading Progress"}</span>
-                <span className="font-medium text-foreground">{Math.round(progress!.progress_pct)}%</span>
+                <span className="font-medium text-foreground">{lang === "bn" ? toBanglaDigits(Math.round(progress!.progress_pct)) : Math.round(progress!.progress_pct)}%</span>
               </div>
               <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
                 <div
@@ -457,6 +477,18 @@ function BookDetailPage() {
                   totalRatings={ratingAgg.total_ratings}
                 />
               </div>
+              {reviews.length > 0 && (
+                <button
+                  type="button"
+                  onClick={scrollToReviews}
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground/70 hover:text-primary transition-colors cursor-pointer"
+                >
+                  {lang === "bn"
+                    ? `${toBanglaDigits(reviews.length)}টি পর্যালোচনা পড়ুন`
+                    : `Read ${reviews.length} review${reviews.length === 1 ? "" : "s"}`}
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              )}
             </div>
           )}
 
@@ -511,8 +543,8 @@ function BookDetailPage() {
           )}
           </Reveal>
 
-          {/* Metadata grid */}
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-5">
+          {/* Metadata grid — 2 cols on phones so the Price / File Size cells breathe */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
             {book.pages > 0 && (
               <div>
                 <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-1">
@@ -526,7 +558,11 @@ function BookDetailPage() {
                 <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-1">
                   {lang === "bn" ? "পড়ার সময়" : "Read Time"}
                 </p>
-                <p className="text-sm font-medium">{formatReadingTime(book.pages * 250)}</p>
+                <p className="text-sm font-medium">
+                  {lang === "bn"
+                    ? `${toBanglaDigits(book.pages * 250)} মিনিট পড়া`
+                    : formatReadingTime(book.pages * 250)}
+                </p>
               </div>
             )}
             {book.isbn && (
@@ -554,8 +590,12 @@ function BookDetailPage() {
                 </p>
                 <p className="text-sm font-medium">
                   {book.pdf_file_size >= 1024 * 1024
-                    ? `${(book.pdf_file_size / (1024 * 1024)).toFixed(1)} MB`
-                    : `${Math.max(1, Math.round(book.pdf_file_size / 1024))} KB`}
+                    ? lang === "bn"
+                      ? `${toBanglaDigits((book.pdf_file_size / (1024 * 1024)).toFixed(1))} MB`
+                      : `${(book.pdf_file_size / (1024 * 1024)).toFixed(1)} MB`
+                    : lang === "bn"
+                      ? `${toBanglaDigits(Math.max(1, Math.round(book.pdf_file_size / 1024)))} KB`
+                      : `${Math.max(1, Math.round(book.pdf_file_size / 1024))} KB`}
                 </p>
               </div>
             )}

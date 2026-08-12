@@ -26,6 +26,7 @@ import {
   type ReadingHistoryEntry,
 } from "@/lib/reading-history";
 import { DEMO_ACCOUNTS } from "@/lib/mock-session";
+import { toBanglaDigits } from "@/lib/i18n";
 
 /* ─── Types ────────────────────────────────────────────────────── */
 
@@ -448,11 +449,19 @@ function emptyStats(): ReadingStats {
 
 /* ─── Formatting helpers (shared with the dashboard UI) ───────── */
 
-export function formatDuration(ms: number): string {
+/**
+ * Human duration like "5m" / "3h 12m" (EN) or "৫ মিনিট" / "৩ ঘণ্টা ১২ মিনিট"
+ * (BN, Bengali numerals via the i18n helper). `lang` defaults to "en" so
+ * existing callers/tests are unaffected.
+ */
+export function formatDuration(ms: number, lang: "en" | "bn" = "en"): string {
   const mins = Math.round(ms / 60_000);
-  if (mins < 1) return "0m";
+  if (mins < 1) return lang === "bn" ? "০ মিনিট" : "0m";
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  if (h === 0) return `${m}m`;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+  if (h === 0) return lang === "bn" ? `${toBanglaDigits(m)} মিনিট` : `${m}m`;
+  if (m === 0) return lang === "bn" ? `${toBanglaDigits(h)} ঘণ্টা` : `${h}h`;
+  return lang === "bn"
+    ? `${toBanglaDigits(h)} ঘণ্টা ${toBanglaDigits(m)} মিনিট`
+    : `${h}h ${m}m`;
 }

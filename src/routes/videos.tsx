@@ -59,14 +59,10 @@ function VideosPage() {
 
   const allVideos = data?.data ?? [];
 
-  if (isError) {
-    return (
-      <div className="mx-auto max-w-6xl px-6 py-20 md:py-28 text-center">
-        <p className="text-sm text-muted-foreground">{lang === "bn" ? "ভিডিও লোড করা যায়নি। পরে আবার চেষ্টা করুন।" : "Failed to load videos. Please try again later."}</p>
-      </div>
-    );
-  }
-
+  // Hooks must be declared unconditionally — these were previously AFTER the
+  // isError early-return, a Rules-of-Hooks violation that crashed React when
+  // the query flipped between error/retry states ("Rendered more hooks than
+  // during the previous render").
   const videos = useMemo(() => {
     if (!searchQuery.trim()) return allVideos;
     const q = searchQuery.toLowerCase();
@@ -80,6 +76,14 @@ function VideosPage() {
   const handlePlay = useCallback((ytId: string, title: string) => {
     setActiveVideo({ id: ytId, title });
   }, []);
+
+  if (isError) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-20 md:py-28 text-center">
+        <p className="text-sm text-muted-foreground">{lang === "bn" ? "ভিডিও লোড করা যায়নি। পরে আবার চেষ্টা করুন।" : "Failed to load videos. Please try again later."}</p>
+      </div>
+    );
+  }
 
   const header = pickLocalized(
     pageData?.header_en || "Videos",

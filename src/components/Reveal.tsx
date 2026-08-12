@@ -24,8 +24,18 @@ export function Reveal({
 }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [prefersReduced, setPrefersReduced] = useState(false);
 
   useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReduced(mq.matches);
+
+    // Reduced-motion users get content instantly — no entrance animation.
+    if (mq.matches) {
+      setIsVisible(true);
+      return;
+    }
+
     const el = ref.current;
     if (!el) return;
 
@@ -43,12 +53,15 @@ export function Reveal({
     return () => observer.disconnect();
   }, []);
 
-  const style: React.CSSProperties = {
-    opacity: isVisible ? 1 : 0,
-    transform: isVisible ? "translateY(0)" : `translateY(${distance}px)`,
-    transition: `opacity ${duration}s ease-out, transform ${duration}s ease-out`,
-    transitionDelay: `${delay}s`,
-  };
+  // Skip the entrance animation entirely for reduced-motion users.
+  const style: React.CSSProperties = prefersReduced
+    ? {}
+    : {
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0)" : `translateY(${distance}px)`,
+        transition: `opacity ${duration}s ease-out, transform ${duration}s ease-out`,
+        transitionDelay: `${delay}s`,
+      };
 
   return (
     <Tag ref={ref} style={style} className={className}>

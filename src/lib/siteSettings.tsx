@@ -23,6 +23,8 @@ export interface SiteConfig {
     desc_en: string;
     desc_bn: string;
     cta_label: string;
+    /** Bangla variant of the hero CTA label (e.g. "পড়া শুরু করুন"). */
+    cta_label_bn: string;
     cta_url: string;
   };
   theme: {
@@ -404,6 +406,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
       "Quiet essays on the Buddha's teachings, the science of the mind, and the slow art of becoming well.",
     desc_bn: "বুদ্ধের শিক্ষা, মনের বিজ্ঞান, এবং সুস্থ হয়ে ওঠার ধীর শিল্প নিয়ে শান্ত প্রবন্ধ।",
     cta_label: "Begin reading",
+    cta_label_bn: "পড়া শুরু করুন",
     cta_url: "/reflections",
   },
   theme: {

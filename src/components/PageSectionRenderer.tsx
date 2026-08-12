@@ -66,7 +66,8 @@ function HeroSection({ content }: { content: Record<string, string> }) {
       {content.button_text && content.button_url && (
         <a
           href={content.button_url}
-          className="mt-8 inline-block px-8 py-3 text-sm uppercase tracking-[0.2em] bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
+          rel={content.button_url.startsWith("http") ? "noopener noreferrer" : undefined}
+          className="mt-8 inline-block px-8 py-3 text-sm uppercase tracking-[0.2em] bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"
         >
           {content.button_text}
         </a>
@@ -137,6 +138,7 @@ function VideoSection({ content }: { content: Record<string, string> }) {
             title={content.caption || "YouTube video"}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            loading="lazy"
             className="w-full h-full"
           />
         ) : (
@@ -162,7 +164,8 @@ function CTASection({ content }: { content: Record<string, string> }) {
         {content.button_text && content.button_url && (
           <a
             href={content.button_url}
-            className="mt-6 inline-block px-8 py-3 text-sm uppercase tracking-[0.2em] bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
+            rel={content.button_url.startsWith("http") ? "noopener noreferrer" : undefined}
+            className="mt-6 inline-block px-8 py-3 text-sm uppercase tracking-[0.2em] bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"
           >
             {content.button_text}
           </a>

@@ -26,30 +26,6 @@ export function escapeHtml(str: string): string {
     .replace(/'/g, "&#039;");
 }
 
-/** Format a date string to a relative time string (e.g., "5m ago", "2h ago") */
-export function timeAgo(dateStr: string): string {
-  const d = new Date(dateStr);
-  const now = Date.now();
-  const diff = now - d.getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return d.toLocaleDateString();
-}
-
-/** Format a date string to a readable date (e.g., "Jan 15, 2024") */
-export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 /**
  * True when an ID is a mock/dev id (non-UUID) rather than a real database
  * UUID. Mock content (posts/books from mock-data.ts) uses ids like "post-3"

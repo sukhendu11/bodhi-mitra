@@ -4,6 +4,8 @@ import { subscribeToNewsletter } from "@/lib/newsletter";
 import { callFn } from "@/lib/call-fn";
 import { Loader2, CheckCircle } from "lucide-react";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
+import { useLang } from "@/lib/i18n";
+import { useNotificationGate } from "@/hooks/useNotificationGate";
 
 interface NewsletterSignupProps {
   title?: string;
@@ -16,6 +18,9 @@ export function NewsletterSignup({ title, text, compact }: NewsletterSignupProps
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const doSubscribe = useServerFn(subscribeToNewsletter);
+  const { lang } = useLang();
+  const bn = lang === "bn";
+  const { canNotify } = useNotificationGate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +34,12 @@ export function NewsletterSignup({ title, text, compact }: NewsletterSignupProps
       const result = await callFn(doSubscribe, { email: trimmed });
       if (result.alreadySubscribed) {
         setMessage("You're already subscribed!");
+      } else if (!canNotify("newsletter")) {
+        // "Newsletter" preference off — subscribe still works, but the note
+        // makes the mute visible (Settings → Notifications).
+        setMessage(bn
+          ? "সাবস্ক্রাইব হয়েছে — তবে আপনার সেটিংসে নিউজলেটার নিঃশব্দ করা আছে।"
+          : "Subscribed — but newsletters are muted in your notification settings.");
       } else {
         setMessage("Thank you for subscribing!");
       }

@@ -5,8 +5,9 @@ import { fetchComments, type Comment } from "@/lib/comments";
 import { addCommentFn, updateCommentFn, deleteCommentFn } from "@/lib/comment-functions";
 import { callFn } from "@/lib/call-fn";
 import { useAuthSession, useIsAdmin } from "@/hooks/useAuth";
+import { useNotificationGate } from "@/hooks/useNotificationGate";
 import { useSiteSettings } from "@/lib/siteSettings";
-import { useLang, pickLocalized } from "@/lib/i18n";
+import { useLang, pickLocalized, formatDate } from "@/lib/i18n";
 import { LetterAvatar } from "@/components/LetterAvatar";
 import { AuthModal } from "@/components/AuthModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -20,6 +21,7 @@ export function Comments({ postId }: { postId: string }) {
   const { user } = useAuthSession();
   const { data: isAdmin = false } = useIsAdmin(user);
   const queryClient = useQueryClient();
+  const { canNotify } = useNotificationGate();
   const cfg = useSiteSettings();
   const { lang } = useLang();
   const [text, setText] = useState("");
@@ -83,10 +85,12 @@ export function Comments({ postId }: { postId: string }) {
       if (vars.parent_id) {
         setReplyText("");
         setReplyTo(null);
-        toast.success(lang === "bn" ? "উত্তর পোস্ট করা হয়েছে" : "Reply posted");
+        // "Comments" preference off → suppress the notification toast (the
+        // comment still posts; only the notification is muted).
+        if (canNotify("comments")) toast.success(lang === "bn" ? "উত্তর পোস্ট করা হয়েছে" : "Reply posted");
       } else {
         setText("");
-        toast.success(lang === "bn" ? "মন্তব্য পোস্ট করা হয়েছে" : "Comment posted");
+        if (canNotify("comments")) toast.success(lang === "bn" ? "মন্তব্য পোস্ট করা হয়েছে" : "Comment posted");
       }
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
@@ -116,7 +120,7 @@ export function Comments({ postId }: { postId: string }) {
     onSuccess: () => {
       setEditingId(null);
       setEditingText("");
-      toast.success(lang === "bn" ? "মন্তব্য আপডেট করা হয়েছে" : "Comment updated");
+      if (canNotify("comments")) toast.success(lang === "bn" ? "মন্তব্য আপডেট করা হয়েছে" : "Comment updated");
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -149,7 +153,7 @@ export function Comments({ postId }: { postId: string }) {
                 )}
               </p>
               <time className="text-xs text-muted-foreground shrink-0">
-                {new Date(c.created_at).toLocaleDateString("en-US", {
+                {formatDate(c.created_at, lang, {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
@@ -157,8 +161,8 @@ export function Comments({ postId }: { postId: string }) {
                 {c.updated_at &&
                   new Date(c.updated_at).getTime() - new Date(c.created_at).getTime() > 1500 && (
                     <span className="ml-2 italic">
-                      (edited{" "}
-                      {new Date(c.updated_at).toLocaleDateString("en-US", {
+                      {lang === "bn" ? "(সম্পাদিত " : "(edited "}
+                      {formatDate(c.updated_at, lang, {
                         month: "short",
                         day: "numeric",
                         year: "numeric",

@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { mockFetchPosts, mockFetchPostBySlug, mockFetchPostCounts } from "@/lib/mock-data";
+import { mockFetchPosts, mockFetchPostBySlug } from "@/lib/mock-data";
 
 export type PostCategory = string;
 
@@ -85,12 +85,6 @@ export async function uploadCoverImage(file: File): Promise<string> {
   if (error) throw new Error(error.message);
   const { data } = supabase.storage.from("blog-images").getPublicUrl(path);
   return data.publicUrl;
-}
-
-export async function fetchPostCounts(
-  categoryNames?: string[],
-): Promise<Record<string, number>> {
-  return mockFetchPostCounts();
 }
 
 import { slugifyPost as cmsSlugify } from "@/lib/cms-engine";

@@ -369,14 +369,6 @@ export function mockFetchPosts(category?: PostCategory, page = 1, pageSize = 9, 
   return { data, total };
 }
 
-export function mockFetchPostCounts(): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const p of mockApplyPostOverrides(MOCK_POSTS_DATA)) {
-    counts[p.category] = (counts[p.category] || 0) + 1;
-  }
-  return counts;
-}
-
 export function mockFetchPostBySlug(slug: string): Post | null {
   return mockApplyPostOverrides(MOCK_POSTS_DATA).find((p) => p.slug === slug) ?? null;
 }

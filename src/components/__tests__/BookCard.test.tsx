@@ -17,6 +17,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SiteSettingsProvider } from "@/lib/siteSettings";
 import { WishlistProvider } from "@/hooks/useWishlist";
+import { LanguageProvider } from "@/lib/i18n";
 import { BookCard } from "@/components/BookCard";
 import type { Book } from "@/lib/books";
 import type { MockCartBookSnapshot } from "@/lib/mock-cart";
@@ -103,21 +104,23 @@ function renderCard(props: {
     defaultOptions: { queries: { retry: false } },
   });
   const utils = render(
-    <QueryClientProvider client={queryClient}>
-      <SiteSettingsProvider>
-        <WishlistProvider>
-          <BookCard
-            book={props.book ?? makeBook()}
-            lang={props.lang ?? "en"}
-            userId={props.userId}
-            onEyeClick={props.onEyeClick}
-            requireAuth={props.requireAuth}
-            onAddToCart={props.onAddToCart}
-            onRemove={props.onRemove}
-          />
-        </WishlistProvider>
-      </SiteSettingsProvider>
-    </QueryClientProvider>,
+    <LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        <SiteSettingsProvider>
+          <WishlistProvider>
+            <BookCard
+              book={props.book ?? makeBook()}
+              lang={props.lang ?? "en"}
+              userId={props.userId}
+              onEyeClick={props.onEyeClick}
+              requireAuth={props.requireAuth}
+              onAddToCart={props.onAddToCart}
+              onRemove={props.onRemove}
+            />
+          </WishlistProvider>
+        </SiteSettingsProvider>
+      </QueryClientProvider>
+    </LanguageProvider>,
   );
   return utils;
 }

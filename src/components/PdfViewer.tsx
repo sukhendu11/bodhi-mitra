@@ -33,6 +33,8 @@ import {
 import type * as PdfJs from "pdfjs-dist";
 import { encodePdfSrc } from "@/lib/pdf-proxy";
 import { cn } from "@/lib/utils";
+import { useLang, toBanglaDigits } from "@/lib/i18n";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 /* ── Reading theme (light / dark / sepia) ───────────────────────── */
 export type ReaderTheme = "light" | "dark" | "sepia";
@@ -125,6 +127,7 @@ function PageThumbnail({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [done, setDone] = useState(false);
   const taskRef = useRef<PdfJs.RenderTask | null>(null);
+  const { lang } = useLang();
 
   // Render only when the thumbnail is (near) the sidebar's viewport
   useEffect(() => {
@@ -182,7 +185,7 @@ function PageThumbnail({
           active ? "text-primary" : "text-muted-foreground"
         }`}
       >
-        {pageNumber}
+        {lang === "bn" ? toBanglaDigits(pageNumber) : pageNumber}
       </span>
     </button>
   );
@@ -212,6 +215,7 @@ function ContinuousPage({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [done, setDone] = useState(false);
   const taskRef = useRef<PdfJs.RenderTask | null>(null);
+  const { lang } = useLang();
 
   // Re-render when the target width / zoom changes
   useEffect(() => {
@@ -262,7 +266,7 @@ function ContinuousPage({
       <span
         className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium tabular-nums px-1.5 rounded-sm bg-background/85 border border-border/40 text-muted-foreground"
       >
-        {pageNumber}
+        {lang === "bn" ? toBanglaDigits(pageNumber) : pageNumber}
       </span>
     </div>
   );
@@ -395,6 +399,7 @@ function TocList({
   theme: ReaderTheme;
   onSelect: (p: number) => void;
 }) {
+  const { lang } = useLang();
   const activeCls =
     theme === "sepia"
       ? "font-medium text-amber-800 bg-amber-100"
@@ -425,7 +430,7 @@ function TocList({
             )}
           >
             <span className="text-xs tabular-nums opacity-60 shrink-0">
-              {ch.page}
+              {lang === "bn" ? toBanglaDigits(ch.page) : ch.page}
             </span>
             <span className="truncate">{ch.title}</span>
           </button>
@@ -623,6 +628,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
     },
     ref,
   ) {
+    const { lang } = useLang();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const canvas2Ref = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -656,6 +662,18 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
     const [mode, setMode] = useState<ReaderMode>(defaultMode);
     // Reading theme
     const [theme, setTheme] = useState<ReaderTheme>(controlledTheme ?? "light");
+    // True once the user manually picks a theme in the viewer — after that the
+    // saved "Reading mode" preference never overrides their in-session choice.
+    const themeTouchedRef = useRef(false);
+    // Saved reading-mode preference (Settings → Reading Preferences → Reading
+    // mode). Applied once loaded, unless the parent controls the theme or the
+    // user already changed it manually.
+    const { data: userPrefs } = useUserPreferences();
+    useEffect(() => {
+      if (controlledTheme || themeTouchedRef.current) return;
+      const mode = userPrefs?.reading?.mode;
+      if (mode === "light" || mode === "sepia" || mode === "dark") setTheme(mode);
+    }, [userPrefs, controlledTheme]);
     // In-document search
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -914,6 +932,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
     const fitToPage = () => setZoomMode("fit-page");
     const rotate = () => setRotation((r) => (r + 90) % 360);
     const cycleTheme = () => {
+      themeTouchedRef.current = true;
       const next =
         theme === "light" ? "dark" : theme === "dark" ? "sepia" : "light";
       setTheme(next);
@@ -1347,7 +1366,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
                   )}
                   aria-label="Current page"
                 />
-                <span className={cn("text-xs", themeMuted)}>/ {totalPages}</span>
+                <span className={cn("text-xs", themeMuted)}>/ {lang === "bn" ? toBanglaDigits(totalPages) : totalPages}</span>
               </div>
               <button
                 onClick={() => goToPage(pageNum + 1)}
@@ -1383,7 +1402,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
                 aria-haspopup="listbox"
                 aria-expanded={zoomMenuOpen}
               >
-                {Math.round(displayScale * 100)}%
+                {lang === "bn" ? toBanglaDigits(Math.round(displayScale * 100)) : Math.round(displayScale * 100)}%
                 <ChevronDown className="h-3 w-3 opacity-60" />
               </button>
               <button
@@ -1421,7 +1440,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
                   {ZOOM_PRESETS.map((p) => (
                     <ZoomMenuItem
                       key={p}
-                      label={`${p}%`}
+                      label={`${lang === "bn" ? toBanglaDigits(p) : p}%`}
                       active={
                         zoomMode === "custom" && Math.round(scale * 100) === p
                       }
@@ -1600,7 +1619,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
               ) : (
                 <>
                   <p className={cn("text-xs mt-2", themeMuted)}>
-                    {searchResults.length}{" "}
+                    {lang === "bn" ? toBanglaDigits(searchResults.length) : searchResults.length}{" "}
                     {searchResults.length === 1 ? "result" : "results"}
                   </p>
                   <div className="flex gap-2 overflow-x-auto max-h-40">
@@ -1623,7 +1642,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
                             themeMuted,
                           )}
                         >
-                          Page {r.page}
+                          {lang === "bn" ? `পৃষ্ঠা ${toBanglaDigits(r.page)}` : `Page ${r.page}`}
                         </span>
                         <p
                           className={cn(

@@ -41,6 +41,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
 import { SiteToaster } from "@/components/SiteToaster";
 import { useTheme } from "@/hooks/useTheme";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: () => fetchSiteSettings().catch(() => DEFAULT_CONFIG),
@@ -270,7 +271,7 @@ function Header() {
   if (!layout.headerVisible) return null;
 
   const linkCls =
-    "group relative inline-flex items-center gap-1.5 text-base text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-300";
+    "group relative inline-flex items-center gap-1.5 text-base text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-300 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40";
   const activeLinkCls = "text-foreground";
 
   // Cart count query — used by both CartBadge and MobileNav.
@@ -295,7 +296,7 @@ function Header() {
             : "border-b border-border/20 bg-background/50"
         } transition-all duration-500 ease-out ${isSticky ? "sticky top-0 z-40" : ""}`}
       >
-      <div className="flex w-full items-center px-10 md:px-16 py-5">          {/* ── Desktop: 4-column layout ── */}
+      <div className="flex w-full items-center px-5 sm:px-8 md:px-16 py-4 sm:py-5">          {/* ── Desktop: 4-column layout ── */}
         <div className="hidden md:flex w-full items-center gap-10">
           {/* SECTION 1 — Logo (left) */}
           <div className="flex items-center flex-shrink-0">
@@ -425,9 +426,9 @@ function Header() {
           </div>
         </div>
 
-        {/* ── Mobile: logo + cart + hamburger ── */}
-        <div className="md:hidden flex w-full items-center justify-between">
-          <Link to="/" className="font-serif text-2xl tracking-tight flex items-center gap-3">
+        {/* ── Mobile: logo + actions + hamburger ── */}
+        <div className="md:hidden flex w-full items-center justify-between gap-2">
+          <Link to="/" className="font-serif text-2xl tracking-tight flex items-center gap-3 min-w-0">
             {layout.logoUrl ? (
               <img
                 src={layout.logoUrl}
@@ -436,18 +437,22 @@ function Header() {
                 className="object-contain"
               />
             ) : (
-              <span>{layout.brandName}</span>
+              <span className="truncate">{layout.brandName}</span>
             )}
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 sm:gap-2">
+            {/* Notifications (signed-in only) */}
             {user && (
-              <div className="mr-1">
+              <div className="mr-0.5">
                 <NotificationBell userId={user.id} />
               </div>
             )}
+            {/* Wishlist — after the bell, same heart as desktop */}
+            <WishlistBadge />
+            {/* Cart */}
             <CartDrawer cartCount={cartCount}>
               {(open) => (
-                <button className="text-muted-foreground hover:text-foreground transition-colors p-0.5">
+                <button className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-full hover:scale-110 active:scale-95">
                   <CartIcon count={cartCount} isOpen={open} />
                 </button>
               )}
@@ -459,6 +464,9 @@ function Header() {
               }))}
               groups={layout.dropdownGroups.map((group) => ({
                 label: navLabel(group, lang),
+                // Only link the label when the dropdown has a landing page —
+                // otherwise the whole row toggles (avoids linking to /).
+                to: group.type === "external" ? group.url : group.slug || undefined,
                 items: group.children.map((child) => ({
                   to: child.type === "external" ? child.url : child.slug || "/",
                   label: navLabel(child, lang),
@@ -467,10 +475,18 @@ function Header() {
               isAdmin={!!isAdmin}
               isSignedIn={!!user}
               adminLabel="Admin"
-              profileLabel="Profile"
               cartCount={cartCount}
+              // Profile lives in the drawer's persistent bottom block — the
+              // display name comes from user metadata (mock session puts it in
+              // `display_name`; Google OAuth may set `name`/`full_name`).
               userEmail={user?.email ?? ""}
               userAvatarUrl={user?.user_metadata?.avatar_url}
+              userDisplayName={
+                (user?.user_metadata?.display_name as string) ||
+                user?.user_metadata?.name ||
+                user?.user_metadata?.full_name ||
+                ""
+              }
               signInLabel="Sign in"
               signOutLabel="Sign out"
               onSignOut={() => signOut()}
@@ -487,7 +503,7 @@ function Header() {
 
 function FooterLink({ to, label, external }: { to: string; label: string; external?: boolean }) {
   const base =
-    "text-sm text-muted-foreground/90 hover:text-foreground transition-colors duration-300 relative block w-fit after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:bg-foreground/40 after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100";
+    "text-sm text-muted-foreground/90 hover:text-foreground transition-colors duration-300 relative block w-fit after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:bg-foreground/40 after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40";
   if (external) {
     return (
       <a href={to} target="_blank" rel="noopener noreferrer" className={base}>
@@ -518,7 +534,7 @@ function SocialIcon({
       target="_blank"
       rel="noreferrer noopener"
       aria-label={label}
-      className="w-9 h-9 rounded-full border border-border/40 flex items-center justify-center text-xs font-medium text-muted-foreground/85 hover:text-foreground hover:border-foreground/25 hover:bg-foreground/[0.04] hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 transition-all duration-300"
+      className="w-9 h-9 rounded-full border border-border/40 flex items-center justify-center text-xs font-medium text-muted-foreground/85 hover:text-foreground hover:border-foreground/25 hover:bg-foreground/[0.04] hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       {children}
     </a>
@@ -565,7 +581,9 @@ function Footer() {
               <p className="text-xs uppercase tracking-[0.18em] font-semibold text-muted-foreground/85 mb-4">
                 {lang === "bn" ? "অন্বেষণ" : "Explore"}
               </p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+              {/* Mobile: links wrap inline for a compact, thumb-friendly row.
+                  Desktop: tidy 2-column grid. */}
+              <div className="flex flex-wrap gap-x-5 gap-y-2.5 md:grid md:grid-cols-2 md:gap-x-4">
                 <FooterLink to="/reflections" label={lang === "bn" ? "প্রতিফলন" : "Reflections"} />
                 <FooterLink to="/books" label={lang === "bn" ? "বই" : "Books"} />
                 <FooterLink to="/videos" label={lang === "bn" ? "ভিডিও" : "Videos"} />
@@ -581,7 +599,7 @@ function Footer() {
               <p className="text-xs uppercase tracking-[0.18em] font-semibold text-muted-foreground/85 mb-4">
                 {lang === "bn" ? "দ্রুত লিঙ্ক" : "Quick Links"}
               </p>
-              <div className="flex flex-col gap-y-2.5">
+              <div className="flex flex-wrap gap-x-5 gap-y-2.5 md:flex-col md:gap-y-2.5">
                 <FooterLink to="/faq" label={lang === "bn" ? "সচরাচর জিজ্ঞাসা" : "FAQ"} />
                 <FooterLink to="/privacy" label={lang === "bn" ? "গোপনীয়তা" : "Privacy"} />
                 <FooterLink to="/terms" label={lang === "bn" ? "শর্তাবলী" : "Terms"} />
@@ -652,6 +670,27 @@ function ThemeController() {
   return null;
 }
 
+/* ─── Reduced Motion Controller ────────────────────────────────── */
+
+/** Bridges the saved "Reduced motion" preference (Settings → Appearance)
+ *  with the site-wide `data-reduced-motion` attribute on <html>, which the
+ *  CSS kill-switch in styles.css reads to suppress animations/transitions.
+ *  Runs at the root so the setting applies on every page, not just /settings. */
+function ReducedMotionController() {
+  const { data: prefs } = useUserPreferences();
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (prefs?.reduced_motion) {
+      document.documentElement.setAttribute("data-reduced-motion", "true");
+    } else {
+      document.documentElement.removeAttribute("data-reduced-motion");
+    }
+  }, [prefs?.reduced_motion]);
+
+  return null;
+}
+
 /* ─── Root component ───────────────────────────────────────────────────── */
 
 function RootComponent() {
@@ -693,6 +732,7 @@ function RootComponent() {
         <LanguageProvider>
           <SiteSettingsProvider>
             <ThemeController />
+            <ReducedMotionController />
             <WishlistProvider>
             <MaintenanceGate>
               <LayoutProvider>

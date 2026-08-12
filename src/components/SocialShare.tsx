@@ -117,7 +117,7 @@ export function SocialShare({ url, title, description }: SocialShareProps) {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
+                className="flex items-center justify-center w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
                 title={link.name}
                 onClick={() => setOpen(false)}
               >
@@ -126,7 +126,7 @@ export function SocialShare({ url, title, description }: SocialShareProps) {
             ))}
             <button
               onClick={() => { handleCopyLink(); }}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
+              className="flex items-center justify-center w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
               title="Copy link"
             >
               {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Link2 className="h-3.5 w-3.5" />}

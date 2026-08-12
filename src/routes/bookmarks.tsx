@@ -11,7 +11,7 @@ import {
 } from "@/lib/bookmarks";
 import { useAuthSession } from "@/hooks/useAuth";
 import { isMockMode } from "@/lib/data-source";
-import { useLang, formatMoney, timeAgo } from "@/lib/i18n";
+import { useLang, formatMoney, timeAgo, toBanglaDigits } from "@/lib/i18n";
 import { callFn } from "@/lib/call-fn";
 import { getSiteName } from "@/lib/siteSettings";
 import { ErrorPage } from "@/components/error-page";
@@ -175,7 +175,7 @@ function BookmarksPage() {
           {lang === "bn" ? "বুকমার্ক" : "Bookmarks"}
         </h1>
         <p className="text-sm text-muted-foreground mt-2">
-          {count}{" "}
+          {lang === "bn" ? toBanglaDigits(count) : count}{" "}
           {count === 1
             ? lang === "bn"
               ? "টি সংরক্ষিত"
@@ -204,7 +204,7 @@ function BookmarksPage() {
               {lang === "bn" ? t.labelBn : t.labelEn}
               {t.n !== undefined && (
                 <span className={tab === t.key ? "opacity-70" : "text-muted-foreground/50"}>
-                  ({t.n})
+                  ({lang === "bn" ? toBanglaDigits(t.n) : t.n})
                 </span>
               )}
             </button>

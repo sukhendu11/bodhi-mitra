@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import heroImg from "@/assets/hero.jpg";
 import { PostGrid } from "@/components/PostGrid";
@@ -17,8 +17,8 @@ import { BookOpen, ArrowRight, Play, ShoppingCart, Loader2, PenLine } from "luci
 import { BrandCtaButton } from "@/components/BrandCtaButton";
 import { fetchPublishedBooks } from "@/lib/books";
 import { fetchPublishedVideos } from "@/lib/videos";
-import { fetchPostCounts } from "@/lib/posts";
 import { useAuthSession } from "@/hooks/useAuth";
+import { useNotificationGate } from "@/hooks/useNotificationGate";
 import { checkOwnership } from "@/lib/books-purchases";
 import { getPdfReaderUrl, purchaseBookAction } from "@/lib/books-reader";
 import { addToCart } from "@/lib/cart";
@@ -35,6 +35,59 @@ import { callFn } from "@/lib/call-fn";
 const PdfViewer = lazy(() =>
   import("@/components/PdfViewer").then((m) => ({ default: m.PdfViewer })),
 );
+
+/* ─── Home section header — tinted icon chip + serif title + pill View-all ── */
+
+function HomeSectionHeader({
+  icon,
+  title,
+  viewAllTo,
+  viewAllLabel,
+  accent = "saffron",
+}: {
+  icon: ReactNode;
+  title: string;
+  viewAllTo: string;
+  viewAllLabel: string;
+  /** Which brand-tint the icon chip wears: saffron (primary) | gold | indigo. */
+  accent?: "saffron" | "gold" | "indigo";
+}) {
+  const chipTints: Record<typeof accent, string> = {
+    saffron: "bg-[var(--color-saffron)]/10 text-[var(--color-saffron)] ring-[var(--color-saffron)]/20",
+    gold: "bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-amber-500/20",
+    indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-indigo-500/20",
+  };
+  const hairlineTints: Record<typeof accent, string> = {
+    saffron: "from-[var(--color-saffron)] to-[var(--color-saffron)]/15",
+    gold: "from-amber-500 to-amber-500/15",
+    indigo: "from-indigo-500 to-indigo-500/15",
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center gap-3 min-w-0">
+        <span
+          className={`w-10 h-10 shrink-0 rounded-xl ring-1 flex items-center justify-center ${chipTints[accent]}`}
+        >
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <h2 className="font-serif text-xl md:text-2xl leading-tight">{title}</h2>
+          <span
+            className={`mt-1.5 block h-0.5 w-12 rounded-full bg-gradient-to-r ${hairlineTints[accent]}`}
+          />
+        </div>
+      </div>
+      <Link
+        to={viewAllTo}
+        className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-[var(--color-saffron)]/40 hover:shadow-sm transition-all duration-300 active:scale-95"
+      >
+        {viewAllLabel}
+        <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5" />
+      </Link>
+    </div>
+  );
+}
 
 
 export const Route = createFileRoute("/")({
@@ -84,6 +137,7 @@ function Home() {
   const hero = settings.hero;
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
+  const { canNotify } = useNotificationGate();
   const [active, setActive] = useState<PostCategory | "All">("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -206,9 +260,10 @@ function Home() {
         return;
       }
       if (result.alreadyOwned) {
-        toast.info(lang === "bn" ? "আপনি ইতিমধ্যে এই বইটির মালিক।" : "You already own this book.");
+        // "Orders & purchases" preference off → suppress the order toast.
+        if (canNotify("orders")) toast.info(lang === "bn" ? "আপনি ইতিমধ্যে এই বইটির মালিক।" : "You already own this book.");
       } else {
-        toast.success(lang === "bn" ? "বইটি কেনা হয়েছে! আপনি এখন এটি পড়তে পারেন।" : "Book purchased! You can now read it.");
+        if (canNotify("orders")) toast.success(lang === "bn" ? "বইটি কেনা হয়েছে! আপনি এখন এটি পড়তে পারেন।" : "Book purchased! You can now read it.");
       }
       queryClient.invalidateQueries({ queryKey: ["book-owned", purchaseBook.id] });
       // Mark owned instantly — the card's Lock → Eye flips without a round-trip.
@@ -220,7 +275,7 @@ function Home() {
       setPurchaseLoading(false);
       toast.error(err instanceof Error ? err.message : lang === "bn" ? "ক্রয় ব্যর্থ হয়েছে।" : "Purchase failed.");
     }
-  }, [purchaseBook, user, doPurchase, queryClient, openPdfReader]);
+  }, [purchaseBook, user, doPurchase, queryClient, openPdfReader, canNotify]);
 
   const cartMutation = useMutation({
     mutationFn: (payload: { bookId: string; book: MockCartBookSnapshot }) =>
@@ -249,12 +304,6 @@ function Home() {
     staleTime: 300_000,
   });
 
-  const { data: postCounts } = useQuery({
-    queryKey: ["post-counts"],
-    queryFn: () => fetchPostCounts(),
-    staleTime: 300_000,
-  });
-
   const featuredBooks = booksData?.data ?? [];
   const homeVideos = videosData?.data ?? [];
 
@@ -279,6 +328,9 @@ function Home() {
   const heroTitle = pickLocalized(hero.title_en, hero.title_bn, lang);
   const heroDesc = pickLocalized(hero.desc_en, hero.desc_bn, lang);
   const heroEyebrow = pickLocalized(hero.eyebrow_en, hero.eyebrow_bn, lang);
+  // Bilingual CTA label (Bangla mode shows "পড়া শুরু করুন" instead of the
+  // English "Begin reading") — desktop and mobile both render this link.
+  const heroCtaLabel = pickLocalized(hero.cta_label, hero.cta_label_bn, lang, hero.cta_label);
   const isExternal = /^https?:\/\//i.test(hero.cta_url);
 
   return (
@@ -306,15 +358,15 @@ function Home() {
                 {heroDesc}
               </p>
             </Reveal>
-            {hero.cta_label && hero.cta_url && (
+            {(hero.cta_label || hero.cta_label_bn) && hero.cta_url && (
               <Reveal delay={0.45}>
                 {isExternal ? (
                   <a href={hero.cta_url} className="mt-10 inline-block border-b border-foreground/50 dark:border-white/50 dark:text-white pb-1 text-sm tracking-wide hover:border-foreground dark:hover:border-white transition-all duration-300">
-                    {hero.cta_label} →
+                    {heroCtaLabel} →
                   </a>
                 ) : (
                   <Link to={hero.cta_url} className="mt-10 inline-block border-b border-foreground/50 dark:border-white/50 dark:text-white pb-1 text-sm tracking-wide hover:border-foreground dark:hover:border-white transition-all duration-300">
-                    {hero.cta_label} →
+                    {heroCtaLabel} →
                   </Link>
                 )}
               </Reveal>
@@ -348,27 +400,28 @@ function Home() {
       {/* Recent Reflections */}
       <section className="mx-auto max-w-6xl px-6 py-16 border-t border-border/40">
         <Reveal delay={0.1}>
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
-            <div className="flex items-center gap-2">
-              <PenLine className="h-5 w-5 text-muted-foreground/60" />
-              <h2 className="font-serif text-xl md:text-2xl">{t("recent_reflections")}</h2>
-            </div>
+          <div className="mb-10 space-y-5">
+            <HomeSectionHeader
+              icon={<PenLine className="h-5 w-5" />}
+              title={t("recent_reflections")}
+              viewAllTo="/reflections"
+              viewAllLabel={lang === "bn" ? "সব প্রতিফলন" : "All reflections"}
+              accent="saffron"
+            />
             {/* Category pills — same visual language as the Reflections hub */}
             <div className="flex flex-wrap gap-2">
               {filters.map((f) => (
                 <button
                   key={f.value}
                   onClick={() => setActive(f.value)}
-                  className={`relative px-4 py-2 text-xs font-medium uppercase tracking-[0.1em] rounded-full transition-all duration-300 ${
+                  aria-pressed={active === f.value}
+                  className={`px-3 py-2 text-xs font-medium uppercase tracking-[0.08em] rounded-full border transition-all duration-300 ${
                     active === f.value
-                      ? "bg-foreground text-background shadow-md"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                      ? "bg-foreground text-background border-transparent shadow-sm"
+                      : "border-border/40 text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:border-foreground/20"
                   }`}
                 >
                   {f.label}
-                  {f.value !== "All" && postCounts?.[f.value] !== undefined && (
-                    <span className="ml-1.5 opacity-60">({postCounts[f.value]})</span>
-                  )}
                 </button>
               ))}
             </div>
@@ -385,14 +438,14 @@ function Home() {
         <Reveal delay={0.15}>
           <section className="py-16 border-t border-border/40 bg-secondary/10 dark:bg-secondary/20">
             <div className="mx-auto max-w-6xl px-6">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-muted-foreground/60" />
-                  <h2 className="font-serif text-xl md:text-2xl">{lang === "bn" ? "বৈশিষ্ট্যযুক্ত বই" : "Featured Books"}</h2>
-                </div>
-                <Link to="/books" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-300">
-                  {lang === "bn" ? "সব দেখুন" : "View all"} <ArrowRight className="h-3 w-3" />
-                </Link>
+              <div className="mb-8">
+                <HomeSectionHeader
+                  icon={<BookOpen className="h-5 w-5" />}
+                  title={lang === "bn" ? "বৈশিষ্ট্যযুক্ত বই" : "Featured Books"}
+                  viewAllTo="/books"
+                  viewAllLabel={lang === "bn" ? "সব বই" : "All books"}
+                  accent="gold"
+                />
               </div>
               <div className="book-grid">
                 {featuredBooks.map((book) => (
@@ -418,14 +471,14 @@ function Home() {
       {homeVideos.length > 0 && (
         <Reveal delay={0.2}>
           <section className="mx-auto max-w-6xl px-6 py-16 border-t border-border/40">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-2">
-                <Play className="h-5 w-5 text-muted-foreground/60" />
-                <h2 className="font-serif text-xl md:text-2xl">{lang === "bn" ? "ভিডিও" : "Videos"}</h2>
-              </div>
-              <Link to="/videos" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                {lang === "bn" ? "সব দেখুন" : "View all"} <ArrowRight className="h-3 w-3" />
-              </Link>
+            <div className="mb-8">
+              <HomeSectionHeader
+                icon={<Play className="h-5 w-5" />}
+                title={lang === "bn" ? "ভিডিও" : "Videos"}
+                viewAllTo="/videos"
+                viewAllLabel={lang === "bn" ? "সব ভিডিও" : "All videos"}
+                accent="indigo"
+              />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-10">
               {homeVideos.map((video) => (

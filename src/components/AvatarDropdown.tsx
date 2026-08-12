@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ExternalLink, LogOut } from "lucide-react";
 import { useLang } from "@/lib/i18n";
-import { getProfileMenuItems } from "@/lib/profile-menu";
+import { getProfileMenuItems, PROFILE_MENU_GROUP_LABELS } from "@/lib/profile-menu";
 
 interface AvatarDropdownProps {
   avatarUrl?: string | null;
@@ -68,6 +68,9 @@ export function AvatarDropdown({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { lang } = useLang();
   const bn = lang === "bn";
+  const menuItems = getProfileMenuItems().filter(
+    (item) => !item.adminOnly || isAdmin,
+  );
 
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
@@ -89,33 +92,45 @@ export function AvatarDropdown({
       <DropdownMenuContent align="end" sideOffset={8} className="w-48">
         {/* Nav destinations — order comes from PROFILE_MENU_ITEMS.sort_order,
             so a future admin backend can customize item positions. */}
-        {getProfileMenuItems()
-          .filter((item) => !item.adminOnly || isAdmin)
-          .map((item) => {
+        {menuItems.map((item, i) => {
             const Icon = item.icon;
-            if (item.external) {
-              return (
-                <DropdownMenuItem asChild key={item.id}>
-                  <a
-                    href={strapiUrl || "http://localhost:1337"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <Icon className="h-4 w-4" />
-                    {bn ? item.label_bn : item.label_en}
-                    <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground/40" />
-                  </a>
-                </DropdownMenuItem>
-              );
-            }
+            const prev = i > 0 ? menuItems[i - 1] : undefined;
+            // Separator at every boundary: between groups, into/out of a
+            // group, and between consecutive standalone items.
+            const needSeparator =
+              !!prev && (prev.group !== item.group || (!prev.group && !item.group));
+            const showHeader =
+              !!item.group && (!prev || prev.group !== item.group);
             return (
-              <DropdownMenuItem asChild key={item.id}>
-                <Link to={item.to} className="flex items-center gap-2 cursor-pointer">
-                  <Icon className="h-4 w-4" />
-                  {bn ? item.label_bn : item.label_en}
-                </Link>
-              </DropdownMenuItem>
+              <Fragment key={item.id}>
+                {i > 0 && needSeparator && <DropdownMenuSeparator />}
+                {item.group && showHeader && (
+                  <p className="px-3 pt-2 pb-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/60">
+                    {bn
+                      ? PROFILE_MENU_GROUP_LABELS[item.group].labelBn
+                      : PROFILE_MENU_GROUP_LABELS[item.group].label}
+                  </p>
+                )}
+                <DropdownMenuItem asChild>
+                  {item.external ? (
+                    <a
+                      href={item.to || strapiUrl || "http://localhost:1337"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Icon className="h-4 w-4" />
+                      {bn ? item.label_bn : item.label_en}
+                      <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground/40" />
+                    </a>
+                  ) : (
+                    <Link to={item.to} className="flex items-center gap-2 cursor-pointer">
+                      <Icon className="h-4 w-4" />
+                      {bn ? item.label_bn : item.label_en}
+                    </Link>
+                  )}
+                </DropdownMenuItem>
+              </Fragment>
             );
           })}
         <DropdownMenuSeparator />

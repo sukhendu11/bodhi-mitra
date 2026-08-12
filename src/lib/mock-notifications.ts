@@ -11,6 +11,7 @@
  * Writes dispatch a custom event so the header bell re-reads reactively.
  */
 import { DEMO_ACCOUNTS } from "@/lib/mock-session";
+import type { NotificationTopic } from "@/lib/user-preferences";
 
 const STORE_KEY = "sabbe-satta-mock-notifications";
 /** Custom window event fired on notification writes (same-tab reactivity). */
@@ -21,7 +22,33 @@ export type MockNotificationType =
   | "comment_reply"
   | "contact_message"
   | "new_purchase"
+  | "new_content"
+  | "recommendation"
   | "welcome";
+
+/**
+ * Map a notification type to the /settings notification topic it belongs to
+ * (null = account/contact rows that are always visible). The header bell uses
+ * this to filter its list + badge by the user's enabled topics, so toggling
+ * "content" / "recommendations" / "orders" / "comments" off visibly removes
+ * those notifications.
+ */
+export function notificationTypeToTopic(type: MockNotificationType): NotificationTopic | null {
+  switch (type) {
+    case "new_comment":
+    case "comment_reply":
+      return "comments";
+    case "new_purchase":
+      return "orders";
+    case "new_content":
+      return "content";
+    case "recommendation":
+      return "recommendations";
+    case "contact_message":
+    case "welcome":
+      return null;
+  }
+}
 
 export interface MockNotification {
   id: string;
@@ -65,15 +92,26 @@ function generateId() {
   return `notif-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/* ─── Seed welcome notifications (ROADMAP §2.3: demo user has 2) ──── */
+/* ─── Seed demo notifications (ROADMAP §2.3: demo user has a few) ── */
+/*
+ * Idempotent per (user, type): each row below seeds only if the demo account
+ * doesn't already have one of that type — so existing localStorage stores
+ * pick up new seed types on the next visit without duplicating old ones.
+ * The seeded types intentionally cover the /settings notification topics
+ * (content, recommendations, orders) so the bell visibly demonstrates the
+ * preference toggles in mock mode.
+ */
 
 function seedOnce(): Promise<void> {
-  // Idempotent — seeds only when the demo accounts have no welcome rows.
+  // Re-seed when the demo accounts have no rows at all (fresh/cleared store,
+  // e.g. between test cases). doSeed's per-(user, type) guards make this
+  // idempotent — sequential microtasks read the fresh store, so a re-run
+  // after a successful seed is a no-op rather than a duplicate.
   const store = readStore();
-  const hasWelcome = store.notifications.some(
-    (n) => n.type === "welcome" && (n.userId === DEMO_ACCOUNTS.user.id || n.userId === DEMO_ACCOUNTS.admin.id),
+  const hasAnyDemoRow = store.notifications.some(
+    (n) => n.userId === DEMO_ACCOUNTS.user.id || n.userId === DEMO_ACCOUNTS.admin.id,
   );
-  if (!hasWelcome) seedPromise = null;
+  if (!hasAnyDemoRow) seedPromise = null;
   if (!seedPromise) {
     seedPromise = Promise.resolve().then(doSeed);
   }
@@ -82,42 +120,72 @@ function seedOnce(): Promise<void> {
 
 async function doSeed() {
   const store = readStore();
-  const hasWelcome = store.notifications.some(
-    (n) => n.type === "welcome" && (n.userId === DEMO_ACCOUNTS.user.id || n.userId === DEMO_ACCOUNTS.admin.id),
-  );
-  if (hasWelcome) return;
-
   const now = new Date().toISOString();
-  const welcomeUser: MockNotification = {
-    id: generateId(),
-    userId: DEMO_ACCOUNTS.user.id,
-    type: "welcome",
-    message: "Welcome to Sabbe Satta, Demo Reader. Enjoy your library!",
-    link: "/books",
-    read: false,
-    createdAt: now,
-  };
-  const welcomeAdmin: MockNotification = {
-    id: generateId(),
-    userId: DEMO_ACCOUNTS.admin.id,
-    type: "welcome",
-    message: "Welcome to Sabbe Satta, Demo Admin. You can manage content from the admin panel.",
-    link: "/admin",
-    read: false,
-    createdAt: now,
-  };
-  // Match the seeded purchases from mock-commerce: the demo user owns books.
-  const purchaseNudge: MockNotification = {
-    id: generateId(),
-    userId: DEMO_ACCOUNTS.user.id,
-    type: "new_purchase",
-    message: "Your purchased books are ready to read in your library.",
-    link: "/purchases",
-    read: false,
-    createdAt: now,
-  };
+  const has = (userId: string, type: MockNotificationType) =>
+    store.notifications.some((n) => n.userId === userId && n.type === type);
+  const pending: MockNotification[] = [];
 
-  store.notifications = [...store.notifications, welcomeUser, welcomeAdmin, purchaseNudge];
+  if (!has(DEMO_ACCOUNTS.user.id, "welcome")) {
+    pending.push({
+      id: generateId(),
+      userId: DEMO_ACCOUNTS.user.id,
+      type: "welcome",
+      message: "Welcome to Sabbe Satta, Demo Reader. Enjoy your library!",
+      link: "/books",
+      read: false,
+      createdAt: now,
+    });
+  }
+  if (!has(DEMO_ACCOUNTS.admin.id, "welcome")) {
+    pending.push({
+      id: generateId(),
+      userId: DEMO_ACCOUNTS.admin.id,
+      type: "welcome",
+      message: "Welcome to Sabbe Satta, Demo Admin. You can manage content from the admin panel.",
+      link: "/admin",
+      read: false,
+      createdAt: now,
+    });
+  }
+  // Matches the seeded purchases from mock-commerce: the demo user owns books.
+  if (!has(DEMO_ACCOUNTS.user.id, "new_purchase")) {
+    pending.push({
+      id: generateId(),
+      userId: DEMO_ACCOUNTS.user.id,
+      type: "new_purchase",
+      message: "Your purchased books are ready to read in your library.",
+      link: "/purchases",
+      read: false,
+      createdAt: now,
+    });
+  }
+  // New-content + recommendation rows demo the "content" / "recommendations"
+  // toggles in the header bell (real events arrive with the CMS + backend).
+  if (!has(DEMO_ACCOUNTS.user.id, "new_content")) {
+    pending.push({
+      id: generateId(),
+      userId: DEMO_ACCOUNTS.user.id,
+      type: "new_content",
+      message: "New reflection: The Art of Deep Listening",
+      link: "/posts/the-art-of-deep-listening",
+      read: false,
+      createdAt: now,
+    });
+  }
+  if (!has(DEMO_ACCOUNTS.user.id, "recommendation")) {
+    pending.push({
+      id: generateId(),
+      userId: DEMO_ACCOUNTS.user.id,
+      type: "recommendation",
+      message: "A book matched to your taste: The Art of Sitting Still",
+      link: "/books/art-of-sitting-still",
+      read: false,
+      createdAt: now,
+    });
+  }
+
+  if (pending.length === 0) return;
+  store.notifications = [...store.notifications, ...pending];
   writeStore(store);
 }
 

@@ -7,9 +7,10 @@ import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 import { fetchPageBySlug } from "@/lib/pages";
 import { fetchSiteSettings, useSiteSettings } from "@/lib/siteSettings";
 import { fetchCategories } from "@/lib/taxonomy";
-import { useLang, pickLocalized, formatMoney, localizeCartResult } from "@/lib/i18n";
+import { useLang, pickLocalized, formatMoney, localizeCartResult, toBanglaDigits } from "@/lib/i18n";
 import { localizeAuthorName } from "@/lib/taxonomy";
 import { useAuthSession } from "@/hooks/useAuth";
+import { useNotificationGate } from "@/hooks/useNotificationGate";
 import { checkOwnership } from "@/lib/books-purchases";
 import { getPdfReaderUrl, purchaseBookAction } from "@/lib/books-reader";
 import { addToCart } from "@/lib/cart";
@@ -96,6 +97,7 @@ function BooksPage() {
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
   const config = useSiteSettings();
+  const { canNotify } = useNotificationGate();
   const [search, setSearch] = useState<string>("");
   const [sort, setSort] = useState<BookSortOption>("newest");
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -355,9 +357,10 @@ function BooksPage() {
         return;
       }
       if (result.alreadyOwned) {
-        toast.info(lang === "bn" ? "আপনি ইতিমধ্যে এই বইটির মালিক।" : "You already own this book.");
+        // "Orders & purchases" preference off → suppress the order toast.
+        if (canNotify("orders")) toast.info(lang === "bn" ? "আপনি ইতিমধ্যে এই বইটির মালিক।" : "You already own this book.");
       } else {
-        toast.success(lang === "bn" ? "বইটি কেনা হয়েছে! এখন আপনি এটি পড়তে পারেন।" : "Book purchased! You can now read it.");
+        if (canNotify("orders")) toast.success(lang === "bn" ? "বইটি কেনা হয়েছে! এখন আপনি এটি পড়তে পারেন।" : "Book purchased! You can now read it.");
       }
       queryClient.invalidateQueries({ queryKey: ["book-owned", purchaseBook.id] });
       // Mark owned instantly — the grid's Lock → Eye flips without a round-trip.
@@ -369,7 +372,7 @@ function BooksPage() {
       setPurchaseLoading(false);
       toast.error(err instanceof Error ? err.message : (lang === "bn" ? "কেনা সফল হয়নি।" : "Purchase failed."));
     }
-  }, [purchaseBook, user, doPurchase, queryClient, openPdfReader, lang]);
+  }, [purchaseBook, user, doPurchase, queryClient, openPdfReader, lang, canNotify]);
 
   /* ── Pagination controls ───────────────────────────────────── */
   const scrollToTop = useCallback(() => {
@@ -597,7 +600,7 @@ function BooksPage() {
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
                       }`}
                     >
-                      {p}
+                      {lang === "bn" ? toBanglaDigits(p) : p}
                     </button>
                   ),
                 )}

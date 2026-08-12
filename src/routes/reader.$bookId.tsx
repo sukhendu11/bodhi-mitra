@@ -4,10 +4,11 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { fetchBookById, type Book } from "@/lib/books";
 import { useAuthSession } from "@/hooks/useAuth";
-import { useLang, pickLocalized } from "@/lib/i18n";
+import { useLang, pickLocalized, toBanglaDigits } from "@/lib/i18n";
 import { useSiteSettings } from "@/lib/siteSettings";
 import { useFeatureFlag } from "@/hooks/useFeatureFlags";
 import { useTheme } from "@/hooks/useTheme";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import {
   getPdfReaderUrl,
   downloadBookPdf,
@@ -276,6 +277,11 @@ function ReaderPage() {
     staleTime: 15_000,
   });
 
+  // Saved "Save reading progress" preference — when off, page turns still
+  // update the UI but nothing is persisted (no resume, no reading history).
+  const { data: userPrefs } = useUserPreferences();
+  const saveProgress = userPrefs?.reading?.save_progress !== false;
+
   // Track page changes and save progress
   const progressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingProgressRef = useRef<{ page: number; total: number } | null>(null);
@@ -288,6 +294,7 @@ function ReaderPage() {
     const pending = pendingProgressRef.current;
     if (!pending || !user || !book) return;
     pendingProgressRef.current = null;
+    if (!saveProgress) return;
     upsertProgress({
       userId: user.id,
       bookId: book.id,
@@ -309,7 +316,7 @@ function ReaderPage() {
     }).catch(() => {
       /* silent */
     });
-  }, [user, book, queryClient]);
+  }, [user, book, queryClient, saveProgress]);
 
   const flushRef = useRef(flushProgress);
   flushRef.current = flushProgress;
@@ -567,7 +574,7 @@ function ReaderPage() {
             <span
               className={`text-xs tabular-nums mr-2 ${THEME_MUTED[readerTheme]}`}
             >
-              {Math.round(progress.progress_pct)}%
+              {lang === "bn" ? toBanglaDigits(Math.round(progress.progress_pct)) : Math.round(progress.progress_pct)}%
             </span>
           )}
 
@@ -733,7 +740,7 @@ function ReaderPage() {
                           }`}
                         >
                           <span className="text-xs tabular-nums opacity-60 shrink-0">
-                            {chapterPage}
+                            {lang === "bn" ? toBanglaDigits(chapterPage) : chapterPage}
                           </span>
                           <span className="truncate">{chapter}</span>
                         </button>
@@ -771,8 +778,12 @@ function ReaderPage() {
                       <Bookmark className="h-4 w-4" />
                     )}
                     {isCurrentPageBookmarked
-                      ? `Page ${currentPage} bookmarked`
-                      : `Bookmark page ${currentPage}`}
+                      ? lang === "bn"
+                        ? `পৃষ্ঠা ${toBanglaDigits(currentPage)} বুকমার্ক করা হয়েছে`
+                        : `Page ${currentPage} bookmarked`
+                      : lang === "bn"
+                        ? `পৃষ্ঠা ${toBanglaDigits(currentPage)} বুকমার্ক করুন`
+                        : `Bookmark page ${currentPage}`}
                   </button>
 
                   {/* List of bookmarks */}
@@ -787,7 +798,7 @@ function ReaderPage() {
                           key={b.id}
                           className={`flex items-center justify-between px-2 py-1.5 rounded-md text-sm ${THEME_HOVER_SURFACE[readerTheme]}`}
                         >
-                          <span className="text-xs font-medium">{lang === "bn" ? `পৃষ্ঠা ${b.page_number}` : `Page ${b.page_number}`}</span>
+                          <span className="text-xs font-medium">{lang === "bn" ? `পৃষ্ঠা ${toBanglaDigits(b.page_number)}` : `Page ${b.page_number}`}</span>
                           <button
                             onClick={() => removeBkmkMutation.mutate(b.id)}
                             className={`p-0.5 ${THEME_MUTED[readerTheme]} hover:text-destructive transition-colors`}
@@ -807,7 +818,7 @@ function ReaderPage() {
                   {/* Add note form */}
                   <div className="space-y-2">
                     <p className={`text-xs uppercase tracking-[0.05em] ${THEME_MUTED[readerTheme]} font-medium`}>
-                      {lang === "bn" ? `পৃষ্ঠা ${currentPage}-এ নোট` : `Note on page ${currentPage}`}
+                      {lang === "bn" ? `পৃষ্ঠা ${toBanglaDigits(currentPage)}-এ নোট` : `Note on page ${currentPage}`}
                     </p>
                     <textarea
                       value={noteText}
@@ -842,7 +853,7 @@ function ReaderPage() {
                           className={`p-2 rounded-lg text-xs leading-relaxed ${THEME_ITEM_SURFACE[readerTheme]}`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium opacity-60">{lang === "bn" ? `পৃষ্ঠা ${n.page_number}` : `Page ${n.page_number}`}</span>
+                            <span className="font-medium opacity-60">{lang === "bn" ? `পৃষ্ঠা ${toBanglaDigits(n.page_number)}` : `Page ${n.page_number}`}</span>
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => {
@@ -940,7 +951,7 @@ function ReaderPage() {
                     ) : (
                       <>
                         <p className={`text-xs ${THEME_MUTED[readerTheme]}`}>
-                          {searchResults.length}{" "}
+                          {lang === "bn" ? toBanglaDigits(searchResults.length) : searchResults.length}{" "}
                           {searchResults.length === 1 ? "result" : "results"}
                         </p>
                         <div className="space-y-2">
@@ -953,7 +964,7 @@ function ReaderPage() {
                               <span
                                 className={`text-[10px] uppercase tracking-[0.08em] font-medium ${THEME_MUTED[readerTheme]}`}
                               >
-                                Page {r.page}
+                                {lang === "bn" ? `পৃষ্ঠা ${toBanglaDigits(r.page)}` : `Page ${r.page}`}
                               </span>
                               <p
                                 className={`text-xs mt-1 leading-relaxed ${THEME_HOVER_TEXT[readerTheme]}`}

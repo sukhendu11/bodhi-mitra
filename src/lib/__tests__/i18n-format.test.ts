@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toBanglaDigits, formatMoney, localizeCartResult } from "@/lib/i18n";
+import { toBanglaDigits, formatMoney, formatDate, localizeCartResult } from "@/lib/i18n";
 import { mockAddToCart, mockRemoveFromCart, mockClearCart, mockGetCart } from "@/lib/mock-cart";
 import { mockFetchPublishedBooks } from "@/lib/mock-data";
 
@@ -13,6 +13,27 @@ describe("toBanglaDigits", () => {
   it("keeps decimal separators and other characters intact", () => {
     expect(toBanglaDigits("20.05")).toBe("২০.০৫");
     expect(toBanglaDigits("3 books")).toBe("৩ books");
+  });
+});
+
+describe("formatDate", () => {
+  it("renders English dates with Latin digits", () => {
+    expect(formatDate("2026-08-07T12:00:00Z", "en")).toBe("August 7, 2026");
+  });
+
+  it("renders Bangla dates with Bengali numerals (bn-BD + digit pass)", () => {
+    const bn = formatDate("2026-08-07T12:00:00Z", "bn");
+    // Month name is Bangla and every numeral is Bengali — never Latin digits.
+    expect(bn).not.toMatch(/[0-9]/);
+    expect(bn).toMatch(/৭/); // day
+    expect(bn).toMatch(/২০২৬/); // year
+  });
+
+  it("honors custom options and returns empty for invalid dates", () => {
+    expect(
+      formatDate("2026-08-07T12:00:00Z", "en", { month: "short", day: "numeric", year: "numeric" }),
+    ).toBe("Aug 7, 2026");
+    expect(formatDate("not-a-date", "en")).toBe("");
   });
 });
 

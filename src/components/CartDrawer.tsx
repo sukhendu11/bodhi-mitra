@@ -300,7 +300,7 @@ export function CartDrawer({ children, cartCount = 0 }: CartDrawerProps) {
                       disabled={removeMutation.isPending}
                       aria-label={lang === "bn" ? `কার্ট থেকে সরান: ${title}` : `Remove ${title} from cart`}
                       title={lang === "bn" ? "সরান" : "Remove"}
-                      className="p-1.5 rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all duration-200 focus:opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100"
+                      className="p-2 rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all duration-200 focus:opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

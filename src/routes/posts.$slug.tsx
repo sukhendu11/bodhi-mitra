@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useRef } from "react";
 import { fetchPostBySlug, fetchPosts } from "@/lib/posts";
-import { useLang, pickLocalized } from "@/lib/i18n";
+import { useLang, pickLocalized, toBanglaDigits } from "@/lib/i18n";
 import { localizeCategoryName } from "@/lib/taxonomy";
 import { LetterAvatar } from "@/components/LetterAvatar";
 import { fetchSiteSettings, useSiteSettings } from "@/lib/siteSettings";
@@ -15,11 +15,8 @@ import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 import { generateArticleSchema, generateBreadcrumbSchema } from "@/lib/structured-data";
 import { SocialShare } from "@/components/SocialShare";
 import { TypographyControls, useTypography, mapReadingPrefs } from "@/components/TypographyControls";
-import { useAuthSession } from "@/hooks/useAuth";
-import { isMockMode } from "@/lib/data-source";
-import { mockGetProfile } from "@/lib/mock-session";
-import { supabase } from "@/integrations/supabase/client";
-import type { UserPreferences } from "@/lib/user-preferences";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { READING_WIDTH_MAX } from "@/lib/user-preferences";
 import { ArticleSkeleton } from "@/components/ArticleSkeleton";
 import { Reveal } from "@/components/Reveal";
 import { TableOfContents } from "@/components/TableOfContents";
@@ -98,26 +95,7 @@ function PostPage() {
 
   // Reading preferences saved on /settings (profile) feed the article
   // typography, so "Reading font size / Line spacing" actually take effect.
-  const { user } = useAuthSession();
-  const { data: userPrefs } = useQuery({
-    queryKey: ["user-preferences", user?.id],
-    queryFn: async (): Promise<UserPreferences | null> => {
-      if (!user) return null;
-      if (isMockMode()) {
-        const p = mockGetProfile(user.id);
-        return (p?.preferences as UserPreferences | undefined) ?? null;
-      }
-      const db = supabase;
-      const { data } = await db
-        .from("profiles")
-        .select("preferences")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      return (data?.preferences as UserPreferences | null) ?? null;
-    },
-    enabled: !!user,
-    staleTime: 30_000,
-  });
+  const { data: userPrefs } = useUserPreferences();
   // Memoize the seed — mapReadingPrefs returns a fresh object each call, and
   // an unstable identity would re-trigger useTypography's seed effect every render.
   const readingSeed = useMemo(
@@ -125,6 +103,8 @@ function PostPage() {
     [userPrefs],
   );
   const { settings: typoSettings, setSettings: setTypoSettings, typoStyle } = useTypography(readingSeed);
+  // Reading measure (narrow / normal / wide) — caps the article column width.
+  const readingMaxWidth = userPrefs ? READING_WIDTH_MAX[userPrefs.reading.width] : undefined;
 
   if (isLoading) return <ArticleSkeleton />;
   if (isError) throw notFound();
@@ -198,7 +178,7 @@ function PostPage() {
               </Link>
               <span className="w-1 h-1 rounded-full bg-border" />
               <span className="text-xs text-muted-foreground">
-                {readingTime} {t("min_read")}
+                {lang === "bn" ? toBanglaDigits(readingTime) : readingTime} {t("min_read")}
               </span>
             </div>
 
@@ -256,7 +236,7 @@ function PostPage() {
 
             {/* Content */}
             <Reveal delay={0.1}>
-              <div style={typoStyle}>
+              <div style={{ ...typoStyle, ...(readingMaxWidth ? { maxWidth: readingMaxWidth } : {}) }}>
                 {isHtml ? (
                   <SanitizedHtml html={contentWithIds} />
                 ) : (
@@ -308,10 +288,10 @@ function PostPage() {
                     <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground mb-1">
                       {lang === "bn" ? "লেখক" : "Written by"}
                     </p>
-                    <p className="font-serif text-lg font-medium mb-2">{post.author_name}</p>
-                    <Link to="/profile" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                      {lang === "bn" ? "প্রোফাইল দেখুন" : "View profile"} →
-                    </Link>
+                    <p className="font-serif text-lg font-medium">{post.author_name}</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">
+                      {lang === "bn" ? "সাব্বে সত্তা প্রতিফলনের লেখক" : "Author of this reflection"}
+                    </p>
                   </div>
                 </div>
               </div>

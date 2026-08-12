@@ -1,14 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "@tanstack/react-router";
 import { Bell, CheckCheck, Inbox } from "lucide-react";
-import {
-  mockGetNotifications,
-  mockGetUnreadCount,
-  mockMarkAllRead,
-  mockMarkRead,
-  MOCK_NOTIFICATIONS_EVENT,
-  type MockNotification,
-} from "@/lib/mock-notifications";
+import { useNotifications } from "@/hooks/useNotifications";
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -23,35 +16,22 @@ function timeAgo(iso: string): string {
 
 export function NotificationBell({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<MockNotification[]>([]);
-  const [unread, setUnread] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
-
-  const refresh = useCallback(async () => {
-    const [list, count] = await Promise.all([
-      mockGetNotifications(userId),
-      mockGetUnreadCount(userId),
-    ]);
-    setItems(list);
-    setUnread(count);
-  }, [userId]);
-
-  useEffect(() => {
-    refresh();
-    window.addEventListener(MOCK_NOTIFICATIONS_EVENT, refresh);
-    return () => window.removeEventListener(MOCK_NOTIFICATIONS_EVENT, refresh);
-  }, [refresh]);
+  // Shared notifications state — store, event subscription, topic gate, and
+  // mark-read actions all live in the useNotifications hook (also used by
+  // the profile Notifications card, so both surfaces stay in sync).
+  const { unread, visible, markRead, markAllRead } = useNotifications(userId);
 
   const handleOpen = useCallback(
     (next: boolean) => {
       // Mark unread items as read when the panel CLOSES — keeps the unread
       // dots visible while the user scans the panel (then clears the badge).
       if (!next && unread > 0) {
-        mockMarkAllRead(userId).then(refresh);
+        markAllRead();
       }
       setOpen(next);
     },
-    [unread, refresh, userId],
+    [unread, markAllRead],
   );
 
   // Close on outside click / Escape while open. Uses a document-level
@@ -77,9 +57,11 @@ export function NotificationBell({ userId }: { userId: string }) {
   }, [open, handleOpen]);
 
   const handleItemClick = (id: string) => {
-    mockMarkRead(userId, id).then(refresh);
+    markRead(id);
     handleOpen(false);
   };
+
+  const visibleUnread = visible.filter((n) => !n.read).length;
 
   return (
     <div ref={rootRef} className="relative">
@@ -92,9 +74,9 @@ export function NotificationBell({ userId }: { userId: string }) {
       >
         <span className="relative block group-hover:scale-110 transition-transform duration-300">
           <Bell className="h-5 w-5" strokeWidth={1.8} />
-          {unread > 0 && (
+          {visibleUnread > 0 && (
             <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center px-1 ring-2 ring-background">
-              {unread > 9 ? "9+" : unread}
+              {visibleUnread > 9 ? "9+" : visibleUnread}
             </span>
           )}
         </span>
@@ -109,9 +91,9 @@ export function NotificationBell({ userId }: { userId: string }) {
             {/* Panel header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
               <p className="text-sm font-medium text-foreground">Notifications</p>
-              {unread > 0 && (
+              {visibleUnread > 0 && (
                 <button
-                  onClick={() => mockMarkAllRead(userId).then(refresh)}
+                  onClick={markAllRead}
                   className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
@@ -122,14 +104,14 @@ export function NotificationBell({ userId }: { userId: string }) {
 
             {/* List */}
             <div className="max-h-80 overflow-y-auto">
-              {items.length === 0 ? (
+              {visible.length === 0 ? (
                 <div className="px-4 py-10 text-center">
                   <Inbox className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
                   <p className="text-sm text-muted-foreground">No notifications yet.</p>
                 </div>
               ) : (
                 <ul className="divide-y divide-border/40">
-                  {items.slice(0, 8).map((n) => {
+                  {visible.slice(0, 8).map((n) => {
                     const body = (
                       <div
                         className={`flex gap-3 px-4 py-3 text-left transition-colors ${
@@ -170,7 +152,7 @@ export function NotificationBell({ userId }: { userId: string }) {
               )}
             </div>
 
-            {items.length > 8 && (
+            {visible.length > 8 && (
               <div className="px-4 py-2 border-t border-border/40 text-center">
                 <Link
                   to="/profile"

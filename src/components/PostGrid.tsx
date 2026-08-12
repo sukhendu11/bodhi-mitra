@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchPosts, type PostCategory } from "@/lib/posts";
 import { PostCard } from "./PostCard";
 import { PostCardSkeleton } from "./PostCardSkeleton";
-import { useLang } from "@/lib/i18n";
+import { useLang, toBanglaDigits } from "@/lib/i18n";
 
 const PAGE_SIZE = 9;
 
@@ -18,7 +18,7 @@ export function PostGrid({
   searchQuery?: string;
   pageSize?: number;
 }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export function PostGrid({
             ← {t("prev_page")}
           </button>
           <span className="text-muted-foreground text-xs">
-            {page} / {totalPages}
+            {lang === "bn" ? toBanglaDigits(page) : page} / {lang === "bn" ? toBanglaDigits(totalPages) : totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

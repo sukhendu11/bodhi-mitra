@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getYoutubeId, formatDuration, fetchYouTubeOEmbed } from "@/lib/videos";
-import { useLang, pickLocalized } from "@/lib/i18n";
+import { useLang, pickLocalized, toBanglaDigits, formatDate } from "@/lib/i18n";
 import { Play, Clock } from "lucide-react";
 import type { Video, YouTubeMetadata } from "@/lib/videos";
 
@@ -54,7 +54,7 @@ export function VideoCard({ video, onPlay }: VideoCardProps) {
     (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : "");
   const displayAuthor = ytMeta?.author_name || "";
 
-  const date = new Date(video.created_at).toLocaleDateString("en-US", {
+  const date = formatDate(video.created_at, lang, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -100,7 +100,7 @@ export function VideoCard({ video, onPlay }: VideoCardProps) {
         {video.duration ? (
           <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white text-xs font-medium px-1.5 py-0.5 rounded-md tracking-tight flex items-center gap-1 transition-all duration-300 group-hover:bg-saffron/90 group-hover:text-white">
             <Clock className="h-2.5 w-2.5" />
-            {formatDuration(video.duration)}
+            {lang === "bn" ? toBanglaDigits(formatDuration(video.duration)) : formatDuration(video.duration)}
           </div>
         ) : null}
 

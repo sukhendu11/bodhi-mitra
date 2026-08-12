@@ -17,7 +17,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useRef, useCallback } from "react";
 import { fetchPageBySlug } from "@/lib/pages";
 import { fetchCategories } from "@/lib/taxonomy";
-import { fetchPostCounts } from "@/lib/posts";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { PostGrid } from "@/components/PostGrid";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
@@ -53,12 +52,6 @@ function ReflectionsHub() {
   const { data: page, isLoading: pageLoading } = useQuery({
     queryKey: ["public-page", "blog"],
     queryFn: () => fetchPageBySlug("blog"),
-    staleTime: 60_000,
-  });
-
-  const { data: counts } = useQuery({
-    queryKey: ["post-counts"],
-    queryFn: () => fetchPostCounts(),
     staleTime: 60_000,
   });
 
@@ -157,7 +150,6 @@ function ReflectionsHub() {
             </button>
             {topCategories.map((cat) => {
               const isActive = activeCategory === cat.name_en;
-              const count = counts?.[cat.name_en as any] as number | undefined;
               const color = getCatColor(cat.slug, cat.color);
               return (
                 <button
@@ -169,7 +161,6 @@ function ReflectionsHub() {
                   style={isActive ? { backgroundColor: color } : undefined}
                 >
                   {pickLocalized(cat.name_en, cat.name_bn, lang, cat.name_en)}
-                  {count !== undefined && <span className="ml-1.5 opacity-60">({count})</span>}
                 </button>
               );
             })}

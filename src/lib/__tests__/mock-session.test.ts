@@ -9,6 +9,7 @@ import {
   mockDeleteProfile,
   mockGetProfile,
   mockSessionToSupabaseSession,
+  mockSetSessionAvatar,
   mockUpsertProfile,
   signInAsDemo,
   signInWithMock,
@@ -90,6 +91,33 @@ describe("mockSessionToSupabaseSession", () => {
 
   it("returns null for a null mock session", () => {
     expect(mockSessionToSupabaseSession(null)).toBeNull();
+  });
+});
+
+describe("mockSetSessionAvatar", () => {
+  it("updates the signed-in user's avatar and maps it into user_metadata", () => {
+    signInAsDemo("user");
+    mockSetSessionAvatar(DEMO_ACCOUNTS.user.id, "data:image/png;base64,abc");
+    const session = mockSessionToSupabaseSession(getMockSession());
+    const meta = session!.user.user_metadata as Record<string, unknown>;
+    expect(meta.avatar_url).toBe("data:image/png;base64,abc");
+  });
+
+  it("clears the avatar when passed null", () => {
+    signInAsDemo("user");
+    mockSetSessionAvatar(DEMO_ACCOUNTS.user.id, "data:image/png;base64,abc");
+    mockSetSessionAvatar(DEMO_ACCOUNTS.user.id, null);
+    const meta = mockSessionToSupabaseSession(getMockSession())!.user.user_metadata as Record<string, unknown>;
+    expect(meta.avatar_url).toBeUndefined();
+  });
+
+  it("is a no-op for a non-matching userId or when signed out", () => {
+    signInAsDemo("user");
+    mockSetSessionAvatar("someone-else", "data:image/png;base64,xyz");
+    const meta = mockSessionToSupabaseSession(getMockSession())!.user.user_metadata as Record<string, unknown>;
+    expect(meta.avatar_url).toBeUndefined();
+    signOutMock();
+    expect(() => mockSetSessionAvatar(DEMO_ACCOUNTS.user.id, "data:image/png;base64,zzz")).not.toThrow();
   });
 });
 

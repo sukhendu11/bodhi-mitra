@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useAuthSession } from "@/hooks/useAuth";
-import { useLang } from "@/lib/i18n";
+import { useLang, toBanglaDigits, formatDate } from "@/lib/i18n";
 import { useTheme } from "@/hooks/useTheme";
 import { seoHead } from "@/lib/seo";
 import { getSiteName } from "@/lib/siteSettings";
@@ -17,6 +17,7 @@ import {
 } from "@/lib/reading-stats";
 import { BackLink } from "@/components/BackLink";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
+import { StatCard, StatGrid } from "@/components/StatCard";
 import {
   ArrowLeft,
   CalendarRange,
@@ -87,6 +88,15 @@ function StatsPage() {
     const days = (stats?.days ?? []).slice(-CHART_DAYS);
     const axis = isDark ? "#a1a1aa" : "#71717a";
     const split = isDark ? "#27272a" : "#e4e4e7";
+    // Localized short day labels — `formatDate` renders en-US (matching the
+    // stored `d.label`, which is always en-US) and bn-BD with forced Bengali
+    // numerals for Bangla mode.
+    const axisLabels = days.map((d) =>
+      formatDate(`${d.date}T12:00:00`, lang, {
+        month: "short",
+        day: "numeric",
+      }),
+    );
     return {
       grid: { left: 40, right: 12, top: 28, bottom: 30 },
       tooltip: {
@@ -97,14 +107,17 @@ function StatsPage() {
         formatter: (params: any) => {
           const p = Array.isArray(params) ? params[0] : params;
           const day = days[p.dataIndex];
-          const time = day ? formatDuration(day.timeMs) : "0m";
+          const time = day ? formatDuration(day.timeMs, lang) : lang === "bn" ? "০ মিনিট" : "0m";
           const pages = day?.pages ?? 0;
-          return `${p.axisValue}<br/>${pages} ${pages === 1 ? "page" : "pages"} · ${time}`;
+          const label = axisLabels[p.dataIndex] ?? "";
+          return lang === "bn"
+            ? `${label}<br/>${toBanglaDigits(pages)} পৃষ্ঠা · ${time}`
+            : `${label}<br/>${pages} ${pages === 1 ? "page" : "pages"} · ${time}`;
         },
       },
       xAxis: {
         type: "category" as const,
-        data: days.map((d) => d.label),
+        data: axisLabels,
         axisLabel: { color: axis, fontSize: 10 },
         axisLine: { lineStyle: { color: split } },
         axisTick: { show: false },
@@ -112,7 +125,11 @@ function StatsPage() {
       yAxis: {
         type: "value" as const,
         minInterval: 1,
-        axisLabel: { color: axis, fontSize: 10 },
+        axisLabel: {
+          color: axis,
+          fontSize: 10,
+          formatter: (v: number) => (lang === "bn" ? toBanglaDigits(v) : String(v)),
+        },
         splitLine: { lineStyle: { color: split } },
       },
       series: [
@@ -128,7 +145,7 @@ function StatsPage() {
         },
       ],
     };
-  }, [stats, isDark]);
+  }, [stats, isDark, lang]);
 
   const days = stats?.days ?? [];
   const books = stats?.books ?? [];
@@ -222,43 +239,23 @@ function StatsPage() {
       ) : (
         <>
           {/* ── Stat cards ─────────────────────────────────────── */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard
-              icon={<Flame className="h-4 w-4" />}
-              value={stats.currentStreak}
-              suffix={t(lang, "days", "দিন")}
-              label={t(lang, "Current streak", "বর্তমান ধারা")}
-            />
-            <StatCard
-              icon={<BookOpen className="h-4 w-4" />}
-              value={stats.totalPagesRead}
-              suffix={t(lang, "pages", "পৃষ্ঠা")}
-              label={t(lang, "Pages read", "পঠিত পৃষ্ঠা")}
-            />
-            <StatCard
-              icon={<Clock className="h-4 w-4" />}
-              value={formatDuration(stats.totalTimeMs)}
-              suffix=""
-              label={t(lang, "Reading time", "পড়ার সময়")}
-            />
-            <StatCard
-              icon={<CalendarRange className="h-4 w-4" />}
-              value={stats.activeDays}
-              suffix={t(lang, "days", "দিন")}
-              label={t(lang, "Active days", "সক্রিয় দিন")}
-            />
-          </div>
+          <StatGrid columns={4} className="gap-4">
+            <StatCard layout="stacked" icon={<Flame className="h-4 w-4" />} value={lang === "bn" ? toBanglaDigits(stats.currentStreak) : stats.currentStreak} suffix={t(lang, "days", "দিন")} label={t(lang, "Current streak", "বর্তমান ধারা")} />
+            <StatCard layout="stacked" icon={<BookOpen className="h-4 w-4" />} value={lang === "bn" ? toBanglaDigits(stats.totalPagesRead) : stats.totalPagesRead} suffix={t(lang, "pages", "পৃষ্ঠা")} label={t(lang, "Pages read", "পঠিত পৃষ্ঠা")} />
+            <StatCard layout="stacked" icon={<Clock className="h-4 w-4" />} value={formatDuration(stats.totalTimeMs, lang)} suffix="" label={t(lang, "Reading time", "পড়ার সময়")} />
+            <StatCard layout="stacked" icon={<CalendarRange className="h-4 w-4" />} value={lang === "bn" ? toBanglaDigits(stats.activeDays) : stats.activeDays} suffix={t(lang, "days", "দিন")} label={t(lang, "Active days", "সক্রিয় দিন")} />
+          </StatGrid>
 
           {/* ── Pages per day chart ───────────────────────────── */}
           <section className="mt-8 border border-border/60 rounded-xl p-5">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-2">
               <h2 className="text-sm font-medium text-foreground">
                 {t(lang, "Pages read — last 14 days", "গত ১৪ দিনে পঠিত পৃষ্ঠা")}
               </h2>
               <span className="text-xs text-muted-foreground">
-                {t(lang, "longest streak", "দীর্ঘতম ধারা")}: {stats.longestStreak}{" "}
+                {t(lang, "longest streak", "দীর্ঘতম ধারা")}: {lang === "bn" ? toBanglaDigits(stats.longestStreak) : stats.longestStreak}{" "}
                 {t(lang, "days", "দিন")} · {t(lang, "avg session", "গড় সেশন")}:{" "}
-                {formatDuration(stats.avgSessionMinutes * 60_000)}
+                {formatDuration(stats.avgSessionMinutes * 60_000, lang)}
               </span>
             </div>
             {days.length === 0 && !isLoading ? (
@@ -285,7 +282,7 @@ function StatsPage() {
                 ? t(
                     lang,
                     `You've read ${stats.currentStreak} day${stats.currentStreak === 1 ? "" : "s"} in a row.`,
-                    `আপনি টানা ${stats.currentStreak} দিন পড়েছেন।`,
+                    `আপনি টানা ${toBanglaDigits(stats.currentStreak)} দিন পড়েছেন।`,
                   )
                 : t(
                     lang,
@@ -336,16 +333,16 @@ function StatsPage() {
                           />
                         </div>
                         <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">
-                          {b.progressPct}%
+                          {lang === "bn" ? toBanglaDigits(b.progressPct) : b.progressPct}%
                         </span>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-xs font-medium text-foreground tabular-nums">
-                        {formatDuration(b.timeMs)}
+                        {formatDuration(b.timeMs, lang)}
                       </p>
                       <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
-                        {b.pagesRead} {t(lang, "pages", "পৃষ্ঠা")} · {b.sessions}{" "}
+                        {lang === "bn" ? toBanglaDigits(b.pagesRead) : b.pagesRead} {t(lang, "pages", "পৃষ্ঠা")} · {lang === "bn" ? toBanglaDigits(b.sessions) : b.sessions}{" "}
                         {t(lang, "sessions", "সেশন")}
                       </p>
                     </div>
@@ -360,32 +357,7 @@ function StatsPage() {
   );
 }
 
-function StatCard({
-  icon,
-  value,
-  suffix,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: string | number;
-  suffix: string;
-  label: string;
-}) {
-  return (
-    <div className="border border-border/60 rounded-xl p-4 flex flex-col gap-2">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {icon}
-        <span className="text-[10px] uppercase tracking-[0.1em] font-medium">{label}</span>
-      </div>
-      <p className="text-2xl font-semibold text-foreground tabular-nums leading-none">
-        {value}
-        {suffix && <span className="text-xs font-normal text-muted-foreground ml-1">{suffix}</span>}
-      </p>
-    </div>
-  );
-}
-
-function StreakStrip({ stats, lang }: { stats: ReadingStats; lang: string }) {
+function StreakStrip({ stats, lang }: { stats: ReadingStats; lang: "en" | "bn" }) {
   const byDate = new Map(stats.days.map((d) => [d.date, d]));
   const dots: { date: string; pages: number }[] = [];
   const now = new Date();
@@ -401,22 +373,25 @@ function StreakStrip({ stats, lang }: { stats: ReadingStats; lang: string }) {
   const maxPages = Math.max(1, ...dots.map((d) => d.pages));
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto pb-1">
+    <div className="flex gap-1.5 overflow-x-auto pb-1 thumbnail-scroll">
       {dots.map((dot) => {
         const active = dot.pages > 0;
         const intensity = active ? 0.35 + 0.65 * (dot.pages / maxPages) : 0;
         return (
           <div
             key={dot.date}
-            title={`${dot.date} — ${dot.pages} ${t(lang, "pages", "পৃষ্ঠা")}`}
-            className="h-8 w-8 shrink-0 rounded-md flex items-center justify-center text-[10px] tabular-nums transition-transform hover:scale-110"
+            title={`${formatDate(`${dot.date}T12:00:00`, lang, {
+              month: "short",
+              day: "numeric",
+            })} — ${lang === "bn" ? toBanglaDigits(dot.pages) : dot.pages} ${t(lang, "pages", "পৃষ্ঠা")}`}
+            className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 rounded-md flex items-center justify-center text-[10px] tabular-nums transition-transform hover:scale-110"
             style={
               active
                 ? { backgroundColor: `rgba(211, 84, 0, ${intensity})`, color: "#fff" }
                 : { backgroundColor: "rgba(128, 128, 128, 0.12)", color: "rgba(128,128,128,0.5)" }
             }
           >
-            {dot.pages > 0 ? dot.pages : ""}
+            {dot.pages > 0 ? (lang === "bn" ? toBanglaDigits(dot.pages) : dot.pages) : ""}
           </div>
         );
       })}

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyLibrary, type LibraryBook } from "@/lib/books-purchases";
 import { useAuthSession } from "@/hooks/useAuth";
-import { useLang, formatMoney } from "@/lib/i18n";
+import { useLang, formatMoney, toBanglaDigits, formatDate } from "@/lib/i18n";
 import { seoHead } from "@/lib/seo";
 import { BackLink } from "@/components/BackLink";
 import { AuthModal } from "@/components/AuthModal";
@@ -16,11 +16,13 @@ import {
   CheckCircle,
   Library,
   ArrowRight,
+  Receipt,
 } from "lucide-react";
+import { StatCard, StatGrid } from "@/components/StatCard";
 
 export const Route = createFileRoute("/purchases")({
   head: () => seoHead({
-    title: "Purchase History",
+    title: "My Books",
     description: "Your purchased books and reading history.",
     path: "/purchases",
     noIndex: true,
@@ -50,12 +52,12 @@ function PurchasesPage() {
           <Library className="h-7 w-7 text-muted-foreground/30" />
         </div>
         <h1 className="font-serif text-3xl mb-3">
-          {lang === "bn" ? "কেনাকাটার ইতিহাস" : "Purchase History"}
+          {lang === "bn" ? "আমার বই" : "My Books"}
         </h1>
         <p className="text-sm text-muted-foreground mb-8">
           {lang === "bn"
-            ? "আপনার কেনাকাটার ইতিহাস দেখতে সাইন ইন করুন।"
-            : "Sign in to view your purchase history."}
+            ? "আপনার বই দেখতে সাইন ইন করুন।"
+            : "Sign in to view your books."}
         </p>
         <BrandCtaButton
           onClick={() => setAuthModalOpen(true)}
@@ -75,38 +77,30 @@ function PurchasesPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-12 md:py-20">
       <BackLink
-        to="/"
-        label={lang === "bn" ? "হোম" : "Home"}
+        to="/profile"
+        label={lang === "bn" ? "প্রোফাইল" : "Profile"}
       />
 
       <div className="mb-10">
         <h1 className="font-serif text-3xl md:text-4xl">
-          {lang === "bn" ? "কেনাকাটার ইতিহাস" : "Purchase History"}
+          {lang === "bn" ? "আমার বই" : "My Books"}
         </h1>
         <div className="mx-auto mt-3 h-0.5 w-16 rounded-full bg-gradient-to-r from-saffron/60 to-saffron/20" />
+        <Link
+          to="/orders"
+          className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Receipt className="h-3.5 w-3.5" />
+          {lang === "bn" ? "অর্ডার ও রসিদ দেখুন" : "View orders & receipts"}
+        </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
-        <div className="p-4 rounded-xl bg-secondary/30 border border-border/40 text-center">
-          <p className="text-2xl font-medium">{books.length}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {lang === "bn" ? "মোট বই" : "Total Books"}
-          </p>
-        </div>
-        <div className="p-4 rounded-xl bg-secondary/30 border border-border/40 text-center">
-          <p className="text-2xl font-medium">{paidBooks.length}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {lang === "bn" ? "কেনা বই" : "Purchased"}
-          </p>
-        </div>
-        <div className="p-4 rounded-xl bg-secondary/30 border border-border/40 text-center">
-          <p className="text-2xl font-medium">{formatMoney(totalSpent, lang)}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {lang === "bn" ? "মোট খরচ" : "Total Spent"}
-          </p>
-        </div>
-      </div>
+      {/* Stats — StatGrid stacks the money grid to 1 col on phones */}
+      <StatGrid columns={3} money className="gap-4 mb-10">
+        <StatCard value={lang === "bn" ? toBanglaDigits(books.length) : books.length} label={lang === "bn" ? "মোট বই" : "Total Books"} />
+        <StatCard value={lang === "bn" ? toBanglaDigits(paidBooks.length) : paidBooks.length} label={lang === "bn" ? "কেনা বই" : "Purchased"} />
+        <StatCard value={formatMoney(totalSpent, lang)} label={lang === "bn" ? "মোট খরচ" : "Total Spent"} money />
+      </StatGrid>
 
       {/* Loading */}
       {isLoading && (
@@ -177,14 +171,14 @@ function PurchasesPage() {
                         />
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {Math.round(book.progressPct)}%
+                        {lang === "bn" ? toBanglaDigits(Math.round(book.progressPct)) : Math.round(book.progressPct)}%
                       </span>
                     </div>
                   )}
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs text-muted-foreground">
-                    {new Date(book.purchaseDate).toLocaleDateString("en-US", {
+                    {formatDate(book.purchaseDate, lang, {
                       month: "short",
                       day: "numeric",
                       year: "numeric",

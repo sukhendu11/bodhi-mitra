@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getOrders, type OrderReceipt } from "@/lib/orders";
 import { addToCart } from "@/lib/cart";
 import { useAuthSession } from "@/hooks/useAuth";
-import { useLang, formatMoney } from "@/lib/i18n";
+import { useLang, formatMoney, toBanglaDigits, formatDate } from "@/lib/i18n";
 import { seoHead } from "@/lib/seo";
 import { BackLink } from "@/components/BackLink";
 import { AuthModal } from "@/components/AuthModal";
@@ -14,6 +14,7 @@ import { callFn } from "@/lib/call-fn";
 import { openCartDrawer } from "@/lib/cart-events";
 import { toast } from "sonner";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
+import { StatCard, StatGrid } from "@/components/StatCard";
 import { Receipt, BookOpen, ShoppingBag, ChevronDown, RotateCcw, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/orders")({
@@ -26,14 +27,6 @@ export const Route = createFileRoute("/orders")({
     }),
   component: OrdersPage,
 });
-
-function formatDate(iso: string, lang: string): string {
-  return new Date(iso).toLocaleDateString(lang === "bn" ? "bn-BD" : "en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 function OrdersPage() {
   const { user } = useAuthSession();
@@ -74,7 +67,7 @@ function OrdersPage() {
       const n = items.length;
       toast.success(
         lang === "bn"
-          ? `${n} টি বই কার্টে যোগ হয়েছে`
+          ? `${toBanglaDigits(n)} টি বই কার্টে যোগ হয়েছে`
           : `${n} ${n === 1 ? "book" : "books"} added to your cart`
       );
       queryClient.invalidateQueries({ queryKey: ["cart"] });
@@ -89,7 +82,7 @@ function OrdersPage() {
       <div className="mx-auto max-w-2xl px-6 py-20 md:py-28 text-center">
         <Receipt className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
         <h1 className="font-serif text-3xl mb-3">
-          {lang === "bn" ? "অর্ডারের ইতিহাস" : "Order History"}
+          {lang === "bn" ? "অর্ডার ও রসিদ" : "Orders & Receipts"}
         </h1>
         <p className="text-sm text-muted-foreground mb-8">
           {lang === "bn"
@@ -115,28 +108,23 @@ function OrdersPage() {
 
       <div className="mb-10">
         <h1 className="font-serif text-3xl md:text-4xl">
-          {lang === "bn" ? "অর্ডারের ইতিহাস" : "Order History"}
+          {lang === "bn" ? "অর্ডার ও রসিদ" : "Orders & Receipts"}
         </h1>
         <div className="mx-auto mt-3 h-0.5 w-16 rounded-full bg-gradient-to-r from-saffron/60 to-saffron/20" />
+        <Link
+          to="/purchases"
+          className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <BookOpen className="h-3.5 w-3.5" />
+          {lang === "bn" ? "আমার বই দেখুন" : "View my books"}
+        </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-10">
-        <div className="p-4 rounded-xl bg-secondary/30 border border-border/40 text-center">
-          <p className="text-2xl font-medium">{orders.length}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {lang === "bn" ? "মোট অর্ডার" : "Total Orders"}
-          </p>
-        </div>
-        <div className="p-4 rounded-xl bg-secondary/30 border border-border/40 text-center">
-          <p className="text-2xl font-medium">
-            {formatMoney(totalSpent, lang)}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {lang === "bn" ? "মোট খরচ" : "Total Spent"}
-          </p>
-        </div>
-      </div>
+      {/* Stats — StatGrid keeps 2-col on phones (text-xl money fits) */}
+      <StatGrid columns={2} money className="gap-4 mb-10">
+        <StatCard value={orders.length} label={lang === "bn" ? "মোট অর্ডার" : "Total Orders"} />
+        <StatCard value={formatMoney(totalSpent, lang)} label={lang === "bn" ? "মোট খরচ" : "Total Spent"} money />
+      </StatGrid>
 
       {/* Loading */}
       {isLoading && (
@@ -206,10 +194,9 @@ function OrderCard({
   const itemCount = order.items.reduce((s, i) => s + 1, 0);
   return (
     <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
-      {/* Header — always visible */}
-      <button
+      {/* Header — always visible */}        <button
         onClick={onToggle}
-        className="w-full flex items-center gap-4 p-4 text-left hover:bg-secondary/20 transition-colors cursor-pointer"
+        className="w-full flex flex-wrap items-center gap-x-4 gap-y-2 p-4 text-left hover:bg-secondary/20 transition-colors cursor-pointer"
         aria-expanded={expanded}
       >
         <div className="w-10 h-10 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
@@ -217,10 +204,13 @@ function OrderCard({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium truncate">
-            {lang === "bn" ? "অর্ডার" : "Order"} #{order.id.slice(-8).toUpperCase()}
+            {lang === "bn" ? "অর্ডার" : "Order"} #{lang === "bn" ? toBanglaDigits(order.id.slice(-8).toUpperCase()) : order.id.slice(-8).toUpperCase()}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {formatDate(order.createdAt, lang)} · {itemCount} {itemCount === 1 ? "book" : "books"}
+            {formatDate(order.createdAt, lang)} ·{" "}
+            {lang === "bn"
+              ? `${toBanglaDigits(itemCount)} টি বই`
+              : `${itemCount} ${itemCount === 1 ? "book" : "books"}`}
           </p>
         </div>
         <OrderStatusBadge status="paid" lang={lang} />
