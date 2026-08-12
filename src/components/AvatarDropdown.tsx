@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ExternalLink, LogOut } from "lucide-react";
-import { useLang } from "@/lib/i18n";
+import { useLang, formatCountBadge } from "@/lib/i18n";
 import { getProfileMenuItems, PROFILE_MENU_GROUP_LABELS } from "@/lib/profile-menu";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useBookmarkCount } from "@/hooks/useBookmarkCount";
@@ -147,7 +147,7 @@ export function AvatarDropdown({
                       {bn ? item.label_bn : item.label_en}
                       {badgeCounts[item.id] > 0 && (
                         <span className="ml-auto inline-flex items-center justify-center h-[18px] min-w-[18px] rounded-full bg-foreground text-background text-[10px] font-bold px-1 shadow-sm">
-                          {badgeCounts[item.id] > 99 ? "99+" : badgeCounts[item.id]}
+                          {formatCountBadge(badgeCounts[item.id], lang)}
                         </span>
                       )}
                     </Link>

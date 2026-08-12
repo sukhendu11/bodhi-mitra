@@ -1,6 +1,7 @@
 import { Heart } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useWishlist } from "@/hooks/useWishlist";
+import { useLang, formatCountBadge } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 interface WishlistBadgeProps {
@@ -9,6 +10,7 @@ interface WishlistBadgeProps {
 
 export function WishlistBadge({ className }: WishlistBadgeProps) {
   const { count } = useWishlist();
+  const { lang } = useLang();
 
   return (
     <Link
@@ -29,7 +31,7 @@ export function WishlistBadge({ className }: WishlistBadgeProps) {
       
       {count > 0 && (
         <span className="absolute -top-1.5 -right-1.5 h-5 min-w-5 rounded-full bg-gradient-to-br from-red-400 to-red-600 text-xs font-bold text-white flex items-center justify-center px-1 shadow-sm ring-2 ring-background animate-in zoom-in duration-200">
-          {count > 99 ? "99+" : count}
+          {formatCountBadge(count, lang)}
         </span>
       )}
     </Link>

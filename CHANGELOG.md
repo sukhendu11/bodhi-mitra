@@ -2,6 +2,16 @@
 
 ## 2026-08-12
 
+### Counters localize to Bangla, book-cover sticky fix, drawer profile divider
+
+**Counters render Bengali numerals in Bangla mode on every screen.** New shared `formatCountBadge(count, lang, cap)` in `src/lib/i18n.tsx` — EN `12` / `99+`, BN `১২` / `৯৯+` (digits AND the "+" cap localize). Applied to all six counter surfaces: desktop header cart (`CartIcon` now takes `lang`) + wishlist (`WishlistBadge` gains `useLang`), mobile bottom nav (wishlist + cart), mobile drawer (`CountBadge` takes `lang`), avatar dropdown badges, and the notification-bell unread pill. `i18n-format.test.ts` gained a `formatCountBadge` suite (13 tests total) locking digits + `৯+`/`৯৯+` caps.
+
+**Book detail cover no longer sticky on small screens.** `books.$slug.tsx` cover column was `sticky top-28` on all widths — on mobile's single-column layout it pinned over the scrolling details. Now `md:sticky md:top-28 md:self-start`: sticky only in the desktop two-column grid, normal flow on small screens.
+
+**Mobile drawer profile divider more visible.** The pinned bottom profile block's top border strengthened `border-border/10` → `border-border/25`, plus a saffron-tinted hairline and a soft upward shadow — the profile surface now clearly reads as a separate anchored section below the scrollable nav on small screens.
+
+- **Validated** — 0 TS errors, 620/620 tests, 56/56 responsive-contract guards.
+
 ### Mobile consolidation, FAB scroll behavior, universal counters & confirm dialogs
 
 **Mobile header + bottom nav consolidation.** Cart and Wishlist icons removed from the mobile header row (the bottom nav owns them — header now shows Search · Notifications · hamburger). Reflections tab added to the bottom nav (`BottomNav`): Home · Reflections · Books · Wishlist · Cart; icon pair unified with the mobile drawer + homepage header (`BookOpen` Reflections / `Book` Books — was a mismatched Feather + BookOpen pair). Desktop header's Bookmarks icon (added earlier this session) removed again — bookmarks stays reachable via the avatar dropdown + mobile drawer badges.

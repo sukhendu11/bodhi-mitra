@@ -14,7 +14,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useLang } from "@/lib/i18n";
+import { useLang, formatCountBadge } from "@/lib/i18n";
 import { useWishlist } from "@/hooks/useWishlist";
 import { getCartCount } from "@/lib/cart";
 import { callFn } from "@/lib/call-fn";
@@ -99,7 +99,7 @@ export function BottomNav() {
             <Heart className="h-5 w-5 stroke-[1.8]" />
             {wishlistCount > 0 && (
               <span className={badge}>
-                {wishlistCount > 9 ? "9+" : wishlistCount}
+                {formatCountBadge(wishlistCount, lang, 9)}
               </span>
             )}
           </span>
@@ -115,7 +115,7 @@ export function BottomNav() {
             <ShoppingBag className="h-5 w-5 stroke-[1.8]" />
             {cartCount > 0 && (
               <span className={badge}>
-                {cartCount > 9 ? "9+" : cartCount}
+                {formatCountBadge(cartCount, lang, 9)}
               </span>
             )}
           </span>

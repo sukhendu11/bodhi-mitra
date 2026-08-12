@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "@tanstack/react-router";
 import { Bell, CheckCheck, Inbox, X } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useLang, formatCountBadge } from "@/lib/i18n";
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -17,6 +18,7 @@ function timeAgo(iso: string): string {
 export function NotificationBell({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const { lang } = useLang();
   // Shared notifications state — store, event subscription, topic gate, and
   // mark-read actions all live in the useNotifications hook (also used by
   // the profile Notifications card, so both surfaces stay in sync).
@@ -76,7 +78,7 @@ export function NotificationBell({ userId }: { userId: string }) {
           <Bell className="h-5 w-5" strokeWidth={1.8} />
           {visibleUnread > 0 && (
             <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center px-1 ring-2 ring-background">
-              {visibleUnread > 9 ? "9+" : visibleUnread}
+              {formatCountBadge(visibleUnread, lang, 9)}
             </span>
           )}
         </span>

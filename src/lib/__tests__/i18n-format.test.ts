@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { toBanglaDigits, formatMoney, formatDate, localizeCartResult } from "@/lib/i18n";
+import {
+  toBanglaDigits,
+  formatCountBadge,
+  formatMoney,
+  formatDate,
+  localizeCartResult,
+} from "@/lib/i18n";
 import { mockAddToCart, mockRemoveFromCart, mockClearCart, mockGetCart } from "@/lib/mock-cart";
 import { mockFetchPublishedBooks } from "@/lib/mock-data";
 
@@ -13,6 +19,23 @@ describe("toBanglaDigits", () => {
   it("keeps decimal separators and other characters intact", () => {
     expect(toBanglaDigits("20.05")).toBe("২০.০৫");
     expect(toBanglaDigits("3 books")).toBe("৩ books");
+  });
+});
+
+describe("formatCountBadge", () => {
+  it("uses Latin digits in English mode", () => {
+    expect(formatCountBadge(0, "en")).toBe("0");
+    expect(formatCountBadge(12, "en")).toBe("12");
+    expect(formatCountBadge(5, "en", 9)).toBe("5");
+    expect(formatCountBadge(10, "en", 9)).toBe("9+");
+  });
+
+  it("uses Bengali numerals in Bangla mode — digits and the + cap", () => {
+    expect(formatCountBadge(0, "bn")).toBe("০");
+    expect(formatCountBadge(12, "bn")).toBe("১২");
+    expect(formatCountBadge(5, "bn", 9)).toBe("৫");
+    expect(formatCountBadge(10, "bn", 9)).toBe("৯+");
+    expect(formatCountBadge(150, "bn")).toBe("৯৯+");
   });
 });
 

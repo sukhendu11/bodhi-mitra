@@ -24,7 +24,7 @@ import { UserAvatar } from "./UserAvatar";
 import { BrandCtaButton } from "./BrandCtaButton";
 import { LotusIcon } from "./LotusIcon";
 import { useSiteSettings } from "@/lib/siteSettings";
-import { useLang } from "@/lib/i18n";
+import { useLang, formatCountBadge } from "@/lib/i18n";
 import { PROFILE_MENU_GROUP_LABELS } from "@/lib/profile-menu";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useBookmarkCount } from "@/hooks/useBookmarkCount";
@@ -155,11 +155,11 @@ function NavItemEntry({
 
 /* ─── Compact count chip for the Account rows ───────────── */
 
-function CountBadge({ count }: { count: number }) {
+function CountBadge({ count, lang }: { count: number; lang: "en" | "bn" }) {
   // min-w + px-1 (not a fixed w-5) so "99+" doesn't overflow the pill.
   return (
     <span className="h-5 min-w-5 px-1 rounded-full bg-foreground text-background text-[10px] font-bold flex items-center justify-center shadow-sm">
-      {count > 99 ? "99+" : count}
+      {formatCountBadge(count, lang)}
     </span>
   );
 }
@@ -643,7 +643,7 @@ export function MobileNav({
               label={lang === "bn" ? "কার্ট" : "Cart"}
               suffix={
                 cartCount != null && cartCount > 0 ? (
-                  <CountBadge count={cartCount} />
+                  <CountBadge count={cartCount} lang={lang} />
                 ) : undefined
               }
               style={getStyle(nextIndex())}
@@ -651,13 +651,13 @@ export function MobileNav({
             <NavItemEntry
               to="/wishlist"
               label={lang === "bn" ? "ইচ্ছাতালিকা" : "Wishlist"}
-              suffix={wishlistCount > 0 ? <CountBadge count={wishlistCount} /> : undefined}
+              suffix={wishlistCount > 0 ? <CountBadge count={wishlistCount} lang={lang} /> : undefined}
               style={getStyle(nextIndex())}
             />
             <NavItemEntry
               to="/bookmarks"
               label={lang === "bn" ? "বুকমার্ক" : "Bookmarks"}
-              suffix={bookmarkCount > 0 ? <CountBadge count={bookmarkCount} /> : undefined}
+              suffix={bookmarkCount > 0 ? <CountBadge count={bookmarkCount} lang={lang} /> : undefined}
               style={getStyle(nextIndex())}
             />
 
@@ -696,8 +696,12 @@ export function MobileNav({
         </nav>
 
         {/* ── Persistent bottom profile block — Profile lives HERE, anchored
-             below the navigation, separated by a subtle divider. ── */}
-        <div className="relative shrink-0 border-t border-border/10 px-4 py-3 bg-gradient-to-t from-saffron-50/[0.02] to-background">
+             below the scrollable navigation. The divider on top is clearly
+             visible (border + hairline + soft shadow) so the pinned block
+             reads as a separate surface on small screens. ── */}
+        <div className="relative shrink-0 border-t border-border/25 px-4 py-3 bg-gradient-to-t from-saffron-50/[0.02] to-background shadow-[0_-8px_16px_-12px_hsl(var(--foreground)/0.25)]">
+          {/* Saffron-tinted hairline on the divider edge */}
+          <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-[var(--color-saffron)]/25 to-transparent" />
           <ProfileBlock
             isSignedIn={isSignedIn}
             userEmail={userEmail}

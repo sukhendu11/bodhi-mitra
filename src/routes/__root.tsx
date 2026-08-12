@@ -13,7 +13,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { useAuthSession, useIsAdmin, signOut } from "@/hooks/useAuth";
-import { LanguageProvider, useLang } from "@/lib/i18n";
+import { LanguageProvider, useLang, formatCountBadge } from "@/lib/i18n";
 import { SiteSettingsProvider, fetchSiteSettings, DEFAULT_CONFIG, useSiteSettings } from "@/lib/siteSettings";
 import { useLayout, LayoutProvider } from "@/lib/layout-engine";
 import type { NavTreeNode } from "@/lib/navigation";
@@ -240,13 +240,13 @@ function CartBagIcon({ isOpen = false }: { isOpen?: boolean }) {
   );
 }
 
-function CartIcon({ count, isOpen }: { count: number; isOpen?: boolean }) {
+function CartIcon({ count, isOpen, lang }: { count: number; isOpen?: boolean; lang: "en" | "bn" }) {
   return (
     <span className="relative inline-flex items-center justify-center">
       <CartBagIcon isOpen={isOpen} />
       {count > 0 && (
         <span className="absolute -top-2 -right-2.5 min-w-[18px] h-[18px] rounded-full bg-foreground text-background text-[10px] font-bold flex items-center justify-center px-1 shadow-sm ring-2 ring-background">
-          {count > 9 ? "9+" : count}
+          {formatCountBadge(count, lang, 9)}
         </span>
       )}
     </span>
@@ -410,7 +410,7 @@ function Header() {
                     title={lang === "bn" ? "কার্ট" : "Cart"}
                   >
                     <span className="block group-hover:scale-110 transition-transform duration-300">
-                      <CartIcon count={cartCount} isOpen={open} />
+                      <CartIcon count={cartCount} isOpen={open} lang={lang} />
                     </span>
                   </button>
                 )}

@@ -379,8 +379,9 @@ function BookDetailPage() {
       <BackLink to="/books" label={lang === "bn" ? "সব বই" : "All Books"} search={{ search: "", page: 1 }} />
 
       <div className="grid md:grid-cols-[340px_1fr] gap-10 md:gap-16">
-        {/* Cover */}
-        <div className="sticky top-28 self-start">
+        {/* Cover — sticky only on md+ (two-column grid); on small screens it
+            scrolls away in normal flow so it never overlaps the details. */}
+        <div className="md:sticky md:top-28 md:self-start">
           <div className="aspect-[3/4] bg-gradient-to-br from-secondary/40 to-secondary/10 rounded-xl overflow-hidden border border-border/50 shadow-lg shadow-black/5">
             {book.cover_image ? (
               <img src={book.cover_image} alt={title} className="w-full h-full object-cover" />

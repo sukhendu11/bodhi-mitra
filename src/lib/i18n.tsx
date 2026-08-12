@@ -149,6 +149,17 @@ export function toBanglaDigits(value: string | number): string {
 }
 
 /**
+ * Localize a count badge for the UI language: caps above `cap` render as
+ * "99+" (Latin) or "৯৯+" (Bengali), and every digit becomes a Bengali
+ * numeral in BN mode. Shared by the cart / wishlist / bookmarks / unread
+ * badges across header, bottom nav, drawer, and avatar dropdown.
+ */
+export function formatCountBadge(count: number, lang: Lang, cap = 99): string {
+  const label = count > cap ? `${cap}+` : String(count);
+  return lang === "bn" ? toBanglaDigits(label) : label;
+}
+
+/**
  * Localize a cart-action result message. The cart services
  * (src/lib/cart.ts / src/lib/mock-cart.ts) return English-only messages
  * because they run server-side / in shared code and cannot know the client's
