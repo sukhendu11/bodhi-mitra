@@ -442,6 +442,44 @@ describe("M7 Final QA — global overflow guard (audit fold-in)", () => {
   });
 });
 
+describe("Badge centering contract — digits centered in round pills (2026-08-12)", () => {
+  // Every count badge (header cart/wishlist, bottom nav, mobile drawer,
+  // avatar dropdown, notification bell) must center its digits BOTH axes:
+  // flex centering targets the line box, and `leading-none` collapses the
+  // line box to the glyph height so the ink (incl. Bengali numerals like
+  // ১২ / ৯৯+) sits dead-center. Guards against the line-height regression.
+  const badgeSurfaces: [string, string][] = [
+    ["src/routes/__root.tsx", "min-w-[18px] h-[18px] rounded-full"],
+    ["src/components/WishlistBadge.tsx", "h-5 min-w-5 rounded-full"],
+    ["src/components/BottomNav.tsx", "min-w-[16px] h-4 rounded-full"],
+    ["src/components/MobileNav.tsx", "h-5 min-w-5 px-1 rounded-full"],
+    ["src/components/AvatarDropdown.tsx", "h-[18px] min-w-[18px] rounded-full"],
+    ["src/components/NotificationBell.tsx", "min-w-[16px] h-4 rounded-full"],
+  ];
+
+  const badgeClassOf = (src: string, marker: string): string => {
+    const esc = marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = src.match(new RegExp(`"([^"]*${esc}[^"]*)"`));
+    return m?.[1] ?? "";
+  };
+
+  it.each(badgeSurfaces)("%s badge centers digits on both axes", (file, marker) => {
+    const cls = badgeClassOf(read(file), marker);
+    expect(cls, `${file} badge class string not found`).not.toBe("");
+    expect(cls).toMatch(/flex|inline-flex/);
+    expect(cls).toContain("items-center");
+    expect(cls).toContain("justify-center");
+    expect(cls).toContain("leading-none");
+  });
+
+  it("badge digits localize to Bengali numerals in BN mode (formatCountBadge)", async () => {
+    const { formatCountBadge } = await import("@/lib/i18n");
+    expect(formatCountBadge(12, "bn")).toBe("১২");
+    expect(formatCountBadge(99, "bn", 9)).toBe("৯+");
+    expect(formatCountBadge(120, "bn", 99)).toBe("৯৯+");
+  });
+});
+
 describe("Responsive contract — settings.tsx + SettingsNav.tsx", () => {
   it("desktop sidebar is lg-only and ships a mobile chips alternative", () => {
     expect(settingsNavSrc).toContain("hidden lg:block lg:col-start-1");

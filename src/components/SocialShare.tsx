@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Share2, Link2, Check } from "lucide-react";
+import { useLang } from "@/lib/i18n";
 import { cn, ACTION_PILL_CLS } from "@/lib/utils";
 
 interface SocialShareProps {
@@ -9,6 +10,7 @@ interface SocialShareProps {
 }
 
 export function SocialShare({ url, title, description }: SocialShareProps) {
+  const { lang } = useLang();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -101,11 +103,11 @@ export function SocialShare({ url, title, description }: SocialShareProps) {
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(ACTION_PILL_CLS)}
-        aria-label="Share"
-        title="Share"
+        aria-label={lang === "bn" ? "শেয়ার করুন" : "Share"}
+        title={lang === "bn" ? "শেয়ার করুন" : "Share"}
       >
         <Share2 className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Share</span>
+        <span className="hidden sm:inline">{lang === "bn" ? "শেয়ার করুন" : "Share"}</span>
       </button>
 
       {open && (
@@ -127,7 +129,7 @@ export function SocialShare({ url, title, description }: SocialShareProps) {
             <button
               onClick={() => { handleCopyLink(); }}
               className="flex items-center justify-center w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
-              title="Copy link"
+              title={lang === "bn" ? "লিংক কপি করুন" : "Copy link"}
             >
               {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Link2 className="h-3.5 w-3.5" />}
             </button>

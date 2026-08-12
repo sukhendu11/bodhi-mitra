@@ -3,6 +3,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { isAppError, getUserMessage } from "@/lib/errors";
 import { captureError } from "@/lib/errors";
+import { useLang } from "@/lib/i18n";
 
 interface ErrorPageProps {
   error: Error;
@@ -17,10 +18,19 @@ export function ErrorPage({ error, reset, title }: ErrorPageProps) {
   }, [error]);
 
   const router = useRouter();
+  const { lang } = useLang();
 
   const statusCode = isAppError(error) ? error.statusCode : 500;
   const userMessage = getUserMessage(error);
-  const displayTitle = title ?? (statusCode === 404 ? "Page not found" : "Something went wrong");
+  const displayTitle =
+    title ??
+    (lang === "bn"
+      ? statusCode === 404
+        ? "পৃষ্ঠা পাওয়া যায়নি"
+        : "কিছু একটা সমস্যা হয়েছে"
+      : statusCode === 404
+        ? "Page not found"
+        : "Something went wrong");
 
   return (
     <div className="flex min-h-[50vh] items-center justify-center px-4">
@@ -37,14 +47,14 @@ export function ErrorPage({ error, reset, title }: ErrorPageProps) {
               }}
               className="border-b border-foreground/40 pb-0.5 text-sm tracking-wide hover:border-foreground transition-colors"
             >
-              Try again
+              {lang === "bn" ? "আবার চেষ্টা করুন" : "Try again"}
             </button>
           )}
           <Link
             to="/"
             className="border-b border-foreground/40 pb-0.5 text-sm tracking-wide hover:border-foreground transition-colors"
           >
-            Go home
+            {lang === "bn" ? "হোমে যান" : "Go home"}
           </Link>
         </div>
       </div>
@@ -53,21 +63,22 @@ export function ErrorPage({ error, reset, title }: ErrorPageProps) {
 }
 
 export function NotFoundPage() {
+  const { lang } = useLang();
   return (
     <div className="flex min-h-[50vh] items-center justify-center px-4">
       <div className="max-w-md text-center">
         <p className="font-serif text-7xl text-foreground/20">404</p>
         <h1 className="mt-4 text-xl font-semibold tracking-tight">
-          This page has drifted into stillness.
+          {lang === "bn" ? "এই পৃষ্ঠাটি নিস্তব্ধতায় হারিয়ে গেছে।" : "This page has drifted into stillness."}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          {lang === "bn" ? "আপনি যে পৃষ্ঠাটি খুঁজছেন তা এখন নেই বা সরিয়ে দেওয়া হয়েছে।" : "The page you're looking for doesn't exist or has been moved."}
         </p>
         <Link
           to="/"
           className="mt-6 inline-block border-b border-foreground/40 pb-0.5 text-sm tracking-wide hover:border-foreground transition-colors"
         >
-          Return home
+          {lang === "bn" ? "হোমে ফিরুন" : "Return home"}
         </Link>
       </div>
     </div>

@@ -5,21 +5,21 @@ import { useState, useEffect } from "react";
 import { searchContent, type SearchResult, type ContentType } from "@/lib/search";
 import { useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized, formatDate, toBanglaDigits } from "@/lib/i18n";
-import { Search, FileText, BookOpen, Video, File, Loader2, ArrowLeft, ChevronDown, Sparkles } from "lucide-react";
+import { Search, Feather, BookOpen, Video, File, Loader2, ArrowLeft, ChevronDown, Sparkles } from "lucide-react";
 import DOMPurify from "dompurify";
 import { seoHead } from "@/lib/seo";
 import { callFn } from "@/lib/call-fn";
 
 const contentTypes: { key: ContentType | "all"; labelEn: string; labelBn: string; icon: typeof Search }[] = [
   { key: "all", labelEn: "All", labelBn: "সব", icon: Search },
-  { key: "post", labelEn: "Reflections", labelBn: "প্রতিফলন", icon: FileText },
+  { key: "post", labelEn: "Reflections", labelBn: "প্রতিফলন", icon: Feather },
   { key: "page", labelEn: "Pages", labelBn: "পৃষ্ঠা", icon: File },
   { key: "book", labelEn: "Books", labelBn: "বই", icon: BookOpen },
   { key: "video", labelEn: "Videos", labelBn: "ভিডিও", icon: Video },
 ];
 
-const typeIcons: Record<string, typeof FileText> = {
-  post: FileText,
+const typeIcons: Record<string, typeof Feather> = {
+  post: Feather,
   page: File,
   book: BookOpen,
   video: Video,
@@ -269,7 +269,7 @@ function SearchPage() {
 }
 
 function ResultCard({ result }: { result: SearchResult }) {
-  const Icon = typeIcons[result.type] || FileText;
+  const Icon = typeIcons[result.type] || Feather;
   const { lang } = useLang();
   const typeLabel: Record<string, string> = {
     post: lang === "bn" ? "প্রতিফলন" : "Reflection",

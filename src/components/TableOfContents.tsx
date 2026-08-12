@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { HeadingItem } from "@/lib/headings";
+import { useLang, toBanglaDigits } from "@/lib/i18n";
 
 interface TableOfContentsProps {
   headings: HeadingItem[];
@@ -7,6 +8,8 @@ interface TableOfContentsProps {
 }
 
 export function TableOfContents({ headings, sidebar }: TableOfContentsProps) {
+  const { lang } = useLang();
+  const onThisPage = lang === "bn" ? "এই পৃষ্ঠায়" : "On this page";
   const [activeId, setActiveId] = useState<string>("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -66,11 +69,11 @@ export function TableOfContents({ headings, sidebar }: TableOfContentsProps) {
   return (
     <>
       {/* Desktop: sticky sidebar */}
-      <nav aria-label="Table of contents" className="hidden lg:block">
+      <nav aria-label={lang === "bn" ? "সূচিপত্র" : "Table of contents"} className="hidden lg:block">
         {sidebar ? (
           <>
             <p className="text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground/50 mb-4">
-              On this page
+              {onThisPage}
             </p>
             <ul className="space-y-1.5 border-l border-border/40">
               {headings.map((h) => (
@@ -93,7 +96,7 @@ export function TableOfContents({ headings, sidebar }: TableOfContentsProps) {
         ) : (
           <div className="sticky top-28">
             <p className="text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground/50 mb-4">
-              On this page
+              {onThisPage}
             </p>
             <ul className="space-y-1.5 border-l border-border/40">
               {headings.map((h) => (
@@ -117,7 +120,7 @@ export function TableOfContents({ headings, sidebar }: TableOfContentsProps) {
       </nav>
 
       {/* Mobile: collapsible */}
-      <nav aria-label="Table of contents" className="lg:hidden mb-10">
+      <nav aria-label={lang === "bn" ? "সূচিপত্র" : "Table of contents"} className="lg:hidden mb-10">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="flex items-center gap-2 w-full text-xs uppercase tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground transition-colors py-3"
@@ -131,7 +134,7 @@ export function TableOfContents({ headings, sidebar }: TableOfContentsProps) {
           >
             <path d="M9 18l6-6-6-6" />
           </svg>
-          On this page ({headings.length})
+          {onThisPage} ({lang === "bn" ? toBanglaDigits(headings.length) : headings.length})
         </button>
         {mobileOpen && (
           <ul className="mt-2 space-y-0.5 border-l-2 border-border/60 pl-4">

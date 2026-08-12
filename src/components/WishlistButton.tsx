@@ -1,5 +1,6 @@
 import { Heart } from "lucide-react";
 import { useWishlist } from "@/hooks/useWishlist";
+import { useLang } from "@/lib/i18n";
 import { cn, ACTION_PILL_CLS } from "@/lib/utils";
 
 interface WishlistButtonProps {
@@ -15,8 +16,16 @@ interface WishlistButtonProps {
  */
 export function WishlistButton({ resourceId, compact = false, className }: WishlistButtonProps) {
   const { isWishlisted, toggle } = useWishlist();
+  const { lang } = useLang();
 
   const wishlisted = isWishlisted(resourceId);
+  const wishlistTitle = lang === "bn"
+    ? wishlisted
+      ? "উইশলিস্ট থেকে সরান"
+      : "উইশলিস্টে যোগ করুন"
+    : wishlisted
+      ? "Remove from wishlist"
+      : "Add to wishlist";
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -36,7 +45,7 @@ export function WishlistButton({ resourceId, compact = false, className }: Wishl
             : "bg-white/95 dark:bg-zinc-800/95 text-muted-foreground hover:text-foreground hover:bg-white dark:hover:bg-zinc-700",
           className,
         )}
-        title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        title={wishlistTitle}
       >
         <Heart
           className={cn(
@@ -62,7 +71,7 @@ export function WishlistButton({ resourceId, compact = false, className }: Wishl
           : "",
         className,
       )}
-      title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+      title={wishlistTitle}
     >
       <Heart
         className={cn(
@@ -70,7 +79,7 @@ export function WishlistButton({ resourceId, compact = false, className }: Wishl
           wishlisted ? "fill-red-500 text-red-500" : "fill-none",
         )}
       />
-      {wishlisted ? "Wishlisted" : "Add to Wishlist"}
+      {lang === "bn" ? (wishlisted ? "উইশলিস্টে আছে" : "উইশলিস্টে যোগ করুন") : wishlisted ? "Wishlisted" : "Add to Wishlist"}
     </button>
   );
 }

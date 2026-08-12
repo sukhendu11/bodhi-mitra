@@ -2,6 +2,36 @@
 
 ## 2026-08-12
 
+### Polish batch — i18n audit, icon unification, badges, nav drawer, hero CTA
+
+**i18n audit fixes** — every remaining user-facing English-only string localized (see the dedicated entry below): `BookmarkButton`, `WishlistButton`, `SocialShare`, `error-page`/`NotFoundPage` visible text + a11y labels (`SearchBar`, `ScrollToTop`, `TableOfContents`, `ui/sheet`+`ui/dialog` sr-only Close). Dead code `TagInput.tsx` + `PostPreview.tsx` (old admin editor leftovers, zero importers) deleted.
+
+**Icon unification** — Reflections = Feather everywhere (`MobileNav` PATH_ICONS, `BottomNav` tab, homepage Recent Reflections section header, `SearchPalette`/`/search` post type, bookmarks post placeholders; was BookOpen/PenLine/FileText mix). Books = open-book `BookOpen` everywhere (`BottomNav` + `MobileNav` switched from closed `Book`). Pair stays visually distinct.
+
+**Nav drawer** — profile divider is now a single saffron top border (removed the stacked faint-border + inset hairline + upward shadow that read as padding), with a 48px scroll-fade shadow at the bottom of the scrollable nav so the menu reads as scrollable on small screens. Signed-out profile icon + signed-in `UserAvatar` fallback colored saffron (was grey). Mobile menu ✕ shrunk `h-8 w-8 rounded-full` → `h-6 w-6 rounded-md` (matches cart drawer); hamburger span tightened to fit.
+
+**Cart drawer** — ✕ close button box `h-8 w-8 rounded-lg` → `h-6 w-6 rounded-md` on all screen sizes.
+
+**Hero CTA** — "Begin reading" is an underlined text link again (not a `BrandCtaButton` pill), keeping the uppercase tracking + sliding arrow; stays bilingual.
+
+**Badge digit centering** — all six counter badges (header cart/wishlist, bottom nav, drawer `CountBadge`, dropdown, notification bell) gained `leading-none` so the flex centering targets the glyphs; Bengali numerals (১২/৯৯+) now sit dead-center. New contract guard in `responsive-contract.test.ts` (7 tests) asserts every badge span keeps `flex/items-center/justify-center/leading-none`.
+
+Validation: tsc 0 errors · **627/627 tests** · 63 contract guards.
+
+### i18n audit fixes — last English-only strings localized
+
+Full-site audit of user-facing English-only strings (grep every route/component for bare English JSX text, aria-labels, titles, placeholders; files without `lang` usage inspected individually). Remaining gaps were concentrated in leaf components that never called `useLang`. All now bilingual via inline `lang === "bn" ? … : …` ternaries:
+
+- **`BookmarkButton.tsx`** (post + book pages) — visible `Bookmark`/`Bookmarked` label, `title` (Remove bookmark / Bookmark this post·book / sign-in intent), and the `/login` redirect message (`বই/পোস্ট বুকমার্ক করতে সাইন ইন করুন`).
+- **`WishlistButton.tsx`** (book cards + book page) — visible `Add to Wishlist`/`Wishlisted` (`উইশলিস্টে যোগ করুন`/`উইশলিস্টে আছে`) + `title` in both compact and full variants (shared const).
+- **`SocialShare.tsx`** (post + book pages) — visible `Share` label + `aria-label`/`title` (`শেয়ার করুন`), `Copy link` title (`লিংক কপি করুন`). Network brand names stay as-is.
+- **`error-page.tsx`** — `ErrorPage` title (`পৃষ্ঠা পাওয়া যায়নি` / `কিছু একটা সমস্যা হয়েছে`), Try again / Go home; `NotFoundPage` headline + body + Return home (poetic BN: “এই পৃষ্ঠাটি নিস্তব্ধতায় হারিয়ে গেছে।”).
+- **a11y-only labels** — `SearchBar` clear (`অনুসন্ধান মুছুন`), `ScrollToTop` (`উপরে যান`), `TableOfContents` aria-labels (`সূচিপত্র`) + the visible “On this page” (`এই পৃষ্ঠায়`, 3 spots incl. Bengali-numeral mobile count), and the `sr-only` Close in `ui/sheet.tsx` + `ui/dialog.tsx` (`বন্ধ করুন` — forwardRefs converted from implicit return to block bodies to call `useLang`).
+
+Not touched by design: auth pages (`login`/`forgot-password`/`reset-password`/`onboarding`) — documented EN-only system pages (DESIGN.md §6); `admin.tsx` shell; redirect/layout shells (`blog.tsx`, `books.tsx`, `reflections.tsx`). Dead code `TagInput.tsx` + `PostPreview.tsx` (old admin editor leftovers, zero importers) **deleted** — verified no live imports or test files before removal (620/620 tests still pass).
+
+Validation: tsc 0 errors · **620/620 tests** · reviewer-checked (ternary parse, hooks order in forwardRef conversions, provider coverage).
+
 ### Counters localize to Bangla, book-cover sticky fix, drawer profile divider
 
 **Counters render Bengali numerals in Bangla mode on every screen.** New shared `formatCountBadge(count, lang, cap)` in `src/lib/i18n.tsx` — EN `12` / `99+`, BN `১২` / `৯৯+` (digits AND the "+" cap localize). Applied to all six counter surfaces: desktop header cart (`CartIcon` now takes `lang`) + wishlist (`WishlistBadge` gains `useLang`), mobile bottom nav (wishlist + cart), mobile drawer (`CountBadge` takes `lang`), avatar dropdown badges, and the notification-bell unread pill. `i18n-format.test.ts` gained a `formatCountBadge` suite (13 tests total) locking digits + `৯+`/`৯৯+` caps.

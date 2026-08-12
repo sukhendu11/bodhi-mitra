@@ -19,10 +19,10 @@ import { useLang } from "@/lib/i18n";
 import { searchContent, type SearchResult, type ContentType } from "@/lib/search";
 import { callFn } from "@/lib/call-fn";
 import { OPEN_SEARCH_PALETTE_EVENT } from "@/lib/search-events";
-import { Search, FileText, BookOpen, Video, File, Loader2, CornerDownLeft } from "lucide-react";
+import { Search, Feather, BookOpen, Video, File, Loader2, CornerDownLeft } from "lucide-react";
 
-const TYPE_META: Record<ContentType, { labelEn: string; labelBn: string; icon: typeof FileText }> = {
-  post: { labelEn: "Reflections", labelBn: "প্রতিফলন", icon: FileText },
+const TYPE_META: Record<ContentType, { labelEn: string; labelBn: string; icon: typeof Feather }> = {
+  post: { labelEn: "Reflections", labelBn: "প্রতিফলন", icon: Feather },
   page: { labelEn: "Pages", labelBn: "পৃষ্ঠা", icon: File },
   book: { labelEn: "Books", labelBn: "বই", icon: BookOpen },
   video: { labelEn: "Videos", labelBn: "ভিডিও", icon: Video },

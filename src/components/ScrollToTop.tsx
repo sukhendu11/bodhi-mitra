@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useLang } from "@/lib/i18n";
 
 export function ScrollToTop() {
+  const { lang } = useLang();
   const [visible, setVisible] = useState(false);
   const [clicked, setClicked] = useState(false);
   const rafRef = useRef<number>(0);
@@ -29,7 +31,7 @@ export function ScrollToTop() {
   return (
     <button
       onClick={scrollToTop}
-      aria-label="Scroll to top"
+      aria-label={lang === "bn" ? "উপরে যান" : "Scroll to top"}
       className={`fixed bottom-20 right-6 z-50 w-10 h-10 flex items-center justify-center rounded-full border border-border/50 bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-background hover:shadow-md active:translate-y-0 transition-all duration-300 ${
         clicked ? "-translate-y-1 scale-90" : "hover:-translate-y-0.5"
       } ${

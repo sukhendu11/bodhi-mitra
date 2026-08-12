@@ -146,7 +146,7 @@ export function AvatarDropdown({
                       <Icon className="h-4 w-4" />
                       {bn ? item.label_bn : item.label_en}
                       {badgeCounts[item.id] > 0 && (
-                        <span className="ml-auto inline-flex items-center justify-center h-[18px] min-w-[18px] rounded-full bg-foreground text-background text-[10px] font-bold px-1 shadow-sm">
+                        <span className="ml-auto inline-flex items-center justify-center h-[18px] min-w-[18px] rounded-full bg-foreground text-background text-[10px] font-bold leading-none px-1 shadow-sm">
                           {formatCountBadge(badgeCounts[item.id], lang)}
                         </span>
                       )}

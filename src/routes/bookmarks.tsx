@@ -20,7 +20,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   Bookmark,
   ArrowLeft,
-  FileText,
+  Feather,
   BookOpen,
   X,
   ChevronRight,
@@ -333,7 +333,7 @@ function BookmarksPage() {
                       ) : isBook ? (
                         <BookOpen className="h-6 w-6 text-muted-foreground/40" />
                       ) : (
-                        <FileText className="h-6 w-6 text-muted-foreground/40" />
+                        <Feather className="h-6 w-6 text-muted-foreground/40" />
                       )}
                     </div>
 

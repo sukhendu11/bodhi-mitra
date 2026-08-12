@@ -1,13 +1,13 @@
 import {
   Home,
   BookOpen,
-  Book,
   Video,
   ShoppingCart,
   ShoppingBag,
   BarChart3,
   Settings,
   Shield,
+  Feather,
   Heart,
   ChevronDown,
   ChevronRight,
@@ -66,8 +66,8 @@ interface MobileNavProps {
 
 const PATH_ICONS: Record<string, React.ReactNode> = {
   "/": <Home className="h-4 w-4" />,
-  "/reflections": <BookOpen className="h-4 w-4" />,
-  "/books": <Book className="h-4 w-4" />,
+  "/reflections": <Feather className="h-4 w-4" />,
+  "/books": <BookOpen className="h-4 w-4" />,
   "/videos": <Video className="h-4 w-4" />,
   "/about": <Info className="h-4 w-4" />,
   "/purchases": <BookOpen className="h-4 w-4" />,
@@ -158,7 +158,7 @@ function NavItemEntry({
 function CountBadge({ count, lang }: { count: number; lang: "en" | "bn" }) {
   // min-w + px-1 (not a fixed w-5) so "99+" doesn't overflow the pill.
   return (
-    <span className="h-5 min-w-5 px-1 rounded-full bg-foreground text-background text-[10px] font-bold flex items-center justify-center shadow-sm">
+    <span className="h-5 min-w-5 px-1 rounded-full bg-foreground text-background text-[10px] font-bold leading-none flex items-center justify-center shadow-sm">
       {formatCountBadge(count, lang)}
     </span>
   );
@@ -346,7 +346,7 @@ function HamburgerButton({ open = false }: { open?: boolean }) {
   const bar =
     "absolute left-1/2 -translate-x-1/2 h-[2px] w-5 rounded-full bg-current transition-all duration-300 ease-out motion-reduce:transition-none";
   return (
-    <span className="relative block h-4 w-6" aria-hidden>
+    <span className="relative block h-4 w-5" aria-hidden>
       {/* Top bar → ✕ first leg (rotates down-right around its center) */}
       <span className={`${bar} top-[1px] ${open ? "translate-y-[6px] rotate-45" : ""}`} />
       {/* Middle bar → fades and shrinks away */}
@@ -424,7 +424,7 @@ function ProfileBlock({
           search={loginSearch ?? { message: "", redirect: "/" }}
           className={rowCls}
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/40 text-muted-foreground">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-saffron)]/10 text-[var(--color-saffron)]">
             <UserRound className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">
@@ -521,7 +521,7 @@ export function MobileNav({
             <SheetClose asChild>
               <button
                 aria-label="Close navigation menu"
-                className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/40 hover:scale-105 active:scale-90 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/40 hover:scale-105 active:scale-90 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 <MorphClose open={sheetOpen} />
               </button>
@@ -534,7 +534,8 @@ export function MobileNav({
 
         {/* ── Scrollable middle — only this region scrolls; the profile block
              and bottom utilities stay pinned below. ── */}
-        <nav className="relative flex-1 overflow-y-auto px-3 pb-4">
+        <div className="relative min-h-0 flex-1">
+        <nav className="h-full overflow-y-auto px-3 pb-2">
           {/* Browse section */}
           <SectionLabel>{lang === "bn" ? "ব্রাউজ করুন" : "Browse"}</SectionLabel>
           <NavSurface>
@@ -695,13 +696,19 @@ export function MobileNav({
           </NavSurface>
         </nav>
 
+        {/* Scroll-shadow fade — sits at the bottom of the scrollable nav and
+            dims the content edge into the divider below, so users can tell
+            the menu scrolls on small screens. Purely visual (pointer-events-
+            none, no layout space), so it adds no padding above the divider. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-background via-background/70 to-transparent" />
+        </div>
+
         {/* ── Persistent bottom profile block — Profile lives HERE, anchored
-             below the scrollable navigation. The divider on top is clearly
-             visible (border + hairline + soft shadow) so the pinned block
-             reads as a separate surface on small screens. ── */}
-        <div className="relative shrink-0 border-t border-border/25 px-4 py-3 bg-gradient-to-t from-saffron-50/[0.02] to-background shadow-[0_-8px_16px_-12px_hsl(var(--foreground)/0.25)]">
-          {/* Saffron-tinted hairline on the divider edge */}
-          <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-[var(--color-saffron)]/25 to-transparent" />
+             below the scrollable navigation. The top edge is a SINGLE
+             saffron-tinted divider (the saffron line IS the top border — no
+             stacked hairline and no upward shadow band above it) so the
+             pinned block reads as a separate surface on small screens. ── */}
+        <div className="relative shrink-0 border-t border-[var(--color-saffron)]/30 px-4 py-3 bg-gradient-to-t from-saffron-50/[0.02] to-background">
           <ProfileBlock
             isSignedIn={isSignedIn}
             userEmail={userEmail}

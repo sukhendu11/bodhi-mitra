@@ -13,7 +13,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ value, onChange, placeholder, accentColor }: SearchBarProps) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   const accentStyle: CSSProperties | undefined = accentColor
     ? ({ "--search-accent": accentColor } as CSSProperties)
@@ -41,7 +41,7 @@ export function SearchBar({ value, onChange, placeholder, accentColor }: SearchB
         <button
           onClick={() => onChange("")}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-foreground transition-colors duration-200"
-          aria-label="Clear search"
+          aria-label={lang === "bn" ? "অনুসন্ধান মুছুন" : "Clear search"}
         >
           <X className="h-4 w-4" />
         </button>

@@ -23,7 +23,7 @@ export function UserAvatar({ email, avatarUrl, size = "sm" }: UserAvatarProps) {
   return (
     <Avatar className={sizeClasses[size]}>
       {avatarUrl && <AvatarImage src={avatarUrl} alt={email} />}
-      <AvatarFallback className={`${sizeClasses[size]} bg-secondary/50 text-muted-foreground`}>
+      <AvatarFallback className={`${sizeClasses[size]} bg-[var(--color-saffron)]/10 text-[var(--color-saffron)]`}>
         <svg viewBox="0 0 119.683 119.683" fill="currentColor" className={iconSizes[size]}>
           <circle cx="59.058" cy="18.729" r="18.729" />
           <path d="M103.871,101.242c-0.698-5.748-4.909-7.937-12.004-9.021c-4.976,4.548-13.326,8.022-27.24,8.022c-1.926,0-3.786-0.489-5.454-1.426c-1.668,0.937-3.528,1.426-5.456,1.426c-13.785,0-22.109-3.412-27.1-7.898c-6.38,1.253-10.152,3.544-10.806,8.896c-0.416,3.445,0.659,6.824,3.029,9.518c6.678,7.592,24.951,8.85,35.247,8.923c0.021,0,0.043,0,0.063,0c2.184,0,4.173-0.821,5.69-2.168c1.516,1.347,3.506,2.168,5.689,2.168c0.021,0,0.042,0,0.063,0c10.297-0.073,28.57-1.331,35.25-8.925C103.215,108.066,104.287,104.688,103.871,101.242z" />

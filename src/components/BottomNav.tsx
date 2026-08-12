@@ -19,7 +19,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { getCartCount } from "@/lib/cart";
 import { callFn } from "@/lib/call-fn";
 import { openCartDrawer } from "@/lib/cart-events";
-import { Home, BookOpen, Book, Heart, ShoppingBag } from "lucide-react";
+import { Home, Feather, BookOpen, Heart, ShoppingBag } from "lucide-react";
 
 const SAFE_BOTTOM = "pb-[env(safe-area-inset-bottom)]";
 
@@ -58,7 +58,7 @@ export function BottomNav() {
     }`;
 
   const badge =
-    "absolute -top-1 -right-1.5 min-w-[16px] h-4 rounded-full bg-destructive text-white text-[9px] font-bold flex items-center justify-center px-1 ring-2 ring-background";
+    "absolute -top-1 -right-1.5 min-w-[16px] h-4 rounded-full bg-destructive text-white text-[9px] font-bold leading-none flex items-center justify-center px-1 ring-2 ring-background";
 
   return (
     <nav
@@ -74,22 +74,22 @@ export function BottomNav() {
         </Link>
 
         {/* Reflections — the hub page (category pages also light it up).
-            BookOpen matches the mobile-drawer icon AND the homepage section
-            header; Books uses `Book` (same pair as the mobile nav) so the two
-            tabs stay visually distinct. */}
+            Feather matches the mobile-drawer icon AND the homepage section
+            header; Books uses the open-book `BookOpen` (same as the mobile
+            nav) so the two tabs stay visually distinct. */}
         <Link
           to="/reflections"
           className={tabCls(currentPath.startsWith("/reflections"))}
         >
           <span className={iconWrapCls(currentPath.startsWith("/reflections"))}>
-            <BookOpen className="h-5 w-5 stroke-[1.8]" />
+            <Feather className="h-5 w-5 stroke-[1.8]" />
           </span>
           {lang === "bn" ? "প্রতিফলন" : "Reflections"}
         </Link>
 
         <Link to="/books" className={tabCls(currentPath.startsWith("/books"))}>
           <span className={iconWrapCls(currentPath.startsWith("/books"))}>
-            <Book className="h-5 w-5 stroke-[1.8]" />
+            <BookOpen className="h-5 w-5 stroke-[1.8]" />
           </span>
           {lang === "bn" ? "বই" : "Books"}
         </Link>

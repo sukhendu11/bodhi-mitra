@@ -6,6 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -61,25 +62,28 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, hideClose, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-      {!hideClose && (
-        /* Neutral close — smaller radius (rounded-lg) so the chip reads as
-           compact rather than a full circle; no colored tint/border. z-10
-           keeps it above positioned sheet content (e.g. MobileNav's relative
-           brand header). Only CartDrawer uses the built-in ✕ today (MobileNav
-           passes hideClose), so this styling is effectively cart-scoped. */
-        <SheetPrimitive.Close className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground/70 ring-offset-background cursor-pointer transition-all hover:bg-secondary/60 hover:text-foreground hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
-      )}
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-));
+>(({ side = "right", className, children, hideClose, ...props }, ref) => {
+  const { lang } = useLang();
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+        {!hideClose && (
+          /* Neutral close — smaller radius (rounded-lg) so the chip reads as
+             compact rather than a full circle; no colored tint/border. z-10
+             keeps it above positioned sheet content (e.g. MobileNav's relative
+             brand header). Only CartDrawer uses the built-in ✕ today (MobileNav
+             passes hideClose), so this styling is effectively cart-scoped. */
+          <SheetPrimitive.Close className="absolute right-4 top-4 z-10 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/70 ring-offset-background cursor-pointer transition-all hover:bg-secondary/60 hover:text-foreground hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <X className="h-3.5 w-3.5" />
+            <span className="sr-only">{lang === "bn" ? "বন্ধ করুন" : "Close"}</span>
+          </SheetPrimitive.Close>
+        )}
+        {children}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+});
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

@@ -11,6 +11,7 @@ import {
 import { useAuthSession } from "@/hooks/useAuth";
 import { callFn } from "@/lib/call-fn";
 import { isMockMode } from "@/lib/data-source";
+import { useLang } from "@/lib/i18n";
 import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { cn, ACTION_PILL_CLS } from "@/lib/utils";
@@ -47,6 +48,7 @@ export function BookmarkButton({
   className,
 }: BookmarkButtonProps) {
   const { user } = useAuthSession();
+  const { lang } = useLang();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const doToggle = useServerFn(toggleBookmark);
@@ -112,16 +114,27 @@ export function BookmarkButton({
           navigate({
             to: "/login",
             search: {
-              message: `Sign in to bookmark ${resourceType === "book" ? "books" : "posts"}`,
+              message:
+                lang === "bn"
+                  ? resourceType === "book"
+                    ? "বই বুকমার্ক করতে সাইন ইন করুন"
+                    : "পোস্ট বুকমার্ক করতে সাইন ইন করুন"
+                  : `Sign in to bookmark ${resourceType === "book" ? "books" : "posts"}`,
               redirect: typeof window !== "undefined" ? window.location.pathname : "",
             } as any,
           });
         }}
         className={cn(ACTION_PILL_CLS, className)}
-        title={`Sign in to bookmark this ${resourceType}`}
+        title={
+          lang === "bn"
+            ? resourceType === "book"
+              ? "এই বই বুকমার্ক করতে সাইন ইন করুন"
+              : "এই পোস্ট বুকমার্ক করতে সাইন ইন করুন"
+            : `Sign in to bookmark this ${resourceType}`
+        }
       >
         <Bookmark className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Bookmark</span>
+        <span className="hidden sm:inline">{lang === "bn" ? "বুকমার্ক" : "Bookmark"}</span>
       </button>
     );
   }
@@ -140,7 +153,17 @@ export function BookmarkButton({
           : "",
         className,
       )}
-      title={bookmarked ? "Remove bookmark" : `Bookmark this ${resourceType}`}
+      title={
+        lang === "bn"
+          ? bookmarked
+            ? "বুকমার্ক সরান"
+            : resourceType === "book"
+              ? "এই বই বুকমার্ক করুন"
+              : "এই পোস্ট বুকমার্ক করুন"
+          : bookmarked
+            ? "Remove bookmark"
+            : `Bookmark this ${resourceType}`
+      }
     >
       {mutation.isPending ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -149,7 +172,9 @@ export function BookmarkButton({
       ) : (
         <Bookmark className="h-3.5 w-3.5" />
       )}
-      <span className="hidden sm:inline">{bookmarked ? "Bookmarked" : "Bookmark"}</span>
+      <span className="hidden sm:inline">
+        {lang === "bn" ? (bookmarked ? "বুকমার্ক করা হয়েছে" : "বুকমার্ক") : bookmarked ? "Bookmarked" : "Bookmark"}
+      </span>
     </button>
   );
 }

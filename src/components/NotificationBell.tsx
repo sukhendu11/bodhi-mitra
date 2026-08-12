@@ -77,7 +77,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         <span className="relative block group-hover:scale-110 transition-transform duration-300">
           <Bell className="h-5 w-5" strokeWidth={1.8} />
           {visibleUnread > 0 && (
-            <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center px-1 ring-2 ring-background">
+            <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 rounded-full bg-destructive text-white text-[10px] font-bold leading-none flex items-center justify-center px-1 ring-2 ring-background">
               {formatCountBadge(visibleUnread, lang, 9)}
             </span>
           )}

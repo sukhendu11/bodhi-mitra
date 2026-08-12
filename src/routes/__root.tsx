@@ -245,7 +245,7 @@ function CartIcon({ count, isOpen, lang }: { count: number; isOpen?: boolean; la
     <span className="relative inline-flex items-center justify-center">
       <CartBagIcon isOpen={isOpen} />
       {count > 0 && (
-        <span className="absolute -top-2 -right-2.5 min-w-[18px] h-[18px] rounded-full bg-foreground text-background text-[10px] font-bold flex items-center justify-center px-1 shadow-sm ring-2 ring-background">
+        <span className="absolute -top-2 -right-2.5 min-w-[18px] h-[18px] rounded-full bg-foreground text-background text-[10px] font-bold leading-none flex items-center justify-center px-1 shadow-sm ring-2 ring-background">
           {formatCountBadge(count, lang, 9)}
         </span>
       )}

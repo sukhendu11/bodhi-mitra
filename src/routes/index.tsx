@@ -14,7 +14,7 @@ import { generateWebSiteSchema, generateOrganizationSchema } from "@/lib/structu
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { BookCard } from "@/components/BookCard";
-import { BookOpen, ArrowRight, Play, ShoppingCart, Loader2, PenLine, BookMarked, ChevronRight } from "lucide-react";
+import { BookOpen, ArrowRight, Play, ShoppingCart, Loader2, Feather, BookMarked, ChevronRight } from "lucide-react";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
 import { fetchPublishedBooks } from "@/lib/books";
 import { fetchPublishedVideos } from "@/lib/videos";
@@ -333,23 +333,24 @@ function Home() {
             </Reveal>
             {(hero.cta_label || hero.cta_label_bn) && hero.cta_url && (
               <Reveal delay={0.45}>
+                {/* The hero CTA is an underlined text link (not a button) —
+                    matches the site's quiet, editorial link language; the
+                    arrow slides on hover. */}
                 {isExternal ? (
-                  <a href={hero.cta_url} className="mt-10 inline-block">
-                    <BrandCtaButton asChild>
-                      <span className="inline-flex items-center gap-2 px-8 py-3 text-sm uppercase tracking-[0.18em]">
-                        {heroCtaLabel}
-                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-0.5" />
-                      </span>
-                    </BrandCtaButton>
+                  <a
+                    href={hero.cta_url}
+                    className="group mt-10 inline-flex items-center gap-2 border-b border-foreground/40 pb-1 text-sm uppercase tracking-[0.18em] text-foreground hover:border-foreground transition-colors duration-300"
+                  >
+                    {heroCtaLabel}
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                   </a>
                 ) : (
-                  <Link to={hero.cta_url} className="mt-10 inline-block">
-                    <BrandCtaButton asChild>
-                      <span className="inline-flex items-center gap-2 px-8 py-3 text-sm uppercase tracking-[0.18em]">
-                        {heroCtaLabel}
-                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-0.5" />
-                      </span>
-                    </BrandCtaButton>
+                  <Link
+                    to={hero.cta_url}
+                    className="group mt-10 inline-flex items-center gap-2 border-b border-foreground/40 pb-1 text-sm uppercase tracking-[0.18em] text-foreground hover:border-foreground transition-colors duration-300"
+                  >
+                    {heroCtaLabel}
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                   </Link>
                 )}
               </Reveal>
@@ -446,7 +447,7 @@ function Home() {
         <Reveal delay={0.1}>
           <div className="mb-10 space-y-5">
             <SectionHeader
-              icon={<PenLine className="h-5 w-5" />}
+              icon={<Feather className="h-5 w-5" />}
               title={t("recent_reflections")}
               viewAllTo="/reflections"
               viewAllLabel={lang === "bn" ? "সব প্রতিফলন" : "All reflections"}
