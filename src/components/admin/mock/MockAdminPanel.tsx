@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import {
   LayoutDashboard,
   BookOpen,
-  FileText,
+  Feather,
   Video,
   Receipt,
   Bell,
@@ -77,7 +77,7 @@ type TabId = "dashboard" | "books" | "posts" | "videos" | "orders" | "notificati
 const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "books", label: "Books", icon: BookOpen },
-  { id: "posts", label: "Reflections", icon: FileText },
+  { id: "posts", label: "Reflections", icon: Feather },
   { id: "videos", label: "Videos", icon: Video },
   { id: "orders", label: "Orders", icon: Receipt },
   { id: "notifications", label: "Notifications", icon: Bell },

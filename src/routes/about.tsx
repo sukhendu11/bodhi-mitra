@@ -6,7 +6,7 @@ import { fetchPageBySlug } from "@/lib/pages";
 import { Reveal } from "@/components/Reveal";
 import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
-import { PenLine, BookOpen, Play, HeartHandshake, ArrowRight } from "lucide-react";
+import { Feather, BookOpen, Play, HeartHandshake, ArrowRight } from "lucide-react";
 import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
@@ -46,7 +46,7 @@ function About() {
   const exploreItems = [
     {
       to: "/reflections" as const,
-      icon: PenLine,
+      icon: Feather,
       titleEn: "Reflections",
       titleBn: "প্রতিফলন",
       descEn: "Essays on the dharma, the mind, and the examined life.",
