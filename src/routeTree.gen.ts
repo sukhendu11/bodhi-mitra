@@ -17,11 +17,13 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReflectionsRouteImport } from './routes/reflections'
+import { Route as ReadingHistoryRouteImport } from './routes/reading-history'
 import { Route as PurchasesRouteImport } from './routes/purchases'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -90,6 +92,11 @@ const ReflectionsRoute = ReflectionsRouteImport.update({
   path: '/reflections',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReadingHistoryRoute = ReadingHistoryRouteImport.update({
+  id: '/reading-history',
+  path: '/reading-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PurchasesRoute = PurchasesRouteImport.update({
   id: '/purchases',
   path: '/purchases',
@@ -113,6 +120,11 @@ const OrdersRoute = OrdersRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -266,11 +278,13 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/purchases': typeof PurchasesRoute
+  '/reading-history': typeof ReadingHistoryRoute
   '/reflections': typeof ReflectionsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
@@ -307,11 +321,13 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/purchases': typeof PurchasesRoute
+  '/reading-history': typeof ReadingHistoryRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -349,11 +365,13 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/purchases': typeof PurchasesRoute
+  '/reading-history': typeof ReadingHistoryRoute
   '/reflections': typeof ReflectionsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
@@ -393,11 +411,13 @@ export interface FileRouteTypes {
     | '/faq'
     | '/forgot-password'
     | '/login'
+    | '/notifications'
     | '/onboarding'
     | '/orders'
     | '/privacy'
     | '/profile'
     | '/purchases'
+    | '/reading-history'
     | '/reflections'
     | '/reset-password'
     | '/search'
@@ -434,11 +454,13 @@ export interface FileRouteTypes {
     | '/faq'
     | '/forgot-password'
     | '/login'
+    | '/notifications'
     | '/onboarding'
     | '/orders'
     | '/privacy'
     | '/profile'
     | '/purchases'
+    | '/reading-history'
     | '/reset-password'
     | '/search'
     | '/settings'
@@ -475,11 +497,13 @@ export interface FileRouteTypes {
     | '/faq'
     | '/forgot-password'
     | '/login'
+    | '/notifications'
     | '/onboarding'
     | '/orders'
     | '/privacy'
     | '/profile'
     | '/purchases'
+    | '/reading-history'
     | '/reflections'
     | '/reset-password'
     | '/search'
@@ -518,11 +542,13 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
   OrdersRoute: typeof OrdersRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   PurchasesRoute: typeof PurchasesRoute
+  ReadingHistoryRoute: typeof ReadingHistoryRoute
   ReflectionsRoute: typeof ReflectionsRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
@@ -600,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReflectionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reading-history': {
+      id: '/reading-history'
+      path: '/reading-history'
+      fullPath: '/reading-history'
+      preLoaderRoute: typeof ReadingHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/purchases': {
       id: '/purchases'
       path: '/purchases'
@@ -633,6 +666,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -879,11 +919,13 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
   OrdersRoute: OrdersRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   PurchasesRoute: PurchasesRoute,
+  ReadingHistoryRoute: ReadingHistoryRoute,
   ReflectionsRoute: ReflectionsRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,

@@ -13,6 +13,7 @@ import { seoHead } from "@/lib/seo";
 import { BackLink } from "@/components/BackLink";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
 import { GiftBoxIcon } from "@/components/GiftBoxIcon";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { callFn } from "@/lib/call-fn";
 import { calculateTax } from "@/lib/commerce";
 import { toast } from "sonner";
@@ -52,6 +53,9 @@ function CartPage() {
   const [couponError, setCouponError] = useState("");
   const [discount, setDiscount] = useState(0);
   const [couponLoading, setCouponLoading] = useState(false);
+  // Destructive-action confirmations (bilingual, shared ConfirmDialog).
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
 
   const doValidateCoupon = useServerFn(validateCoupon);
 
@@ -142,6 +146,14 @@ function CartPage() {
   const tax = calculateTax(Math.max(0, totalPrice - discount), taxRate);
   const grandTotal = Math.max(0, totalPrice - discount + tax);
 
+  const pendingRemove = items.find((i) => i.id === confirmRemoveId);
+  const pendingRemoveTitle = pickLocalized(
+    pendingRemove?.book_title_en,
+    pendingRemove?.book_title_bn,
+    lang,
+    "",
+  );
+
   /* ── Not signed in state ─────────────────────────────────────── */
   if (!user) {
     return (
@@ -188,7 +200,7 @@ function CartPage() {
         </div>
         {itemCount > 0 && (
           <button
-            onClick={() => clearMutation.mutate()}
+            onClick={() => setConfirmClearOpen(true)}
             disabled={clearMutation.isPending}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-destructive border border-destructive/30 rounded-lg hover:bg-destructive/10 transition-colors disabled:opacity-50"
           >
@@ -300,7 +312,7 @@ function CartPage() {
 
                   {/* Remove button */}
                   <button
-                    onClick={() => removeMutation.mutate(item.id)}
+                    onClick={() => setConfirmRemoveId(item.id)}
                     disabled={removeMutation.isPending}
                     title={lang === "bn" ? "কার্ট থেকে সরান" : "Remove from cart"}
                     className="p-2 rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50 focus:opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100"
@@ -418,6 +430,42 @@ function CartPage() {
           </div>
         </div>
       )}
+
+      {/* ── Destructive-action confirmations ── */}
+      <ConfirmDialog
+        open={confirmClearOpen}
+        onOpenChange={setConfirmClearOpen}
+        title={lang === "bn" ? "কার্ট খালি করবেন?" : "Clear cart?"}
+        description={
+          lang === "bn"
+            ? `আপনার কার্টের ${toBanglaDigits(itemCount)}টি আইটেম মুছে যাবে। এটি ফিরিয়ে আনা যাবে না।`
+            : `Remove all ${itemCount} ${itemCount === 1 ? "item" : "items"} from your cart? This cannot be undone.`
+        }
+        confirmLabel={lang === "bn" ? "মুছুন" : "Clear"}
+        cancelLabel={lang === "bn" ? "বাতিল" : "Cancel"}
+        onConfirm={() => {
+          clearMutation.mutate();
+          setConfirmClearOpen(false);
+        }}
+      />
+      <ConfirmDialog
+        open={!!confirmRemoveId}
+        onOpenChange={(open) => {
+          if (!open) setConfirmRemoveId(null);
+        }}
+        title={lang === "bn" ? "কার্ট থেকে সরাবেন?" : "Remove from cart?"}
+        description={
+          lang === "bn"
+            ? `"${pendingRemoveTitle}" কার্ট থেকে সরানো হবে।`
+            : `Remove "${pendingRemoveTitle}" from your cart?`
+        }
+        confirmLabel={lang === "bn" ? "সরান" : "Remove"}
+        cancelLabel={lang === "bn" ? "বাতিল" : "Cancel"}
+        onConfirm={() => {
+          if (confirmRemoveId) removeMutation.mutate(confirmRemoveId);
+          setConfirmRemoveId(null);
+        }}
+      />
     </div>
   );
 }

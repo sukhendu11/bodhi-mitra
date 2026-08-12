@@ -20,6 +20,7 @@ import {
   getReadingHistory,
   type ReadingHistoryBook,
 } from "@/lib/reading-history";
+import { getReadingStats } from "@/lib/reading-stats";
 import { getSiteName } from "@/lib/siteSettings";
 import { useLang, timeAgo, toBanglaDigits, formatDate } from "@/lib/i18n";
 import { seoHead } from "@/lib/seo";
@@ -38,7 +39,7 @@ import {
   Heart,
   Bookmark,
   BookMarked,
-  Receipt,
+  ShoppingBag,
   ChevronRight,
   Bell,
   CheckCheck,
@@ -142,6 +143,15 @@ function ProfilePage() {
     enabled: !!user,
     staleTime: 30_000,
   });
+
+  /* ── Streak (from the history-derived stats — B4 2026-08-12) ── */
+  const { data: streakData } = useQuery({
+    queryKey: ["reading-streak", user?.id],
+    queryFn: () => getReadingStats(user?.id),
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+  const streak = streakData?.currentStreak ?? 0;
 
   const { data: readingStats } = useQuery({
     queryKey: ["user-reading-stats", user?.id],
@@ -316,6 +326,19 @@ function ProfilePage() {
                 <Pencil className="h-3 w-3" />
                 {lang === "bn" ? "প্রোফাইল সম্পাদনা করুন" : "Edit profile"}
               </Link>
+
+              {/* Streak chip — B4 2026-08-12 (links to the reading stats page) */}
+              {streak > 0 && (
+                <Link
+                  to="/stats"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 hover:shadow-sm transition-all duration-300"
+                >
+                  <span aria-hidden>🔥</span>
+                  {lang === "bn"
+                    ? `${toBanglaDigits(streak)} দিনের ধারাবাহিকতা`
+                    : `${streak}-day streak`}
+                </Link>
+              )}
             </div>
           </div>
 
@@ -365,11 +388,18 @@ function ProfilePage() {
           <div className="flex items-center gap-2 text-sm text-foreground mb-3">
             <Bell className="h-4 w-4 text-[var(--color-saffron)]/70" />
             <span className="font-medium">{lang === "bn" ? "বিজ্ঞপ্তি" : "Notifications"}</span>
+            <Link
+              to="/notifications"
+              className="ml-auto inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {lang === "bn" ? "সব দেখুন" : "View all"}
+              <ChevronRight className="h-3 w-3" />
+            </Link>
             {unreadNotifications > 0 && (
               <button
                 type="button"
                 onClick={markAllRead}
-                className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <CheckCheck className="h-3 w-3" />
                 {lang === "bn" ? "সব পড়া হয়েছে" : "Mark all read"}
@@ -538,6 +568,13 @@ function ProfilePage() {
               <span className="font-medium">
                 {lang === "bn" ? "পড়ার ইতিহাস" : "Reading History"}
               </span>
+              <Link
+                to="/reading-history"
+                className="ml-auto inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {lang === "bn" ? "সব দেখুন" : "View all"}
+                <ChevronRight className="h-3 w-3" />
+              </Link>
             </div>
             <ul className="space-y-1">
               {(readingHistory as ReadingHistoryBook[])
@@ -621,7 +658,7 @@ function ProfilePage() {
             to="/orders"
             className="group flex items-center gap-3 rounded-xl border border-border/40 bg-secondary/20 hover:border-[var(--color-saffron)]/40 hover:bg-secondary/40 p-4 transition-all duration-200"
           >
-            <Receipt className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
+            <ShoppingBag className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0" />
             <span className="text-sm font-medium">
               {lang === "bn" ? "অর্ডার ও রসিদ" : "Orders & receipts"}
             </span>

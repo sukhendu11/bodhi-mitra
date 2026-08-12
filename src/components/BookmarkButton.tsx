@@ -73,6 +73,7 @@ export function BookmarkButton({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ["user-bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["bookmark-count"] });
     },
   });
 

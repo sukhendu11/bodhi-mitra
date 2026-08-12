@@ -3,18 +3,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchPublishedBooks, type Book } from "@/lib/books";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useAuthSession } from "@/hooks/useAuth";
-import { useLang, localizeCartResult } from "@/lib/i18n";
+import { useLang, localizeCartResult, toBanglaDigits } from "@/lib/i18n";
 import { useServerFn } from "@tanstack/react-start";
 import { addToCart } from "@/lib/cart";
 import type { MockCartBookSnapshot } from "@/lib/mock-cart";
 import { callFn } from "@/lib/call-fn";
 import { openCartDrawer } from "@/lib/cart-events";
-import { Heart, ArrowLeft, BookOpen, Loader2 } from "lucide-react";
+import { Heart, ArrowLeft, BookOpen, Loader2, ShoppingCart } from "lucide-react";
+import { useState } from "react";
 import { getSiteName } from "@/lib/siteSettings";
 import { ErrorPage } from "@/components/error-page";
 import { BookCard } from "@/components/BookCard";
 import { BookSkeleton } from "@/components/BookSkeleton";
+import { Reveal } from "@/components/Reveal";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import { seoHead } from "@/lib/seo";
 
@@ -34,8 +37,10 @@ function WishlistPage() {
   const { user } = useAuthSession();
   const { lang } = useLang();
   const queryClient = useQueryClient();
-  const { ids: wishlistIds, remove: removeFromWishlist } = useWishlist();
+  const { ids: wishlistIds, remove: removeFromWishlist, clear: clearWishlist } = useWishlist();
   const doAddToCart = useServerFn(addToCart);
+  // Pending destructive remove — confirmed via the shared ConfirmDialog.
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
 
   // Fetch all books to get details for wishlisted IDs
   const { data: allBooksData, isLoading: booksLoading, isError: booksError } = useQuery({
@@ -65,6 +70,28 @@ function WishlistPage() {
     cartMutation.mutate({ bookId: book.id, book });
   };
 
+  /* ── Bulk action: move ALL wishlisted books to the cart ──────── */
+  const bulkMoveMutation = useMutation({
+    mutationFn: async (books: Book[]) => {
+      // Sequentially add each book (the server mock is idempotent per book).
+      for (const book of books) {
+        await callFn(doAddToCart, { bookId: book.id, book: book as MockCartBookSnapshot });
+      }
+    },
+    onSuccess: (_res, books) => {
+      // Everything added — clear the wishlist and surface the drawer.
+      clearWishlist();
+      toast.success(
+        lang === "bn"
+          ? `${books.length}টি বই কার্টে যোগ করা হয়েছে`
+          : `${books.length} book${books.length !== 1 ? "s" : ""} moved to cart`,
+      );
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+      openCartDrawer();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   const allBooks: Book[] = allBooksData?.data ?? [];
   const wishlistBooks = allBooks.filter((book) => wishlistIds.includes(String(book.id)));
 
@@ -77,9 +104,10 @@ function WishlistPage() {
   }
 
   const handleRemove = (bookId: string) => {
-    removeFromWishlist(bookId);
-    toast.success(lang === "bn" ? "উইশলিস্ট থেকে সরানো হয়েছে" : "Removed from wishlist");
+    setConfirmRemoveId(bookId);
   };
+
+  const pendingRemoveBook = allBooks.find((b) => String(b.id) === confirmRemoveId);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
@@ -113,20 +141,68 @@ function WishlistPage() {
           </BrandCtaButton>
         </div>
       ) : (
-        <div className="book-grid">
-          {wishlistBooks.map((book) => (
-            <BookCard
-              key={book.id}
-              book={book}
-              lang={lang}
-              userId={user?.id}
-              onRemove={handleRemove}
-              onAddToCart={handleMoveToCart}
-              isCartAdding={cartMutation.isPending}
-            />
-          ))}
-        </div>
+        <>
+          {/* Bulk action bar — appears when 2+ books are wishlisted */}
+          {wishlistBooks.length > 1 && (
+            <div className="mb-8 flex flex-wrap items-center gap-3">
+              <p className="text-xs text-muted-foreground">
+                {lang === "bn"
+                  ? `${toBanglaDigits(wishlistBooks.length)}টি বই আপনার তালিকায় আছে`
+                  : `${wishlistBooks.length} book${wishlistBooks.length !== 1 ? "s" : ""} in your wishlist`}
+              </p>
+              <button
+                onClick={() => bulkMoveMutation.mutate(wishlistBooks)}
+                disabled={bulkMoveMutation.isPending}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[var(--color-saffron)]/40 bg-[var(--color-saffron)]/10 px-4 py-2 text-xs font-medium text-[var(--color-saffron)] hover:bg-[var(--color-saffron)]/20 hover:shadow-sm active:scale-95 transition-all duration-300 disabled:opacity-50"
+              >
+                {bulkMoveMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ShoppingCart className="h-3.5 w-3.5" />
+                )}
+                {lang === "bn" ? "সব কার্টে যোগ করুন" : "Move all to cart"}
+              </button>
+            </div>
+          )}
+          <div className="book-grid">
+            {wishlistBooks.map((book, i) => (
+              <Reveal key={book.id} delay={Math.min(i * 0.04, 0.3)}>
+                <BookCard
+                  book={book}
+                  lang={lang}
+                  userId={user?.id}
+                  onRemove={handleRemove}
+                  onAddToCart={handleMoveToCart}
+                  isCartAdding={cartMutation.isPending}
+                />
+              </Reveal>
+            ))}
+          </div>
+        </>
       )}
+
+      {/* ── Destructive-action confirmation ── */}
+      <ConfirmDialog
+        open={!!confirmRemoveId}
+        onOpenChange={(open) => {
+          if (!open) setConfirmRemoveId(null);
+        }}
+        title={lang === "bn" ? "উইশলিস্ট থেকে সরাবেন?" : "Remove from wishlist?"}
+        description={
+          lang === "bn"
+            ? `"${pendingRemoveBook?.title_bn || pendingRemoveBook?.title_en || ""}" উইশলিস্ট থেকে সরানো হবে।`
+            : `Remove "${pendingRemoveBook?.title_en || pendingRemoveBook?.title_bn || ""}" from your wishlist?`
+        }
+        confirmLabel={lang === "bn" ? "সরান" : "Remove"}
+        cancelLabel={lang === "bn" ? "বাতিল" : "Cancel"}
+        onConfirm={() => {
+          if (confirmRemoveId) {
+            removeFromWishlist(confirmRemoveId);
+            toast.success(lang === "bn" ? "উইশলিস্ট থেকে সরানো হয়েছে" : "Removed from wishlist");
+          }
+          setConfirmRemoveId(null);
+        }}
+      />
     </div>
   );
 }

@@ -2,6 +2,42 @@
 
 ## 2026-08-12
 
+### Mobile consolidation, FAB scroll behavior, universal counters & confirm dialogs
+
+**Mobile header + bottom nav consolidation.** Cart and Wishlist icons removed from the mobile header row (the bottom nav owns them — header now shows Search · Notifications · hamburger). Reflections tab added to the bottom nav (`BottomNav`): Home · Reflections · Books · Wishlist · Cart; icon pair unified with the mobile drawer + homepage header (`BookOpen` Reflections / `Book` Books — was a mismatched Feather + BookOpen pair). Desktop header's Bookmarks icon (added earlier this session) removed again — bookmarks stays reachable via the avatar dropdown + mobile drawer badges.
+
+**AI chat FAB scroll behavior — hide only while scrolling.** The FAB now hides ONLY during active downward scrolling and reappears ~300ms after scrolling pauses (`FAB_REVEAL_GRACE_MS`), on scroll-up, or near the top. Extracted from `AiChatPanel.tsx` into a testable seam: `src/lib/fab-scroll-visibility.ts` (pure reducer `fabScrollStep` + constants) + `src/hooks/useFabScrollVisibility.ts`. New jsdom suite `useFabScrollVisibility.test.tsx` (6 tests, fake timers + `window.scrollY` override) proves pause-reveal, up-scroll, sub-threshold jitter, sustained-drift detection, and timer cleanup on unmount.
+
+**Wishlist / cart / bookmarks counters on all screen types.** New `getBookmarkCount` server fn (mock-aware; Supabase `head: true` count) + `getBookmarkCountClient`, and shared `useBookmarkCount` hook (`["bookmark-count", userId]` query, invalidated on every toggle/remove). Badges now show on: mobile drawer (wishlist + bookmarks added; cart kept), avatar dropdown (cart + wishlist + bookmarks added, `ml-auto` pill), desktop header (cart + wishlist kept). `CountBadge` uses `min-w + px-1` so `99+` never overflows; `AvatarDropdown.test.tsx` now wraps with QueryClient + WishlistProvider, silences `useServerFn` router warnings via `importOriginal` partial mock, and gained a badge-rendering test (6 tests).
+
+**Cart drawer UX.** Mobile width narrowed `w-[88%]` → `w-[75%]` for a wider click-outside strip; close ✕ radius `rounded-full` → `rounded-lg` (cart is the only consumer of the built-in sheet ✕); header `pr-12` → `pr-16` plus `flex-wrap gap-x-4` so "Clear all" has real breathing room from the ✕ on every device. Notification panel header gained a matching neutral ✕ close button (same `handleOpen(false)` path → keeps mark-all-read-on-close).
+
+**Destructive-action confirmations.** Clear cart (drawer + `/cart`), per-item cart remove (drawer + page), bookmark X remove, and wishlist per-book remove now all ask first via the shared bilingual `ConfirmDialog` (AlertDialog): titled "Clear cart? / Remove from cart? / Remove bookmark? / Remove from wishlist?" with Cancel (বাতিল) + destructive Confirm. "Move all to cart" deliberately excluded (additive, clearly labeled). Book-review delete keeps its existing two-step confirm.
+
+**Mobile brand & close polish.** Mobile header site name `text-2xl` → `text-3xl`; drawer brand header `text-lg` → `text-xl`; drawer ✕ button tightened `h-10` → `h-9` → `h-8` (compact padding around the morphing icon).
+
+- **Validated** — 0 TS errors, 618/618 tests (6 FAB + 1 dropdown badge), 56/56 responsive-contract guards, code-reviewed (CountBadge overflow, useServerFn warnings, FAB hook parity, confirm-dialog hooks-order + nesting).
+
+### Enhancement batch — global search, mobile bottom bar, notifications & reading pages, CTA polish
+
+**A1 — Global search (⌘K palette + header).** New `SearchPalette` (cmdk `Command.Dialog`) searches posts/books/videos/pages via the mock-first `searchContent` server fn — debounced 250ms, race-guarded, results grouped by type with covers. Opens from ⌘K/Ctrl+K, a desktop header search icon (Section 3), a mobile header icon, and the bottom-bar Search tab (`openSearchPalette` event bus). Chat's ⌘K shortcut moved to `/` only so search owns ⌘K.
+
+**A2 — Mobile bottom tab bar.** New `BottomNav` (`md:hidden fixed z-[44]`): Home · Books · Search · Wishlist · Cart with live badges (shared `cart-count` query + wishlist store). Page gets `pb-16 md:pb-0` so content clears the bar; chat FAB raised to `max-sm:bottom-24`. Hidden on `/reader` and `/checkout` (immersive/focused flows).
+
+**A3 — Full notifications page.** New `/notifications` route — full topic-gated list via the shared `useNotifications` hook, mark-read on tap, mark-all-read, unread count pill. Header bell's "View all" and the profile Notifications card now deep-link here (was capped at 5–8).
+
+**B1 — Continue Reading strip.** Homepage section for signed-in users: up to 4 in-progress books from `getUserProgress` joined to book covers, each with a cover thumb, % and progress bar, horizontal `thumbnail-scroll` row, "Continue" links to the book.
+
+**B2 — Full reading-history page.** New `/reading-history` route (200 entries, cover + page/progress bar + time ago); profile's Reading History card gained "View all".
+
+**B3 — Wishlist bulk move.** `useWishlist` gained `clear()`; wishlist page shows a "Move all to cart" bar when 2+ books — sequentially adds each, clears the wishlist, toasts, opens the drawer.
+
+**B4 — Streak chip.** Profile identity card shows a 🔥 N-day streak pill (from `getReadingStats`) linking to `/stats`.
+
+**C1–C3 — CTA & section polish.** Hero CTA upgraded from a plain underline link to the shared `BrandCtaButton` (gradient + shimmer, arrow slides on `group-hover/cta`). `HomeSectionHeader` extracted to shared `SectionHeader.tsx` (used by homepage sections + the new Continue Reading strip). Reveal scroll animation added to videos grid cards and the wishlist grid.
+
+- **Validated** — 0 TS errors, 611/611 tests, 56/56 responsive-contract guards (new files avoid unwrapped justify-between rows), full build passes, code-reviewed (shouldFilter, reader/checkout bar hiding, clear() reuse, debounce race guard applied).
+
 ### Mobile menu synced with the desktop dropdown
 
 **The mobile drawer's ACCOUNT section now mirrors the dropdown's Financial / Stats / Settings grouping.**

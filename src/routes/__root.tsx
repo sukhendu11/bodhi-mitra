@@ -32,6 +32,9 @@ import { callFn } from "@/lib/call-fn";
 import { WishlistBadge } from "@/components/WishlistBadge";
 import { WishlistProvider } from "@/hooks/useWishlist";
 import { NotificationBell } from "@/components/NotificationBell";
+import { SearchPalette } from "@/components/SearchPalette";
+import { openSearchPalette } from "@/lib/search-events";
+import { BottomNav } from "@/components/BottomNav";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AiChatPanel } from "@/components/AiChatPanel";
 import { AvatarDropdown } from "@/components/AvatarDropdown";
@@ -39,6 +42,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { LotusIcon } from "@/components/LotusIcon";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
+import { Search } from "lucide-react";
 import { SiteToaster } from "@/components/SiteToaster";
 import { useTheme } from "@/hooks/useTheme";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -362,8 +366,23 @@ function Header() {
             </nav>
           </div>
 
-          {/* SECTION 3 — Notifications + Wishlist + Cart (after nav) */}
+          {/* SECTION 3 — Search + Notifications + Wishlist + Cart (after nav) */}
           <div className="flex items-center flex-shrink-0 gap-5">
+            {/* Search — opens the global ⌘K palette */}
+            <div className="group/icon relative flex flex-col items-center">
+              <button
+                onClick={openSearchPalette}
+                aria-label={lang === "bn" ? "অনুসন্ধান" : "Search"}
+                title={lang === "bn" ? "অনুসন্ধান (⌘K)" : "Search (⌘K)"}
+                className="group relative block p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Search className="h-5 w-5 stroke-[1.8] block group-hover:scale-110 transition-transform duration-300" />
+              </button>
+              <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.12em] text-foreground/60 whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity duration-300 pointer-events-none">
+                {lang === "bn" ? "অনুসন্ধান" : "Search"}
+              </span>
+            </div>
+
             {/* Notifications (signed-in only) */}
             {user && (
               <div className="group/icon relative flex flex-col items-center">
@@ -414,6 +433,8 @@ function Header() {
                 avatarUrl={user.user_metadata?.avatar_url}
                 isAdmin={!!isAdmin}
                 strapiUrl={import.meta.env.VITE_STRAPI_URL}
+                userId={user.id}
+                cartCount={cartCount}
                 onSignOut={() => signOut()}
               />
             ) : (
@@ -428,7 +449,7 @@ function Header() {
 
         {/* ── Mobile: logo + actions + hamburger ── */}
         <div className="md:hidden flex w-full items-center justify-between gap-2">
-          <Link to="/" className="font-serif text-2xl tracking-tight flex items-center gap-3 min-w-0">
+          <Link to="/" className="font-serif text-3xl tracking-tight flex items-center gap-3 min-w-0">
             {layout.logoUrl ? (
               <img
                 src={layout.logoUrl}
@@ -441,22 +462,21 @@ function Header() {
             )}
           </Link>
           <div className="flex items-center gap-0.5 sm:gap-2">
+            {/* Search — opens the global ⌘K palette */}
+            <button
+              onClick={openSearchPalette}
+              aria-label={lang === "bn" ? "অনুসন্ধান" : "Search"}
+              className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors hover:scale-110 active:scale-95"
+            >
+              <Search className="h-5 w-5 stroke-[1.8]" />
+            </button>
             {/* Notifications (signed-in only) */}
             {user && (
               <div className="mr-0.5">
                 <NotificationBell userId={user.id} />
               </div>
             )}
-            {/* Wishlist — after the bell, same heart as desktop */}
-            <WishlistBadge />
-            {/* Cart */}
-            <CartDrawer cartCount={cartCount}>
-              {(open) => (
-                <button className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-full hover:scale-110 active:scale-95">
-                  <CartIcon count={cartCount} isOpen={open} />
-                </button>
-              )}
-            </CartDrawer>
+            {/* Wishlist lives in the bottom nav on mobile — no header heart */}
             <MobileNav
               items={layout.mobileItems.map((item) => ({
                 to: item.type === "external" ? item.url : item.slug || "/",
@@ -476,6 +496,7 @@ function Header() {
               isSignedIn={!!user}
               adminLabel="Admin"
               cartCount={cartCount}
+              userId={user?.id}
               // Profile lives in the drawer's persistent bottom block — the
               // display name comes from user metadata (mock session puts it in
               // `display_name`; Google OAuth may set `name`/`full_name`).
@@ -736,7 +757,7 @@ function RootComponent() {
             <WishlistProvider>
             <MaintenanceGate>
               <LayoutProvider>
-              <div className="min-h-screen flex flex-col">
+              <div className="min-h-screen flex flex-col pb-16 md:pb-0">
                 <ReadingProgress />
                 <Header />
                 <main className="flex-1">
@@ -744,8 +765,10 @@ function RootComponent() {
                 </main>
                 <Footer />
               </div>
+              <BottomNav />
               {useFeatureFlag("ai_chat") && <AiChatPanel />}
               <ScrollToTop />
+              <SearchPalette />
               <SiteToaster />
               </LayoutProvider>
             </MaintenanceGate>

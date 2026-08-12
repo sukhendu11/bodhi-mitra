@@ -63,6 +63,10 @@ export function getUserBookmarksClient(userId?: string): Promise<BookmarkedItem[
   return mockGetUserBookmarks(userId ?? "");
 }
 
+export function getBookmarkCountClient(userId?: string): Promise<number> {
+  return mockGetUserBookmarks(userId ?? "").then((items) => items.length);
+}
+
 /* ─── Toggle bookmark (post or book) ────────────────────────────── */
 
 export const toggleBookmark = createServerFn({ method: "POST" })
@@ -214,6 +218,39 @@ export const getUserBookmarks = createServerFn({ method: "GET" })
       });
 
       return results;
+    },
+  );
+
+/* ─── Get total bookmark count (badges across header/dropdown/nav) ─ */
+
+export const getBookmarkCount = createServerFn({ method: "GET" })
+  .middleware([requireAuthOrMock])
+  .handler(
+    async ({
+      context,
+      data,
+    }: {
+      context: { supabase: any; userId: string | null };
+      data: unknown;
+    }) => {
+      const { supabase: ctxSupabase, userId } = context;
+      const input = (data ?? {}) as { userId?: string };
+      const uid = userId ?? input.userId ?? "";
+
+      // Mock mode — localStorage-backed store (client wrapper is used in mock
+      // mode by UI components so the count survives reloads).
+      if (!ctxSupabase || isMockMode()) {
+        return mockGetUserBookmarks(uid).then((items) => items.length);
+      }
+
+      const db = ctxSupabase;
+      const { count, error } = await db
+        .from("bookmarks")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", uid);
+
+      if (error) throw error;
+      return count ?? 0;
     },
   );
 

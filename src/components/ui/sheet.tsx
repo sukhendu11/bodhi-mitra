@@ -66,9 +66,12 @@ const SheetContent = React.forwardRef<
     <SheetOverlay />
     <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
       {!hideClose && (
-        /* Neutral circular close — no colored tint/border. z-10 keeps it above
-           positioned sheet content (e.g. MobileNav's relative brand header). */
-        <SheetPrimitive.Close className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground/70 ring-offset-background cursor-pointer transition-all hover:bg-secondary/60 hover:text-foreground hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+        /* Neutral close — smaller radius (rounded-lg) so the chip reads as
+           compact rather than a full circle; no colored tint/border. z-10
+           keeps it above positioned sheet content (e.g. MobileNav's relative
+           brand header). Only CartDrawer uses the built-in ✕ today (MobileNav
+           passes hideClose), so this styling is effectively cart-scoped. */
+        <SheetPrimitive.Close className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground/70 ring-offset-background cursor-pointer transition-all hover:bg-secondary/60 hover:text-foreground hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>

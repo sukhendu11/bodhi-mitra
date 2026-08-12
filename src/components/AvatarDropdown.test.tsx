@@ -9,8 +9,23 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "@/lib/i18n";
+import { WishlistProvider } from "@/hooks/useWishlist";
 import { AvatarDropdown } from "./AvatarDropdown";
+
+// useBookmarkCount calls useServerFn internally (which needs a RouterProvider
+// outside tests). No userId is passed, so the count query is disabled and the
+// fn is never invoked — returning it as-is silences the router warnings.
+// importOriginal keeps the rest of the module intact (bookmarks.ts pulls
+// createMiddleware from it at load time).
+vi.mock("@tanstack/react-start", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-start")>();
+  return {
+    ...actual,
+    useServerFn: (fn: unknown) => fn,
+  };
+});
 
 // AvatarDropdown's only router import is <Link> — render it as a plain anchor
 // so the test needs no RouterProvider.
@@ -53,11 +68,21 @@ describe("AvatarDropdown — regrouped sections", () => {
   const renderMenu = ({
     isAdmin = false,
     strapiUrl = "https://cms.example.com",
-  }: { isAdmin?: boolean; strapiUrl?: string } = {}) =>
+    cartCount = 0,
+  }: { isAdmin?: boolean; strapiUrl?: string; cartCount?: number } = {}) =>
     render(
-      <LanguageProvider>
-        <AvatarDropdown isAdmin={isAdmin} strapiUrl={strapiUrl} onSignOut={() => {}} />
-      </LanguageProvider>,
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <LanguageProvider>
+          <WishlistProvider>
+            <AvatarDropdown
+              isAdmin={isAdmin}
+              strapiUrl={strapiUrl}
+              cartCount={cartCount}
+              onSignOut={() => {}}
+            />
+          </WishlistProvider>
+        </LanguageProvider>
+      </QueryClientProvider>,
     );
 
   const open = () => {
@@ -167,5 +192,20 @@ describe("AvatarDropdown — regrouped sections", () => {
     expect(screen.queryByText("Admin")).not.toBeInTheDocument();
     expect(screen.queryByText("অ্যাডমিন")).not.toBeInTheDocument();
     expect(separators()).toBe(5);
+  });
+
+  it("shows a count badge on the Cart entry when cartCount > 0", async () => {
+    renderMenu({ isAdmin: true, cartCount: 3 });
+    open();
+
+    await waitFor(() =>
+      expect(screen.getByText("Orders & Receipts")).toBeInTheDocument(),
+    );
+
+    // Badge renders the count inside the Cart row (wishlist + bookmarks stay
+    // at 0 without seeded state / userId, so no other badges appear).
+    const cartRow = screen.getByText("Cart").closest("a");
+    expect(cartRow).not.toBeNull();
+    expect(cartRow?.textContent).toContain("3");
   });
 });

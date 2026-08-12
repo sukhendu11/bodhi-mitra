@@ -26,6 +26,8 @@ import { LotusIcon } from "./LotusIcon";
 import { useSiteSettings } from "@/lib/siteSettings";
 import { useLang } from "@/lib/i18n";
 import { PROFILE_MENU_GROUP_LABELS } from "@/lib/profile-menu";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useBookmarkCount } from "@/hooks/useBookmarkCount";
 
 /* ─── Types ─────────────────────────────────────────────── */
 
@@ -48,6 +50,8 @@ interface MobileNavProps {
   isSignedIn?: boolean;
   adminLabel?: string;
   cartCount?: number;
+  /** Needed for the bookmarks count badge (auth-required in all modes). */
+  userId?: string;
   userEmail?: string;
   userAvatarUrl?: string | null;
   userDisplayName?: string;
@@ -146,6 +150,17 @@ function NavItemEntry({
         {suffix}
       </Link>
     </SheetClose>
+  );
+}
+
+/* ─── Compact count chip for the Account rows ───────────── */
+
+function CountBadge({ count }: { count: number }) {
+  // min-w + px-1 (not a fixed w-5) so "99+" doesn't overflow the pill.
+  return (
+    <span className="h-5 min-w-5 px-1 rounded-full bg-foreground text-background text-[10px] font-bold flex items-center justify-center shadow-sm">
+      {count > 99 ? "99+" : count}
+    </span>
   );
 }
 
@@ -443,11 +458,16 @@ export function MobileNav({
   signOutLabel,
   onSignOut,
   loginSearch,
+  userId,
 }: MobileNavProps) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const config = useSiteSettings();
   const { lang } = useLang();
+  // Live count badges for the Account rows — same shared stores/queries as
+  // the header + bottom nav (wishlist context, bookmark-count query).
+  const { count: wishlistCount } = useWishlist();
+  const bookmarkCount = useBookmarkCount(userId);
   const navStyle = config.navigation?.mobile_nav_style || "slide";
   const { getStyle, visible } = useStaggeredEntrance(50);
 
@@ -492,7 +512,7 @@ export function MobileNav({
           <SheetClose asChild>
             <Link
               to="/"
-              className="font-serif text-lg tracking-tight text-foreground hover:opacity-80 transition-opacity inline-flex items-center gap-2 min-w-0"
+              className="font-serif text-xl tracking-tight text-foreground hover:opacity-80 transition-opacity inline-flex items-center gap-2 min-w-0"
             >
               <span className="text-[var(--color-saffron)]">❖</span>
               <span className="truncate">{displayBrand}</span>
@@ -501,7 +521,7 @@ export function MobileNav({
             <SheetClose asChild>
               <button
                 aria-label="Close navigation menu"
-                className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/40 hover:scale-105 active:scale-90 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/40 hover:scale-105 active:scale-90 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 <MorphClose open={sheetOpen} />
               </button>
@@ -623,9 +643,7 @@ export function MobileNav({
               label={lang === "bn" ? "কার্ট" : "Cart"}
               suffix={
                 cartCount != null && cartCount > 0 ? (
-                  <span className="w-5 h-5 rounded-full bg-foreground text-background text-[10px] font-bold flex items-center justify-center shadow-sm">
-                    {cartCount > 9 ? "9+" : cartCount}
-                  </span>
+                  <CountBadge count={cartCount} />
                 ) : undefined
               }
               style={getStyle(nextIndex())}
@@ -633,11 +651,13 @@ export function MobileNav({
             <NavItemEntry
               to="/wishlist"
               label={lang === "bn" ? "ইচ্ছাতালিকা" : "Wishlist"}
+              suffix={wishlistCount > 0 ? <CountBadge count={wishlistCount} /> : undefined}
               style={getStyle(nextIndex())}
             />
             <NavItemEntry
               to="/bookmarks"
               label={lang === "bn" ? "বুকমার্ক" : "Bookmarks"}
+              suffix={bookmarkCount > 0 ? <CountBadge count={bookmarkCount} /> : undefined}
               style={getStyle(nextIndex())}
             />
 

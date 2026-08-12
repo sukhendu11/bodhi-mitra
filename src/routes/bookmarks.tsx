@@ -16,6 +16,7 @@ import { callFn } from "@/lib/call-fn";
 import { getSiteName } from "@/lib/siteSettings";
 import { ErrorPage } from "@/components/error-page";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   Bookmark,
   ArrowLeft,
@@ -70,6 +71,8 @@ function BookmarksPage() {
   const { lang } = useLang();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("all");
+  // Pending destructive remove — confirmed via the shared ConfirmDialog.
+  const [confirmRemove, setConfirmRemove] = useState<BookmarkedItem | null>(null);
   const doGetBookmarks = useServerFn(getUserBookmarks);
   const doToggle = useServerFn(toggleBookmark);
   const isMock = isMockMode();
@@ -104,6 +107,7 @@ function BookmarksPage() {
           }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["bookmark-count"] });
       toast.success(lang === "bn" ? "বুকমার্ক থেকে সরানো হয়েছে" : "Removed from bookmarks");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -278,6 +282,26 @@ function BookmarksPage() {
         </div>
       )}
 
+      {/* ── Destructive-action confirmation ── */}
+      <ConfirmDialog
+        open={!!confirmRemove}
+        onOpenChange={(open) => {
+          if (!open) setConfirmRemove(null);
+        }}
+        title={lang === "bn" ? "বুকমার্ক সরাবেন?" : "Remove bookmark?"}
+        description={
+          lang === "bn"
+            ? `"${confirmRemove?.titleBn || confirmRemove?.titleEn || ""}" বুকমার্ক থেকে সরানো হবে।`
+            : `Remove "${confirmRemove?.titleEn || confirmRemove?.titleBn || ""}" from your bookmarks?`
+        }
+        confirmLabel={lang === "bn" ? "সরান" : "Remove"}
+        cancelLabel={lang === "bn" ? "বাতিল" : "Cancel"}
+        onConfirm={() => {
+          if (confirmRemove) removeMutation.mutate(confirmRemove);
+          setConfirmRemove(null);
+        }}
+      />
+
       {/* List */}
       {!isLoading && !isError && list.length > 0 && (
         <ul className="space-y-3">
@@ -366,7 +390,7 @@ function BookmarksPage() {
                   {/* Remove (sibling of the Link — never nested) */}
                   <button
                     type="button"
-                    onClick={() => removeMutation.mutate(item)}
+                    onClick={() => setConfirmRemove(item)}
                     disabled={removeMutation.isPending}
                     aria-label={lang === "bn" ? "বুকমার্ক সরান" : "Remove bookmark"}
                     title={lang === "bn" ? "বুকমার্ক সরান" : "Remove bookmark"}

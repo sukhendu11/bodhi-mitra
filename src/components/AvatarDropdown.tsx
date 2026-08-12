@@ -10,11 +10,17 @@ import {
 import { ExternalLink, LogOut } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { getProfileMenuItems, PROFILE_MENU_GROUP_LABELS } from "@/lib/profile-menu";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useBookmarkCount } from "@/hooks/useBookmarkCount";
 
 interface AvatarDropdownProps {
   avatarUrl?: string | null;
   isAdmin?: boolean;
   strapiUrl?: string;
+  /** Needed for the bookmarks count badge. */
+  userId?: string;
+  /** Shared cart count (same query the header + bottom nav use). */
+  cartCount?: number;
   onSignOut: () => void;
 }
 
@@ -63,14 +69,26 @@ export function AvatarDropdown({
   avatarUrl,
   isAdmin,
   strapiUrl,
+  userId,
+  cartCount = 0,
   onSignOut,
 }: AvatarDropdownProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { lang } = useLang();
   const bn = lang === "bn";
+  const { count: wishlistCount } = useWishlist();
+  const bookmarkCount = useBookmarkCount(userId);
   const menuItems = getProfileMenuItems().filter(
     (item) => !item.adminOnly || isAdmin,
   );
+
+  // Live count badges for the Financial rows — same stores/queries as the
+  // header + bottom nav, so all surfaces agree.
+  const badgeCounts: Record<string, number> = {
+    cart: cartCount,
+    wishlist: wishlistCount,
+    bookmarks: bookmarkCount,
+  };
 
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
@@ -127,6 +145,11 @@ export function AvatarDropdown({
                     <Link to={item.to} className="flex items-center gap-2 cursor-pointer">
                       <Icon className="h-4 w-4" />
                       {bn ? item.label_bn : item.label_en}
+                      {badgeCounts[item.id] > 0 && (
+                        <span className="ml-auto inline-flex items-center justify-center h-[18px] min-w-[18px] rounded-full bg-foreground text-background text-[10px] font-bold px-1 shadow-sm">
+                          {badgeCounts[item.id] > 99 ? "99+" : badgeCounts[item.id]}
+                        </span>
+                      )}
                     </Link>
                   )}
                 </DropdownMenuItem>

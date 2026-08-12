@@ -27,6 +27,8 @@ interface WishlistContextValue {
   toggle: (id: string) => void;
   add: (id: string) => void;
   remove: (id: string) => void;
+  /** Remove every item (used by the wishlist “Move all to cart” bulk action). */
+  clear: () => void;
   count: number;
 }
 
@@ -68,8 +70,10 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     setIds((prev) => prev.filter((x) => x !== idStr));
   }, []);
 
+  const clear = useCallback(() => setIds([]), []);
+
   return (
-    <WishlistContext.Provider value={{ ids, isWishlisted, toggle, add, remove, count: ids.length }}>
+    <WishlistContext.Provider value={{ ids, isWishlisted, toggle, add, remove, clear, count: ids.length }}>
       {children}
     </WishlistContext.Provider>
   );

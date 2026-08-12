@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
 import { useAuthSession } from "@/hooks/useAuth";
+import { useFabScrollVisibility } from "@/hooks/useFabScrollVisibility";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, pickLocalized } from "@/lib/i18n";
 import { useSiteSettings } from "@/lib/siteSettings";
@@ -112,11 +113,13 @@ export function AiChatPanel() {
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
-  // Scroll-aware FAB: hidden while the user scrolls DOWN so it never sits on
-  // top of content (reading-history details, book rows…) on small screens;
-  // reappears on scroll-up or when near the top. Never hides while the chat
-  // is open (the FAB is the close control).
-  const [fabHidden, setFabHidden] = useState(false);
+  // Scroll-aware FAB: hidden ONLY while the user is actively scrolling DOWN
+  // (never on top of content mid-scroll — reading-history details, book
+  // rows…); revealed on pause, scroll-up, or near-top. The state machine
+  // lives in useFabScrollVisibility (unit-tested in
+  // src/hooks/__tests__/useFabScrollVisibility.test.tsx). Never hides while
+  // the chat is open (the FAB is the close control).
+  const fabHidden = useFabScrollVisibility();
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef(messages);
@@ -126,23 +129,7 @@ export function AiChatPanel() {
   // Abort fetch on unmount
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  // FAB auto-hide on scroll direction
-  useEffect(() => {
-    let lastY = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (y < 96) {
-        setFabHidden(false);
-      } else if (y > lastY + 8) {
-        setFabHidden(true);
-      } else if (y < lastY - 8) {
-        setFabHidden(false);
-      }
-      lastY = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -156,13 +143,13 @@ export function AiChatPanel() {
     }
   }, [messages]);
 
-  // Keyboard shortcut: `/` to open, `Escape` to close
+  // Keyboard shortcut: `/` to open, `Escape` to close.
+  // (⌘K/Ctrl+K belongs to the global search palette — A1 2026-08-12.)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Open: Cmd+K or just `/` when not in an input
       if (
-        (e.key === "k" && (e.metaKey || e.ctrlKey)) ||
-        (e.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName))
+        e.key === "/" &&
+        !["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName)
       ) {
         e.preventDefault();
         if (!isOpen) {
@@ -341,7 +328,7 @@ export function AiChatPanel() {
           open on desktop. */}
       <button
         onClick={() => (isOpen ? handleClose() : setIsOpen(true))}
-        className={`fixed bottom-6 right-24 z-[46] w-14 h-14 rounded-full shadow-lg shadow-[var(--color-saffron)]/20 hover:shadow-xl hover:shadow-[var(--color-saffron)]/30 hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-out motion-reduce:transition-none motion-reduce:hover:translate-y-0 flex items-center justify-center group max-sm:w-12 max-sm:h-12 max-sm:right-20 ${
+        className={`fixed bottom-6 right-24 z-[46] w-14 h-14 rounded-full shadow-lg shadow-[var(--color-saffron)]/20 hover:shadow-xl hover:shadow-[var(--color-saffron)]/30 hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-out motion-reduce:transition-none motion-reduce:hover:translate-y-0 flex items-center justify-center group max-sm:w-12 max-sm:h-12 max-sm:right-20 max-sm:bottom-24 ${
           fabHidden && !isOpen
             ? "opacity-0 translate-y-3 pointer-events-none"
             : "opacity-100 translate-y-0 pointer-events-auto"

@@ -12,6 +12,7 @@ import { OPEN_CART_DRAWER_EVENT } from "@/lib/cart-events";
 import { CheckoutPaymentDialog } from "@/components/CheckoutPaymentDialog";
 import { GiftBoxIcon } from "@/components/GiftBoxIcon";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -66,6 +67,9 @@ export function CartDrawer({ children, cartCount = 0 }: CartDrawerProps) {
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState<string | undefined>();
+  // Destructive-action confirmations (bilingual, shared ConfirmDialog).
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState<{ id: string; title: string } | null>(null);
 
   /* ── Fetch cart when drawer opens ──────────────────────────────
      Runs for guests too — the mock-aware server fn returns the
@@ -174,7 +178,10 @@ export function CartDrawer({ children, cartCount = 0 }: CartDrawerProps) {
       <SheetTrigger asChild>
         {typeof children === "function" ? children(open) : children}
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md flex flex-col gap-0 p-0">
+      {/* Mobile: 75% width (not full) so a wide visible strip of the overlay
+          stays clickable outside the drawer — tapping it closes the modal
+          (the Radix overlay closes on outside click). Desktop keeps max-w-md. */}
+      <SheetContent className="w-[75%] sm:max-w-md flex flex-col gap-0 p-0">
         {/* ── Saffron accent bar ── */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-[var(--color-saffron)] via-[var(--color-saffron)]/50 to-transparent z-10" />
 
@@ -189,9 +196,11 @@ export function CartDrawer({ children, cartCount = 0 }: CartDrawerProps) {
               : `Your cart has ${itemCount} ${itemCount === 1 ? "item" : "items"}. Total ${formatMoney(grandTotal, "en")}`}
         </p>
 
-        {/* Header — pr-12 keeps "Clear all" clear of the sheet's close ✕ (top-right) */}
-        <SheetHeader className="px-6 pr-12 py-4 border-b border-border/30">
-          <div className="flex items-center justify-between">
+        {/* Header — pr-16 keeps "Clear all" clear of the sheet's close ✕
+            (top-right) with real breathing room; the row wraps on the very
+            narrowest screens so title and Clear all never collide. */}
+        <SheetHeader className="px-6 pr-16 py-4 border-b border-border/30">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
             <SheetTitle className="flex items-center gap-2.5 text-base">
               <span className="text-[var(--color-saffron)]">
                 <GiftBoxIcon className="h-4 w-4" />
@@ -206,7 +215,7 @@ export function CartDrawer({ children, cartCount = 0 }: CartDrawerProps) {
             </SheetTitle>
             {itemCount > 0 && (
               <button
-                onClick={() => clearMutation.mutate()}
+                onClick={() => setConfirmClearOpen(true)}
                 disabled={clearMutation.isPending}
                 className="text-xs text-muted-foreground/50 hover:text-destructive transition-colors disabled:opacity-50 uppercase tracking-[0.08em]"
               >
@@ -296,7 +305,7 @@ export function CartDrawer({ children, cartCount = 0 }: CartDrawerProps) {
                       </p>
                     </div>
                     <button
-                      onClick={() => removeMutation.mutate(item.id)}
+                      onClick={() => setConfirmRemove({ id: item.id, title })}
                       disabled={removeMutation.isPending}
                       aria-label={lang === "bn" ? `কার্ট থেকে সরান: ${title}` : `Remove ${title} from cart`}
                       title={lang === "bn" ? "সরান" : "Remove"}
@@ -463,6 +472,42 @@ export function CartDrawer({ children, cartCount = 0 }: CartDrawerProps) {
         tax={tax}
         taxRate={taxRate}
         orderId={pendingOrderId}
+      />
+
+      {/* ── Destructive-action confirmations ── */}
+      <ConfirmDialog
+        open={confirmClearOpen}
+        onOpenChange={setConfirmClearOpen}
+        title={lang === "bn" ? "কার্ট খালি করবেন?" : "Clear cart?"}
+        description={
+          lang === "bn"
+            ? `আপনার কার্টের ${toBanglaDigits(itemCount)}টি আইটেম মুছে যাবে। এটি ফিরিয়ে আনা যাবে না।`
+            : `Remove all ${itemCount} ${itemCount === 1 ? "item" : "items"} from your cart? This cannot be undone.`
+        }
+        confirmLabel={lang === "bn" ? "মুছুন" : "Clear"}
+        cancelLabel={lang === "bn" ? "বাতিল" : "Cancel"}
+        onConfirm={() => {
+          clearMutation.mutate();
+          setConfirmClearOpen(false);
+        }}
+      />
+      <ConfirmDialog
+        open={!!confirmRemove}
+        onOpenChange={(open) => {
+          if (!open) setConfirmRemove(null);
+        }}
+        title={lang === "bn" ? "কার্ট থেকে সরাবেন?" : "Remove from cart?"}
+        description={
+          lang === "bn"
+            ? `"${confirmRemove?.title ?? ""}" কার্ট থেকে সরানো হবে।`
+            : `Remove "${confirmRemove?.title ?? ""}" from your cart?`
+        }
+        confirmLabel={lang === "bn" ? "সরান" : "Remove"}
+        cancelLabel={lang === "bn" ? "বাতিল" : "Cancel"}
+        onConfirm={() => {
+          if (confirmRemove) removeMutation.mutate(confirmRemove.id);
+          setConfirmRemove(null);
+        }}
       />
     </Sheet>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bell, CheckCheck, Inbox } from "lucide-react";
+import { Bell, CheckCheck, Inbox, X } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 
 function timeAgo(iso: string): string {
@@ -91,15 +91,25 @@ export function NotificationBell({ userId }: { userId: string }) {
             {/* Panel header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
               <p className="text-sm font-medium text-foreground">Notifications</p>
-              {visibleUnread > 0 && (
+              <div className="flex items-center gap-0.5">
+                {visibleUnread > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <CheckCheck className="h-3.5 w-3.5" />
+                    Mark all read
+                  </button>
+                )}
+                {/* Close — same neutral circular style as the modal close buttons */}
                 <button
-                  onClick={markAllRead}
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => handleOpen(false)}
+                  aria-label="Close notifications"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/70 cursor-pointer transition-all hover:bg-secondary/60 hover:text-foreground hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/40"
                 >
-                  <CheckCheck className="h-3.5 w-3.5" />
-                  Mark all read
+                  <X className="h-4 w-4" />
                 </button>
-              )}
+              </div>
             </div>
 
             {/* List */}
@@ -155,11 +165,11 @@ export function NotificationBell({ userId }: { userId: string }) {
             {visible.length > 8 && (
               <div className="px-4 py-2 border-t border-border/40 text-center">
                 <Link
-                  to="/profile"
+                  to="/notifications"
                   onClick={() => handleOpen(false)}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  View all in profile
+                  View all
                 </Link>
               </div>
             )}

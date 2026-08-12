@@ -1,22 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useCallback, useRef, type ReactNode } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import heroImg from "@/assets/hero.jpg";
 import { PostGrid } from "@/components/PostGrid";
 import { SearchBar } from "@/components/SearchBar";
+import { SectionHeader } from "@/components/SectionHeader";
 import type { PostCategory } from "@/lib/posts";
 import type { Book } from "@/lib/books";
-import { useLang, pickLocalized, formatMoney, localizeCartResult } from "@/lib/i18n";
+import { useLang, pickLocalized, formatMoney, localizeCartResult, toBanglaDigits } from "@/lib/i18n";
 import { fetchSiteSettings, useSiteSettings } from "@/lib/siteSettings";
 import { Reveal } from "@/components/Reveal";
 import { generateWebSiteSchema, generateOrganizationSchema } from "@/lib/structured-data";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { BookCard } from "@/components/BookCard";
-import { BookOpen, ArrowRight, Play, ShoppingCart, Loader2, PenLine } from "lucide-react";
+import { BookOpen, ArrowRight, Play, ShoppingCart, Loader2, PenLine, BookMarked, ChevronRight } from "lucide-react";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
 import { fetchPublishedBooks } from "@/lib/books";
 import { fetchPublishedVideos } from "@/lib/videos";
+import { getUserProgress } from "@/lib/books-progress";
 import { useAuthSession } from "@/hooks/useAuth";
 import { useNotificationGate } from "@/hooks/useNotificationGate";
 import { checkOwnership } from "@/lib/books-purchases";
@@ -35,59 +37,6 @@ import { callFn } from "@/lib/call-fn";
 const PdfViewer = lazy(() =>
   import("@/components/PdfViewer").then((m) => ({ default: m.PdfViewer })),
 );
-
-/* ─── Home section header — tinted icon chip + serif title + pill View-all ── */
-
-function HomeSectionHeader({
-  icon,
-  title,
-  viewAllTo,
-  viewAllLabel,
-  accent = "saffron",
-}: {
-  icon: ReactNode;
-  title: string;
-  viewAllTo: string;
-  viewAllLabel: string;
-  /** Which brand-tint the icon chip wears: saffron (primary) | gold | indigo. */
-  accent?: "saffron" | "gold" | "indigo";
-}) {
-  const chipTints: Record<typeof accent, string> = {
-    saffron: "bg-[var(--color-saffron)]/10 text-[var(--color-saffron)] ring-[var(--color-saffron)]/20",
-    gold: "bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-amber-500/20",
-    indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-indigo-500/20",
-  };
-  const hairlineTints: Record<typeof accent, string> = {
-    saffron: "from-[var(--color-saffron)] to-[var(--color-saffron)]/15",
-    gold: "from-amber-500 to-amber-500/15",
-    indigo: "from-indigo-500 to-indigo-500/15",
-  };
-
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <div className="flex items-center gap-3 min-w-0">
-        <span
-          className={`w-10 h-10 shrink-0 rounded-xl ring-1 flex items-center justify-center ${chipTints[accent]}`}
-        >
-          {icon}
-        </span>
-        <div className="min-w-0">
-          <h2 className="font-serif text-xl md:text-2xl leading-tight">{title}</h2>
-          <span
-            className={`mt-1.5 block h-0.5 w-12 rounded-full bg-gradient-to-r ${hairlineTints[accent]}`}
-          />
-        </div>
-      </div>
-      <Link
-        to={viewAllTo}
-        className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-[var(--color-saffron)]/40 hover:shadow-sm transition-all duration-300 active:scale-95"
-      >
-        {viewAllLabel}
-        <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5" />
-      </Link>
-    </div>
-  );
-}
 
 
 export const Route = createFileRoute("/")({
@@ -307,6 +256,30 @@ function Home() {
   const featuredBooks = booksData?.data ?? [];
   const homeVideos = videosData?.data ?? [];
 
+  /* ── Continue Reading (B1 2026-08-12) — signed-in users resume
+         in-progress books from the mock/supabase progress store. ── */
+  const { data: continueRows = [] } = useQuery({
+    queryKey: ["home-continue-reading", user?.id],
+    queryFn: () => getUserProgress(user?.id ?? ""),
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+  const { data: allBooksDataForContinue } = useQuery({
+    queryKey: ["home-all-books-for-continue"],
+    queryFn: () => fetchPublishedBooks(1, 100, {}),
+    enabled: !!user,
+    staleTime: 300_000,
+  });
+  const allBooksForContinue: Book[] = allBooksDataForContinue?.data ?? [];
+  const continueBooks = continueRows
+    .filter((r) => r.progress_pct > 0 && !r.completed)
+    .slice(0, 4)
+    .map((row) => {
+      const book = allBooksForContinue.find((b) => String(b.id) === String(row.book_id));
+      return { row, book };
+    })
+    .filter((x): x is { row: (typeof continueRows)[number]; book: Book } => !!x.book);
+
   const filters: { label: string; value: PostCategory | "All" }[] = lang === "bn"
     ? [
         { label: "সব", value: "All" },
@@ -330,7 +303,7 @@ function Home() {
   const heroEyebrow = pickLocalized(hero.eyebrow_en, hero.eyebrow_bn, lang);
   // Bilingual CTA label (Bangla mode shows "পড়া শুরু করুন" instead of the
   // English "Begin reading") — desktop and mobile both render this link.
-  const heroCtaLabel = pickLocalized(hero.cta_label, hero.cta_label_bn, lang, hero.cta_label);
+  const heroCtaLabel = pickLocalized(hero.cta_label, hero.cta_label_bn, lang, hero.cta_label || "");
   const isExternal = /^https?:\/\//i.test(hero.cta_url);
 
   return (
@@ -361,12 +334,22 @@ function Home() {
             {(hero.cta_label || hero.cta_label_bn) && hero.cta_url && (
               <Reveal delay={0.45}>
                 {isExternal ? (
-                  <a href={hero.cta_url} className="mt-10 inline-block border-b border-foreground/50 dark:border-white/50 dark:text-white pb-1 text-sm tracking-wide hover:border-foreground dark:hover:border-white transition-all duration-300">
-                    {heroCtaLabel} →
+                  <a href={hero.cta_url} className="mt-10 inline-block">
+                    <BrandCtaButton asChild>
+                      <span className="inline-flex items-center gap-2 px-8 py-3 text-sm uppercase tracking-[0.18em]">
+                        {heroCtaLabel}
+                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-0.5" />
+                      </span>
+                    </BrandCtaButton>
                   </a>
                 ) : (
-                  <Link to={hero.cta_url} className="mt-10 inline-block border-b border-foreground/50 dark:border-white/50 dark:text-white pb-1 text-sm tracking-wide hover:border-foreground dark:hover:border-white transition-all duration-300">
-                    {heroCtaLabel} →
+                  <Link to={hero.cta_url} className="mt-10 inline-block">
+                    <BrandCtaButton asChild>
+                      <span className="inline-flex items-center gap-2 px-8 py-3 text-sm uppercase tracking-[0.18em]">
+                        {heroCtaLabel}
+                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-0.5" />
+                      </span>
+                    </BrandCtaButton>
                   </Link>
                 )}
               </Reveal>
@@ -397,11 +380,72 @@ function Home() {
         </section>
       </Reveal>
 
+      {/* Continue Reading — B1 2026-08-12 */}
+      {user && continueBooks.length > 0 && (
+        <Reveal delay={0.1}>
+          <section className="mx-auto max-w-6xl px-6 py-16 border-t border-border/40">
+            <div className="mb-8">
+              <SectionHeader
+                icon={<BookMarked className="h-5 w-5" />}
+                title={lang === "bn" ? "পড়া চালিয়ে যান" : "Continue reading"}
+                viewAllTo="/purchases"
+                viewAllLabel={lang === "bn" ? "আমার বই" : "My books"}
+                accent="gold"
+              />
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2 thumbnail-scroll">
+              {continueBooks.map(({ row, book }) => (
+                <Link
+                  key={row.book_id}
+                  to="/books/$slug"
+                  params={{ slug: book.slug }}
+                  search={{ search: "", page: 1 }}
+                  className="group flex w-64 shrink-0 flex-col rounded-xl border border-border/40 bg-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--color-saffron)]/40 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    {book.cover_image ? (
+                      <img
+                        src={book.cover_image}
+                        alt={pickLocalized(book.title_en, book.title_bn, lang, "Book cover")}
+                        className="h-16 w-12 shrink-0 rounded-md object-cover ring-1 ring-black/5"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="flex h-16 w-12 shrink-0 items-center justify-center rounded-md bg-secondary/40 text-muted-foreground/40">
+                        <BookOpen className="h-5 w-5" />
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium group-hover:text-[var(--color-saffron)] transition-colors">
+                        {pickLocalized(book.title_en, book.title_bn, lang, "Untitled")}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground/70">
+                        {lang === "bn" ? toBanglaDigits(row.progress_pct) : row.progress_pct}%
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-1.5 bg-secondary/60 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[var(--color-saffron)] rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(row.progress_pct, 100)}%` }}
+                    />
+                  </div>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[var(--color-saffron)]">
+                    {lang === "bn" ? "চালিয়ে যান" : "Continue"}
+                    <ChevronRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </Reveal>
+      )}
+
       {/* Recent Reflections */}
       <section className="mx-auto max-w-6xl px-6 py-16 border-t border-border/40">
         <Reveal delay={0.1}>
           <div className="mb-10 space-y-5">
-            <HomeSectionHeader
+            <SectionHeader
               icon={<PenLine className="h-5 w-5" />}
               title={t("recent_reflections")}
               viewAllTo="/reflections"
@@ -439,7 +483,7 @@ function Home() {
           <section className="py-16 border-t border-border/40 bg-secondary/10 dark:bg-secondary/20">
             <div className="mx-auto max-w-6xl px-6">
               <div className="mb-8">
-                <HomeSectionHeader
+                <SectionHeader
                   icon={<BookOpen className="h-5 w-5" />}
                   title={lang === "bn" ? "বৈশিষ্ট্যযুক্ত বই" : "Featured Books"}
                   viewAllTo="/books"
@@ -472,7 +516,7 @@ function Home() {
         <Reveal delay={0.2}>
           <section className="mx-auto max-w-6xl px-6 py-16 border-t border-border/40">
             <div className="mb-8">
-              <HomeSectionHeader
+              <SectionHeader
                 icon={<Play className="h-5 w-5" />}
                 title={lang === "bn" ? "ভিডিও" : "Videos"}
                 viewAllTo="/videos"
