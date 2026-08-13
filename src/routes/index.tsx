@@ -90,6 +90,7 @@ function Home() {
   const { canNotify } = useNotificationGate();
   const [active, setActive] = useState<PostCategory | "All">("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeVideo, setActiveVideo] = useState<{ id: string; title: string } | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const userRef = useRef(user);
@@ -256,6 +257,12 @@ function Home() {
 
   const featuredBooks = booksData?.data ?? [];
   const homeVideos = videosData?.data ?? [];
+
+  // Homepage videos play inline in a modal (same as /videos) — the card
+  // needs onPlay, otherwise VideoCard falls back to a <Link to="/videos">.
+  const handleVideoPlay = useCallback((ytId: string, title: string) => {
+    setActiveVideo({ id: ytId, title });
+  }, []);
 
   /* ── Continue Reading (B1 2026-08-12) — signed-in users resume
          in-progress books from the mock/supabase progress store. ── */
@@ -530,7 +537,7 @@ function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-10">
               {homeVideos.map((video, i) => (
                 <Reveal key={video.id} fade={false} delay={Math.min(i * 0.05, 0.3)}>
-                  <VideoCard video={video} />
+                  <VideoCard video={video} onPlay={handleVideoPlay} />
                 </Reveal>
               ))}
             </div>
@@ -560,6 +567,45 @@ function Home() {
           </div>
         </section>
       </Reveal>
+
+      {/* Video player popup — inline play for the homepage grid (same
+          treatment as /videos: autoplay embed, dark surface, custom ✕). */}
+      <Dialog
+        open={!!activeVideo}
+        onOpenChange={(open) => {
+          if (!open) setActiveVideo(null);
+        }}
+      >
+        <DialogContent className="max-w-4xl p-0 gap-0 bg-zinc-950 overflow-hidden rounded-xl shadow-2xl border-0 [&>button]:hidden">
+          {activeVideo && (
+            <div className="relative">
+              <button
+                onClick={() => setActiveVideo(null)}
+                className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white/70 hover:text-white hover:bg-black/80 transition-colors"
+                aria-label={lang === "bn" ? "প্লেয়ার বন্ধ করুন" : "Close player"}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              <div className="aspect-video w-full bg-black">
+                <iframe
+                  src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&rel=0&modestbranding=1`}
+                  title={activeVideo.title}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+
+              <p className="px-4 py-3 text-sm text-white/80 bg-zinc-900">
+                {activeVideo.title}
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Auth Modal */}
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} onSuccess={handleAuthSuccess} />

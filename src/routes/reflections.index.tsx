@@ -124,7 +124,7 @@ function ReflectionsHub() {
         {page?.banner_url && (
           <Reveal delay={0}>
             <div className="mb-12 -mx-6 md:mx-0 overflow-hidden rounded-xl shadow-lg">
-              <img src={page.banner_url} alt={heading} className="w-full aspect-[21/9] object-cover" />
+              <img src={page.banner_url} alt={heading} className="w-full aspect-[16/9] sm:aspect-[21/9] object-cover" />
             </div>
           </Reveal>
         )}

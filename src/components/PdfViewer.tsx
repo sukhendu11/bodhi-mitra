@@ -1310,8 +1310,9 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
             themeToolbar,
           )}
         >
-          {/* Left: sidebar toggle + title */}
-          <div className="flex items-center gap-1.5 min-w-0">
+          {/* Left: sidebar toggle + title — title truncates; keep the block
+              shrinkable so it never pushes the toolbar off a small screen. */}
+          <div className="flex items-center gap-1.5 min-w-0 shrink">
             {!loading && pdf && totalPages > 1 && (
               <button
                 type="button"
@@ -1335,8 +1336,9 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
             )}
           </div>
 
-          {/* Center: page nav + zoom + mode */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Center: page nav + zoom + mode — wraps internally so the
+              cluster (≈350px wide) never overflows a 320px phone screen. */}
+          <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 sm:gap-2">
             {/* Page navigation */}
             <div className="flex items-center gap-1 border-r border-border/40 pr-2 sm:pr-3">
               <button
@@ -1672,7 +1674,11 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
             <div
               ref={scrollRef}
               className={cn(
-                "h-full overflow-auto flex items-start justify-center p-4",
+                // No justify-center here: with centered flex overflow the left
+                // edge of a page wider than the viewport becomes unreachable.
+                // Auto margins on the page wrapper center it when it fits and
+                // keep it scrollable from x=0 when it doesn't.
+                "h-full overflow-auto flex items-start p-2 sm:p-4",
                 theme === "dark"
                   ? "bg-zinc-950"
                   : theme === "sepia"
@@ -1706,7 +1712,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
               ) : (
                 <div
                   key={`${pageNum}-${mode}-${rotation}`}
-                  className="animate-in fade-in duration-200 motion-reduce:animate-none reader-page-shadow flex"
+                  className="animate-in fade-in duration-200 motion-reduce:animate-none reader-page-shadow flex mx-auto"
                   style={{
                     transform: `translateX(${swipeOffset}px)`,
                     transition: dragging

@@ -2,6 +2,18 @@
 
 ## 2026-08-13
 
+### Homepage video cards play inline + PdfViewer & hero-image small-screen fixes
+
+- **Homepage video cards now play in place** — clicking any video in the homepage grid previously navigated to `/videos` because `<VideoCard video={video}>` was rendered **without `onPlay`** (the card falls back to a `<Link to="/videos">` when no play handler exists). The homepage now owns the same autoplay YouTube modal the `/videos` page uses: `handleVideoPlay` + a `Dialog` with a dark surface and custom ✕ (`index.tsx`). Card titles/thumbnails open the player; the "Watch on YouTube" pill still opens YouTube in a new tab.
+- **PdfViewer small-screen fixes** (`src/components/PdfViewer.tsx`):
+  - **Left-edge clipping gone** — the scroll container used `justify-center`, so a page wider than the viewport (spread mode, zoomed-in, or a wide PDF on a phone) clipped its left edge with no way to scroll to it. Removed `justify-center`; the page wrapper now uses `mx-auto` — centers when it fits, scrolls from x=0 when it overflows.
+  - **Toolbar wraps on narrow screens** — the center cluster (page nav + zoom + mode) was one rigid ~350px row that overflowed 320px screens; it now wraps internally (`flex-wrap justify-center`). The left title block gained `shrink` so the toolbar never pushes off-screen.
+  - **Tighter page padding on phones** — `p-4` → `p-2 sm:p-4` so more of a narrow viewport is page area.
+- **Hero/banner images responsive across pages** — post-page covers previously rendered portrait sources (2:3 mock covers) in a fixed `h-[300px] md:h-[400px]` landscape frame, slicing them into a thin band on desktop and a near-square crop on phones. All hero/banner surfaces now use responsive aspect-ratio frames that scale with the viewport: `posts.$slug.tsx` cover `aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9]` (absolute-positioned `object-cover` + the existing fade mask), `reflections.index.tsx` + `pages.$slug.tsx` banners `aspect-[16/9] sm:aspect-[21/9]` (a 21/9 strip is only ~137px tall on a 320px phone).
+- **About hero backdrop eliminated on phones** (`about.tsx`) — the 3:2 artwork was `object-contain` centered inside a section whose height was driven by the text panel, so on mobile it letterboxed into a narrow band with the empty page backdrop dominating above/below it. Phones now let the artwork **flow at its natural aspect ratio** (`w-full h-auto` — the band IS the image, zero backdrop), with the frosted text panel stacked compactly below (`py-8`, tighter title `text-3xl`, `text-base` tagline). Desktop unchanged: absolute contained artwork, centered panel over it (`sm:absolute sm:inset-0`, gradient scrim returns at `sm:`).
+
+Validation: tsc 0 errors · **627/627 tests**.
+
 ### Full-site font-size audit — every page, every section aligned to the type scale
 
 **Systematic audit of all 38 routes + shared components against DESIGN.md's scale (titles 18 / body 16 / captions 14 / meta 12). Fixed every surface that rendered below body size or outside its tier — same treatment on mobile and desktop (no mobile-shrunk text):**

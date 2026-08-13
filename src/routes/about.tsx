@@ -75,26 +75,32 @@ function About() {
     <>
       {/* Full-bleed banner hero — edge-to-edge, homepage-hero language.
           Renders only when a banner image is configured; otherwise the
-          plain centered hero inside the article below. The image is
-          CONTAINED (never cropped) so the whole artwork — including the
-          meditator's face — stays visible; it letterboxes against the
-          page background on wider bands. */}
+          plain centered hero inside the article below. The image is always
+          CONTAINED (never cropped) so the whole artwork — meditator's face
+          included — stays visible on every screen. Phones: the artwork flows
+          at its natural aspect ratio (band = image, no letterbox backdrop)
+          with the text panel stacked compactly below. Desktop: artwork fills
+          the band absolutely, frosted panel centered over it. */}
       {banner && (
         <Reveal delay={0}>
           <section className="relative overflow-hidden border-b border-border/60">
+            {/* Mobile: the artwork flows at its natural aspect ratio (full
+                width, h-auto) so the band is exactly the image — no tall
+                letterbox backdrop above/below it. Desktop: absolute-contained
+                artwork filling the section with the panel centered over it. */}
             <img
               src={banner}
               alt=""
               aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-contain"
+              className="w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:w-full"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/15 to-background/80" />
+            <div className="hidden sm:block sm:absolute sm:inset-0 bg-gradient-to-b from-background/30 via-background/15 to-background/80" />
             {/* Hero typography — sits on a frosted panel so it stays readable
                 over the artwork in BOTH themes (bare foreground text read as
                 near-black-on-dark-figure in light mode). Brand treatment:
                 saffron eyebrow + hairlines, serif title, saffron dot divider. */}
-            <div className="relative mx-auto max-w-3xl px-6 py-24 md:py-32 text-center">
-              <div className="inline-block rounded-3xl border border-border/30 bg-background/55 px-7 py-9 md:px-12 md:py-12 shadow-2xl backdrop-blur-md ring-1 ring-black/5 dark:bg-background/50 dark:ring-white/5">
+            <div className="relative mx-auto max-w-3xl px-6 py-8 sm:py-24 md:py-32 text-center">
+              <div className="inline-block rounded-3xl border border-border/30 bg-background/55 px-6 py-7 sm:px-7 sm:py-9 md:px-12 md:py-12 shadow-2xl backdrop-blur-md ring-1 ring-black/5 dark:bg-background/50 dark:ring-white/5">
                 <p className="inline-flex items-center gap-3 text-xs uppercase tracking-[0.3em] font-medium text-[var(--color-saffron)]">
                   <span
                     aria-hidden="true"
@@ -106,10 +112,10 @@ function About() {
                     className="h-px w-8 bg-[var(--color-saffron)]/60"
                   />
                 </p>
-                <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight mt-5 text-foreground">
+                <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.15] sm:leading-[1.1] tracking-tight mt-4 sm:mt-5 text-foreground">
                   {title}
                 </h1>
-                <div className="mt-7 flex items-center justify-center gap-3" aria-hidden="true">
+                <div className="mt-5 sm:mt-7 flex items-center justify-center gap-3" aria-hidden="true">
                   <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
                   <span className="h-0.5 w-16 rounded-full bg-gradient-to-r from-saffron/70 to-saffron/20" />
                   <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
@@ -117,13 +123,15 @@ function About() {
                 {/* Subheadline size matches the blog excerpt + page headers
                     (text-lg) so all page sub-headlines read consistently. */}
                 {tagline && (
-                  <p className="mt-6 max-w-xl mx-auto text-lg leading-relaxed text-foreground/85">
+                  <p className="mt-4 sm:mt-6 max-w-xl mx-auto text-base sm:text-lg leading-relaxed text-foreground/85">
                     {tagline}
                   </p>
                 )}
               </div>
             </div>
-            {/* Bottom saffron hairline accent */}
+            {/* Bottom saffron hairline accent — sits under the artwork on
+                mobile (image flows to the band bottom) and under the centered
+                band on desktop. */}
             <span
               aria-hidden="true"
               className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-24 rounded-full bg-gradient-to-r from-transparent via-saffron/60 to-transparent"

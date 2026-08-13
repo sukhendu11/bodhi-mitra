@@ -143,13 +143,16 @@ function PostPage() {
 
   return (
     <>
-      {/* Cover image — overlapping header */}
+      {/* Cover image — overlapping header. Responsive aspect-ratio frame
+          (taller crop on phones, wide cinematic on desktop) so portrait
+          covers don't get sliced into a thin band or a square: the frame
+          scales with the viewport instead of a fixed pixel height. */}
       {post.cover_image && (
-        <div className="relative w-full h-[300px] md:h-[400px] overflow-hidden">
+        <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] overflow-hidden">
           <img
             src={post.cover_image}
             alt={title}
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-center"
             style={{
               maskImage: "linear-gradient(to bottom, black 85%, transparent 100%)",
               WebkitMaskImage: "linear-gradient(to bottom, black 85%, transparent 100%)",

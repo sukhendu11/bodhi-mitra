@@ -150,7 +150,7 @@ function PublicPage() {
             <img
               src={page.banner_url}
               alt={title}
-              className="w-full aspect-[21/9] object-cover rounded-lg border border-border/60"
+              className="w-full aspect-[16/9] sm:aspect-[21/9] object-cover rounded-lg border border-border/60"
             />
           </div>
         </Reveal>
