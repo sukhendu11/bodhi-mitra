@@ -292,7 +292,7 @@ export function CartDrawer({ children, cartCount = 0 }: CartDrawerProps) {
                         to="/books/$slug"
                         params={{ slug: item.book_slug }}
                         onClick={() => setOpen(false)}
-                        className="text-sm font-medium line-clamp-1 hover:text-[var(--color-saffron)] transition-colors"
+                        className="text-base font-medium line-clamp-1 hover:text-[var(--color-saffron)] transition-colors"
                       >
                         {title}
                       </Link>

@@ -87,7 +87,7 @@ export function NotificationsSection({
         <div className="flex items-center justify-between gap-4">
           <div>
             <span className="text-sm text-foreground">{bn ? "ইমেইল বিজ্ঞপ্তি" : "Email notifications"}</span>
-            <p className="text-xs text-muted-foreground/60 mt-0.5">
+            <p className="text-sm text-muted-foreground/60 mt-0.5">
               {bn ? "সব ইমেইল বিজ্ঞপ্তির মূল সুইচ" : "Master switch for all email notifications"}
             </p>
           </div>
@@ -109,8 +109,8 @@ export function NotificationsSection({
                 <div className="flex items-center gap-2.5">
                   <Icon className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
                   <div>
-                    <span className="text-sm text-foreground">{bn ? r.labelBn : r.label}</span>
-                    <p className="text-xs text-muted-foreground/60 mt-0.5">{bn ? r.descBn : r.desc}</p>
+                    <span className="text-base text-foreground">{bn ? r.labelBn : r.label}</span>
+                    <p className="text-sm text-muted-foreground/60 mt-0.5">{bn ? r.descBn : r.desc}</p>
                   </div>
                 </div>
                 <Switch

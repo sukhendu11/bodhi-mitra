@@ -7,7 +7,6 @@ import {
   BarChart3,
   Settings,
   Shield,
-  Feather,
   Heart,
   ChevronDown,
   ChevronRight,
@@ -15,6 +14,7 @@ import {
   Bookmark,
   Info,
 } from "lucide-react";
+import { FeatherPenIcon } from "./FeatherPenIcon";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
@@ -66,7 +66,7 @@ interface MobileNavProps {
 
 const PATH_ICONS: Record<string, React.ReactNode> = {
   "/": <Home className="h-4 w-4" />,
-  "/reflections": <Feather className="h-4 w-4" />,
+  "/reflections": <FeatherPenIcon className="h-4 w-4" />,
   "/books": <BookOpen className="h-4 w-4" />,
   "/videos": <Video className="h-4 w-4" />,
   "/about": <Info className="h-4 w-4" />,
@@ -338,21 +338,21 @@ function SubNavLink({ to, label, style }: { to: string; label: string; style?: R
 
 function HamburgerButton({ open = false }: { open?: boolean }) {
   // Pure-transform morph: bars keep FIXED positions and only translate/rotate,
-  // so the 3-line hamburger glides into a 2-line ✕ (same w-5 line length) and
+  // so the 3-line hamburger glides into a 2-line ✕ (same line length) and
   // reverses identically on close — no `top` jumps, no origin drift.
-  // Geometry: 16px tall box, 2px bars at y=1/7/13 (centers 2/8/14); the top
-  // and bottom bars translate ±6px to the middle bar's axis (y=8) and rotate
-  // ±45° around their own centers to form the ✕ legs.
+  // Geometry: 14×16 box, 2px bars at y=1/6/11 (centers 2/7/12); the top and
+  // bottom bars translate ±5px to the middle bar's axis (y=7) and rotate ±45°
+  // around their own centers to form the ✕ legs.
   const bar =
-    "absolute left-1/2 -translate-x-1/2 h-[2px] w-5 rounded-full bg-current transition-all duration-300 ease-out motion-reduce:transition-none";
+    "absolute left-1/2 -translate-x-1/2 h-[2px] w-4 rounded-full bg-current transition-all duration-300 ease-out motion-reduce:transition-none";
   return (
-    <span className="relative block h-4 w-5" aria-hidden>
+    <span className="relative block h-3.5 w-4" aria-hidden>
       {/* Top bar → ✕ first leg (rotates down-right around its center) */}
-      <span className={`${bar} top-[1px] ${open ? "translate-y-[6px] rotate-45" : ""}`} />
+      <span className={`${bar} top-[1px] ${open ? "translate-y-[5px] rotate-45" : ""}`} />
       {/* Middle bar → fades and shrinks away */}
-      <span className={`${bar} top-[7px] ${open ? "opacity-0 scale-x-0" : ""}`} />
+      <span className={`${bar} top-[6px] ${open ? "opacity-0 scale-x-0" : ""}`} />
       {/* Bottom bar → ✕ second leg (rotates up-left around its center) */}
-      <span className={`${bar} top-[13px] ${open ? "-translate-y-[6px] -rotate-45" : ""}`} />
+      <span className={`${bar} top-[11px] ${open ? "-translate-y-[5px] -rotate-45" : ""}`} />
     </span>
   );
 }
@@ -521,7 +521,7 @@ export function MobileNav({
             <SheetClose asChild>
               <button
                 aria-label="Close navigation menu"
-                className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/40 hover:scale-105 active:scale-90 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/40 hover:scale-105 active:scale-90 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 <MorphClose open={sheetOpen} />
               </button>
@@ -534,8 +534,13 @@ export function MobileNav({
 
         {/* ── Scrollable middle — only this region scrolls; the profile block
              and bottom utilities stay pinned below. ── */}
+        {/* No background fade on this container: a full-height gradient whose
+            bottom stop sits just above the saffron divider read as a white
+            band between the last nav row and the line in light mode (and as a
+            pale field whenever the menu didn't overflow). The profile block's
+            own upward shadow provides the scroll separation affordance. */}
         <div className="relative min-h-0 flex-1">
-        <nav className="h-full overflow-y-auto px-3 pb-2">
+        <nav className="h-full overflow-y-auto px-3">
           {/* Browse section */}
           <SectionLabel>{lang === "bn" ? "ব্রাউজ করুন" : "Browse"}</SectionLabel>
           <NavSurface>
@@ -696,19 +701,14 @@ export function MobileNav({
           </NavSurface>
         </nav>
 
-        {/* Scroll-shadow fade — sits at the bottom of the scrollable nav and
-            dims the content edge into the divider below, so users can tell
-            the menu scrolls on small screens. Purely visual (pointer-events-
-            none, no layout space), so it adds no padding above the divider. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-background via-background/70 to-transparent" />
         </div>
 
         {/* ── Persistent bottom profile block — Profile lives HERE, anchored
              below the scrollable navigation. The top edge is a SINGLE
-             saffron-tinted divider (the saffron line IS the top border — no
-             stacked hairline and no upward shadow band above it) so the
-             pinned block reads as a separate surface on small screens. ── */}
-        <div className="relative shrink-0 border-t border-[var(--color-saffron)]/30 px-4 py-3 bg-gradient-to-t from-saffron-50/[0.02] to-background">
+             saffron-tinted divider; a soft upward shadow lifts the divider
+             off the nav content above so the scrollable menu is clearly
+             recognizable on small screens. ── */}
+        <div className="relative shrink-0 border-t border-[var(--color-saffron)]/30 px-4 py-3 bg-gradient-to-t from-saffron-50/[0.02] to-background shadow-[0_-12px_24px_-10px_hsl(var(--foreground)/0.35)]">
           <ProfileBlock
             isSignedIn={isSignedIn}
             userEmail={userEmail}

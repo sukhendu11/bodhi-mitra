@@ -128,7 +128,7 @@ function StrapiShell({ user }: { user: ReturnType<typeof useAuthSession>["user"]
         </div>
 
         <h1 className="font-serif text-3xl text-foreground mb-3">Admin Panel</h1>
-        <p className="text-sm text-muted-foreground mb-8 max-w-sm mx-auto">
+        <p className="text-base text-muted-foreground mb-8 max-w-sm mx-auto">
           Content management has moved to Strapi CMS. Use the button below to access the admin panel.
         </p>
 

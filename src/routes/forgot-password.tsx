@@ -51,7 +51,7 @@ function ForgotPasswordPage() {
       <div className="mx-auto max-w-md px-6 py-32 text-center">
         <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-500 mb-6" />
         <h1 className="font-serif text-3xl mb-3">Check your email</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-8">
+        <p className="text-base text-muted-foreground leading-relaxed mb-8">
           We've sent a password reset link to{" "}
           <span className="text-foreground font-medium">{email}</span>.
           Click the link in the email to reset your password. It expires in 1 hour.
@@ -86,7 +86,7 @@ function ForgotPasswordPage() {
       </Link>
 
       <h1 className="font-serif text-3xl mt-8 mb-3">Forgot password?</h1>
-      <p className="text-sm text-muted-foreground leading-relaxed mb-10">
+      <p className="text-base text-muted-foreground leading-relaxed mb-10">
         Enter the email address you used to sign up, and we'll send you a link
         to reset your password.
       </p>

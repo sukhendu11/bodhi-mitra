@@ -6,7 +6,8 @@ import { fetchPageBySlug } from "@/lib/pages";
 import { Reveal } from "@/components/Reveal";
 import { PublicBreadcrumbs } from "@/components/PublicBreadcrumbs";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
-import { Feather, BookOpen, Play, HeartHandshake, ArrowRight } from "lucide-react";
+import { BookOpen, Play, HeartHandshake, ArrowRight } from "lucide-react";
+import { FeatherPenIcon } from "@/components/FeatherPenIcon";
 import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
@@ -46,7 +47,7 @@ function About() {
   const exploreItems = [
     {
       to: "/reflections" as const,
-      icon: Feather,
+      icon: FeatherPenIcon,
       titleEn: "Reflections",
       titleBn: "প্রতিফলন",
       descEn: "Essays on the dharma, the mind, and the examined life.",
@@ -74,7 +75,10 @@ function About() {
     <>
       {/* Full-bleed banner hero — edge-to-edge, homepage-hero language.
           Renders only when a banner image is configured; otherwise the
-          plain centered hero inside the article below. */}
+          plain centered hero inside the article below. The image is
+          CONTAINED (never cropped) so the whole artwork — including the
+          meditator's face — stays visible; it letterboxes against the
+          page background on wider bands. */}
       {banner && (
         <Reveal delay={0}>
           <section className="relative overflow-hidden border-b border-border/60">
@@ -82,34 +86,42 @@ function About() {
               src={banner}
               alt=""
               aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-contain"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/15 to-background/80" />
-            <div className="relative mx-auto max-w-3xl px-6 py-28 md:py-36 text-center text-foreground dark:text-white">
-              <p className="inline-flex items-center gap-3 text-xs uppercase tracking-[0.3em] font-medium text-foreground/70 dark:text-white/80">
-                <span
-                  aria-hidden="true"
-                  className="h-px w-8 bg-foreground/30 dark:bg-white/40"
-                />
-                {eyebrow}
-                <span
-                  aria-hidden="true"
-                  className="h-px w-8 bg-foreground/30 dark:bg-white/40"
-                />
-              </p>
-              <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight mt-5">
-                {title}
-              </h1>
-              <div className="mt-7 flex items-center justify-center gap-3" aria-hidden="true">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
-                <span className="h-0.5 w-16 rounded-full bg-gradient-to-r from-saffron/70 to-saffron/20" />
-                <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
-              </div>
-              {tagline && (
-                <p className="mt-6 max-w-xl mx-auto text-sm md:text-base leading-relaxed text-foreground/80 dark:text-white/70">
-                  {tagline}
+            {/* Hero typography — sits on a frosted panel so it stays readable
+                over the artwork in BOTH themes (bare foreground text read as
+                near-black-on-dark-figure in light mode). Brand treatment:
+                saffron eyebrow + hairlines, serif title, saffron dot divider. */}
+            <div className="relative mx-auto max-w-3xl px-6 py-24 md:py-32 text-center">
+              <div className="inline-block rounded-3xl border border-border/30 bg-background/55 px-7 py-9 md:px-12 md:py-12 shadow-2xl backdrop-blur-md ring-1 ring-black/5 dark:bg-background/50 dark:ring-white/5">
+                <p className="inline-flex items-center gap-3 text-xs uppercase tracking-[0.3em] font-medium text-[var(--color-saffron)]">
+                  <span
+                    aria-hidden="true"
+                    className="h-px w-8 bg-[var(--color-saffron)]/60"
+                  />
+                  {eyebrow}
+                  <span
+                    aria-hidden="true"
+                    className="h-px w-8 bg-[var(--color-saffron)]/60"
+                  />
                 </p>
-              )}
+                <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight mt-5 text-foreground">
+                  {title}
+                </h1>
+                <div className="mt-7 flex items-center justify-center gap-3" aria-hidden="true">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
+                  <span className="h-0.5 w-16 rounded-full bg-gradient-to-r from-saffron/70 to-saffron/20" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
+                </div>
+                {/* Subheadline size matches the blog excerpt + page headers
+                    (text-lg) so all page sub-headlines read consistently. */}
+                {tagline && (
+                  <p className="mt-6 max-w-xl mx-auto text-lg leading-relaxed text-foreground/85">
+                    {tagline}
+                  </p>
+                )}
+              </div>
             </div>
             {/* Bottom saffron hairline accent */}
             <span
@@ -190,7 +202,7 @@ function About() {
               </div>
             )}
             {noteText && (
-              <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+              <p className="text-base text-muted-foreground whitespace-pre-line leading-relaxed">
                 {noteText}
               </p>
             )}
@@ -217,10 +229,12 @@ function About() {
                 <div className="w-10 h-10 rounded-xl bg-secondary/40 flex items-center justify-center mb-4">
                   <item.icon className="h-5 w-5 text-[var(--color-saffron)]/70" />
                 </div>
-                <h3 className="text-sm font-medium group-hover:text-[var(--color-saffron)] transition-colors">
+                <h3 className="text-lg font-medium group-hover:text-[var(--color-saffron)] transition-colors">
                   {lang === "bn" ? item.titleBn : item.titleEn}
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed flex-1">
+                {/* Card description is reading copy — text-base per the type scale
+                    (was 12px; body min is 16px). */}
+                <p className="text-base text-muted-foreground mt-1 leading-relaxed flex-1">
                   {lang === "bn" ? item.descBn : item.descEn}
                 </p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground/60 group-hover:text-[var(--color-saffron)] transition-colors">

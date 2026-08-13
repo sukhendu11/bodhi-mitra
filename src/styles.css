@@ -223,8 +223,9 @@
 
   /* ── Animation Keyframes ─────────────────────────────────────── */
   /* NOTE: Tailwind's built-in animate-spin/pulse/bounce cover most cases.
-     Custom keyframes (shimmer, page-enter, card-enter) are referenced
-     directly by classes below — no --animate-* tokens needed. */
+     Custom keyframes (shimmer, page-enter) are referenced directly by
+     classes below — no --animate-* tokens needed. (card-enter/stagger-enter
+     removed 2026-08-12 — grid cards use the scroll-triggered Reveal.) */
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -414,9 +415,6 @@
     main {
       animation: none;
     }
-    .stagger-enter {
-      animation: none !important;
-    }
     .skeleton-shimmer {
       animation: none;
     }
@@ -448,14 +446,6 @@
 
 /* ── Utilities ──────────────────────────────────────────────────── */
 
-@utility stagger-enter {
-  animation: card-enter 0.4s ease-out both;
-}
-
-@keyframes card-enter {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 
 @layer base {
   .skeleton-shimmer {

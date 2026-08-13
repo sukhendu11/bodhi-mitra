@@ -61,7 +61,7 @@ function ReadingHistoryPage() {
         <h1 className="font-serif text-3xl text-foreground mb-3">
           {lang === "bn" ? "পড়ার ইতিহাস" : "Reading History"}
         </h1>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-base text-muted-foreground mb-6">
           {lang === "bn"
             ? "আপনার পড়ার ইতিহাস দেখতে সাইন ইন করুন।"
             : "Sign in to view your reading history."}
@@ -142,7 +142,7 @@ function ReadingHistoryPage() {
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium group-hover:text-[var(--color-saffron)] transition-colors">
+                    <p className="truncate text-base font-medium group-hover:text-[var(--color-saffron)] transition-colors">
                       {pickLocalized(book!.title_en, book!.title_bn, lang, "Untitled")}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground/70">

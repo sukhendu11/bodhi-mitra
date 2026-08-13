@@ -142,7 +142,15 @@ export function AvatarDropdown({
                       <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground/40" />
                     </a>
                   ) : (
-                    <Link to={item.to} className="flex items-center gap-2 cursor-pointer">
+                    <Link
+                      to={item.to}
+                      className="flex items-center gap-2 cursor-pointer"
+                      // Active state mirrors the mobile drawer's Account rows
+                      // (saffron-tinted row) so desktop matches mobile nav.
+                      activeProps={{
+                        className: "bg-primary/10 text-foreground font-medium",
+                      }}
+                    >
                       <Icon className="h-4 w-4" />
                       {bn ? item.label_bn : item.label_en}
                       {badgeCounts[item.id] > 0 && (

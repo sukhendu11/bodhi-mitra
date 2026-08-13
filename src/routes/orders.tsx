@@ -84,7 +84,7 @@ function OrdersPage() {
         <h1 className="font-serif text-3xl mb-3">
           {lang === "bn" ? "অর্ডার ও রসিদ" : "Orders & Receipts"}
         </h1>
-        <p className="text-sm text-muted-foreground mb-8">
+        <p className="text-base text-muted-foreground mb-8">
           {lang === "bn"
             ? "আপনার অর্ডার ও রসিদ দেখতে সাইন ইন করুন।"
             : "Sign in to view your orders and receipts."}
@@ -203,7 +203,7 @@ function OrderCard({
           <Receipt className="h-5 w-5 text-muted-foreground/60" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium truncate">
+          <p className="text-base font-medium truncate">
             {lang === "bn" ? "অর্ডার" : "Order"} #{lang === "bn" ? toBanglaDigits(order.id.slice(-8).toUpperCase()) : order.id.slice(-8).toUpperCase()}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">

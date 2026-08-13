@@ -56,7 +56,7 @@ export function DangerZoneSection() {
       <div className="border border-destructive/25 bg-destructive/[0.04] rounded-xl p-5">
         {!showDeleteConfirm ? (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               {bn
                 ? "আপনার অ্যাকাউন্ট এবং সম্পর্কিত সব তথ্য স্থায়ীভাবে মুছে ফেলুন। এই কাজটি ফিরিয়ে আনা যাবে না।"
                 : "Permanently delete your account and all associated data. This action cannot be undone."}

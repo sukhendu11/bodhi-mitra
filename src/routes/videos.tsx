@@ -162,7 +162,7 @@ function VideosPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
           {videos.map((video, i) => (
-            <Reveal key={video.id} delay={Math.min(i * 0.05, 0.3)}>
+            <Reveal key={video.id} fade={false} delay={Math.min(i * 0.05, 0.3)}>
               <VideoCard video={video} onPlay={handlePlay} />
             </Reveal>
           ))}

@@ -1,6 +1,100 @@
 # Changelog
 
-## 2026-08-12
+## 2026-08-13
+
+### Full-site font-size audit — every page, every section aligned to the type scale
+
+**Systematic audit of all 38 routes + shared components against DESIGN.md's scale (titles 18 / body 16 / captions 14 / meta 12). Fixed every surface that rendered below body size or outside its tier — same treatment on mobile and desktop (no mobile-shrunk text):**
+
+- **Page intro/description paragraphs** under page titles: `text-sm` (14px) → **`text-base` (16px)** on profile, settings, purchases, orders, bookmarks, stats, reading-history, notifications, cart, checkout, search, admin, login, onboarding, forgot-password, reset-password. (Content hubs — books/videos/reflections/FAQ/terms/privacy/donate/contact/about — already had 18px intros via `EditorialHeader` or `text-lg`.)
+- **In-page section headings** (e.g. "My Books", chart titles, notification/profile section rows, shared `SettingsSectionCard` header): `text-sm` → **`text-base`** (all 8 settings sections + profile cards + stats charts + notifications).
+- **Row/list item titles** (purchases books, orders, bookmarks, reading-history, notifications, settings rows incl. Support & Legal / Email verification / Connected accounts, cart + checkout + CartDrawer items, checkout-success): `text-sm` → **`text-base` (16px)**.
+- **Row/list descriptions** (bookmark excerpts, settings row descriptions, notification sub-copy): `text-xs` (12px) → **`text-sm` (14px)** captions.
+- **Body copy in cards**: profile bio, settings bio, Danger Zone warning → `text-base`.
+- **Stats values** in time-per-book rows: 12px → 14px.
+- **Unchanged on purpose** (already consistent or chrome): header nav (16px), footer (18px brand / 14px links / 12px copyright), mobile nav (14px drawer rows / 10px bottom labels), card-grid titles (18px serif), card excerpts (16px), book metadata grids, money values, form inputs/labels, badges, dates, empty states, auth hints, reader toolbar, ToC items.
+
+Validation: tsc 0 errors · **627/627 tests**.
+
+### Section/card fonts lifted to body minimum — site-wide
+
+**The previous sweeps raised body copy (editorial 1.18rem / compact 16px) but left section content — card titles, card descriptions, excerpts, section blurbs — at caption/meta sizes (12–14px), so sections read visibly smaller than the body text around them. Fixed by applying DESIGN.md's documented scale to every section surface (rule added to `DESIGN.md §3.1`):**
+
+- **Card titles → `text-lg` (18px):** About Explore cards (`text-sm` → `text-lg`), `VideoCard` (16px → `text-lg`). Row/list titles → `text-base` (16px): homepage Continue-reading card, search result titles, post-sidebar Explore widget labels.
+- **Card descriptions/excerpts → `text-base` (16px):** About Explore card descriptions (12px → 16px), About note block (`text-sm` → `text-base`), `PostCard` excerpts (14px → 16px — reflections grids, related posts, homepage), search result snippets (12px → 16px), homepage newsletter CTA blurb + hero tagline (`text-sm` → `text-base` / `md:text-lg`).
+- **Captions → `text-sm` (14px):** post-sidebar Explore widget one-line descriptions (12px → 14px).
+- **Untouched (metadata, per DESIGN):** dates, badges, uppercase eyebrows, channel labels, card action buttons, empty-state notes, ToC items.
+
+Result: no reading copy renders below 16px anywhere; sections hold a clear 18/16/14/12 hierarchy instead of collapsing below body. `PostCard`/`BookCard`/`VideoCard` are shared, so reflections grids, related posts, homepage sections, and the videos page all inherit the fix.
+
+Validation: tsc 0 errors · **627/627 tests** · DESIGN.md rule added.
+
+### Font-size sweep extended to sidebar/widget surfaces
+
+**Continuing the type-scale consistency sweep (body copy ≥16px; captions ≥14px; pure metadata stays 12px) into the post-page sidebar, widgets, and comments:**
+
+- **Editorial pullquote supporting text** (`posts.$slug.tsx`) — 12px → **16px** (`text-base`); it's body copy in the article flow, same treatment as the rest of the reading surface.
+- **Author card description** — 12px → **14px** (`text-sm`); a descriptive caption under the serif name (pure metadata like dates/badges stays 12px).
+- **Comment bodies** (`Comments.tsx`) — 14px → **16px** (`text-base`); comment text is reading copy and now matches the compact-body minimum (FAQ answers / book description).
+- **Reply + parent-quote snippet boxes** — 12px → **14px** (`text-sm`); quoted copy inside the reply form reads comfortably.
+- **Newsletter widget blurb** (`NewsletterSignup.tsx`) — 14px → **16px** (`text-base`); body copy in the sidebar / About / homepage footer strip.
+- **Untouched (already consistent):** ToC nav items (`text-sm`), Explore labels/descriptions (14px label + 12px micro-caption), header bylines/dates, comment timestamps, empty states, card excerpts (`PostCard` is the shared site-wide card treatment — serif `text-lg` title + `text-sm` line-clamped excerpt, matching the books/videos grids).
+
+Validation: tsc 0 errors · **627/627 tests**.
+
+### About hero typography — frosted panel + saffron brand treatment over the artwork
+
+**The hero text previously sat as bare `text-foreground` directly on the contained image — near-black on the dark-teal meditator in light mode, barely legible. Redesigned the typography block (`about.tsx`):**
+
+- **Frosted panel** — the eyebrow / title / divider / tagline now live in an `inline-block rounded-3xl` panel (`bg-background/55 dark:bg-background/50` + `backdrop-blur-md`, `border-border/30`, `ring-1 ring-black/5 dark:ring-white/5`, `shadow-2xl`) that hugs the text and guarantees contrast over the busy artwork in BOTH themes — `text-foreground` flips automatically, so the `dark:text-white` special-casing is gone.
+- **Saffron eyebrow** — the uppercase tracking eyebrow + its flanking hairlines are now `var(--color-saffron)` (brand accent) instead of muted foreground.
+- Serif title keeps the site-wide H1 language (foreground serif), the dot divider stays saffron (slightly strengthened), tagline brightened to `foreground/85`.
+- Hero padding trimmed `py-28 md:py-36` → `py-24 md:py-32` so the panel + artwork breathe.
+
+**Validation:** tsc 0 errors · **627/627 tests**.
+
+**Audited every body-content surface against the DESIGN.md type scale and the blog article body (`.prose-mitra` 1.18rem / line-height 1.85).**
+
+- **Terms & Privacy — now full editorial prose.** The card containers overrode `.prose-mitra` with `text-sm text-muted-foreground leading-relaxed space-y-8` (14px muted — smaller and dimmer than every other page body). Removed the overrides so the body renders at the shared 1.18rem/foreground/1.85 treatment, and dropped the ad-hoc `font-serif text-lg` classes from the section `<h2>`s so they inherit the prose h2 (2rem serif) — the legal pages now read exactly like a blog article.
+- **FAQ answers + book detail description — 14px → `text-base` (16px).** These are the two remaining non-prose body surfaces below the DESIGN.md body default (`text-base` = Body default); both now match the site body standard (Blog/About/Pages/legal bodies stay at the larger 1.18rem editorial size by design).
+- **About hero tagline — `text-sm md:text-base` → `text-lg`.** Page sub-headlines were inconsistent: blog excerpt + `pages.$slug` header + `EditorialHeader` (Books/Videos/Reflections) all use `text-lg`; the About hero tagline was the 14→16px outlier.
+
+**Validation:** tsc 0 errors · **627/627 tests** (no contract guard pinned the changed classes).
+
+- **About hero image replaced** — `public/about-hero.png` is now Pixabay vector **8314420** (meditation / zen / nature / lotus lake, Pixabay Content License; 1280×853 landscape, calm teal/mint palette that sits well under the hero's gradient scrim). Same `/about-hero.png` path, so no route change; mock-page comment updated. The hero `<img>` is now **`object-contain`** (was `object-cover`) — the artwork is never cropped, so the meditator's face stays fully visible; it letterboxes against the page background on wider bands.
+- **Mobile drawer white strip above the profile saffron line — gone.** The scroll container carried a full-height fade (`bg-gradient-to-t from-foreground/20 via-foreground/[0.06] to-transparent`) whose bottom stop sat directly above the profile block's saffron divider. In light mode that read as a white band between the last nav row and the line — and as a pale field whenever the menu didn't overflow. Removed the container fade entirely; the profile block's own upward shadow (`shadow-[0_-12px_24px_-10px_…]`) remains as the scroll separation affordance. Comment updated.
+
+**Validation:** tsc 0 errors · **627/627 tests** (contract suite unaffected — no `justify-between` row changed).
+
+## 2026-08-13
+
+### FeatherPenIcon is now a real lucide-style SVG — active tints work everywhere
+
+**Root cause:** the "hand-drawn SVG" in the 2026-08-12 notes never actually landed — `FeatherPenIcon.tsx` was a wrapper around the Flaticon `public/icons/quill-pen.png` raster (`<img>` + a `.dark` invert `<style>`). Raster images can't inherit `currentColor`, so every active-state treatment that tints the other nav icons saffron (`[&_svg]:text-[var(--color-saffron)]` in `MobileNav`, `text-[var(--color-saffron)]` chips in `SectionHeader`/homepage, `text-[var(--color-saffron)]/70` in About/search/bookmarks) silently did nothing on the Reflections mark — it stayed black-in-light / white-in-dark even on the current route.
+
+**Fix — `src/components/FeatherPenIcon.tsx` rewritten as a hand-drawn SVG:**
+- 24×24 viewBox, `fill="none" stroke="currentColor"` stroke-width 2, round caps/joins — lucide-style, same visual family as every other icon in the app
+- Shape mirrors the Flaticon quill it replaces: feather vane (two tapering silhouette curves) + shaft + two barbs + pen nib + the long ink writing line sweeping from under the nib
+- `currentColor` means the icon now tints with `text-*`/`[&_svg]` exactly like the other buttons — saffron on the active Reflections route (mobile drawer rows, bottom-nav tab), saffron icon chips on the homepage/section headers, `text-muted-foreground/40` placeholders, etc.; `stroke-[1.8]` in `BottomNav` still thins it via CSS
+- Deleted `public/icons/quill-pen.png` + the `.dark` invert CSS (no longer needed); drop-in for all 8 call sites (no prop changes)
+
+**Validation:** tsc 0 errors · **627/627 tests**.
+
+### Grid card stagger, custom FeatherPenIcon, desktop nav active states, search palette fixes
+
+**Grid cards appear smoothly on every screen.** Homepage Featured Books + Videos grids gained per-card staggered `Reveal fade={false}` wrappers (`delay={Math.min(i * 0.05, 0.3)}`) — cards previously popped in with their section. The Books and Videos pages' existing per-card `Reveal` stagger switched to `fade={false}` (pure slide-up, no opacity change), matching the homepage sections' motion language from the earlier slide-up batch. `Reveal.tsx` gained a `fade` prop (default `true`; `false` = translateY-only with the softer `cubic-bezier(0.22,1,0.36,1)` landing). Reflections grids (`PostGrid`) converted to the same scroll-triggered `Reveal` pattern — the old `stagger-enter` CSS was mount-time, so single-column cards below the fold on small screens had finished animating before the user scrolled to them (no visible transition). All four content grids are now visually consistent. Scroll-triggered via IntersectionObserver, so the cascade plays as cards enter the viewport; reduced-motion users get content instantly. Dead `stagger-enter`/`card-enter` CSS utilities and their reduced-motion rule removed from `styles.css`.
+
+**Reflections mark → custom `FeatherPenIcon.tsx`** — a hand-drawn full feather quill with an ink writing line (lucide-styled: 24×24, `currentColor`, round caps), replacing both the lucide `Feather` and the interim `QuillInkwellIcon` on all 8 Reflections surfaces (mobile drawer, bottom nav, homepage section header, ⌘K palette, /search tabs + result chips, bookmarks placeholders, About explore card, mock admin tab). Icon-record types relaxed to `React.ComponentType<{ className?: string }>` where they were pinned to `typeof Feather`.
+
+**Desktop nav active states synced from the mobile drawer** — header links (`__root.tsx`), `NavDropdown` trigger + items + nested flyouts, and `AvatarDropdown` items now use the mobile active language: `bg-primary/10` tint pill + saffron left accent bar + medium weight + saffron icon, matching the current route (Reflections trigger prefix-matches category pages). Hover preserved (`hover:bg-primary/15`).
+
+**MobileNav white strip above the saffron divider — finally gone.** Root cause was the pale 56px scroll-shadow overlay div (read as a white band in light mode, and unreachable when the menu didn't overflow). Removed the overlay and moved the bottom fade onto the scroll-container background (`from-foreground/20 via-foreground/[0.06]`), so the fade always terminates exactly at the divider. Dead `pb-2` nav padding removed too.
+
+**Mobile menu ✕ smaller** — hamburger/✕ button box `h-6 w-6` → `h-5 w-5`, morph icon box 16×20 → 14×16, ✕ bars `w-5` → `w-4` (geometry re-derived so the 3-line ↔ ✕ morph still glides).
+
+**Search palette (⌘K) fixes** — `⌘` glyph (tofu box on Windows) → `Ctrl K` in the palette + header tooltip; `↑↓`/`↵` glyphs → lucide ArrowUp/Down + CornerDownLeft icons; keyboard-hint footer now `hidden sm:flex`; new visible ✕ close button on every screen.
+
+Validation: tsc 0 errors · **627/627 tests** · 63 contract guards.
 
 ### Polish batch — i18n audit, icon unification, badges, nav drawer, hero CTA
 

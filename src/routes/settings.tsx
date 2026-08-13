@@ -259,7 +259,7 @@ function SettingsPage() {
       <div className="mx-auto max-w-2xl px-6 py-20 md:py-28 text-center">
         <UserCog className="h-12 w-12 mx-auto text-muted-foreground/20 mb-4" />
         <h1 className="font-serif text-3xl text-foreground mb-3">{bn ? "সেটিংস" : "Settings"}</h1>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-base text-muted-foreground mb-6">
           {bn ? "আপনার পছন্দ পরিচালনা করতে সাইন ইন করুন।" : "Sign in to manage your preferences."}
         </p>
         <BrandCtaButton asChild className="px-6 py-2.5 text-xs uppercase tracking-[0.2em]">
@@ -315,15 +315,15 @@ function SettingsPage() {
           {/* Data & Account — backend-only, hidden in mock mode */}
           {!isMockMode() && (
             <section id="data" className="scroll-mt-28 rounded-2xl border border-border/50 bg-card p-6 md:p-8 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-foreground mb-6">
+              <div className="flex items-center gap-2 text-base text-foreground mb-6">
                 <Database className="h-4 w-4" />
                 <h2 className="text-xl font-semibold">{bn ? "ডেটা ও অ্যাকাউন্ট" : "Data & Account"}</h2>
               </div>
               <div className="space-y-5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <span className="text-sm text-foreground">{bn ? "আপনার ডেটা এক্সপোর্ট করুন" : "Export your data"}</span>
-                    <p className="text-xs text-muted-foreground/60 mt-0.5">
+                    <span className="text-base text-foreground">{bn ? "আপনার ডেটা এক্সপোর্ট করুন" : "Export your data"}</span>
+                    <p className="text-sm text-muted-foreground/60 mt-0.5">
                       {bn ? "আপনার প্রোফাইল, ক্রয় ও পড়ার তথ্যের কপি ডাউনলোড করুন" : "Download a copy of your profile, purchases and reading data"}
                     </p>
                   </div>
@@ -337,8 +337,8 @@ function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between gap-4 pt-5 border-t border-border/40">
                   <div>
-                    <span className="text-sm text-foreground">{bn ? "অ্যাকাউন্ট ব্যবস্থাপনা" : "Account management"}</span>
-                    <p className="text-xs text-muted-foreground/60 mt-0.5">
+                    <span className="text-base text-foreground">{bn ? "অ্যাকাউন্ট ব্যবস্থাপনা" : "Account management"}</span>
+                    <p className="text-sm text-muted-foreground/60 mt-0.5">
                       {bn ? "অ্যাকাউন্ট স্থানান্তর ও বন্ধের বিকল্প" : "Account transfer and closure options"}
                     </p>
                   </div>
@@ -361,10 +361,10 @@ function SettingsPage() {
             <div className="sticky bottom-4 z-10">
               <div className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-md shadow-lg p-4 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">
+                  <p className="text-base font-medium">
                     {bn ? "অসংরক্ষিত পরিবর্তন" : "Unsaved changes"}
                   </p>
-                  <p className="text-xs text-muted-foreground/70">
+                  <p className="text-sm text-muted-foreground/70">
                     {bn ? "পরিবর্তনগুলো সংরক্ষণ করুন" : "Save your changes"}
                   </p>
                 </div>

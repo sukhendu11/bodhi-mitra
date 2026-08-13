@@ -221,7 +221,7 @@ function LoginPage() {
   return (
     <div className="mx-auto max-w-md px-6 py-32">
       <h1 className="font-serif text-4xl mb-4 text-center">Welcome</h1>
-      <p className="text-sm text-muted-foreground mb-12 leading-relaxed text-center">
+      <p className="text-base text-muted-foreground mb-12 leading-relaxed text-center">
         {mode === "signin"
           ? "Sign in to share reflections on the writings."
           : "Create an account to begin."}

@@ -53,7 +53,7 @@ function NotificationsPage() {
         <h1 className="font-serif text-3xl text-foreground mb-3">
           {lang === "bn" ? "বিজ্ঞপ্তি" : "Notifications"}
         </h1>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-base text-muted-foreground mb-6">
           {lang === "bn"
             ? "আপনার বিজ্ঞপ্তি দেখতে সাইন ইন করুন।"
             : "Sign in to view your notifications."}
@@ -83,7 +83,7 @@ function NotificationsPage() {
       </Link>
 
       <div className="mt-8">
-        <div className="flex items-center gap-2 text-sm text-foreground mb-6">
+        <div className="flex items-center gap-2 text-base text-foreground mb-6">
           <Bell className="h-5 w-5 text-[var(--color-saffron)]/70" />
           <h1 className="font-serif text-2xl md:text-3xl tracking-tight">
             {lang === "bn" ? "বিজ্ঞপ্তি" : "Notifications"}
@@ -129,7 +129,7 @@ function NotificationsPage() {
                     aria-hidden
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm text-foreground leading-snug break-words">
+                    <span className="block text-base text-foreground leading-snug break-words">
                       {n.message}
                     </span>
                     <span className="block mt-1 text-xs text-muted-foreground/70">

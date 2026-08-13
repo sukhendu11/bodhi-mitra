@@ -54,7 +54,7 @@ function PurchasesPage() {
         <h1 className="font-serif text-3xl mb-3">
           {lang === "bn" ? "আমার বই" : "My Books"}
         </h1>
-        <p className="text-sm text-muted-foreground mb-8">
+        <p className="text-base text-muted-foreground mb-8">
           {lang === "bn"
             ? "আপনার বই দেখতে সাইন ইন করুন।"
             : "Sign in to view your books."}
@@ -133,7 +133,7 @@ function PurchasesPage() {
       {/* Paid books */}
       {!isLoading && paidBooks.length > 0 && (
         <div className="mb-10">
-          <h2 className="text-sm font-medium text-muted-foreground mb-4">
+          <h2 className="text-base font-medium text-muted-foreground mb-4">
             {lang === "bn" ? "কেনা বই" : "Purchased Books"}
           </h2>
           <div className="space-y-3">
@@ -156,7 +156,7 @@ function PurchasesPage() {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">
+                  <p className="text-base font-medium line-clamp-1 group-hover:text-primary transition-colors">
                     {book.titleEn}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -205,7 +205,7 @@ function PurchasesPage() {
       {/* Free books */}
       {!isLoading && freeBooks.length > 0 && (
         <div>
-          <h2 className="text-sm font-medium text-muted-foreground mb-4">
+          <h2 className="text-base font-medium text-muted-foreground mb-4">
             {lang === "bn" ? "বিনামূল্যের বই" : "Free Books"}
           </h2>
           <div className="space-y-3">
@@ -228,7 +228,7 @@ function PurchasesPage() {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">
+                  <p className="text-base font-medium line-clamp-1 group-hover:text-primary transition-colors">
                     {book.titleEn}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">

@@ -8,6 +8,9 @@ interface RevealProps {
   distance?: number;
   /** Duration of the animation in seconds. Default 0.6. */
   duration?: number;
+  /** Fade opacity in with the slide. Default true; set false for a pure
+      slide-up (no opacity change) — the homepage sections use this. */
+  fade?: boolean;
   /** Additional class names. */
   className?: string;
   /** HTML element to render as. Default "div". */
@@ -19,6 +22,7 @@ export function Reveal({
   delay = 0,
   distance = 20,
   duration = 0.6,
+  fade = true,
   className = "",
   as: Tag = "div",
 }: RevealProps) {
@@ -56,12 +60,20 @@ export function Reveal({
   // Skip the entrance animation entirely for reduced-motion users.
   const style: React.CSSProperties = prefersReduced
     ? {}
-    : {
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0)" : `translateY(${distance}px)`,
-        transition: `opacity ${duration}s ease-out, transform ${duration}s ease-out`,
-        transitionDelay: `${delay}s`,
-      };
+    : fade
+      ? {
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible ? "translateY(0)" : `translateY(${distance}px)`,
+          transition: `opacity ${duration}s ease-out, transform ${duration}s ease-out`,
+          transitionDelay: `${delay}s`,
+        }
+      : {
+          // Pure slide-up — no opacity change. Softer landing easing than
+          // the fade variant (easeOutQuint: quick start, gentle settle).
+          transform: isVisible ? "translateY(0)" : `translateY(${distance}px)`,
+          transition: `transform ${duration}s cubic-bezier(0.22, 1, 0.36, 1)`,
+          transitionDelay: `${delay}s`,
+        };
 
   return (
     <Tag ref={ref} style={style} className={className}>

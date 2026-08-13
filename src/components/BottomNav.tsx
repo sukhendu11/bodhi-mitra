@@ -19,7 +19,8 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { getCartCount } from "@/lib/cart";
 import { callFn } from "@/lib/call-fn";
 import { openCartDrawer } from "@/lib/cart-events";
-import { Home, Feather, BookOpen, Heart, ShoppingBag } from "lucide-react";
+import { Home, BookOpen, Heart, ShoppingBag } from "lucide-react";
+import { FeatherPenIcon } from "./FeatherPenIcon";
 
 const SAFE_BOTTOM = "pb-[env(safe-area-inset-bottom)]";
 
@@ -74,15 +75,15 @@ export function BottomNav() {
         </Link>
 
         {/* Reflections — the hub page (category pages also light it up).
-            Feather matches the mobile-drawer icon AND the homepage section
-            header; Books uses the open-book `BookOpen` (same as the mobile
+            FeatherPenIcon matches the mobile-drawer icon AND the homepage
+            section header; Books uses the open-book `BookOpen` (same as the mobile
             nav) so the two tabs stay visually distinct. */}
         <Link
           to="/reflections"
           className={tabCls(currentPath.startsWith("/reflections"))}
         >
           <span className={iconWrapCls(currentPath.startsWith("/reflections"))}>
-            <Feather className="h-5 w-5 stroke-[1.8]" />
+            <FeatherPenIcon className="h-5 w-5 stroke-[1.8]" />
           </span>
           {lang === "bn" ? "প্রতিফলন" : "Reflections"}
         </Link>

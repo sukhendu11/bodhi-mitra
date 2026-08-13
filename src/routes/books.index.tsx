@@ -544,7 +544,7 @@ function BooksPage() {
         {!isLoading && !isError && books.length > 0 && (
           <div className="book-grid">
             {books.map((book, i) => (
-              <Reveal key={book.id} delay={Math.min(i * 0.04, 0.3)}>
+              <Reveal key={book.id} fade={false} delay={Math.min(i * 0.04, 0.3)}>
                 <BookCard
                   book={book}
                   lang={lang}

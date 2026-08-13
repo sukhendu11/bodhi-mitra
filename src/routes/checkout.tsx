@@ -161,7 +161,7 @@ function CheckoutPage() {
           <GiftBoxIcon className="h-7 w-7 text-muted-foreground/30" />
         </div>
         <h1 className="font-serif text-3xl mb-3">{lang === "bn" ? "চেকআউট" : "Checkout"}</h1>
-        <p className="text-sm text-muted-foreground mb-8">
+        <p className="text-base text-muted-foreground mb-8">
           {lang === "bn" ? "চালিয়ে যেতে সাইন ইন করুন।" : "Sign in to complete checkout."}
         </p>
         <BrandCtaButton
@@ -285,7 +285,7 @@ function CheckoutPage() {
                           to="/books/$slug"
                           params={{ slug: item.book_slug }}
                           search={{ search: "", page: 1 }}
-                          className="text-sm font-medium line-clamp-1 hover:text-foreground/80 transition-colors"
+                          className="text-base font-medium line-clamp-1 hover:text-foreground/80 transition-colors"
                         >
                           {title}
                         </Link>

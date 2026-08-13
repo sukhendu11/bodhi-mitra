@@ -4,6 +4,7 @@ import { fetchPosts, type PostCategory } from "@/lib/posts";
 import { PostCard } from "./PostCard";
 import { PostCardSkeleton } from "./PostCardSkeleton";
 import { useLang, toBanglaDigits } from "@/lib/i18n";
+import { Reveal } from "./Reveal";
 
 const PAGE_SIZE = 9;
 
@@ -58,9 +59,13 @@ export function PostGrid({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16" key={page}>
           {posts.map((post, i) => (
-            <div key={post.id} className="stagger-enter" style={{ animationDelay: `${i * 0.06}s` }}>
+            // Scroll-triggered per-card slide-up (matches the books/videos
+            // grids). `stagger-enter` was mount-time — cards below the fold
+            // (single-column on small screens) had finished animating before
+            // the user scrolled to them, so no transition was visible.
+            <Reveal key={post.id} fade={false} delay={Math.min(i * 0.05, 0.3)}>
               <PostCard post={post} />
-            </div>
+            </Reveal>
           ))}
         </div>
       )}

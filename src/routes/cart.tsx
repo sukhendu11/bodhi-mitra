@@ -162,7 +162,7 @@ function CartPage() {
           <GiftBoxIcon className="h-7 w-7 text-muted-foreground/30" />
         </div>
         <h1 className="font-serif text-3xl mb-3">{pickLocalized(config.commerce.cart_title_en, config.commerce.cart_title_bn, lang, "Your Cart")}</h1>
-        <p className="text-sm text-muted-foreground mb-8">{lang === "bn" ? "আপনার কার্ট দেখতে ও পরিচালনা করতে সাইন ইন করুন।" : "Sign in to view and manage your cart."}</p>
+        <p className="text-base text-muted-foreground mb-8">{lang === "bn" ? "আপনার কার্ট দেখতে ও পরিচালনা করতে সাইন ইন করুন।" : "Sign in to view and manage your cart."}</p>
         <BrandCtaButton
           onClick={() => setAuthModalOpen(true)}
           className="px-6 py-3"
@@ -297,7 +297,7 @@ function CartPage() {
                       to="/books/$slug"
                       params={{ slug: item.book_slug }}
                       search={{ search: "", page: 1 }}
-                      className="text-sm font-medium line-clamp-1 hover:text-[var(--color-saffron)] transition-colors"
+                      className="text-base font-medium line-clamp-1 hover:text-[var(--color-saffron)] transition-colors"
                     >
                       {title}
                     </Link>

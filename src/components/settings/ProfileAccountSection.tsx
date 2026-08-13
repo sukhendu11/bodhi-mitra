@@ -415,7 +415,7 @@ export function ProfileAccountSection({
           ) : (
             <div>
               {profile?.bio ? (
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {profile.bio}
                 </p>
               ) : (
@@ -447,8 +447,8 @@ export function ProfileAccountSection({
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-muted-foreground/60" />
                 <div>
-                  <p className="text-sm text-foreground">{bn ? "ইমেইল যাচাইকরণ" : "Email verification"}</p>
-                  <p className="text-xs text-muted-foreground/60 mt-0.5">
+                  <p className="text-base text-foreground">{bn ? "ইমেইল যাচাইকরণ" : "Email verification"}</p>
+                  <p className="text-sm text-muted-foreground/60 mt-0.5">
                     {bn ? "আপনার ইমেইল নিশ্চিত হয়েছে" : "Your email address is confirmed"}
                   </p>
                 </div>
@@ -461,9 +461,9 @@ export function ProfileAccountSection({
             <div className="pt-6 border-t border-border/40">
               <div className="flex items-center gap-2 mb-4">
                 <Link2 className="h-4 w-4 text-muted-foreground/60" />
-                <p className="text-sm text-foreground">{bn ? "সংযুক্ত অ্যাকাউন্ট" : "Connected accounts"}</p>
+                <p className="text-base text-foreground">{bn ? "সংযুক্ত অ্যাকাউন্ট" : "Connected accounts"}</p>
               </div>
-              <p className="text-xs text-muted-foreground/70">
+              <p className="text-sm text-muted-foreground/70">
                 {bn
                   ? "Google দিয়ে সাইন-ইন সংযোগ ব্যবস্থাপনা এখানে আসবে।"
                   : "Manage your Google sign-in connection here."}

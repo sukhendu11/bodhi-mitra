@@ -128,8 +128,8 @@ export function VideoCard({ video, onPlay }: VideoCardProps) {
               </p>
             ) : null}
 
-            {/* Title */}
-            <h3 className="text-base font-medium text-foreground leading-snug line-clamp-2 group-hover:text-primary/80 transition-colors duration-300">
+            {/* Title — text-lg card-title size per the type scale (was 16px). */}
+            <h3 className="text-lg font-medium text-foreground leading-snug line-clamp-2 group-hover:text-primary/80 transition-colors duration-300">
               {displayTitle}
             </h3>
 

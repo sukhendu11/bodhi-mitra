@@ -51,6 +51,10 @@ function DropdownSubItem({ item }: { item: DropdownItem }) {
             to={item.to as any}
             role="menuitem"
             className="flex-1 rounded-sm px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-0.5 transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+            activeProps={{
+              className:
+                "text-foreground font-medium bg-primary/10 hover:bg-primary/15",
+            }}
           >
             {item.label}
           </Link>
@@ -101,7 +105,14 @@ function DropdownLink({ item }: { item: DropdownItem }) {
     );
   }
   return (
-    <Link to={item.to as any} role="menuitem" className={itemCls}>
+    <Link
+      to={item.to as any}
+      role="menuitem"
+      className={itemCls}
+      activeProps={{
+        className: "text-foreground font-medium bg-primary/10 hover:bg-primary/15",
+      }}
+    >
       {item.label}
     </Link>
   );
@@ -135,8 +146,11 @@ export function NavDropdown({ triggerLabel, to, items }: NavDropdownProps) {
     }
   };
 
+  // Active state — bold text + a persistent saffron underline (no background
+  // pill; the mobile-style tint reads too heavy in the quiet desktop header).
+  const activeCls = "text-foreground font-medium [&>span]:scale-x-100 [&>span]:bg-[var(--color-saffron)]";
   const triggerCls =
-    "group relative inline-flex items-center gap-1 text-base text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-300 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40";
+    "group relative inline-flex items-center gap-1 px-2.5 py-1 text-base text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-300 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40";
 
   return (
     <div
@@ -156,6 +170,7 @@ export function NavDropdown({ triggerLabel, to, items }: NavDropdownProps) {
           aria-expanded={open}
           className={triggerCls}
           activeOptions={{ exact: to === "/" }}
+          activeProps={{ className: activeCls }}
         >
           {triggerLabel}
           <ChevronDown className="h-3 w-3 transition-transform duration-200 group-data-[state=open]:rotate-180" />

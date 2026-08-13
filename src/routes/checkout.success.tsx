@@ -105,7 +105,7 @@ function CheckoutSuccessPage() {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium line-clamp-1 group-hover/item:text-[var(--color-saffron)] transition-colors">
+                  <p className="text-base font-medium line-clamp-1 group-hover/item:text-[var(--color-saffron)] transition-colors">
                     {book.titleEn}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">{book.author}</p>

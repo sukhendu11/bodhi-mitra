@@ -499,7 +499,7 @@ function BookDetailPage() {
               <p className="text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground mb-2">
                 Description
               </p>
-              <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+              <div className="text-base text-muted-foreground leading-relaxed whitespace-pre-line">
                 {description}
               </div>
             </div>

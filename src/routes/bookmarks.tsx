@@ -20,12 +20,12 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   Bookmark,
   ArrowLeft,
-  Feather,
   BookOpen,
   X,
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import { FeatherPenIcon } from "@/components/FeatherPenIcon";
 import { toast } from "sonner";
 import { seoHead } from "@/lib/seo";
 
@@ -139,7 +139,7 @@ function BookmarksPage() {
         <h1 className="font-serif text-3xl text-foreground mb-3">
           {lang === "bn" ? "বুকমার্ক" : "Bookmarks"}
         </h1>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-base text-muted-foreground mb-6">
           {lang === "bn"
             ? "আপনার বুকমার্ক দেখতে সাইন ইন করুন।"
             : "Sign in to view your bookmarks."}
@@ -333,7 +333,7 @@ function BookmarksPage() {
                       ) : isBook ? (
                         <BookOpen className="h-6 w-6 text-muted-foreground/40" />
                       ) : (
-                        <Feather className="h-6 w-6 text-muted-foreground/40" />
+                        <FeatherPenIcon className="h-6 w-6 text-muted-foreground/40" />
                       )}
                     </div>
 
@@ -360,12 +360,12 @@ function BookmarksPage() {
                           {timeAgo(item.bookmarkedAt, lang)}
                         </span>
                       </div>
-                      <h2 className="text-sm font-medium truncate group-hover:text-[var(--color-saffron)] transition-colors">
+                      <h2 className="text-base font-medium truncate group-hover:text-[var(--color-saffron)] transition-colors">
                         {title}
                       </h2>
                       {!isBook ? (
                         item.excerptEn && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
                             {lang === "bn" ? item.excerptBn || item.excerptEn : item.excerptEn}
                           </p>
                         )

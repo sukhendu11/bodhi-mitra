@@ -5,21 +5,22 @@ import { useState, useEffect } from "react";
 import { searchContent, type SearchResult, type ContentType } from "@/lib/search";
 import { useSiteSettings } from "@/lib/siteSettings";
 import { useLang, pickLocalized, formatDate, toBanglaDigits } from "@/lib/i18n";
-import { Search, Feather, BookOpen, Video, File, Loader2, ArrowLeft, ChevronDown, Sparkles } from "lucide-react";
+import { Search, BookOpen, Video, File, Loader2, ArrowLeft, ChevronDown, Sparkles } from "lucide-react";
+import { FeatherPenIcon } from "@/components/FeatherPenIcon";
 import DOMPurify from "dompurify";
 import { seoHead } from "@/lib/seo";
 import { callFn } from "@/lib/call-fn";
 
-const contentTypes: { key: ContentType | "all"; labelEn: string; labelBn: string; icon: typeof Search }[] = [
+const contentTypes: { key: ContentType | "all"; labelEn: string; labelBn: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: "all", labelEn: "All", labelBn: "সব", icon: Search },
-  { key: "post", labelEn: "Reflections", labelBn: "প্রতিফলন", icon: Feather },
+  { key: "post", labelEn: "Reflections", labelBn: "প্রতিফলন", icon: FeatherPenIcon },
   { key: "page", labelEn: "Pages", labelBn: "পৃষ্ঠা", icon: File },
   { key: "book", labelEn: "Books", labelBn: "বই", icon: BookOpen },
   { key: "video", labelEn: "Videos", labelBn: "ভিডিও", icon: Video },
 ];
 
-const typeIcons: Record<string, typeof Feather> = {
-  post: Feather,
+const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  post: FeatherPenIcon,
   page: File,
   book: BookOpen,
   video: Video,
@@ -105,7 +106,7 @@ function SearchPage() {
 
       {/* Search header */}
       <h1 className="font-serif text-3xl md:text-4xl mb-2">{pickLocalized(cfg.search.title_en, cfg.search.title_bn, lang, "Search")}</h1>
-      <p className="text-sm text-muted-foreground mb-8">
+      <p className="text-base text-muted-foreground mb-8">
         {lang === "bn"
           ? "প্রতিফলন, বই, ভিডিও ও আরও অনেক কিছু খুঁজুন।"
           : "Reflections, books, videos, and more — all in one place."}
@@ -269,7 +270,7 @@ function SearchPage() {
 }
 
 function ResultCard({ result }: { result: SearchResult }) {
-  const Icon = typeIcons[result.type] || Feather;
+  const Icon = typeIcons[result.type] || FeatherPenIcon;
   const { lang } = useLang();
   const typeLabel: Record<string, string> = {
     post: lang === "bn" ? "প্রতিফলন" : "Reflection",
@@ -309,12 +310,12 @@ function ResultCard({ result }: { result: SearchResult }) {
           </span>
         </div>
         <h3
-          className="text-sm font-medium group-hover:text-[var(--color-saffron)] transition-colors line-clamp-1"
+          className="text-base font-medium group-hover:text-[var(--color-saffron)] transition-colors line-clamp-1"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.highlightedTitle || result.title, { ALLOWED_TAGS: ["mark"] }) }}
         />
         {result.excerpt && (
           <p
-            className="text-xs text-muted-foreground mt-1 line-clamp-2"
+            className="text-base text-muted-foreground mt-1 line-clamp-2"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.highlightedExcerpt || result.excerpt, { ALLOWED_TAGS: ["mark"] }) }}
           />
         )}

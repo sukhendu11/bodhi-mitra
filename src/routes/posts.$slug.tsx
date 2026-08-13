@@ -258,7 +258,9 @@ function PostPage() {
                 <blockquote className="my-10 mx-auto max-w-lg px-8 py-6 rounded-xl border border-border/40 bg-secondary/20 text-center">
                   <p className="font-serif text-xl md:text-2xl leading-relaxed italic text-foreground/90 mb-3">{sidebarTitle}</p>
                   {sidebarText && (
-                    <p className="text-xs text-muted-foreground leading-relaxed">{sidebarText}</p>
+                    // Body copy in the article flow — 16px per the type-scale sweep
+                    // (was 12px, below the compact-body minimum).
+                    <p className="text-base text-muted-foreground leading-relaxed">{sidebarText}</p>
                   )}
                 </blockquote>
               </Reveal>
@@ -289,7 +291,9 @@ function PostPage() {
                       {lang === "bn" ? "লেখক" : "Written by"}
                     </p>
                     <p className="font-serif text-lg font-medium">{post.author_name}</p>
-                    <p className="text-xs text-muted-foreground/70 mt-1">
+                    {/* Descriptive caption — bumped from 12px to 14px so it reads
+                        comfortably under the serif name (pure metadata stays 12px). */}
+                    <p className="text-sm text-muted-foreground/70 mt-1">
                       {lang === "bn" ? "সাব্বে সত্তা প্রতিফলনের লেখক" : "Author of this reflection"}
                     </p>
                   </div>
@@ -366,10 +370,11 @@ function PostPage() {
                           {item.lotus ? <LotusIcon size={14} /> : Icon && <Icon className="w-3.5 h-3.5" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
+                          <p className="text-base font-medium text-foreground/80 group-hover:text-foreground transition-colors">
                             {item.label}
                           </p>
-                          <p className="text-xs text-muted-foreground/60 group-hover:text-muted-foreground/80 transition-colors">
+                          {/* One-line caption — text-sm per the type scale (was 12px). */}
+                          <p className="text-sm text-muted-foreground/60 group-hover:text-muted-foreground/80 transition-colors">
                             {item.desc}
                           </p>
                         </div>

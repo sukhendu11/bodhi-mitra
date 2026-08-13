@@ -135,6 +135,8 @@ Warm charcoal with a subtle indigo tint — **never pure black**.
 
 Conventions: **no arbitrary `text-[0.xxrem]`** — use the scale sizes (`text-xs` = 12px minimum for readable body-adjacent text; 10px is reserved for badges/micro-labels). Card titles at `text-lg`. Headings use the serif stack. Weights: `font-medium` for emphasis on UI text, headings stay weight 400.
 
+**Section/card content must never render below body size.** Reading copy in cards and sections (card descriptions, excerpts, section blurbs, note blocks, search snippets) is `text-base` (16px) — the same size as compact body copy, so sections never read smaller than the body text above/below them. Card titles: `text-lg` (18px) for grid/featured cards, `text-base` for compact row/list cards. Captions (one-line descriptors under titles, quote previews) may use `text-sm` (14px). Pure metadata (dates, badges, uppercase eyebrows, channel labels) stays `text-xs` (12px).
+
 ### 3.2 Article Prose (`.prose-mitra`)
 
 - Body: 1.18rem, `line-height: 1.85`, Inter.
@@ -192,7 +194,7 @@ Per `RULES.md §14`:
 - Calm, slow, Zen-like — never flashy. Prefer 300–700ms transitions with smooth easing (`cubic-bezier(0.4, 0, 0.2, 1)`).
 - Hover: subtle scale (`hover:scale-105` / `110`), gentle grow, soft primary glow shadows.
 - **Respect `prefers-reduced-motion`** — all animations zeroed via the CSS media query.
-- Page entrance: `page-enter` (0.35s fade + 6px rise); cards use `stagger-enter` / `card-enter`.
+- Page entrance: `page-enter` (0.35s fade + 6px rise). **Grid cards** use scroll-triggered per-card slide-ups via the shared `Reveal` component (`fade={false}` = pure translateY with the soft `cubic-bezier(0.22, 1, 0.36, 1)` landing; staggered `delay = i*0.05s`, capped at 0.3s) — used by every content grid (homepage books/videos, books page, videos page, reflections `PostGrid`). `stagger-enter`/`card-enter` CSS utilities were removed 2026-08-12 (mount-time; cards below the fold had finished animating before scroll).
 - Available keyframes: `fade-in/out`, `slide-in/out`, `scale-in/out`, `shimmer` (skeleton), `bounce-subtle`, `pulse-soft`, `spin-slow`.
 
 ### 5.4 Elevation & Focus

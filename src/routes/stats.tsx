@@ -194,7 +194,7 @@ function StatsPage() {
         <h1 className="font-serif text-3xl text-foreground mb-3">
           {t(lang, "Reading Statistics", "পড়ার পরিসংখ্যান")}
         </h1>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-base text-muted-foreground mb-6">
           {t(
             lang,
             "Sign in to see your reading streaks, pages read, and time spent per book.",
@@ -225,7 +225,7 @@ function StatsPage() {
         <h1 className="font-serif text-3xl md:text-4xl text-foreground">
           {t(lang, "Reading Statistics", "পড়ার পরিসংখ্যান")}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground max-w-xl leading-relaxed">
+        <p className="mt-2 text-base text-muted-foreground max-w-xl leading-relaxed">
           {t(
             lang,
             "A quiet look at your reading practice — streaks, pages turned, and time spent with each book.",
@@ -249,7 +249,7 @@ function StatsPage() {
           {/* ── Pages per day chart ───────────────────────────── */}
           <section className="mt-8 border border-border/60 rounded-xl p-5">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-2">
-              <h2 className="text-sm font-medium text-foreground">
+              <h2 className="text-base font-medium text-foreground">
                 {t(lang, "Pages read — last 14 days", "গত ১৪ দিনে পঠিত পৃষ্ঠা")}
               </h2>
               <span className="text-xs text-muted-foreground">
@@ -273,7 +273,7 @@ function StatsPage() {
 
           {/* ── Streak strip ───────────────────────────────────── */}
           <section className="mt-6 border border-border/60 rounded-xl p-5">
-            <h2 className="text-sm font-medium text-foreground mb-4">
+            <h2 className="text-base font-medium text-foreground mb-4">
               {t(lang, "Last 28 days", "গত ২৮ দিন")}
             </h2>
             <StreakStrip stats={stats} lang={lang} />
@@ -295,7 +295,7 @@ function StatsPage() {
           {/* ── Time per book ──────────────────────────────────── */}
           {books.length > 0 && (
             <section className="mt-6 border border-border/60 rounded-xl p-5">
-              <h2 className="text-sm font-medium text-foreground mb-4">
+              <h2 className="text-base font-medium text-foreground mb-4">
                 {t(lang, "Time per book", "প্রতি বইয়ে সময়")}
               </h2>
               <div className="space-y-3">
@@ -319,7 +319,7 @@ function StatsPage() {
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate group-hover:underline">
+                      <p className="text-base font-medium text-foreground truncate group-hover:underline">
                         {lang === "bn" && b.titleBn ? b.titleBn : b.titleEn}
                       </p>
                       <div className="mt-1.5 flex items-center gap-3">
@@ -338,7 +338,7 @@ function StatsPage() {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs font-medium text-foreground tabular-nums">
+                      <p className="text-sm font-medium text-foreground tabular-nums">
                         {formatDuration(b.timeMs, lang)}
                       </p>
                       <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">

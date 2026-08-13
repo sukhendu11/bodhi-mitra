@@ -133,7 +133,7 @@ export function SecuritySection() {
                 <Link2 className="h-4 w-4 text-muted-foreground/60" />
                 <p className="text-sm text-foreground">{bn ? "সংযুক্ত প্রদানকারী" : "Connected providers"}</p>
               </div>
-              <p className="text-xs text-muted-foreground/70">
+              <p className="text-sm text-muted-foreground/70">
                 {bn
                   ? "গুগল প্রভৃতি সাইন-ইন প্রদানকারীর সংযোগ এখানে দেখা যাবে।"
                   : "Your sign-in providers (e.g. Google) will appear here."}
@@ -145,7 +145,7 @@ export function SecuritySection() {
                 <MonitorSmartphone className="h-4 w-4 text-muted-foreground/60" />
                 <p className="text-sm text-foreground">{bn ? "সক্রিয় সেশন" : "Active sessions"}</p>
               </div>
-              <p className="text-xs text-muted-foreground/70">
+              <p className="text-sm text-muted-foreground/70">
                 {bn
                   ? "এই ডিভাইসটি বর্তমানে সাইন-ইন আছে।"
                   : "This device is currently signed in."}

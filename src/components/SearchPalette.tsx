@@ -19,10 +19,11 @@ import { useLang } from "@/lib/i18n";
 import { searchContent, type SearchResult, type ContentType } from "@/lib/search";
 import { callFn } from "@/lib/call-fn";
 import { OPEN_SEARCH_PALETTE_EVENT } from "@/lib/search-events";
-import { Search, Feather, BookOpen, Video, File, Loader2, CornerDownLeft } from "lucide-react";
+import { Search, BookOpen, Video, File, Loader2, CornerDownLeft, X, ArrowUp, ArrowDown } from "lucide-react";
+import { FeatherPenIcon } from "@/components/FeatherPenIcon";
 
-const TYPE_META: Record<ContentType, { labelEn: string; labelBn: string; icon: typeof Feather }> = {
-  post: { labelEn: "Reflections", labelBn: "প্রতিফলন", icon: Feather },
+const TYPE_META: Record<ContentType, { labelEn: string; labelBn: string; icon: React.ComponentType<{ className?: string }> }> = {
+  post: { labelEn: "Reflections", labelBn: "প্রতিফলন", icon: FeatherPenIcon },
   page: { labelEn: "Pages", labelBn: "পৃষ্ঠা", icon: File },
   book: { labelEn: "Books", labelBn: "বই", icon: BookOpen },
   video: { labelEn: "Videos", labelBn: "ভিডিও", icon: Video },
@@ -138,10 +139,21 @@ export function SearchPalette() {
         {loading ? (
           <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground/50" />
         ) : (
-          <kbd className="hidden sm:inline-flex shrink-0 items-center gap-0.5 rounded border border-border/60 bg-secondary/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            ⌘K
+          <kbd className="hidden sm:inline-flex shrink-0 items-center rounded border border-border/60 bg-secondary/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            Ctrl K
           </kbd>
         )}
+        {/* Close — a visible ✕ on every screen. Mobile has no esc key, so
+            this is the primary close affordance there. */}
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          aria-label={lang === "bn" ? "অনুসন্ধান বন্ধ করুন" : "Close search"}
+          title={lang === "bn" ? "বন্ধ করুন" : "Close"}
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-secondary/60 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
       <Command.List className="max-h-[50vh] overflow-y-auto p-1.5 thumbnail-scroll">
@@ -199,19 +211,29 @@ export function SearchPalette() {
         })}
       </Command.List>
 
-      {/* Footer hints */}
-      <div className="flex items-center gap-3 border-t border-border/40 px-4 py-2 text-[10px] text-muted-foreground/50">
+      {/* Footer hints — keyboard hints are desktop-only, so the whole line
+          hides on small screens (mobile closes via the ✕ button in the input
+          row or an outside tap). All glyphs are lucide icons + plain ASCII
+          so nothing renders as an unknown box character. */}
+      <div className="hidden sm:flex items-center gap-3 border-t border-border/40 px-4 py-2 text-[10px] text-muted-foreground/50">
         <span className="inline-flex items-center gap-1">
-          <kbd className="rounded border border-border/60 bg-secondary/40 px-1 py-px">↑↓</kbd> navigate
+          <kbd className="inline-flex items-center gap-0.5 rounded border border-border/60 bg-secondary/40 px-1 py-px">
+            <ArrowUp className="h-2.5 w-2.5" />
+            <ArrowDown className="h-2.5 w-2.5" />
+          </kbd>{" "}
+          navigate
         </span>
         <span className="inline-flex items-center gap-1">
-          <kbd className="rounded border border-border/60 bg-secondary/40 px-1 py-px">↵</kbd> open
+          <kbd className="inline-flex items-center rounded border border-border/60 bg-secondary/40 px-1 py-px">
+            <CornerDownLeft className="h-3 w-3" />
+          </kbd>{" "}
+          open
         </span>
         <span className="inline-flex items-center gap-1">
           <kbd className="rounded border border-border/60 bg-secondary/40 px-1 py-px">esc</kbd> close
         </span>
-        <span className="ml-auto hidden sm:inline">
-          {lang === "bn" ? "এন্টার চাপুন" : "Press ⌘K anytime"}
+        <span className="ml-auto">
+          {lang === "bn" ? "এন্টার চাপুন" : "Press Ctrl K anytime"}
         </span>
       </div>
     </Command.Dialog>

@@ -80,7 +80,7 @@ export function PrivacySection({
                 <Icon className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
                 <div>
                   <span className="text-sm text-foreground">{bn ? r.labelBn : r.label}</span>
-                  <p className="text-xs text-muted-foreground/60 mt-0.5">{bn ? r.descBn : r.desc}</p>
+                  <p className="text-sm text-muted-foreground/60 mt-0.5">{bn ? r.descBn : r.desc}</p>
                 </div>
               </div>
               <Switch

@@ -63,8 +63,8 @@ export function SupportLegalSection() {
             >
               <Icon className="h-4 w-4 text-[var(--color-saffron)]/70 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium">{bn ? l.labelBn : l.label}</p>
-                <p className="text-xs text-muted-foreground/70 mt-0.5">{bn ? l.descBn : l.desc}</p>
+                <p className="text-base font-medium">{bn ? l.labelBn : l.label}</p>
+                <p className="text-sm text-muted-foreground/70 mt-0.5">{bn ? l.descBn : l.desc}</p>
               </div>
             </Link>
           );

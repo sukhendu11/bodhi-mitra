@@ -44,7 +44,7 @@ export function PostCard({ post }: { post: Post }) {
         {title}
       </h3>
       {excerpt && (
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-2">{excerpt}</p>
+        <p className="mt-2 text-base text-muted-foreground leading-relaxed line-clamp-2">{excerpt}</p>
       )}
       {post.tags && post.tags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">

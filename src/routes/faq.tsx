@@ -142,7 +142,7 @@ function FAQPage() {
                   style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
                 >
                   <div className="overflow-hidden">
-                    <div className="pb-4 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                    <div className="pb-4 text-base text-muted-foreground leading-relaxed whitespace-pre-line">
                       {a}
                     </div>
                   </div>

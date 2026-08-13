@@ -124,7 +124,7 @@ function OnboardingPage() {
   return (
     <div className="mx-auto max-w-md px-6 py-24">
       <h1 className="font-serif text-4xl mb-3 text-center">Welcome</h1>
-      <p className="text-sm text-muted-foreground mb-10 leading-relaxed text-center">
+      <p className="text-base text-muted-foreground mb-10 leading-relaxed text-center">
         Get started in two steps: sign in with your email, then claim admin access for this journal.
       </p>
 

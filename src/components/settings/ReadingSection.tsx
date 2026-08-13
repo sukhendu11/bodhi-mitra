@@ -30,7 +30,7 @@ export function ReadingSection({
 
   const label = (en: string, bangla: string) => (bn ? bangla : en);
   const desc = (en: string, bangla: string) => (
-    <p className="mt-1.5 text-xs text-muted-foreground/60">{label(en, bangla)}</p>
+    <p className="mt-1.5 text-sm text-muted-foreground/60">{label(en, bangla)}</p>
   );
 
   return (
@@ -180,7 +180,7 @@ export function ReadingSection({
               <span className="block text-sm text-foreground">
                 {label("Save reading progress", "পড়ার অগ্রগতি সংরক্ষণ")}
               </span>
-              <p className="mt-0.5 text-xs text-muted-foreground/60">
+              <p className="mt-0.5 text-sm text-muted-foreground/60">
                 {label(
                   "Persist progress and history so you can resume where you left off.",
                   "অগ্রগতি ও ইতিহাস সংরক্ষণ করুন যাতে পরে যেখানে থামিয়েছিলেন সেখান থেকে শুরু করতে পারেন।",

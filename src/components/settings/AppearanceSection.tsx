@@ -89,7 +89,7 @@ export function AppearanceSection({
             <Activity className="h-3.5 w-3.5 text-muted-foreground/60" />
             <div>
               <span className="text-sm text-foreground">{bn ? "কম গতি (রিডিউসড মোশন)" : "Reduced motion"}</span>
-              <p className="text-xs text-muted-foreground/60 mt-0.5">
+              <p className="text-sm text-muted-foreground/60 mt-0.5">
                 {bn
                   ? "পুরো সাইটের অ্যানিমেশন ও ট্রানজিশন বন্ধ করুন"
                   : "Minimize animations and transitions across the site"}

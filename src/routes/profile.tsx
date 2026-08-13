@@ -250,7 +250,7 @@ function ProfilePage() {
       <div className="mx-auto max-w-2xl px-6 py-20 md:py-28 text-center">
         <User className="h-12 w-12 mx-auto text-muted-foreground/20 mb-4" />
         <h1 className="font-serif text-3xl text-foreground mb-3">{lang === "bn" ? "প্রোফাইল" : "Profile"}</h1>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-base text-muted-foreground mb-6">
           {lang === "bn" ? "আপনার প্রোফাইল দেখতে ও সম্পাদনা করতে সাইন ইন করুন।" : "Sign in to view and edit your profile."}
         </p>
         <BrandCtaButton asChild className="px-6 py-2.5 text-xs uppercase tracking-[0.2em]">
@@ -313,7 +313,7 @@ function ProfilePage() {
 
               {/* Bio (read-only here) */}
               {profile?.bio && (
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                <p className="mt-3 text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {profile.bio}
                 </p>
               )}
@@ -385,7 +385,7 @@ function ProfilePage() {
 
         {/* ── Notifications (latest — mirror of the header bell) ── */}
         <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-2 text-sm text-foreground mb-3">
+          <div className="flex items-center gap-2 text-base text-foreground mb-3">
             <Bell className="h-4 w-4 text-[var(--color-saffron)]/70" />
             <span className="font-medium">{lang === "bn" ? "বিজ্ঞপ্তি" : "Notifications"}</span>
             <Link
@@ -425,7 +425,7 @@ function ProfilePage() {
                       }`}
                       aria-hidden
                     />
-                    <span className="min-w-0 flex-1 truncate text-sm">{n.message}</span>
+                    <span className="min-w-0 flex-1 truncate text-base">{n.message}</span>
                     <span className="shrink-0 text-[10px] uppercase tracking-[0.06em] text-muted-foreground/50">
                       {timeAgo(n.createdAt, lang)}
                     </span>
@@ -460,7 +460,7 @@ function ProfilePage() {
         {/* ── Bookmarks (posts + books) ──────────────────────────── */}
         {(bookmarks as BookmarkedItem[]).length > 0 && (
           <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-2 text-sm text-foreground mb-3">
+            <div className="flex items-center gap-2 text-base text-foreground mb-3">
               <Bookmark className="h-4 w-4 text-[var(--color-saffron)]/70" />
               <span className="font-medium">{lang === "bn" ? "বুকমার্ক" : "Bookmarks"}</span>
               <span className="text-xs text-muted-foreground">
@@ -509,7 +509,7 @@ function ProfilePage() {
         {/* ── Library Summary — responsive icon cards. On mobile they
                stack full-width with a leading icon; sm+ lays them 3-across. ── */}
         <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-2 text-sm text-foreground mb-4">
+          <div className="flex items-center gap-2 text-base text-foreground mb-4">
             <Heart className="h-4 w-4 text-[var(--color-saffron)]/70" />
             <span className="font-medium">{lang === "bn" ? "লাইব্রেরি" : "Library"}</span>
             <Link
@@ -563,7 +563,7 @@ function ProfilePage() {
         {/* ── Reading History ───────────────────────────────────── */}
         {(readingHistory as ReadingHistoryBook[]).filter((r) => r.book).length > 0 && (
           <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-2 text-sm text-foreground mb-4">
+            <div className="flex items-center gap-2 text-base text-foreground mb-4">
               <TrendingUp className="h-4 w-4 text-[var(--color-saffron)]/70" />
               <span className="font-medium">
                 {lang === "bn" ? "পড়ার ইতিহাস" : "Reading History"}
@@ -607,7 +607,7 @@ function ProfilePage() {
         {/* ── Recent Books ───────────────────────────────────────── */}
         {(recentBooks as ReadingHistoryBook[]).filter((r) => r.book).length > 0 && (
           <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-2 text-sm text-foreground mb-4">
+            <div className="flex items-center gap-2 text-base text-foreground mb-4">
               <BookOpen className="h-4 w-4 text-[var(--color-saffron)]/70" />
               <span className="font-medium">
                 {lang === "bn" ? "সম্প্রতি পড়া বই" : "Recent Books"}

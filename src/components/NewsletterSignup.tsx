@@ -73,8 +73,10 @@ export function NewsletterSignup({ title, text, compact }: NewsletterSignupProps
   return (
     <form onSubmit={handleSubmit} className={compact ? "mt-3" : ""}>
       {title && <p className="font-serif text-lg mb-2">{title}</p>}
+      {/* Body copy — 16px per the type-scale sweep (was 14px, below the
+          compact-body minimum; same treatment as FAQ answers / book desc). */}
       {text && (
-        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line mb-4">
+        <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-line mb-4">
           {text}
         </p>
       )}

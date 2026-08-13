@@ -210,7 +210,7 @@ export function Comments({ postId }: { postId: string }) {
                 </div>
               </form>
             ) : (
-              <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap">
+              <p className="text-base leading-relaxed text-foreground/85 whitespace-pre-wrap">
                 {c.comment_text}
               </p>
             )}
@@ -255,7 +255,7 @@ export function Comments({ postId }: { postId: string }) {
                 }}
                 className="mt-4 space-y-2 pl-4 border-l-2 border-foreground/30"
               >
-                <div className="bg-secondary/40 border-l-2 border-foreground/40 px-3 py-2 text-xs text-muted-foreground italic">
+                <div className="bg-secondary/40 border-l-2 border-foreground/40 px-3 py-2 text-sm text-muted-foreground italic">
                   <span className="not-italic font-medium text-foreground/70">
                     Replying to {c.user_name}:{" "}
                   </span>
@@ -289,7 +289,7 @@ export function Comments({ postId }: { postId: string }) {
                   return (
                     <li key={r.id}>
                       {parent && (
-                        <div className="mb-2 bg-secondary/40 border-l-2 border-foreground/30 px-3 py-1.5 text-xs text-muted-foreground italic">
+                        <div className="mb-2 bg-secondary/40 border-l-2 border-foreground/30 px-3 py-1.5 text-sm text-muted-foreground italic">
                           <span className="not-italic font-medium text-foreground/70">
                             ↳ {parent.user_name}:{" "}
                           </span>

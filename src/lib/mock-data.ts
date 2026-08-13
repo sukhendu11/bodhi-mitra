@@ -273,7 +273,10 @@ const MOCK_PAGES_DATA: Page[] = [
     header_bn: "যেখানে প্রাচীন জ্ঞান মিলিত হয় আধুনিক মনোবিজ্ঞানের সাথে।",
     body_en: "Sabbe Satta is a sanctuary for contemplative practice — reflections, books, and videos bridging Buddhist wisdom with modern mental health.",
     body_bn: "সব্বে সত্তা ধ্যানমূলক অনুশীলনের একটি আশ্রয়স্থল — বৌদ্ধ জ্ঞানকে আধুনিক মানসিক স্বাস্থ্যের সাথে যুক্ত করে এমন প্রতিফলন, বই এবং ভিডিও।",
-    banner_url: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&h=400&fit=crop&auto=format",
+    // Local hero — meditation, zen, nature, lotus lake (Pixabay vector 8314420,
+    // Pixabay Content License). 1280×853 landscape — sits well in the full-bleed
+    // object-cover hero band.
+    banner_url: "/about-hero.png",
     meta_description_en: "About Sabbe Satta — where ancient wisdom meets modern psychology.",
     meta_description_bn: "সব্বে সত্তা সম্পর্কে — যেখানে প্রাচীন জ্ঞান মিলিত হয় আধুনিক মনোবিজ্ঞানের সাথে।",
     visible: true,

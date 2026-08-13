@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import {
   LayoutDashboard,
   BookOpen,
-  Feather,
   Video,
   Receipt,
   Bell,
@@ -27,6 +26,7 @@ import {
   CheckCheck,
   Save,
 } from "lucide-react";
+import { FeatherPenIcon } from "@/components/FeatherPenIcon";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,10 +74,10 @@ import { useSiteSettingsQuery, DEFAULT_CONFIG } from "@/lib/siteSettings";
 
 type TabId = "dashboard" | "books" | "posts" | "videos" | "orders" | "notifications" | "settings";
 
-const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
+const TABS: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "books", label: "Books", icon: BookOpen },
-  { id: "posts", label: "Reflections", icon: Feather },
+  { id: "posts", label: "Reflections", icon: FeatherPenIcon },
   { id: "videos", label: "Videos", icon: Video },
   { id: "orders", label: "Orders", icon: Receipt },
   { id: "notifications", label: "Notifications", icon: Bell },

@@ -275,8 +275,11 @@ function Header() {
   if (!layout.headerVisible) return null;
 
   const linkCls =
-    "group relative inline-flex items-center gap-1.5 text-base text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-300 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40";
-  const activeLinkCls = "text-foreground";
+    "group relative inline-flex items-center gap-1.5 px-2.5 py-1 text-base text-muted-foreground hover:text-foreground hover:translate-x-0.5 transition-all duration-300 rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40";
+  // Active state — bold text + a persistent saffron underline (no background
+  // pill; the mobile-style tint reads too heavy in the quiet desktop header).
+  const activeLinkCls =
+    "text-foreground font-medium [&>span]:scale-x-100 [&>span]:bg-[var(--color-saffron)]";
 
   // Cart count query — used by both CartBadge and MobileNav.
   // Runs for guests too (mock-aware middleware returns the localStorage count).
@@ -373,7 +376,7 @@ function Header() {
               <button
                 onClick={openSearchPalette}
                 aria-label={lang === "bn" ? "অনুসন্ধান" : "Search"}
-                title={lang === "bn" ? "অনুসন্ধান (⌘K)" : "Search (⌘K)"}
+                title={lang === "bn" ? "অনুসন্ধান (Ctrl K)" : "Search (Ctrl K)"}
                 className="group relative block p-0.5 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Search className="h-5 w-5 stroke-[1.8] block group-hover:scale-110 transition-transform duration-300" />

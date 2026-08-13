@@ -14,7 +14,8 @@ import { generateWebSiteSchema, generateOrganizationSchema } from "@/lib/structu
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { BookCard } from "@/components/BookCard";
-import { BookOpen, ArrowRight, Play, ShoppingCart, Loader2, Feather, BookMarked, ChevronRight } from "lucide-react";
+import { BookOpen, ArrowRight, Play, ShoppingCart, Loader2, BookMarked, ChevronRight } from "lucide-react";
+import { FeatherPenIcon } from "@/components/FeatherPenIcon";
 import { BrandCtaButton } from "@/components/BrandCtaButton";
 import { fetchPublishedBooks } from "@/lib/books";
 import { fetchPublishedVideos } from "@/lib/videos";
@@ -316,23 +317,23 @@ function Home() {
             <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/10 to-background/70" />
           </div>
           <div className="relative mx-auto max-w-4xl px-6 py-32 md:py-44 text-center">
-            <Reveal delay={0}>
+            <Reveal delay={0} fade={false}>
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground dark:text-white/70 mb-6">
                 {heroEyebrow}
               </p>
             </Reveal>
-            <Reveal delay={0.15}>
+            <Reveal delay={0.15} fade={false}>
               <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-[1.05] text-foreground dark:text-white whitespace-pre-line">
                 {heroTitle}
               </h1>
             </Reveal>
-            <Reveal delay={0.3}>
-              <p className="mt-8 max-w-xl mx-auto text-sm md:text-base text-muted-foreground dark:text-white/80 leading-relaxed whitespace-pre-line">
+            <Reveal delay={0.3} fade={false}>
+              <p className="mt-8 max-w-xl mx-auto text-base md:text-lg text-muted-foreground dark:text-white/80 leading-relaxed whitespace-pre-line">
                 {heroDesc}
               </p>
             </Reveal>
             {(hero.cta_label || hero.cta_label_bn) && hero.cta_url && (
-              <Reveal delay={0.45}>
+              <Reveal delay={0.45} fade={false}>
                 {/* The hero CTA is an underlined text link (not a button) —
                     matches the site's quiet, editorial link language; the
                     arrow slides on hover. */}
@@ -360,7 +361,7 @@ function Home() {
       )}
 
       {/* Philosophy Quote */}
-      <Reveal delay={0.1}>
+      <Reveal delay={0.1} fade={false}>
         <section className="mx-auto max-w-3xl px-6 py-20 md:py-28 text-center">
           <div className="flex items-center justify-center gap-3 mb-8">
             <span className="h-px w-12 bg-border" />
@@ -383,7 +384,7 @@ function Home() {
 
       {/* Continue Reading — B1 2026-08-12 */}
       {user && continueBooks.length > 0 && (
-        <Reveal delay={0.1}>
+        <Reveal delay={0.1} fade={false}>
           <section className="mx-auto max-w-6xl px-6 py-16 border-t border-border/40">
             <div className="mb-8">
               <SectionHeader
@@ -417,7 +418,7 @@ function Home() {
                       </span>
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium group-hover:text-[var(--color-saffron)] transition-colors">
+                      <p className="truncate text-base font-medium group-hover:text-[var(--color-saffron)] transition-colors">
                         {pickLocalized(book.title_en, book.title_bn, lang, "Untitled")}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground/70">
@@ -444,10 +445,10 @@ function Home() {
 
       {/* Recent Reflections */}
       <section className="mx-auto max-w-6xl px-6 py-16 border-t border-border/40">
-        <Reveal delay={0.1}>
+        <Reveal delay={0.1} fade={false}>
           <div className="mb-10 space-y-5">
             <SectionHeader
-              icon={<Feather className="h-5 w-5" />}
+              icon={<FeatherPenIcon className="h-5 w-5" />}
               title={t("recent_reflections")}
               viewAllTo="/reflections"
               viewAllLabel={lang === "bn" ? "সব প্রতিফলন" : "All reflections"}
@@ -480,7 +481,7 @@ function Home() {
 
       {/* Featured Books */}
       {featuredBooks.length > 0 && (
-        <Reveal delay={0.15}>
+        <Reveal delay={0.15} fade={false}>
           <section className="py-16 border-t border-border/40 bg-secondary/10 dark:bg-secondary/20">
             <div className="mx-auto max-w-6xl px-6">
               <div className="mb-8">
@@ -493,18 +494,19 @@ function Home() {
                 />
               </div>
               <div className="book-grid">
-                {featuredBooks.map((book) => (
-                  <BookCard
-                    key={book.id}
-                    book={book}
-                    lang={lang}
-                    userId={user?.id}
-                    onEyeClick={handleEyeClick}
-                    requireAuth={requireAuth}
-                    pdfLoading={pdfLoading}
-                    onAddToCart={(book) => cartMutation.mutate({ bookId: book.id, book })}
-                    isCartAdding={cartMutation.isPending}
-                  />
+                {featuredBooks.map((book, i) => (
+                  <Reveal key={book.id} fade={false} delay={Math.min(i * 0.05, 0.3)}>
+                    <BookCard
+                      book={book}
+                      lang={lang}
+                      userId={user?.id}
+                      onEyeClick={handleEyeClick}
+                      requireAuth={requireAuth}
+                      pdfLoading={pdfLoading}
+                      onAddToCart={(book) => cartMutation.mutate({ bookId: book.id, book })}
+                      isCartAdding={cartMutation.isPending}
+                    />
+                  </Reveal>
                 ))}
               </div>
             </div>
@@ -514,7 +516,7 @@ function Home() {
 
       {/* Videos */}
       {homeVideos.length > 0 && (
-        <Reveal delay={0.2}>
+        <Reveal delay={0.2} fade={false}>
           <section className="mx-auto max-w-6xl px-6 py-16 border-t border-border/40">
             <div className="mb-8">
               <SectionHeader
@@ -526,8 +528,10 @@ function Home() {
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-10">
-              {homeVideos.map((video) => (
-                <VideoCard key={video.id} video={video} />
+              {homeVideos.map((video, i) => (
+                <Reveal key={video.id} fade={false} delay={Math.min(i * 0.05, 0.3)}>
+                  <VideoCard video={video} />
+                </Reveal>
               ))}
             </div>
           </section>
@@ -535,7 +539,7 @@ function Home() {
       )}
 
       {/* Newsletter CTA */}
-      <Reveal delay={0.25}>
+      <Reveal delay={0.25} fade={false}>
         <section className="relative overflow-hidden border-t border-border/40">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/3 dark:from-primary/10 dark:via-background dark:to-primary/6 pointer-events-none" />
           <div className="relative mx-auto max-w-xl px-6 py-20 md:py-24 text-center">
@@ -545,7 +549,7 @@ function Home() {
             <h2 className="font-serif text-2xl md:text-3xl leading-tight mb-4">
               {lang === "bn" ? "নতুন প্রতিফলন পান" : "Receive new reflections"}
             </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-8">
+            <p className="text-base text-muted-foreground max-w-md mx-auto mb-8">
               {lang === "bn"
                 ? "ইমেলে নতুন প্রতিফলন পান — ধীর, কখনও কখনও, কখনও শব্দময় নয়।"
                 : "Receive new reflections by email — slow, occasional, never noisy."}

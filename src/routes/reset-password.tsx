@@ -144,7 +144,7 @@ function ResetPasswordPage() {
       <div className="mx-auto max-w-md px-6 py-32 text-center">
         <AlertCircle className="h-12 w-12 mx-auto text-destructive/60 mb-6" />
         <h1 className="font-serif text-3xl mb-3">Invalid link</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-8">{error}</p>
+        <p className="text-base text-muted-foreground leading-relaxed mb-8">{error}</p>
         <Link
           to="/forgot-password"
           search={{}}
@@ -167,7 +167,7 @@ function ResetPasswordPage() {
       <div className="mx-auto max-w-md px-6 py-32 text-center">
         <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-500 mb-6" />
         <h1 className="font-serif text-3xl mb-3">Password updated</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-8">
+        <p className="text-base text-muted-foreground leading-relaxed mb-8">
           Your password has been changed successfully. Redirecting you to sign in…
         </p>
         <Link
@@ -184,7 +184,7 @@ function ResetPasswordPage() {
   return (
     <div className="mx-auto max-w-md px-6 py-32">
       <h1 className="font-serif text-3xl mb-3">Set new password</h1>
-      <p className="text-sm text-muted-foreground leading-relaxed mb-10">
+      <p className="text-base text-muted-foreground leading-relaxed mb-10">
         Choose a new password for your account. It must be at least 6 characters.
       </p>
 
