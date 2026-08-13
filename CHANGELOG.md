@@ -2,6 +2,10 @@
 
 ## 2026-08-13
 
+### Docs — production rule: admin-configurable grid density for all grids
+
+**Rule added to `RULES.md §13.1`, `DESIGN.md §4`, and `PROJECT.md §28` + P6 roadmap:** in the main production phase the admin panel must offer reduce/increment grid-item controls per breakpoint (mobile / tablet / desktop) for **all** content grids — books, reflections (`PostGrid`), videos, homepage sections — not just the books grid. Grids must read column counts from site settings via CSS custom properties (the `.book-grid` `--book-grid-cols-mobile/tablet/desktop` seam extended to every grid), never hardcoded classes alone; the hardcoded 1→2→3 progression stays the default until the production setting ships. P6 — Production hardening gains this as a deliverable; the `BookGridSetting` Strapi content-type reference notes the extension.
+
 ### Homepage video cards play inline + PdfViewer & hero-image small-screen fixes
 
 - **Homepage video cards now play in place** — clicking any video in the homepage grid previously navigated to `/videos` because `<VideoCard video={video}>` was rendered **without `onPlay`** (the card falls back to a `<Link to="/videos">` when no play handler exists). The homepage now owns the same autoplay YouTube modal the `/videos` page uses: `handleVideoPlay` + a `Dialog` with a dark surface and custom ✕ (`index.tsx`). Card titles/thumbnails open the player; the "Watch on YouTube" pill still opens YouTube in a new tab.

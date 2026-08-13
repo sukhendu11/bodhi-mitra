@@ -548,7 +548,7 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 | **P3 — App data real** | Cart/orders/progress/bookmarks/ratings → Supabase-only (Strapi app-data types **removed** 2026-08-08; wire real reads) | All user features persist across sessions |
 | **P4 — Payments** | ✅ Abstraction built (simulated live, PipraPay-ready). Deploy PipraPay (cPanel/VPS) + set `PIPRAPAY_*` env to activate | End-to-end purchase grants access live |
 | **P5 — Storage real** | Real book PDFs → Supabase Storage (private); signed-URL reader flow | Reader opens real books, access-controlled |
-| **P6 — Production hardening** | Strapi to VPS (Docker + PostgreSQL + Nginx + SSL), monitoring, backups, CDN, secrets | Live + monitored |
+| **P6 — Production hardening** | Strapi to VPS (Docker + PostgreSQL + Nginx + SSL), monitoring, backups, CDN, secrets. **Admin-configurable grid density:** the admin panel gains reduce/increment grid-item controls per breakpoint (mobile/tablet/desktop) for **all** content grids — books, reflections (`PostGrid`), videos, homepage sections (site-settings-driven via CSS custom properties, `--book-grid-cols-*` seam extended to every grid) | Live + monitored |
 | **P7 — Cutover & cleanup** | Remove mock modules + Stripe code; force non-mock in prod build; final audit | No mock in prod bundle; tests green; security review |
 | **P8 — License upgrade (future)** | Trade license obtained → swap PipraPay for direct bKash/Nagad merchant APIs | Licensed settlement, formal records |
 
@@ -598,7 +598,7 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 | Navigation | Collection | ❌ | header/footer menus |
 | Comment | Collection | ❌ | post comments (public reads) |
 | SiteSetting | **Single** | ❌ | global site config |
-| BookGridSetting | **Single** | ❌ | books grid layout |
+| BookGridSetting | **Single** | ❌ | books grid layout — **production (P6): extend to per-breakpoint grid-item controls for ALL content grids** (books, reflections `PostGrid`, videos, homepage sections), driven from site settings via CSS custom properties (`--book-grid-cols-mobile/tablet/desktop` pattern) so admins can reduce/increment grid items on small devices for every grid |
 
 > The legacy Strapi **app-data content types** (`purchase`, `reading-progress`, `bookmark`, `book-rating`) are deliberately **not included** — user data lives only in Supabase (AD-026/027). Their controllers, the `supabase-auth` middleware, and the `strapi-client.ts` user functions were **removed from the repo 2026-08-08**.
 

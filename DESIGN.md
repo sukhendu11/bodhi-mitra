@@ -152,6 +152,7 @@ Conventions: **no arbitrary `text-[0.xxrem]`** — use the scale sizes (`text-xs
 - **Reading width:** 42rem for article bodies.
 - **Breakpoints:** mobile `< 768px` · tablet `≥ 768px` (2-col grids) · desktop `≥ 1024px` (3-col grids).
 - **Grids:** responsive 1/2/3 columns. The `.book-grid` class uses CSS custom properties (`--book-grid-cols-mobile/tablet/desktop`, `--book-grid-gap: 40px` default) so admins can tune it.
+  - **Production rule (P1/P6): admin-configurable grid density.** The **production admin panel must expose reduce/increment grid-item controls per breakpoint (mobile / tablet / desktop) for ALL content grids** — books, reflections (`PostGrid`), videos, homepage sections. Column counts must be driven by site settings via CSS custom properties (the `.book-grid` seam is the pattern; the other grids gain equivalent per-grid settings), never hardcoded classes alone. Until that production setting ships, the hardcoded 1→2→3 progression remains the default.
 - **Spacing scale:** Tailwind standard 0.5→96 (2px→384px). Generous section padding — `py-20 md:py-28` for major sections, consistent `border-t border-border/40` section separators.
 - **Z-index ladder:** `--z-dropdown: 100` · `sticky: 200` · `banner: 300` · `drawer: 400` · `modal: 500` · `popover: 600` · `tooltip: 700` · `toast: 800`.
 
