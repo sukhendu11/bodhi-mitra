@@ -2,6 +2,15 @@
 
 ## 2026-08-15
 
+### P2 — Refine + shadcn admin foundation (custom admin inside the app)
+
+- **Installed**: `@refinedev/core@5`, `@refinedev/supabase@6`, `@refinedev/react-table@6` (free, MIT; Refine runs headless — no router provider needed, TanStack Router stays the shell).
+- **Schema-driven resource registry** (`src/lib/admin/resources.ts`): one config per resource (books, posts, videos, pages, categories, navigation_items, orders, profiles) with bilingual columns + form fields (text/textarea/number/boolean/select/tags/url).
+- **Mock-first dataProvider seam** (`src/lib/admin/data-provider.ts`): `getAdminDataProvider()` is `VITE_DATA_SOURCE`-gated — mock mode reads/writes the existing mock stores (books/posts/videos via mock-cms, orders via mock-commerce, categories/nav/pages via mock-data, profiles via mock-session; pages/categories/nav/orders/profiles read-only in mock), real mode delegates to `@refinedev/supabase` against the unified schema. Handles Refine v5's `currentPage` pagination key.
+- **Generic CRUD UI** (`src/components/admin/refine/`): `RefineAdminApp` (provider + sidebar + tabbed resources), `ResourceList` (TanStack Table + search + pagination + edit/delete actions), `ResourceFormDialog` (create/edit with shadcn controls + tags input; `noValidate` so relative content paths like `pdf_url="/pdfs/x.pdf"` don't block submission; field `id`s wired to labels).
+- **`/admin` route**: real mode now renders the Refine shell (replaces the Strapi redirect shell); mock mode keeps the verified MockAdminPanel with a `?admin=refine` preview seam; SSR-safe "Verifying access…" gate (no hydration mismatch).
+- **Verified in the browser** (headless Chrome, mock mode): books list renders, create persists + list refetches, pagination loads page 2, edit updates + closes, delete confirms + removes. **634/634 tests** (+7 dataProvider tests), tsc 0 errors, `npm run build` green (heap flag embedded in the build script for SSR bundling with Refine).
+
 ### Roadmap re-scope — Hostinger provisioning deferred to the Deployment milestone
 
 - Hostinger Managed Node.js provisioning is **no longer a development prerequisite** (was P0). Development continues locally on the approved architecture; the app stays Hostinger-compatible (node-server preset + `npm start`, env vars documented for hPanel). Added **D — Deployment milestone** to the P0–P8 roadmap (PROJECT.md §18 + AGENTS.md), triggered after P4/P5/P6 when the app is sufficiently complete.

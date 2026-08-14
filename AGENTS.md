@@ -58,7 +58,7 @@
 
 | Concern | Library | Status |
 |---------|---------|--------|
-| Admin (target) | Refine Core + shadcn/ui | 🔜 Target (P2) — not installed yet |
+| Admin (target) | Refine Core + shadcn/ui | ✅ P2 foundation (2026-08-15) — mock-first, browser-verified CRUD; real-mode Supabase wiring pending fresh instance |
 | UI Components | shadcn/ui + Radix UI | ✅ Integrated |
 | Forms | React Hook Form + Zod | ✅ Integrated |
 | Tables | TanStack Table | ✅ Integrated |
@@ -282,7 +282,7 @@ Validation: 0 TS errors, 263/263 tests passing. Next up: M0 — Mock Platform Fo
 > **Decision AD-029 (PROJECT.md §21), superseding AD-023/AD-027/AD-028.** Full blueprint: `PROJECT.md §28`.
 
 - **Supabase is the unified backend**: Auth, PostgreSQL (ALL data — content + application), Storage, RLS. Content (posts, pages, books, chapters, authors, videos, categories, tags, navigation, site settings, book-grid settings) lives beside application data (profiles, purchases, orders, cart, progress, bookmarks, ratings, comments, notes/highlights, notifications, coupons, audit).
-- **Admin target: Refine Core + shadcn/ui inside the TanStack app** — CRUD/data-handling patterns + component system; backed by Supabase via server functions. **Not installed yet (P2); do not mark complete.**
+- **Admin target: Refine Core + shadcn/ui inside the TanStack app** — CRUD/data-handling patterns + component system; backed by Supabase via server functions. **Foundation built 2026-08-15 (P2)**: `@refinedev/core` + `@refinedev/supabase` + `@refinedev/react-table` installed; schema-driven resource registry (`src/lib/admin/resources.ts`), mock-first dataProvider seam (`src/lib/admin/data-provider.ts` — real mode delegates to `@refinedev/supabase`), generic list/form/delete components (`src/components/admin/refine/`); `/admin` real mode = Refine shell, mock mode = MockAdminPanel with `?admin=refine` preview. Browser-verified CRUD (create/edit/delete/pagination) offline. Remaining: RBAC + real-mode Supabase verification against the fresh instance.
 - **Strapi is superseded**: historical, pending migration to Supabase + removal (P2/P3). Do **not** delete Strapi code during this migration; do **not** describe Strapi as the production CMS. **No other CMS/backend platform may be introduced without explicit architecture approval.**
 - **Books:** Supabase `books` is the single source of truth (edited via the Refine admin). No Strapi mirror (AD-027 superseded).
 - **Storage:** Supabase Storage — private PDFs (signed URLs, access-controlled), covers, avatars.

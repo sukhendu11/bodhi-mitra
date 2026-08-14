@@ -230,6 +230,13 @@ export function mockGetProfile(userId: string): MockProfile | null {
   return readRawProfiles()[userId] ?? null;
 }
 
+/** All mock profiles, newest first (admin users list — P2). */
+export function mockFetchAllProfiles(): MockProfile[] {
+  return Object.values(readRawProfiles()).sort((a, b) =>
+    (b.created_at ?? "").localeCompare(a.created_at ?? ""),
+  );
+}
+
 export function mockUpsertProfile(
   userId: string,
   patch: Partial<MockProfile>,

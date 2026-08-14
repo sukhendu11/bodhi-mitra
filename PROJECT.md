@@ -135,11 +135,11 @@ Sabbe Satta uses a **unified architecture**: **Supabase** owns the entire backen
 
 | Aspect | Detail |
 |--------|--------|
-| **Provider** | **Refine Core + shadcn/ui inside the TanStack app — target (P2)**; current dev: MockAdminPanel; historical: Strapi redirect shell |
+| **Provider** | **Refine Core + shadcn/ui inside the TanStack app — P2 (done 2026-08-15)**; mock mode: MockAdminPanel (+ `?admin=refine` preview); historical: Strapi redirect shell |
 | **Guard** | Frontend `/admin` checks Supabase Auth + role (RBAC via `user_roles`) |
-| **Sections** | Content CRUD (posts, pages, books, videos, categories, tags, navigation, site settings), commerce admin, users/roles |
+| **Sections** | Content CRUD (books, posts, videos, pages, categories, navigation, orders, profiles via the schema-driven registry), users/roles |
 | **Layout** | Lives inside the public app (`/admin`) — not a separate service |
-| **Status** | 🔜 Target (P2) — not installed; Strapi admin superseded (AD-029) |
+| **Status** | ✅ Foundation built (mock-first, browser-verified CRUD); real-mode Supabase dataProvider + RBAC pending fresh-instance wiring |
 
 ### Posts / Blog
 
@@ -369,9 +369,8 @@ Frontend reads → Supabase (server functions / RLS-guarded queries)
 
 > **2026-08-14 revision (AD-029):** the target admin is **Refine Core + shadcn/ui**, living inside the TanStack application (not a separate backend service). **Strapi is superseded** as the admin panel — its code remains in the repo, pending migration and removal (P2/P3).
 
-- **Target**: Refine Core (admin/CRUD/data-handling patterns) + shadcn/ui (component system) inside the TanStack app, backed by Supabase via server functions — see §18 P2
-- **Current**: the `/admin` route renders the offline **MockAdminPanel** (M5, mock mode) or the Strapi redirect shell (production, until P2 lands)
-- **Not yet done**: Refine/shadcn admin is **not installed or marked complete** — P2 of the roadmap; Strapi removal is pending implementation and validation of the replacement admin/content system
+- **Implemented (2026-08-15)**: Refine Core + `@refinedev/supabase` + `@refinedev/react-table` with a schema-driven resource registry (`src/lib/admin/resources.ts`), a mock-first dataProvider seam (`src/lib/admin/data-provider.ts` — real mode delegates to `@refinedev/supabase`), and generic list/create-edit/delete components (`src/components/admin/refine/`). `/admin` real mode now renders the Refine shell; mock mode keeps the verified **MockAdminPanel** with a `?admin=refine` preview seam. CRUD verified in the browser (create/edit/delete/pagination) in mock mode.
+- **Remaining**: RBAC wiring, verifying the real-mode Supabase dataProvider against the fresh instance, and migrating content resources into the admin
 
 ---
 
@@ -567,7 +566,7 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 |-------|-------|-----------|
 | **P0 — Local dev foundation** | Keep development purely local on the approved architecture: **node-server build preset** (done 2026-08-15 — `npm run build` → `.output/`, `npm start`), mock-first frontend, Supabase/Refine research documented. **Hostinger provisioning is NOT a prerequisite** — it is deferred to the Deployment milestone (after P4/P5/P6). No VPS/Docker/Nginx/PM2 assumptions anywhere | Local dev runs on the approved stack; Hostinger compatibility kept ready (preset + env docs) but not provisioned |
 | **P1 — Supabase content model** | **Unified schema delta done 2026-08-15** (`supabase/migrations/20260815000001_unified_schema_delta.sql` + regenerated `manual-setup.sql`): `orders`/`order_items` (server-side order state machine, RLS), book amendments (`author_bio_en/bn`, `chapters`, `chapter_pages`), `book_grid_settings`, `covers` bucket. Existing 60 migrations already cover content + application tables with RLS. Remaining: chapters/authors table-level modeling + content seeding decisions | Schema + RLS designed and documented; migration SQL prepared (delta landed; `manual-setup.sql` complete at 61 sections) |
-| **P2 — Custom admin** | Implement the **Refine + shadcn/ui admin** inside the TanStack app (`/admin`): CRUD for content + application resources via Refine dataProvider → Supabase server functions; RBAC; replace the Strapi redirect/mock panel | Admin CRUD works against Supabase; editors manage content without code |
+| **P2 — Custom admin** | **Refine + shadcn admin foundation done 2026-08-15**: `@refinedev/core` + `@refinedev/supabase` + `@refinedev/react-table` installed; schema-driven resource registry (`src/lib/admin/resources.ts` — books/posts/videos/pages/categories/navigation/orders/profiles, bilingual columns + form fields); mock-first dataProvider seam (`src/lib/admin/data-provider.ts`, `VITE_DATA_SOURCE`-gated, real mode delegates to `@refinedev/supabase`); generic list + create/edit dialog + delete confirm (`src/components/admin/refine/`); `/admin` real mode renders the Refine shell (replaces the Strapi redirect), mock mode keeps MockAdminPanel with a `?admin=refine` preview seam; browser-verified CRUD (create/edit/delete/pagination) offline. Remaining: RBAC wiring, Supabase dataProvider verification against the fresh instance, migrate content resources | Admin CRUD works against Supabase; editors manage content without code |
 | **P3 — Content migration** | Move required **Strapi responsibilities into Supabase**: migrate content (posts, pages, books, videos, categories, tags, navigation, site settings) into the unified schema; wire frontend content reads to Supabase; **then** remove Strapi code/dependencies (pending validation of the replacement admin/content system) | All content served from Supabase; Strapi removed from the codebase; no mock for content features |
 | **P4 — Application data** | Complete commerce/user/application integration: cart, orders, purchases, progress, bookmarks, ratings, comments, notifications → Supabase-only; remove per-feature mock stores (per the Mock Data Removal Strategy) | All user features persist across sessions on Supabase |
 | **P5 — Payments** | **Validate PipraPay integration** through the existing provider abstraction (initiation, callback/webhook, signature + amount verification, idempotency, order fulfillment, purchase entitlement, email confirmation); `PAYMENT_PROVIDER=piprapay` + `PIPRAPAY_*` env | End-to-end purchase grants access live; gateway swap remains config-only |
