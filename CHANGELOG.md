@@ -2,6 +2,17 @@
 
 ## 2026-08-13
 
+### PdfViewer mobile-first UX restructure — bottom control bar, sidebar drawer, spread collapse
+
+**The reader previously crammed ~15 controls into one wrapping toolbar and let the sidebar overlay half a phone screen with no way to dismiss it. Small screens now get a dedicated mobile layout (`src/components/PdfViewer.tsx`):**
+
+- **Mobile bottom control bar** — the center cluster (page nav + zoom + mode) is extracted into a shared `centerCluster` JSX block rendered in the desktop top toolbar (`hidden md:flex`) **and** in a new `md:hidden` bottom bar under the content area. Thumb-reachable controls on phones; the top toolbar keeps only toggle/title/actions so nothing wraps into a tall strip. The zoom dropdown opens **upward** on mobile (`bottom-full`) so it never clips at the viewer's bottom edge (downward `md:top-full` on desktop).
+- **Sidebar drawer with backdrop + auto-dismiss** — on phones the sidebar overlays the page (desktop stays in-flow `md:static`); a dimmed `bg-black/40` backdrop button (md:hidden) closes it on tap, and picking a page or chapter auto-dismisses the drawer (`onSelect` closes when `isNarrow`). Width widened from a cramped `w-40` to `w-[72%] max-w-[17rem]` on phones (`sm:w-48` unchanged).
+- **Spread mode collapses on phones** — two ~140px pages are unreadable below the md breakpoint, so spread now renders single-page below 768px (an `isNarrow` state driven by a ResizeObserver on the scroll container, mirrored in a ref for the render callback); the spread button is hidden on mobile too. Rotating the device live updates the layout.
+- **`isNarrow` seam** — a single ResizeObserver tracks `clientWidth < 768` (mirrors the Tailwind `md` breakpoint) and drives bottom-bar visibility, spread collapse, and drawer auto-close; updated on mount and on every resize.
+
+Validation: tsc 0 errors · **627/627 tests**.
+
 ### Docs — production rule: admin-configurable grid density for all grids
 
 **Rule added to `RULES.md §13.1`, `DESIGN.md §4`, and `PROJECT.md §28` + P6 roadmap:** in the main production phase the admin panel must offer reduce/increment grid-item controls per breakpoint (mobile / tablet / desktop) for **all** content grids — books, reflections (`PostGrid`), videos, homepage sections — not just the books grid. Grids must read column counts from site settings via CSS custom properties (the `.book-grid` `--book-grid-cols-mobile/tablet/desktop` seam extended to every grid), never hardcoded classes alone; the hardcoded 1→2→3 progression stays the default until the production setting ships. P6 — Production hardening gains this as a deliverable; the `BookGridSetting` Strapi content-type reference notes the extension.

@@ -508,7 +508,7 @@ function LeftSidebar({
 
   return (
     <aside
-      className="absolute inset-y-0 left-0 z-20 w-40 sm:w-48 bg-background/95 backdrop-blur-sm border-r border-border/40 flex flex-col min-h-0 md:static md:bg-card md:backdrop-blur-none"
+      className="absolute inset-y-0 left-0 z-20 w-[72%] max-w-[17rem] sm:w-48 bg-background/95 backdrop-blur-sm border-r border-border/40 flex flex-col min-h-0 md:static md:bg-card md:backdrop-blur-none"
       aria-label="Reader sidebar"
     >
       {/* Tab switcher */}
@@ -658,6 +658,9 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
     const [contentWide, setContentWide] = useState(false);
     // Collapsible left sidebar
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    // Narrow screen (< md): drives the mobile layout (bottom bar, spread
+    // collapse, sidebar drawer behavior). Mirrors the Tailwind `md` breakpoint.
+    const [isNarrow, setIsNarrow] = useState(false);
     // Layout mode
     const [mode, setMode] = useState<ReaderMode>(defaultMode);
     // Reading theme
@@ -692,6 +695,11 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
     useEffect(() => {
       initialPageRef.current = initialPage;
     }, [initialPage]);
+    // Narrow-screen mirror for the render callback (ref keeps it stable).
+    const isNarrowRef = useRef(false);
+    useEffect(() => {
+      isNarrowRef.current = isNarrow;
+    }, [isNarrow]);
 
     // Keep theme in sync with a controlled prop
     useEffect(() => {
@@ -800,7 +808,11 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
           const baseVp = page.getViewport({ scale: 1, rotation });
           const availW = Math.max(200, (scrollRef.current?.clientWidth ?? 800) - 32);
           const availH = Math.max(200, (scrollRef.current?.clientHeight ?? 600) - 32);
-          const spread = mode === "spread" && num + 1 <= totalPages;
+          // Two-page spread is unreadable on phones (~140px pages) — collapse
+          // to single-page rendering below the md breakpoint. `isNarrow` is
+          // mirrored in a ref so the render callback stays stable.
+          const spread =
+            mode === "spread" && num + 1 <= totalPages && !isNarrowRef.current;
           let effective = scale;
           if (zoomMode !== "custom") {
             const targetW = spread ? availW / 2 : availW;
@@ -882,6 +894,18 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
       ro.observe(el);
       return () => ro.disconnect();
     }, [zoomMode, pdf, mode, renderCurrent]);
+
+    // Track narrow screens (width < md = 768px) — drives the mobile bottom
+    // control bar, spread-mode collapse, and sidebar drawer behavior.
+    useEffect(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const update = () => setIsNarrow(el.clientWidth < 768);
+      update();
+      const ro = new ResizeObserver(update);
+      ro.observe(el);
+      return () => ro.disconnect();
+    }, []);
 
     // Notify parent of page changes
     useEffect(() => {
@@ -1289,6 +1313,164 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
           ? "hover:bg-amber-100"
           : "hover:bg-zinc-100";
 
+    /* ── Shared center cluster: page nav + zoom + mode ───────────
+       Rendered in the top toolbar on desktop AND in a dedicated mobile
+       bottom bar on phones (same handlers, two placements). The zoom
+       dropdown opens downward on desktop (`md:top-full`) and upward on
+       mobile (`bottom-full`) so it never clips at the viewer edge. */
+    const centerCluster = (
+      <>
+        {/* Page navigation */}
+        <div className="flex items-center gap-1 border-r border-border/40 pr-2 sm:pr-3">
+          <button
+            onClick={() => goToPage(pageNum - 1)}
+            disabled={pageNum <= 1}
+            className={iconBtn(theme)}
+            title="Previous page (←)"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div
+            className={`flex items-center gap-0.5 min-w-[4.5rem] justify-center ${
+              !showPageNumbers ? "opacity-0 pointer-events-none" : ""
+            }`}
+          >
+            <input
+              type="text"
+              inputMode="numeric"
+              value={pageInput || pageNum}
+              onChange={(e) => setPageInput(e.target.value)}
+              onFocus={() => setPageInput(String(pageNum))}
+              onKeyDown={handlePageInputKeyDown}
+              className={cn(
+                "w-8 text-center text-xs tabular-nums bg-transparent border-b border-transparent focus:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                themeText,
+              )}
+              aria-label="Current page"
+            />
+            <span className={cn("text-xs", themeMuted)}>/ {lang === "bn" ? toBanglaDigits(totalPages) : totalPages}</span>
+          </div>
+          <button
+            onClick={() => goToPage(pageNum + 1)}
+            disabled={pageNum >= totalPages}
+            className={iconBtn(theme)}
+            title="Next page (→)"
+            aria-label="Next page"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Unified zoom control: [-] pct [+] + preset dropdown */}
+        <div className="relative flex items-center gap-1 border-r border-border/40 pr-2 sm:pr-3">
+          <button
+            onClick={zoomOut}
+            disabled={scale <= 0.4 && zoomMode === "custom"}
+            className={iconBtn(theme)}
+            title="Zoom out (−)"
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoomMenuOpen((o) => !o)}
+            className={cn(
+              "flex items-center gap-1 text-xs tabular-nums px-1.5 py-1 rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+              themeHover,
+              themeText,
+            )}
+            title="Zoom presets"
+            aria-haspopup="listbox"
+            aria-expanded={zoomMenuOpen}
+          >
+            {lang === "bn" ? toBanglaDigits(Math.round(displayScale * 100)) : Math.round(displayScale * 100)}%
+            <ChevronDown className="h-3 w-3 opacity-60" />
+          </button>
+          <button
+            onClick={zoomIn}
+            disabled={scale >= 3 && zoomMode === "custom"}
+            className={iconBtn(theme)}
+            title="Zoom in (+)"
+            aria-label="Zoom in"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+
+          {zoomMenuOpen && (
+            <div
+              role="listbox"
+              className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-30 min-w-[9rem] rounded-md border bg-popover shadow-xl py-1 md:top-full md:mt-1 md:bottom-auto md:mb-0"
+            >
+              <ZoomMenuItem
+                label="Fit Width"
+                active={zoomMode === "fit-width"}
+                onSelect={() => {
+                  fitToWidth();
+                  setZoomMenuOpen(false);
+                }}
+              />
+              <ZoomMenuItem
+                label="Fit Page"
+                active={zoomMode === "fit-page"}
+                onSelect={() => {
+                  fitToPage();
+                  setZoomMenuOpen(false);
+                }}
+              />
+              <div className="my-1 h-px bg-border/40" />
+              {ZOOM_PRESETS.map((p) => (
+                <ZoomMenuItem
+                  key={p}
+                  label={`${lang === "bn" ? toBanglaDigits(p) : p}%`}
+                  active={
+                    zoomMode === "custom" && Math.round(scale * 100) === p
+                  }
+                  onSelect={() => {
+                    setExactScale(p / 100);
+                    setZoomMenuOpen(false);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Layout mode selector */}
+        <div className="flex items-center gap-0.5 border-r border-border/40 pr-2 sm:pr-3">
+          <button
+            onClick={() => setMode("single")}
+            className={modeBtn(theme, mode === "single")}
+            title="Single page"
+            aria-pressed={mode === "single"}
+            aria-label="Single page mode"
+          >
+            <Rows3 className="h-4 w-4" />
+          </button>
+          {/* Spread is unreadable below the md breakpoint — hidden on phones. */}
+          <button
+            onClick={() => setMode("spread")}
+            className={cn(modeBtn(theme, mode === "spread"), "hidden md:flex")}
+            title="Two-page spread"
+            aria-pressed={mode === "spread"}
+            aria-label="Two-page spread mode"
+          >
+            <Columns2 className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setMode("continuous")}
+            className={modeBtn(theme, mode === "continuous")}
+            title="Continuous scroll"
+            aria-pressed={mode === "continuous"}
+            aria-label="Continuous scroll mode"
+          >
+            <AlignVerticalSpaceAround className="h-4 w-4" />
+          </button>
+        </div>
+      </>
+    );
+
     return (
       <div
         ref={containerRef}
@@ -1336,156 +1518,11 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
             )}
           </div>
 
-          {/* Center: page nav + zoom + mode — wraps internally so the
-              cluster (≈350px wide) never overflows a 320px phone screen. */}
-          <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 sm:gap-2">
-            {/* Page navigation */}
-            <div className="flex items-center gap-1 border-r border-border/40 pr-2 sm:pr-3">
-              <button
-                onClick={() => goToPage(pageNum - 1)}
-                disabled={pageNum <= 1}
-                className={iconBtn(theme)}
-                title="Previous page (←)"
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <div
-                className={`flex items-center gap-0.5 min-w-[4.5rem] justify-center ${
-                  !showPageNumbers ? "opacity-0 pointer-events-none" : ""
-                }`}
-              >
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={pageInput || pageNum}
-                  onChange={(e) => setPageInput(e.target.value)}
-                  onFocus={() => setPageInput(String(pageNum))}
-                  onKeyDown={handlePageInputKeyDown}
-                  className={cn(
-                    "w-8 text-center text-xs tabular-nums bg-transparent border-b border-transparent focus:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                    themeText,
-                  )}
-                  aria-label="Current page"
-                />
-                <span className={cn("text-xs", themeMuted)}>/ {lang === "bn" ? toBanglaDigits(totalPages) : totalPages}</span>
-              </div>
-              <button
-                onClick={() => goToPage(pageNum + 1)}
-                disabled={pageNum >= totalPages}
-                className={iconBtn(theme)}
-                title="Next page (→)"
-                aria-label="Next page"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Unified zoom control: [-] pct [+] + preset dropdown */}
-            <div className="relative flex items-center gap-1 border-r border-border/40 pr-2 sm:pr-3">
-              <button
-                onClick={zoomOut}
-                disabled={scale <= 0.4 && zoomMode === "custom"}
-                className={iconBtn(theme)}
-                title="Zoom out (−)"
-                aria-label="Zoom out"
-              >
-                <ZoomOut className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setZoomMenuOpen((o) => !o)}
-                className={cn(
-                  "flex items-center gap-1 text-xs tabular-nums px-1.5 py-1 rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                  themeHover,
-                  themeText,
-                )}
-                title="Zoom presets"
-                aria-haspopup="listbox"
-                aria-expanded={zoomMenuOpen}
-              >
-                {lang === "bn" ? toBanglaDigits(Math.round(displayScale * 100)) : Math.round(displayScale * 100)}%
-                <ChevronDown className="h-3 w-3 opacity-60" />
-              </button>
-              <button
-                onClick={zoomIn}
-                disabled={scale >= 3 && zoomMode === "custom"}
-                className={iconBtn(theme)}
-                title="Zoom in (+)"
-                aria-label="Zoom in"
-              >
-                <ZoomIn className="h-4 w-4" />
-              </button>
-
-              {zoomMenuOpen && (
-                <div
-                  role="listbox"
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-30 min-w-[9rem] rounded-md border bg-popover shadow-xl py-1"
-                >
-                  <ZoomMenuItem
-                    label="Fit Width"
-                    active={zoomMode === "fit-width"}
-                    onSelect={() => {
-                      fitToWidth();
-                      setZoomMenuOpen(false);
-                    }}
-                  />
-                  <ZoomMenuItem
-                    label="Fit Page"
-                    active={zoomMode === "fit-page"}
-                    onSelect={() => {
-                      fitToPage();
-                      setZoomMenuOpen(false);
-                    }}
-                  />
-                  <div className="my-1 h-px bg-border/40" />
-                  {ZOOM_PRESETS.map((p) => (
-                    <ZoomMenuItem
-                      key={p}
-                      label={`${lang === "bn" ? toBanglaDigits(p) : p}%`}
-                      active={
-                        zoomMode === "custom" && Math.round(scale * 100) === p
-                      }
-                      onSelect={() => {
-                        setExactScale(p / 100);
-                        setZoomMenuOpen(false);
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Layout mode selector */}
-            <div className="flex items-center gap-0.5 border-r border-border/40 pr-2 sm:pr-3">
-              <button
-                onClick={() => setMode("single")}
-                className={modeBtn(theme, mode === "single")}
-                title="Single page"
-                aria-pressed={mode === "single"}
-                aria-label="Single page mode"
-              >
-                <Rows3 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setMode("spread")}
-                className={modeBtn(theme, mode === "spread")}
-                title="Two-page spread"
-                aria-pressed={mode === "spread"}
-                aria-label="Two-page spread mode"
-              >
-                <Columns2 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setMode("continuous")}
-                className={modeBtn(theme, mode === "continuous")}
-                title="Continuous scroll"
-                aria-pressed={mode === "continuous"}
-                aria-label="Continuous scroll mode"
-              >
-                <AlignVerticalSpaceAround className="h-4 w-4" />
-              </button>
-            </div>
+          {/* Center: page nav + zoom + mode — desktop only here (hidden on
+              phones; the same cluster renders in the mobile bottom bar
+              below the content area). */}
+          <div className="hidden md:flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 sm:gap-2">
+            {centerCluster}
           </div>
 
           {/* Right: actions + theme + close */}
@@ -1718,7 +1755,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
                     transition: dragging
                       ? "none"
                       : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
-                    gap: mode === "spread" ? 16 : 0,
+                    gap: mode === "spread" && !isNarrow ? 16 : 0,
                   }}
                 >
                   <canvas
@@ -1726,7 +1763,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
                     className="block"
                     style={{ filter: THEME_FILTER[theme] }}
                   />
-                  {mode === "spread" && pageNum + 1 <= totalPages && (
+                  {mode === "spread" && !isNarrow && pageNum + 1 <= totalPages && (
                     <canvas
                       ref={canvas2Ref}
                       className="block"
@@ -1793,19 +1830,50 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
             )}
           </div>
 
-          {/* ── Left sidebar (drawer) ─────────────────────────── */}
+          {/* ── Left sidebar (drawer) ───────────────────────────
+              On phones the drawer overlays the page; a dimmed backdrop
+              (md:hidden) closes it on tap, and picking a page or chapter
+              auto-dismisses so the reader returns to content immediately. */}
           {sidebarOpen && !loading && pdf && totalPages > 1 && (
-            <LeftSidebar
-              pdf={pdf}
-              totalPages={totalPages}
-              pageNum={pageNum}
-              rotation={rotation}
-              chapters={chapters}
-              theme={theme}
-              onSelect={goToPage}
-            />
+            <>
+              <button
+                aria-label="Close reader sidebar"
+                onClick={() => setSidebarOpen(false)}
+                className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[1px] md:hidden"
+              />
+              <LeftSidebar
+                pdf={pdf}
+                totalPages={totalPages}
+                pageNum={pageNum}
+                rotation={rotation}
+                chapters={chapters}
+                theme={theme}
+                onSelect={(p) => {
+                  goToPage(p);
+                  // Pick-then-dismiss on phones; desktop keeps it open for
+                  // continuous navigation between chapters/pages.
+                  if (isNarrow) setSidebarOpen(false);
+                }}
+              />
+            </>
           )}
         </div>
+
+        {/* ── Mobile bottom bar — page nav + zoom + mode, thumb-reachable.
+            The desktop toolbar keeps only toggle/title/actions; this bar
+            carries the cluster on phones so controls never wrap into a
+            tall strip at the top. The zoom dropdown opens UPWARD here
+            (bottom-full) so it never clips at the viewer's bottom edge. */}
+        {!loading && (
+          <div
+            className={cn(
+              "md:hidden shrink-0 flex items-center justify-center gap-x-1.5 gap-y-1 flex-wrap px-2 py-1.5 border-t transition-colors",
+              themeToolbar,
+            )}
+          >
+            {centerCluster}
+          </div>
+        )}
 
         {/* Keyboard shortcut hint */}
         {focused && !sidebarOpen && (
