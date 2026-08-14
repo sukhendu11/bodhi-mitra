@@ -36,10 +36,12 @@ interface ResourceFormDialogProps {
 
 /** Tag chips + add input — own component so the useState hook stays legal. */
 function TagsInput({
+  id,
   value,
   onChange,
   disabled,
 }: {
+  id?: string;
   value: unknown;
   onChange: (v: unknown) => void;
   disabled?: boolean;
@@ -75,6 +77,7 @@ function TagsInput({
       </div>
       <div className="flex gap-1.5">
         <Input
+          id={id}
           value={input}
           placeholder={bn ? "ট্যাগ যোগ করুন" : "Add tag"}
           disabled={disabled}
@@ -174,7 +177,7 @@ function FieldControl({
         </select>
       );
     case "tags":
-      return <TagsInput value={value} onChange={onChange} disabled={disabled || field.readOnly} />;
+      return <TagsInput id={id} value={value} onChange={onChange} disabled={disabled || field.readOnly} />;
     default:
       return (
         <Input

@@ -2,6 +2,12 @@
 
 ## 2026-08-15
 
+### P2 — admin resource registry + form dialog tests
+
+- **`src/lib/__tests__/admin-resources.test.ts`** (8 tests) — pins the schema-driven registry contract: every resource covered with unique bilingual labels + icon, valid column/field shapes, select options present, `title_en` required on books/posts/videos, `getResourceDef` lookups, read-only identity fields.
+- **`src/components/admin/refine/ResourceFormDialog.test.tsx`** (9 tests) — renders every declared field with its bilingual label + required asterisk, wires each label's `htmlFor` to the control's `id`, asserts each control matches its declared type (text/number/url/textarea/select/switch/tags), select options, `noValidate` form (relative content paths), create/edit titles, and read-only resource disabling. Also wired the `tags` control's `id` (it previously skipped the `field-*` id the label pointed at).
+- **Validation**: 651/651 tests (+17), tsc 0 errors.
+
 ### P2 — Refine + shadcn admin foundation (custom admin inside the app)
 
 - **Installed**: `@refinedev/core@5`, `@refinedev/supabase@6`, `@refinedev/react-table@6` (free, MIT; Refine runs headless — no router provider needed, TanStack Router stays the shell).
