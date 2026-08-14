@@ -35,19 +35,21 @@ Sabbe Satta is a full-stack digital platform that brings together publishing, di
 
 **Library-first, platform-first. Never rebuild mature solutions. Use free tools only.**
 
-Priority order:
-1. Strapi CMS (admin panel, content management, media library, APIs)
-2. Mature open-source libraries (TanStack, Zod, shadcn, TipTap, etc.)
-3. Supabase services (Auth, Storage, application database)
+Priority order (revised 2026-08-14, AD-029):
+1. Supabase services (Auth, PostgreSQL, Storage, RLS) — the unified backend
+2. Refine Core + shadcn/ui — admin/CRUD patterns + component system (inside the app)
+3. Mature open-source libraries (TanStack, Zod, TipTap, etc.)
 4. Custom business logic (only for unique platform requirements)
 
 **Free tools only.** Never use free tiers with hard limits, trial versions, or freemium services that require paid plans for essential features. When no fully free solution exists, combine free tools with custom hooks/libraries/raw code.
 
-**Strapi owns:** Content management (posts, pages, books, videos, courses, categories, tags, navigation, comments, site settings), admin panel, media library, i18n, SEO. Do not duplicate these.
+> **2026-08-14 (AD-029):** the ownership split below is revised — Supabase owns ALL data (content + application), the admin is Refine + shadcn, and hosting is Hostinger Managed Node.js. Strapi is historical (superseded).
 
-**Supabase owns:** Auth (user signup/login/OAuth), Storage (file uploads, book PDFs), application data (purchases, cart, reading progress, bookmarks, ratings, course enrollments, newsletter subscriptions, coupons, contact messages, notifications, audit logs).
+**Supabase owns (unified backend):** Auth (user signup/login/OAuth/sessions), Storage (book PDFs — private/access-controlled, covers, avatars), content data (posts, pages, books, videos, categories, tags, navigation, site settings, book-grid settings), and application data (profiles/RBAC, purchases, orders, cart, reading progress, bookmarks, ratings, comments, notes/highlights, notifications, coupons, newsletter subscriptions, contact messages, audit logs).
 
-**TanStack Start owns (runs on the VPS):** Frontend SSR, payment webhooks, email (Resend), server functions.
+**Refine + shadcn admin owns (target — P2):** the admin/CRUD UI inside the TanStack app (content + application resources).
+
+**TanStack Start owns (runs on Hostinger Managed Node.js):** Frontend SSR, payment webhooks, email (Resend), server functions.
 
 Custom code is reserved for Sabbe Satta's unique logic: reader behavior, purchase rules, book access permissions, user library, reading progress, page builder, theme builder, commerce, learning system, AI assistant.
 
@@ -55,17 +57,17 @@ Custom code is reserved for Sabbe Satta's unique logic: reader behavior, purchas
 
 | Layer | System | Owns |
 |-------|--------|------|
-| Content / CMS | **Strapi v5** (VPS, PostgreSQL) | posts, pages, book editorial data, videos, categories, tags, navigation, site settings, comments |
-| Auth | **Supabase Auth** | email + Google OAuth, sessions, JWTs |
-| App data | **Supabase Postgres** | profiles/RBAC, purchases, orders, cart, coupons, progress, bookmarks, ratings, reviews, newsletter, contact, audit log |
-| Storage | **Supabase Storage** | private PDFs, covers, avatars (signed-URL access) |
+| Backend (unified) | **Supabase** (Auth + PostgreSQL + Storage) | ALL data — content (posts, pages, books, videos, categories, tags, navigation, site settings) + application (profiles/RBAC, purchases, orders, cart, coupons, progress, bookmarks, ratings, reviews, comments, newsletter, contact, audit) + Auth + Storage |
+| Admin | **Refine Core + shadcn/ui** (inside the TanStack app — target, P2) | admin/CRUD/data-handling patterns |
 | Payments | **Provider-agnostic interface** | one interface: simulated → PipraPay (stopgap) → direct bKash/Nagad merchant APIs (licensed, final) |
 | Email | **Resend** | transactional emails |
-| Frontend | **VPS (TanStack Start SSR, PM2)** | UI + auth-guarded server functions + webhook endpoints |
+| Frontend | **Hostinger Managed Node.js (TanStack Start SSR)** | UI + auth-guarded server functions + webhook endpoints + Refine admin |
 
-**Books:** Strapi is the editorial source of truth; only the commerce/application fields (price, slug, cover, is_free, pdf path) are mirrored into Supabase `books` so cart/checkout/library stay fast and RLS-guarded. No dual-write conflicts — one-way idempotent upsert.
+**Books:** Supabase `books` is the single source of truth (edited via the Refine admin); no Strapi mirror exists in the target architecture (AD-027 superseded by AD-029).
 
-**Payments:** the gateway is replaceable through one common interface (`initiate → redirect/pay → webhook → verify → order → purchase → unlock PDF → email`). Payment success is **always verified server-side** before granting purchased content. See AD-026/027.
+**Payments:** the gateway is replaceable through one common interface (`initiate → redirect/pay → webhook → verify → order → purchase → unlock PDF → email`). Payment success is **always verified server-side** before granting purchased content. See AD-026.
+
+> **Historical (2026-08-14):** under the superseded hybrid architecture (AD-023), Strapi owned content and a one-way mirror (AD-027) carried commerce fields into Supabase `books`. Both are superseded by AD-029.
 
 ---
 
@@ -73,7 +75,8 @@ Custom code is reserved for Sabbe Satta's unique logic: reader behavior, purchas
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| **CMS / Admin** | Strapi v5 (self-hosted, VPS, native) | Content management, admin panel, REST/GraphQL APIs |
+| **Backend (unified)** | Supabase (Auth + PostgreSQL + Storage + RLS) | Unified backend: auth, ALL data (content + application), file storage |
+| **Admin (target)** | Refine Core + shadcn/ui (inside the TanStack app) | Admin/CRUD/data-handling patterns + UI component system (target — P2) |
 | **Framework** | TanStack Start (React 19) | Full-stack SSR framework with file-based routing |
 | **Client Rendering** | React 19 | UI component library |
 | **Routing** | TanStack Router v1 | File-based, type-safe routing with SSR support |
@@ -86,21 +89,22 @@ Custom code is reserved for Sabbe Satta's unique logic: reader behavior, purchas
 | **Drag & Drop** | dnd-kit | Accessible drag-and-drop for navigation builder |
 | **Payments** | Provider-agnostic gateway interface (simulated → PipraPay → direct bKash/Nagad) | Payment processing, checkout redirects, IPN webhooks |
 | **Email** | Resend | Transactional emails (purchases, contact, newsletter) |
-| **Strapi DB** | SQLite (dev) → PostgreSQL (VPS, native) | Strapi content database |
-| **App DB** | Supabase PostgreSQL (Cloud) | Application data (purchases, cart, progress, etc.) |
-| **Auth** | Supabase Auth | Frontend user authentication (email + Google OAuth) |
-| **Storage** | Supabase Storage | File uploads (book PDFs, cover images, avatars) |
+| **Database** | Supabase PostgreSQL (Cloud) | ALL data — content (posts, pages, books, videos, categories, tags, navigation, site settings) + application data (purchases, cart, progress, orders, etc.) |
+| **Auth** | Supabase Auth | Frontend user authentication (email + Google OAuth) + roles/authorization |
+| **Storage** | Supabase Storage | All media — private book PDFs, covers, avatars, other application media |
 | **Search** | PostgreSQL FTS (current) → Meilisearch (planned) | Public search with Bangla support |
-| **Hosting** | VPS (Hostinger/Hetzner) — single box | Frontend SSR + Strapi + PipraPay on one VPS (no Vercel/Docker, AD-028) |
+| **Hosting** | Hostinger Managed Node.js / Web Apps Hosting | Managed hosting for the TanStack Start SSR app (no VPS/Docker/Nginx/PM2/systemd — see AD-029) |
 | **Package Manager** | Bun | Fast package installation and script execution |
+
+> **Strapi v5** — superseded as the production CMS (2026-08-14). Strapi code remains in the repo and is **pending migration and removal** (P3 of the new roadmap); it must not be described as the future production CMS. See AD-029 + §18 P0–P8.
 
 ---
 
 ## 4. System Architecture
 
-> **Full technical blueprint:** see **§28 — Platform Architecture** (merged from `ARCHITECTURE.md`, 2026-08-08) for the hybrid-systems table, high-level architecture diagram, data-flow patterns, auth flows, the mock-platform data-source seam, adapter contracts, navigation structure, hosting, security, and env configuration.
+> **Full technical blueprint:** see **§28 — Platform Architecture** (merged from `ARCHITECTURE.md`, 2026-08-08, revised 2026-08-14 for AD-029) for the unified-backend table, high-level architecture diagram, data-flow patterns, auth flows, the mock-platform data-source seam, adapter contracts, navigation structure, hosting, security, and env configuration. **Target architecture: Supabase unified backend + Refine/shadcn admin + Hostinger Managed Node.js (AD-029).**
 
-Sabbe Satta uses a **Hybrid Architecture**: **Strapi v5** owns content management + the admin panel, **Supabase** owns auth/storage/application data, the **TanStack Start frontend** (on the production VPS) owns the SSR app + payment webhooks + email (Resend) + server functions, and payments flow through a **provider-agnostic gateway interface** (currently simulated; PipraPay as stopgap until direct bKash/Nagad merchant APIs are available). Production hosting: one VPS, natively installed — no Vercel/Docker/GitHub (AD-028).
+Sabbe Satta uses a **unified architecture**: **Supabase** owns the entire backend — Auth, PostgreSQL (ALL data: content + application), Storage, and RLS. The **TanStack Start frontend** (deployed on **Hostinger Managed Node.js**) owns the SSR app, payment webhooks, email (Resend), server functions, and the **admin panel built with Refine Core + shadcn/ui** living inside the TanStack application. Payments flow through a **provider-agnostic gateway interface** (currently simulated; PipraPay as stopgap until direct bKash/Nagad merchant APIs are available). Production hosting: **Hostinger Managed Node.js** (managed platform — no VPS, no Docker, no Nginx, no PM2/systemd administration; see AD-029). The previous Strapi/VPS architecture is superseded — see AD-029 + §18 roadmap.
 
 ---
 
@@ -131,24 +135,24 @@ Sabbe Satta uses a **Hybrid Architecture**: **Strapi v5** owns content managemen
 
 | Aspect | Detail |
 |--------|--------|
-| **Provider** | Strapi v5 admin panel (`/admin` redirects to Strapi) |
-| **Guard** | Frontend `/admin` shell checks auth + role before redirecting |
-| **Sections** | Content Manager, Media Library, RBAC, i18n, API Tokens (Strapi) |
-| **Layout** | Strapi admin — independent of public frontend |
-| **Status** | Transitioned to Strapi ✅ (Phase 2) |
+| **Provider** | **Refine Core + shadcn/ui inside the TanStack app — target (P2)**; current dev: MockAdminPanel; historical: Strapi redirect shell |
+| **Guard** | Frontend `/admin` checks Supabase Auth + role (RBAC via `user_roles`) |
+| **Sections** | Content CRUD (posts, pages, books, videos, categories, tags, navigation, site settings), commerce admin, users/roles |
+| **Layout** | Lives inside the public app (`/admin`) — not a separate service |
+| **Status** | 🔜 Target (P2) — not installed; Strapi admin superseded (AD-029) |
 
 ### Posts / Blog
 
 | Aspect | Detail |
 |--------|--------|
-| **Table** | Strapi `post` content type (bilingual fields) |
+| **Table** | Supabase `posts` (unified schema — target P1/P3; historical: Strapi `post` content type) |
 | **Statuses** | draft, published |
-| **Editor** | Strapi built-in editor (TipTap replaced) |
+| **Editor** | TipTap (admin editor) |
 | **Bilingual** | title_en/bn, content_en/bn, excerpt_en/bn |
-| **Cover** | Strapi media library upload |
-| **Tags** | Strapi tag relation |
+| **Cover** | Supabase Storage upload |
+| **Tags** | Supabase `tags` relation |
 | **Categories** | Meditation, Mindfulness, Mental Health, Philosophy, Buddhist Psychology (nav dropdown) |
-| **Routes** | `/blog` hub + 4 category pages with bilingual SEO |
+| **Routes** | `/reflections` hub + category pages with bilingual SEO |
 | **Status** | Complete |
 
 ### Pages
@@ -260,7 +264,7 @@ Sabbe Satta uses a **Hybrid Architecture**: **Strapi v5** owns content managemen
 
 ## 6. Development Phases
 
-> **Historical (2026-08-14):** this module-status table documents the original build. The current roadmap is **P0–P8** in §18; several rows below were corrected on 2026-08-14 (Stripe → provider-agnostic payments, bookmarks/courses/donations statuses).
+> **Historical (2026-08-14):** this module-status table documents the original build. The current roadmap is **P0–P8** in §18; several rows below were corrected on 2026-08-14 (Stripe → provider-agnostic payments, bookmarks/courses/donations statuses). The Strapi-based CMS rows below are superseded by AD-029 (Supabase unified backend + Refine/shadcn admin target).
 
 ### Phase 1 - Foundation
 
@@ -331,41 +335,43 @@ Sabbe Satta uses a **Hybrid Architecture**: **Strapi v5** owns content managemen
 
 ## 7. CMS Architecture
 
-### Core Pattern
+> **2026-08-14 revision (AD-029):** the target architecture moves content management into **Supabase** (unified backend) with a **Refine Core + shadcn/ui admin** living inside the TanStack application. **Strapi is no longer the target CMS** — it is historical/superseded, pending migration and removal (P2/P3). The current frontend still ships mock-first + a mock admin panel for development (see §18 M0–M6).
+
+### Core Pattern (target)
 
 ```
-Content Management → Strapi Admin Panel (cms.sabbesatta.com/admin)
+Content Management → Custom admin inside the TanStack app (Refine + shadcn/ui)
   |
-Strapi v5 provides:
-  |  - Visual Content-type Builder
-  |  - Content Manager (create/edit/publish)
-  |  - Media Library (images, PDFs, assets)
-  |  - RBAC (editor/admin roles)
-  |  - i18n (English + Bangla)
-  |  - REST/GraphQL APIs
+Refine Core provides:
+  |  - CRUD/data-handling patterns (dataProvider → Supabase)
+  |  - useTable / useList / useForm / useCreate / useUpdate / useDelete
   |
-Frontend reads → Strapi REST API (via VITE_STRAPI_API_TOKEN)
+shadcn/ui provides the component system (tables, forms, dialogs, etc.)
   |
-User-specific operations → Supabase only (server functions; the supabase-auth middleware + app-data Strapi types were removed 2026-08-08)
+Data persists → Supabase PostgreSQL (content + application data, one database)
+  |
+Media persists → Supabase Storage (book PDFs, covers, avatars, other media)
+  |
+Frontend reads → Supabase (server functions / RLS-guarded queries)
 ```
 
-### Content Architecture
+### Content Architecture (target)
 
-- **Content types**: Post, Page, Book, Video, Course, Category, Tag, Navigation, Comment, Site Settings (+ BookGridSetting). No app-data types — purchases/progress/bookmarks/ratings live in Supabase only (the legacy `purchase`, `reading-progress`, `bookmark`, `book-rating` types were removed 2026-08-08).
-- **Bilingual pattern**: Every content type uses paired fields (title_en/title_bn, content_en/content_bn, etc.)
+- **Content tables in Supabase**: posts, pages, books, chapters, authors, videos, categories, tags, navigation, site settings, book-grid settings — alongside application tables (cart, orders, purchases, progress, bookmarks, ratings, comments, notes/highlights, notifications, coupons, audit). One database, one owner (Supabase), RLS everywhere.
+- **Bilingual pattern**: Every content table uses paired columns (title_en/title_bn, content_en/content_bn, etc.)
 - **Runtime selection**: `pickLocalized(field_en, field_bn, lang, fallback)`
-- **Admin UI**: Strapi admin panel (no custom admin frontend)
-- **Content flow**: Editor → Strapi Admin → Strapi PostgreSQL → Strapi REST API → Frontend renders
+- **Admin UI**: Refine + shadcn admin panel inside the TanStack app (target — P2); mock admin panel in dev
+- **Content flow (target)**: Editor → Refine admin (/admin) → server functions → Supabase PostgreSQL → Frontend renders
 
 ---
 
 ## 8. Admin Dashboard
 
-The admin panel is now provided by **Strapi v5**, accessible at `/admin` → redirects to `cms.sabbesatta.com/admin`.
+> **2026-08-14 revision (AD-029):** the target admin is **Refine Core + shadcn/ui**, living inside the TanStack application (not a separate backend service). **Strapi is superseded** as the admin panel — its code remains in the repo, pending migration and removal (P2/P3).
 
-- Strapi admin provides: content management, media library, RBAC, i18n, API token management
-- The frontend `/admin` route shows a clean redirect shell with auth guard and a CTA button to Strapi
-- No custom admin frontend is maintained — Strapi covers all CMS admin needs
+- **Target**: Refine Core (admin/CRUD/data-handling patterns) + shadcn/ui (component system) inside the TanStack app, backed by Supabase via server functions — see §18 P2
+- **Current**: the `/admin` route renders the offline **MockAdminPanel** (M5, mock mode) or the Strapi redirect shell (production, until P2 lands)
+- **Not yet done**: Refine/shadcn admin is **not installed or marked complete** — P2 of the roadmap; Strapi removal is pending implementation and validation of the replacement admin/content system
 
 ---
 
@@ -424,23 +430,33 @@ Library Modules: posts, pages, books, books-purchases, books-ratings, books-prog
 
 ## 16. Database Architecture
 
-Core Tables:
+> **2026-08-14 revision (AD-029):** Supabase PostgreSQL is the **single, unified database** — it owns BOTH content and application data. Under the previous Strapi architecture, content tables were being moved to Strapi's own PostgreSQL; that direction is superseded. The unified Supabase schema (P1 of the new roadmap) holds content tables alongside application tables.
+
+Core Tables (unified Supabase schema — target, P1):
+
+**Content:**
 - posts (bilingual, status, tags, timestamps)
 - pages (bilingual, sections JSON, visibility)
-- books (bilingual, status, price, ratings, featured)
+- books (bilingual, status, price, ratings, featured) + chapters + authors
 - videos (bilingual, embed_url, duration)
-- comments (parent_id for nesting)
+- categories (bilingual, color, visibility)
+- tags (bilingual, color)
+- navigation_items (parent_id for tree structure)
+- site_settings (singleton JSONB) + book_grid_settings
+
+**Application:**
 - user_roles (user_id, role enum)
 - profiles (user_id, email, display_name)
 - purchases (UNIQUE user_id + book_id)
+- orders + order_items
+- carts + cart_items
 - reading_progress (UNIQUE user_id + book_id)
 - book_ratings (UNIQUE user_id + book_id, 1-5)
-- navigation_items (parent_id for tree structure)
-- categories (bilingual, color, visibility)
-- tags (bilingual, color)
-- media_assets (full-text search)
-- site_settings (singleton JSONB)
-- audit_log (actor_id, action, JSONB details)
+- bookmarks + reader_bookmarks + reader_notes + reader_highlights
+- comments (parent_id for nesting)
+- notifications
+- coupons
+- newsletter_subscribers + contact_messages + audit_log + search_analytics
 
 Key Indexes: idx_books_avg_rating, idx_purchases_user_id, idx_purchases_book_id, idx_reading_progress_user_id, idx_book_ratings_book_id
 
@@ -491,7 +507,7 @@ Milestone: Content Platform + UI Polish Complete — Mock-First Frontend Ready f
 
 ### Mock Platform Transformation (2026-08-03)
 
-**Goal:** Make the *entire* product work offline as a production-like mock — auth, commerce, reader access, comments, search, notifications, admin — so Strapi/Supabase integration later is a **data-source swap, not a rewrite**.
+**Goal:** Make the *entire* product work offline as a production-like mock — auth, commerce, reader access, comments, search, notifications, admin — so real-backend integration (Supabase unified backend, AD-029) later is a **data-source swap, not a rewrite**.
 
 Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Former `ROADMAP.md` retired 2026-08-08 — M0–M6 complete.)
 
@@ -502,7 +518,7 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 | M2 — Commerce | ✅ 2026-08-04 | Simulated checkout (card form + spinner), orders, purchases, reader access gating |
 | M3 — Reading & Engagement | ✅ 2026-08-07 | Reading progress, ratings, bookmarks/notes (4 mock stores) |
 | M4 — Community & Search | ✅ 2026-08-07 | Notifications bell, mock search (incl. pages), contact mock fallback, comments |
-| M5 — Mock Admin Panel | ✅ 2026-08-07 | Local admin CRUD + dashboard, orders + notifications admin (Strapi redirect stays for prod) |
+| M5 — Mock Admin Panel | ✅ 2026-08-07 | Local admin CRUD + dashboard, orders + notifications admin (production target: Refine + shadcn admin, P2) |
 | M6 — Integration Seam Verification | ✅ 2026-08-07 | Adapter contract docs + swap drill + cleanup |
 
 **Core seam:** `src/lib/data-source.ts` (`VITE_DATA_SOURCE=mock|strapi|supabase|auto` + `isMockMode()` + `setMockModeOverride()` test seam). Mock stores follow a **per-domain module pattern** (localStorage client / in-memory SSR-safe): `mock-session.ts`, `mock-cart.ts`, `mock-commerce.ts`, `mock-comments.ts`, `mock-progress.ts`, `mock-ratings.ts`, `mock-bookmarks.ts`, `mock-reader.ts`, `mock-notifications.ts`, `mock-cms.ts`, `contact-messages.ts`, `newsletter.ts`. Demo accounts: `demo@sabbesatta.test` / `demo1234` (user), `admin@sabbesatta.test` / `admin1234` (super_admin).
@@ -527,10 +543,10 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 - **Validation** — 0 TS errors, 402/402 tests (19 new: mock-cms 10, mock-settings 9, admin aggregates 2, mockGetAllNotifications 1). Browser-verified: admin dashboard + Settings save flow — site name + accent change reflected on the public homepage instantly, zero console errors. ⚠️ Restart the dev server to pick up `VITE_DATA_SOURCE=mock` (build-time flag). Next up: M6 — Integration Seam Verification.
 
 ### Mock Platform Delivery (2026-08-07) — M6 Integration Seam Verification ✅
-- **E6.1 Adapter contracts** — `PROJECT.md §28` (Adapter Contract) table: every service's public functions, output shapes, and the real adapter (Strapi/Supabase/Stripe/Resend) that must satisfy the same contract; 4-step manual swap drill documented.
+- **E6.1 Adapter contracts** — `PROJECT.md §28` (Adapter Contract) table: every service's public functions, output shapes, and the real adapter (Strapi/Supabase/Stripe/Resend at the time; **target now: Supabase unified — AD-029**) that must satisfy the same contract; 4-step manual swap drill documented.
 - **E6.2 Swap drill test** — `data-source.test.ts` (4 tests): seam toggles via `setMockModeOverride`, flag values validated, mock-mode short-circuit verified across books/posts/videos/settings + reader-route `fetchBookById`, settings overrides apply.
 - **E6.3 Cleanup** — `books.ts` `fetchBookById`/`fetchAllBooks` now `isMockMode()`-gated (last public-path Supabase probes removed); fallback-chain docs rewritten as mock-first dispatch. Real-mode-only fallbacks untouched.
-- **E6.4 Docs** — AGENTS/PROJECT/CHANGELOG updated. **Mock Platform Transformation (M0–M6) is complete** — production hookup = config swap (Phase 6).
+- **E6.4 Docs** — AGENTS/PROJECT/CHANGELOG updated. **Mock Platform Transformation (M0–M6) is complete** — production hookup = config swap (per the P0–P8 roadmap, AD-029).
 
 ### Bilingual (EN↔BN) Sweep + BDT Currency Standard (2026-08-08)
 - **Currency** — every money value now renders `formatMoney()` as `BDT 20.00` (EN) / `২০.০০ টাকা` (BN); the taka glyph and custom-symbol plumbing are gone (`TakaIcon.tsx` + `Money` deleted, `symbol` prop threading removed from PaymentForm→CheckoutPaymentDialog→CartDrawer→BookCard). Bangla numerals via `toBanglaDigits()`.
@@ -539,40 +555,60 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 - **Commerce & engagement** — cart/checkout summary labels, AuthModal, Comments toasts/placeholders, and PaymentForm failure messaging localized.
 - **Validation** — 0 TS errors, **453/453 tests** (31 files).
 
-### Production Migration Phases (Approved 2026-08-08)
+### Production Migration Phases — Revised Roadmap (Approved 2026-08-14)
 
-> Implementation roadmap — each phase is independently shippable and testable. Details in the P1–P8 milestone plan.
+> Implementation roadmap — each phase is independently shippable and testable.
 >
-> ⚠️ **Fresh-start precondition (2026-08-08):** every phase below runs against **brand-new Supabase + Strapi instances** the user creates. The user performs all setup steps **manually** via the dashboards and **does not share credentials with agents** — agents prepare the *Manual Setup Kit* (below), users execute it. Never reuse old dev env vars or previously documented credentials; the current `.env` is **stale**. The legacy `scripts/migrate-to-strapi.mjs` (old dev-data export) is **superseded** — fresh instances are configured/seeded directly, not migrated.
+> ⚠️ **Architecture revision (2026-08-14, AD-029):** the target architecture is **Hostinger Managed Node.js + TanStack Start + Refine Core + shadcn/ui + Supabase** — Supabase becomes the **unified backend** (Auth + PostgreSQL for ALL data + Storage). **Strapi is no longer part of the target architecture** — it is historical/superseded, pending migration and removal (P3). **Do not delete Strapi code yet** — removal happens after the replacement admin/content system is implemented and validated (P2/P3). VPS/Docker/Nginx/PM2/systemd are **not** required production infrastructure; Hostinger's managed platform supplies SSL/CDN/security/backups. Cloudflare is **optional**, not mandatory.
 >
-> 🖥️ **Production hosting (approved 2026-08-14):** one VPS, natively installed — **no Vercel, no Docker, no GitHub** in production (development-only tools). Everything runs on the single production VPS (frontend SSR + Strapi + PostgreSQL + Nginx + PipraPay), Cloudflare free in front, Supabase/Resend free. Strapi and PipraPay become operational in their respective phases (P1/P4). See **AD-028** and §28 §6.
+> ⚠️ **Fresh-start precondition:** phases run against a **fresh Supabase instance** the user creates. The user performs setup **manually** via dashboards and **does not share credentials with agents** — agents prepare the *Manual Setup Kit* (below), users execute it. Never reuse old dev env vars; the current `.env` is **stale**.
 
 | Phase | Focus | Validation |
 |-------|-------|-----------|
-| **P0 — Production foundation** | Provision the production **VPS** (Hostinger KVM / Hetzner CX22, Ubuntu 24.04); install Node 22, PostgreSQL 16, Nginx, Certbot **natively** (no Docker); deploy the frontend SSR on the box (Nitro `node-server` preset, PM2 restart-on-boot, `deploy.sh`); DNS + Cloudflare (sabbesatta.com / cms.* / pay.*); nightly pg_dump + weekly snapshots | `sabbesatta.com` serves the current frontend from the VPS; TLS auto-renews; backups verified |
-| **P1 — Content real** | Configure content types + seed content in the **fresh Strapi** (9 types — see kit below); wire posts/pages/videos/nav/settings to Strapi-first reads; apply the Book schema amendments (chapters, chapter_pages, author_bio_en/bn) + AD-027 mirror amendments; train editors | Every public page renders from Strapi, no mock |
-| **P2 — Auth real** | Create **fresh Supabase** project, apply the fresh-instance schema (**application tables only** — legacy content tables excluded; `orders`/`order_items` added; comments Supabase-owned), enable email + Google auth; configure Resend (receipt/contact/newsletter templates); remove mock-auth fallbacks | Real signup/login/logout; RBAC enforced; transactional email live |
-| **P3 — App data real** | Cart/orders/progress/bookmarks/ratings/comments → Supabase-only (wire real reads); **wire the order state machine to the real `orders`/`order_items` tables**; frontend books reads → Supabase `books` (mirror) | All user features persist across sessions |
-| **P4 — Payments** | ⏳ Abstraction built (simulated live, PipraPay-ready). **Deploy PipraPay** on the VPS (PHP-FPM + MySQL, isolated vhost at `pay.*`), set `PAYMENT_PROVIDER=piprapay` + `PIPRAPAY_*` env, point callback at `/api/payments/webhook`; verify signature + amount check + idempotency live | End-to-end purchase grants access live |
-| **P5 — Storage real** | Real book PDFs → Supabase Storage (`book-pdfs`, private); signed-URL reader flow (`/api/pdf?slug=` ownership check); no direct `.pdf` URLs | Reader opens real books, access-controlled |
-| **P6 — Production hardening** | On the existing VPS (native): monitoring (UptimeRobot: frontend/CMS/webhook), logging, verified backups, performance + caching (Nginx + Cloudflare), secrets. **Admin/site-settings layer:** the admin panel gains reduce/increment grid-item controls per breakpoint (mobile/tablet/desktop) for **all** content grids — books, reflections (`PostGrid`), videos, homepage sections (site-settings-driven via CSS custom properties, `--book-grid-cols-*` seam extended to every grid) | Live + monitored; admin tunes grids/settings without code |
-| **P7 — Cutover & cleanup** | Remove mock modules wholesale + dead Stripe code; force non-mock in prod build; final audit | No mock in prod bundle; tests green; security review |
-| **P8 — License upgrade (future)** | Trade license obtained → swap PipraPay for direct bKash/Nagad merchant APIs | Licensed settlement, formal records |
+| **P0 — Architecture validation** | Research and validate: **Hostinger Managed Node.js** (deploying the TanStack Start SSR app on it), **Refine Core** + **shadcn/ui** admin viability, **Supabase** unified schema approach, **PipraPay** compatibility with the provider abstraction | Research validated + documented; Hostinger managed deploy proof (frontend serves from managed hosting) |
+| **P1 — Supabase content model** | Design the **unified Supabase schema**: content tables (posts, pages, books, chapters, authors, videos, categories, tags, navigation, site settings, book-grid settings) + application tables (cart, orders, order_items, purchases, progress, bookmarks, ratings, comments, notes/highlights, notifications, coupons, audit) with RLS policies + Storage buckets | Schema + RLS designed and documented; migration SQL prepared |
+| **P2 — Custom admin** | Implement the **Refine + shadcn/ui admin** inside the TanStack app (`/admin`): CRUD for content + application resources via Refine dataProvider → Supabase server functions; RBAC; replace the Strapi redirect/mock panel | Admin CRUD works against Supabase; editors manage content without code |
+| **P3 — Content migration** | Move required **Strapi responsibilities into Supabase**: migrate content (posts, pages, books, videos, categories, tags, navigation, site settings) into the unified schema; wire frontend content reads to Supabase; **then** remove Strapi code/dependencies (pending validation of the replacement admin/content system) | All content served from Supabase; Strapi removed from the codebase; no mock for content features |
+| **P4 — Application data** | Complete commerce/user/application integration: cart, orders, purchases, progress, bookmarks, ratings, comments, notifications → Supabase-only; remove per-feature mock stores (per the Mock Data Removal Strategy) | All user features persist across sessions on Supabase |
+| **P5 — Payments** | **Validate PipraPay integration** through the existing provider abstraction (initiation, callback/webhook, signature + amount verification, idempotency, order fulfillment, purchase entitlement, email confirmation); `PAYMENT_PROVIDER=piprapay` + `PIPRAPAY_*` env | End-to-end purchase grants access live; gateway swap remains config-only |
+| **P6 — Storage** | Complete **Supabase Storage/PDF authorization**: private book PDFs (`book-pdfs`), covers, avatars + signed-URL reader flow with server-side ownership checks | Reader opens real books, access-controlled; no direct `.pdf` URLs |
+| **P7 — Production hardening** | Testing, security, backups, monitoring and performance on the managed Hostinger platform (its SSL/CDN/security/WAF/DDoS/backups), secrets management, admin-configurable grid density (admin/site-settings layer) | Live + monitored; security review passes; tests green |
+| **P8 — Future payment upgrade** | Direct bKash/Nagad merchant APIs after licensing/settlement requirements are met (same provider abstraction) | Licensed settlement, formal records |
 
-### Fresh Instance Manual Setup Kit (2026-08-08)
+### Fresh Instance Manual Setup Kit (2026-08-14 revision — AD-029)
 
-> **Workflow:** the user provisions the fresh Supabase + Strapi instances and executes every setup step **manually** (no credentials shared with agents). This kit is the agent-prepared, user-executed checklist for P0 (VPS foundation), P1 (Strapi content) and P2 (Supabase auth). After the user completes a section, the agent verifies and wires the frontend (per the Mock Data Removal Strategy — feature by feature).
+> **Workflow:** the user provisions the fresh Supabase instance (and, at P0, the Hostinger Managed Node.js app) and executes every setup step **manually** (no credentials shared with agents). This kit is the agent-prepared, user-executed checklist for P0 (Hostinger managed hosting), P1 (Supabase content model) and P2 (custom admin). After the user completes a section, the agent verifies and wires the frontend (per the Mock Data Removal Strategy — feature by feature).
 
 ⚠️ **`.env` is stale** — every value belongs to the OLD dev project. Replace each one as the steps below produce fresh values; `SITE_URL` is currently missing and must be added.
 
-#### P0. VPS — production foundation (prerequisite for everything)
+#### P0. Hostinger Managed Node.js — production hosting (prerequisite for everything)
 
-> **Production hosting (approved 2026-08-14):** one VPS, natively installed — **no Vercel, no Docker, no GitHub** (development-only tools). The frontend SSR, Strapi, PostgreSQL, Nginx, and PipraPay all run on this single box; Cloudflare (free) sits in front for DNS/TLS/CDN. See **AD-028** and §28 §6.
+> **Production hosting (approved 2026-08-14, AD-029):** **Hostinger Managed Node.js / Web Apps Hosting** — the managed platform provides Node runtime, deployment, SSL, CDN, security/WAF, DDoS protection, and backups. **No VPS, no Docker, no Nginx administration, no PM2/systemd, no server-installed PostgreSQL.** Cloudflare is optional (only if a specific requirement is demonstrated later). See **AD-029** and §28 §6.
 
-1. **Provision the VPS** — Hostinger KVM 2 (2 vCPU / 8 GB, ~$9–15/mo) or Hetzner CX22 (~€5–8/mo flat), Ubuntu 24.04. Point `sabbesatta.com`, `cms.sabbesatta.com`, `pay.sabbesatta.com` at it (Cloudflare proxy).
-2. **Install the stack natively (apt, no Docker)** — Node 22 (via nvm or nodesource), PostgreSQL 16, Nginx, Certbot.
-3. **Frontend deploy path** — set the Nitro preset to `node-server` in `vite.config.ts` (one line, cutover-time change), add `deploy.sh` (git pull → build → `pm2 reload`), create the production `.env` on the box (`VITE_DATA_SOURCE=supabase` at build; `SITE_URL`, Supabase + Strapi keys).
-4. **Backups** — nightly `pg_dump` (Strapi DB) verified + weekly Hostinger snapshot; PM2/systemd restart-on-boot.
+1. **Create the Hostinger Managed Node.js web app** — Hostinger hPanel → Web Apps / Managed Node.js → choose Node.js runtime (Node 22) → connect the repo (or deploy via Git / file upload per Hostinger's managed flow).
+2. **Deploy the TanStack Start frontend** — build output deployable on the managed Node runtime; set env vars in hPanel (`VITE_DATA_SOURCE`, `SITE_URL`, Supabase keys, `PAYMENT_PROVIDER`, `RESEND_API_KEY`).
+3. **Domain + TLS** — point `sabbesatta.com` at the Hostinger managed app; Hostinger handles SSL (free auto-renewed certificates on the managed plan). Subdomains (`admin.*`/`api.*`) as needed — Hostinger's managed platform handles routing.
+4. **Backups** — rely on Hostinger managed backups + Supabase automatic backups.
+
+#### A. Supabase — fresh project (P1 prerequisite — the unified backend)
+
+> **Supabase is the single backend**: Auth + PostgreSQL (ALL data: content + application) + Storage + RLS. The unified schema is designed in **P1**; the kit below covers the standard project setup. (Under the previous Strapi architecture this section was "application tables only" — that split is superseded: content tables live in Supabase now.)
+
+1. **Create project** — supabase.com → New project (name `sabbe-satta`, nearest region). Note the URL `https://<ref>.supabase.co`.
+2. **Apply schema** — Dashboard → **SQL Editor → New query** → paste the unified schema SQL (produced in P1 — content + application tables, RLS, storage buckets, triggers) → **Run**. Buckets: `book-pdfs` (private), `covers`, `avatars`, `site-assets`, `documents`.
+3. **Sanity check** — Tables list includes content tables (posts, pages, books, chapters, authors, videos, categories, tags, navigation_items, site_settings, book_grid_settings) + application tables (profiles, user_roles, purchases, orders, order_items, carts, cart_items, bookmarks, reading_progress, book_ratings, reader_bookmarks, reader_notes, comments, notifications, coupons, newsletter_subscribers, contact_messages, audit_log, search_analytics) with RLS enabled.
+4. **Auth → Providers** — enable **Email**. Enable **Google**: create an OAuth Client in Google Cloud Console (Web application); Authorized redirect URI → `https://<ref>.supabase.co/auth/v1/callback`; paste Client ID + Secret.
+5. **Auth → URL Configuration** — Site URL `http://localhost:3000` (dev; production domain later) + redirect URLs.
+6. **First admin** — sign up via the frontend, then promote in SQL Editor:
+   ```sql
+   select public.set_user_role('<your-user-uuid>', 'admin');  -- or 'super_admin'
+   ```
+   Then update the hardcoded admin email in `src/lib/permissions.ts` and `src/hooks/useAuth.ts`.
+7. **Settings → API keys** — copy **anon (publishable)** + **service_role** into `.env` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`). Never commit `.env`.
+
+#### B. Strapi — SUPERSEDED (historical — no longer in the target architecture)
+
+> **2026-08-14 (AD-029):** Strapi is **no longer part of the target architecture**. Do **not** create a fresh Strapi instance. The sections below are kept for **historical reference only** — the Strapi instance, its content types, and its API reads are **pending migration to Supabase and removal** (P3 of the new roadmap). Do not describe Strapi as the production CMS.
 
 #### A. Supabase — fresh project (P2 prerequisite)
 
@@ -616,7 +652,9 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 
 > The legacy Strapi **app-data content types** (`purchase`, `reading-progress`, `bookmark`, `book-rating`) and the content types `comment` / `course` are deliberately **not included** — user data lives only in Supabase (AD-026/027), comments are Supabase-owned (2026-08-14), and courses have no frontend consumer. Their controllers, the `supabase-auth` middleware, and the `strapi-client.ts` user functions were **removed from the repo 2026-08-08**.
 
-#### C. Minimum content to enter (Strapi)
+#### C. Minimum content to enter (historical — Strapi)
+
+> **2026-08-14 (AD-029):** this Strapi content-entry guide is **historical**. In the target architecture the same content (categories, navigation, site settings, posts, books, videos) is entered through the **Refine + shadcn admin** (P2) into **Supabase** (P1 schema + P3 migration). The lists below remain the reference set of content the site needs — the entry mechanism changes, not the content itself.
 
 **Categories (5)** — exact slugs required by the frontend:
 
@@ -642,28 +680,15 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 
 **Sample posts (2–3)** — title_en/bn, slug (uid from title_en), content_en/bn (Blocks editor), excerpt_en/bn, category relation, author, reading_time, then **Publish**. Full bilingual bodies can be copied from `src/lib/mock-data.ts` (`MOCK_POSTS_DATA`).
 
-**Fast path — import the pre-built bundle instead of typing content:** the current mock content (5 categories, 22 tags, 5 nav items, 4 pages, 25 posts, 10 books, 8 videos + site settings) is exported as `strapi/seed/strapi-content-bundle.json` (generated from mock data — never hand-edit it). Import it after creating the admin + API token:
-
-```bash
-node scripts/import-strapi-seed.mjs --dry-run   # review the plan (offline)
-npx tsx scripts/generate-strapi-seed.ts          # regenerate the bundle after mock changes
-node scripts/import-strapi-seed.mjs               # real import (env: VITE_STRAPI_URL + VITE_STRAPI_API_TOKEN)
-```
-
-- Idempotent: entries found by slug are skipped (Strapi becomes the source of truth — re-runs never clobber edits); `--update` forces overwrites.
-- Draft & Publish types are created then published via the REST publish endpoint.
-- Local sample PDFs (`public/pdfs/*.pdf`) upload and attach to each book's `pdf_file` automatically; cover images require `--upload-covers` (network).
-- Categories/tags/nav/pages/posts/books/videos/site settings all imported; relations wired by slug → documentId.
+> **Migration path (P3):** the mock content (5 categories, 22 tags, 5 nav items, 4 pages, 25 posts, 10 books, 8 videos + site settings) is the seed set for the Supabase unified schema (P1) and the custom admin (P2). The legacy `strapi/seed/strapi-content-bundle.json` + `scripts/import-strapi-seed.mjs` are Strapi-import tooling (historical; may inform the P1 seed script). The `scripts/sync-strapi-books.mjs` AD-027 mirror is likewise superseded — with content in Supabase, books are written directly, no mirror needed.
 
 **Books (1 free + 1 paid)** — title_en/bn, slug, description blocks, author_name, cover_image (media), pdf_file (media), price (BDT), is_free, book_status = published, featured = true on the free one, rating/rating_count, categories/tags, **Publish**. PDFs live in the Media Library; the reader opens them via `/api/pdf?slug=` (no direct `.pdf` URLs — see the IDM fix in CHANGELOG).
 
 **Videos (1–2)** — title_en/bn, slug, embed_url (YouTube), description, duration, **Publish**.
 
-**After entering books:** run the AD-027 mirror to populate the Supabase `books` table: `node scripts/sync-strapi-books.mjs --dry-run` (review) → `node scripts/sync-strapi-books.mjs` (writes).
+#### D. Content field reference (historical — Strapi content types)
 
-#### D. Content-type field reference (only for a blank Strapi project)
-
-> Reproduce each type in Content-Type Builder with exactly these fields (1:1 with the repo `schema.json` files). Skipped unless you don't reuse the `strapi/` code.
+> **2026-08-14 (AD-029):** the Strapi content-type field reference below is **historical**. In the target architecture these fields become **Supabase table columns** (P1 unified schema) managed by the **Refine + shadcn admin** (P2). The field lists remain the authoritative content shape the frontend consumes — they map 1:1 to the Supabase schema design.
 
 - **Post** — title_en (string, req), title_bn (string), slug (uid ← title_en), content_en (blocks), content_bn (blocks), excerpt_en (text, 500), excerpt_bn (text, 500), cover_image (media · single · images), author (string), categories (relation · manyToMany → Category · inversedBy posts), tags (relation · manyToMany → Tag · inversedBy posts), seo_title (string), seo_description (text, 160), reading_time (integer, default 1), featured (boolean, default false), sort_order (integer, default 0).
 - **Book** — title_en (string, req), title_bn (string), slug (uid ← title_en), description_en (blocks), description_bn (blocks), author_name (string), author_bio_en (blocks) ⭐, author_bio_bn (blocks) ⭐, cover_image (media · single · images), pdf_file (media · single · files), price (decimal, default 0), currency (string, default **BDT**), is_free (boolean, default true), book_status (enum: draft/published/archived, default draft), rating (decimal, default 0), rating_count (integer, default 0), featured (boolean, default false), sort_order (integer, default 0), categories (manyToMany → Category), tags (manyToMany → Tag), chapters (json) ⭐, chapter_pages (json) ⭐, seo_title (string), seo_description (text, 160). ⭐ = **planned amendments (2026-08-14)** — the frontend `Book` interface + reader TOC consume these today; they must be added to the schema + AD-027 mirror (chapters/chapter_pages/author_bio_en/bn).
@@ -681,31 +706,32 @@ node scripts/import-strapi-seed.mjs               # real import (env: VITE_STRAP
 
 | Variable | Where from | Needed for |
 |---|---|---|
-| `VITE_STRAPI_URL` | Strapi URL (`http://localhost:1337` dev) | public content reads |
-| `VITE_STRAPI_API_TOKEN` | Strapi → Settings → API Tokens | Strapi REST API |
-| `VITE_SUPABASE_URL` / `SUPABASE_URL` | Supabase → Settings → API | client + SSR DB/auth |
+| `VITE_SUPABASE_URL` / `SUPABASE_URL` | Supabase → Settings → API | client + SSR DB/auth (unified backend) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_PUBLISHABLE_KEY` | Supabase → Settings → API (anon) | client auth/DB |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API (service_role — server-only) | server functions |
 | `SUPABASE_MANAGEMENT_KEY` | Supabase account → Access Tokens (`sbp_`) | optional seeding scripts |
-| `SITE_URL` | production domain | IPN callbacks, sitemap, email links |
-| `VITE_DATA_SOURCE` | `mock` now → `auto` when wiring | data-source seam |
+| `SITE_URL` | production domain (Hostinger managed) | IPN callbacks, sitemap, email links |
+| `VITE_DATA_SOURCE` | `mock` now → `auto` when wiring | feature-level migration/dispatch seam |
 | `PAYMENT_PROVIDER` | `simulated` now → `piprapay` later | payment abstraction |
-| `PIPRAPAY_*` | PipraPay admin (P4, when deployed) | payments |
+| `PIPRAPAY_*` | PipraPay admin (P5, when deployed) | payments |
 | `RESEND_API_KEY` | resend.com | transactional email |
 | `OPENAI_API_KEY` | platform.openai.com | AI chat / embeddings |
+| ~~`VITE_STRAPI_URL` / `VITE_STRAPI_API_TOKEN`~~ | ~~Strapi~~ — **historical (AD-029)** | public content reads move to Supabase (P3) |
 
-#### F. What the frontend calls (Strapi REST)
+#### F. What the frontend calls (historical — Strapi REST)
 
-| Frontend module | Endpoints (all `/api/…`, Bearer read token) |
-|---|---|
-| posts.ts | `/posts` (+ filters), `/posts?filters[slug]` |
-| books.ts | `/books`, `/books?filters[featured]`, `/books?filters[slug]` |
-| pages.ts | `/pages`, `/pages?filters[slug]` |
-| videos.ts | `/videos` |
-| taxonomy.ts | `/categories`, `/tags` |
-| navigation.ts | `/navigations` |
-| comments.ts | `/comments` |
-| siteSettings.tsx | `/sitesetting` |
+> **2026-08-14 (AD-029):** the Strapi REST endpoints below are **historical**. In the target architecture the same reads go to **Supabase** (via server functions / RLS-guarded queries) once P3 lands. The module → data mapping stays the same (posts, books, pages, videos, taxonomy, navigation, comments, site settings).
+
+| Frontend module | Historical endpoints (Strapi, all `/api/…`, Bearer read token) | Target data source (P3) |
+|---|---|---|
+| posts.ts | `/posts` (+ filters), `/posts?filters[slug]` | Supabase `posts` |
+| books.ts | `/books`, `/books?filters[featured]`, `/books?filters[slug]` | Supabase `books` |
+| pages.ts | `/pages`, `/pages?filters[slug]` | Supabase `pages` |
+| videos.ts | `/videos` | Supabase `videos` |
+| taxonomy.ts | `/categories`, `/tags` | Supabase `categories` + `tags` |
+| navigation.ts | `/navigations` | Supabase `navigation_items` |
+| comments.ts | `/comments` | Supabase `comments` |
+| siteSettings.tsx | `/sitesetting` | Supabase `site_settings` |
 
 ### Mock Data Removal Strategy (2026-08-08)
 
@@ -722,35 +748,39 @@ node scripts/import-strapi-seed.mjs               # real import (env: VITE_STRAP
 
 **Feature coverage (each follows the 6-step sequence above):**
 
-| Feature | Real backend | Admin/CMS config | Verified by |
+| Feature | Real backend (target) | Admin/CMS config (target) | Verified by |
 |---------|-------------|------------------|-------------|
-| Content — posts/reflections | Strapi | Strapi content manager (bilingual fields, categories) | P1 + per-feature steps 4–5 |
-| Content — pages | Strapi | Strapi content manager + page sections | P1 |
-| Navigation (header/footer) | Strapi | Strapi navigation config | P1 |
-| SEO / site settings | Strapi | Strapi site-settings singleton | P1 |
-| Videos | Strapi | Strapi media library + video entries | P1 |
-| Books catalog | Strapi → Supabase mirror (AD-027) | Strapi editorial + one-way sync | P1 + P3 |
-| Authentication | Supabase Auth | Supabase auth settings (email + Google OAuth) | P2 |
-| Comments | Supabase | Admin moderation in Supabase-backed UI | P2 |
-| Cart / checkout | Supabase + payment interface | Order state machine + gateway config | P3 + P4 |
-| Orders / purchases | Supabase | Admin orders view | P3 + P4 |
-| PDF access (reader) | Supabase Storage signed URLs | Private bucket + access rules | P5 |
-| Reading progress | Supabase | Reading-progress table (app data) | P3 |
-| Bookmarks / ratings | Supabase | App-data tables | P3 |
-| Search | PostgreSQL FTS → Meilisearch | Search index/sync | P3 (FTS) → V2 (Meilisearch) |
-| Newsletter / contact | Supabase + Resend | Table + email config | P2 |
+| Content — posts/reflections | Supabase `posts` | Refine admin (bilingual fields, categories) | P3 + per-feature steps 4–5 |
+| Content — pages | Supabase `pages` | Refine admin + page sections | P3 |
+| Navigation (header/footer) | Supabase `navigation_items` | Refine admin navigation config | P3 |
+| SEO / site settings | Supabase `site_settings` | Refine admin site-settings singleton | P3 |
+| Videos | Supabase `videos` | Refine admin + Supabase Storage | P3 |
+| Books catalog | Supabase `books` (+ `chapters` + `authors`) | Refine admin editorial | P3 |
+| Authentication | Supabase Auth | Supabase auth settings (email + Google OAuth) | P4 |
+| Comments | Supabase `comments` | Admin moderation in Refine-backed UI | P4 |
+| Cart / checkout | Supabase + payment interface | Order state machine + gateway config | P4 + P5 |
+| Orders / purchases | Supabase | Admin orders view | P4 + P5 |
+| PDF access (reader) | Supabase Storage signed URLs | Private bucket + access rules | P6 |
+| Reading progress | Supabase | Reading-progress table (app data) | P4 |
+| Bookmarks / ratings | Supabase | App-data tables | P4 |
+| Search | PostgreSQL FTS → Meilisearch | Search index/sync | P4 (FTS) → V2 (Meilisearch) |
+| Newsletter / contact | Supabase + Resend | Table + email config | P4 |
 
-**Where mock removal happens:** the final “remove mock data” step for each feature is completed inside the phase where that feature is verified (P1–P5). **P7 (Cutover)** is the *last* step — it removes the leftover mock modules wholesale only after every feature has individually completed steps 1–6, and forces non-mock in the production build. No feature is left mock-only at cutover.
+> **2026-08-14 (AD-029):** column updated — the real backend is **Supabase** for every feature (content + application unified), and the admin/CMS config is the **Refine + shadcn admin** (P2). The previous rows referenced Strapi as the content backend; that is superseded.
 
-### Migration Phases (Strapi Transition)
+**Where mock removal happens:** the final “remove mock data” step for each feature is completed inside the phase where that feature is verified (P2–P6). **P7 (Hardening)** is the *last* step — it completes testing/security/backups and ensures no feature is left mock-only in production. No feature is left mock-only at cutover.
+
+### Migration Phases (historical — Strapi transition)
+
+> **2026-08-14 (AD-029):** the Strapi transition phases below are **historical**. The active roadmap is the **P0–P8 revision** at the top of §18 (Supabase unified backend + Refine/shadcn admin + Hostinger Managed Node.js).
 
 | Phase | Status | Details |
 |-------|--------|---------|
-| **Phase 1 — Strapi Content API Foundation** | ✅ | Strapi API client (10 content types), 8 service files wired, migration script, `PROJECT.md §28`. (Supabase JWT bridge + app-data types removed 2026-08-08.) |
-| **Phase 2 — Admin Transition** | ✅ | Refine admin panel removed; Strapi admin is now the sole CMS interface (`/admin` redirects) |
-| **Phase 3 — Data Migration** | ⏸ Superseded | **Fresh start (2026-08-08):** content is seeded directly into brand-new Strapi/Supabase instances; legacy `scripts/migrate-to-strapi.mjs` old-dev-data export no longer applies (see P1–P8 roadmap above) |
-| **Phase 4 — Legacy Cleanup** | ✅ | Refine data provider, 27 admin routes, ~50 admin components all removed |
-| **Phase 5 — Production Hardening** | ⏳ Pending | VPS deployment (native, no Docker — see P0/P6): Node 22 + PostgreSQL 16 + Nginx + SSL, monitoring, backups, performance tuning |
+| **Phase 1 — Strapi Content API Foundation** | ✅ (historical) | Strapi API client (10 content types), 8 service files wired, migration script, `PROJECT.md §28`. (Supabase JWT bridge + app-data types removed 2026-08-08.) |
+| **Phase 2 — Admin Transition** | ✅ (historical) | Refine admin panel removed; Strapi admin was the CMS interface (`/admin` redirects). **Superseded 2026-08-14 — Refine returns as the target admin (AD-029).** |
+| **Phase 3 — Data Migration** | ⏸ Superseded | Strapi data migration superseded; content moves to the unified Supabase schema instead (P1/P3) |
+| **Phase 4 — Legacy Cleanup** | ✅ (historical) | Refine data provider, 27 admin routes, ~50 admin components all removed |
+| **Phase 5 — Production Hardening** | ⏳ Superseded | Old VPS hardening superseded — P7 covers hardening on the Hostinger managed platform |
 
 ### Recent Sessions (2026-07-17 → 2026-08-13)
 
@@ -779,23 +809,26 @@ node scripts/import-strapi-seed.mjs               # real import (env: VITE_STRAP
 ### Next Objective
 **Mock Platform Transformation (M0–M6) is complete** — the entire product works offline as a production-like mock: the demo user can sign in, shop, check out with the simulated card form, read premium books offline, rate/progress/bookmark, comment, get notifications, search pages/books/posts/videos, send contact messages, and the demo admin can manage content, orders, notifications, and site settings — all without any backend. The `VITE_DATA_SOURCE` seam (`mock|strapi|supabase|auto`) is verified by the M6 swap drill — hooking up real backends is a config swap, not a rewrite (see `PROJECT.md §28` → Adapter Contract).
 
-**Next steps (fresh start):** the user creates **brand-new Supabase + Strapi instances**; agents must ask for the fresh-start go-ahead + credentials before any real backend work (see the P0–P8 table above and AGENTS.md working agreement).
-1. **P0 — Production foundation** — Provision the VPS (native install: Node 22, PostgreSQL 16, Nginx, Certbot), deploy the frontend SSR on it (Nitro `node-server`, PM2, `deploy.sh`). No Vercel/Docker/GitHub.
-2. **P1 — Content real** — Configure the 9 content types + seed content in the fresh Strapi; apply the Book amendments; wire posts/pages/videos/nav/settings to Strapi-first reads. (Legacy `scripts/migrate-to-strapi.mjs` is superseded — fresh seeding, not old-data migration.)
-3. **P2 — Auth real** — Create the fresh Supabase project, apply the fresh-instance schema (application tables only), update `.env` with the new URL/keys, enable email + Google auth. Configure Resend for emails; the payment gateway interface stays simulated until P4.
+**Next steps (fresh start, revised 2026-08-14 — AD-029):** the user creates a **brand-new Supabase instance** (unified backend) and a **Hostinger Managed Node.js** app; agents must ask for the fresh-start go-ahead before any real backend work (see the P0–P8 table above and AGENTS.md working agreement).
+1. **P0 — Architecture validation** — Validate Hostinger Managed Node.js deployment, Refine Core + shadcn/ui, Supabase unified schema, and PipraPay compatibility; document findings.
+2. **P1 — Supabase content model** — Design the unified schema (content + application tables, RLS, Storage buckets).
+3. **P2 — Custom admin** — Implement the Refine + shadcn admin inside the TanStack app (content + application CRUD → Supabase).
 
 ### Future Phases
-1. **Phase 1: Strapi Content API Foundation** ✅
-2. **Phase 2: Admin Transition** ✅ — Refine admin panel removed, Strapi admin is now the sole admin interface
-3. **Phase 3: Data Migration** ⏸ — **Superseded by the fresh start** (2026-08-08): fresh Strapi/Supabase instances are seeded directly; the legacy `scripts/migrate-to-strapi.mjs` old-dev-data export no longer applies. See the P1–P8 roadmap above.
-4. **Phase 4: Legacy Cleanup** ✅ — Refine admin, integration layer, admin routes, admin components all removed
-5. **Phase 5: Production Hardening** — **superseded by P0/P6** — VPS deployment (native, no Docker), monitoring, backups
+> **2026-08-14 (AD-029):** the legacy phase list below is historical. The active roadmap is the **P0–P8 revision** at the top of §18.
+1. **Phase 1: Strapi Content API Foundation** ✅ (historical)
+2. **Phase 2: Admin Transition** ✅ (historical — Refine admin removed then; **Refine returns as the target admin**, AD-029)
+3. **Phase 3: Data Migration** ⏸ — superseded twice: the old Strapi fresh-start is replaced by the **Supabase unified schema** (P1) + content migration (P3)
+4. **Phase 4: Legacy Cleanup** ✅ (historical)
+5. **Phase 5: Production Hardening** — superseded by **P7** (hardening on the Hostinger managed platform)
 
 ---
 
 ## 19. Current TODO
 
-### Phase 1: Strapi Content API Foundation ✅ (2026-07-17)
+> **2026-08-14 (AD-029):** the Strapi phases below are **historical** — Strapi is superseded, pending migration to Supabase and removal (P2/P3). Active work items: **P0 — Architecture validation**, **P1 — Supabase content model**, **P2 — Custom Refine+shadcn admin**, **P3 — Content migration** (see §18).
+
+### Phase 1: Strapi Content API Foundation ✅ (2026-07-17, historical)
 
 - [x] **Expand Strapi API client** — Added typed interfaces and operations for all 10 content types (posts, books, pages, videos, courses, categories, tags, navigation, comments, site settings) with `buildQuery()` helper
 - [x] **Wire 8 frontend service files** — `pages.ts`, `videos.ts`, `courses.ts`, `comments.ts`, `navigation.ts`, `posts.ts`, `books.ts`, `taxonomy.ts` use Strapi-first + Supabase-fallback with type-mapping functions
@@ -805,23 +838,25 @@ node scripts/import-strapi-seed.mjs               # real import (env: VITE_STRAP
 - [x] **Create migration script** — `scripts/migrate-to-strapi.mjs` exports from Supabase (SDK), transforms HTML-to-blocks, saves JSON unconditionally, imports via Strapi REST API (handles relations, self-references, site settings)
 - [x] **Create architecture docs** — `PROJECT.md §28` with all decisions, flows, and responsibility splits
 
-### Phase 2: Admin Transition ✅ (2026-07-17)
+### Phase 2: Admin Transition ✅ (2026-07-17 — historical)
 
-- [x] **Point admin button to Strapi admin** — Already done (VITE_STRAPI_URL)
+> **2026-08-14 (AD-029):** this removed the old Refine admin in favor of Strapi. The target has since reversed — **Refine + shadcn returns as the admin (P2)** and Strapi is superseded. Kept for historical reference.
+
+- [x] **Point admin button to Strapi admin** — Already done (VITE_STRAPI_URL; historical)
 - [x] **Remove Refine admin panel** — `@refinedev/core`, `@refinedev/supabase` removed; all Refine integration layer, admin routes, admin components deleted; only `page-builder/` kept for public site
 - [x] **Remove dead code** — `useFavorites.ts`, `useRecentItems.ts`, `useContentAutosave.ts`, `dynamic-form-bridge.tsx`, `admin-routes.ts` all removed
 - [x] **Update lockfile** — `bun install` run; lockfile updated; 0 TypeScript errors
-- [ ] **Train editors on Strapi admin** — Document workflows
+- [ ] ~~**Train editors on Strapi admin**~~ — historical; editors will use the Refine admin (P2)
 
-### Phase 3: Data Migration ⏸ (superseded — fresh start)
+### Phase 3: Data Migration ⏸ (superseded — now P1/P3 Supabase content migration)
 
-> **Note (2026-08-08):** All content service files (`posts.ts`, `books.ts`, `videos.ts`, `navigation.ts`, `taxonomy.ts`, `trending.ts`, `siteSettings.tsx`) are **mock-first** for development. The **fresh-start plan replaces old-dev-data migration**: the user creates brand-new Supabase + Strapi instances, and content is **seeded directly** into the fresh Strapi (admin + seed scripts) rather than exported from old dev data. The legacy `scripts/migrate-to-strapi.mjs` no longer applies.
+> **Note (2026-08-08, revised 2026-08-14):** All content service files (`posts.ts`, `books.ts`, `videos.ts`, `navigation.ts`, `taxonomy.ts`, `trending.ts`, `siteSettings.tsx`) are **mock-first** for development. The **Strapi fresh-start plan is superseded by AD-029**: content moves into the **unified Supabase schema** (P1) and is migrated there in P3 (from Strapi/mock data); Strapi code is then removed. The legacy `scripts/migrate-to-strapi.mjs` no longer applies.
 
 - [x] **Create migration script (legacy)** — `scripts/migrate-to-strapi.mjs` (exports old dev data, transforms, saves JSON, imports) — kept for reference only
-- [ ] **Fresh Strapi: configure content types** — Apply the content-type schemas to the new instance (posts/pages/books/videos/categories/tags/navigation/site-settings), create a Full-access API token in Strapi Admin → Settings → API Tokens → `.env` as `VITE_STRAPI_API_TOKEN`
-- [ ] **Seed content in fresh Strapi** — Recreate the bilingual content set (posts, pages, books, videos, nav, settings) via the Strapi admin + seed scripts
-- [ ] **Wire Strapi-first reads** — Point `VITE_DATA_SOURCE=strapi`; verify each public page renders from Strapi (per-feature mock removal per the §18 strategy)
-- [ ] **Fresh Supabase: run migrations + env** — Run `supabase/migrations/` against the new project; set `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` from the user's new project
+- [ ] **P1: Unified Supabase schema** — Design content + application tables, RLS policies, Storage buckets (see §18)
+- [ ] **P2: Custom admin** — Refine Core + shadcn/ui admin inside the TanStack app
+- [ ] **P3: Content migration** — Migrate content (posts/pages/books/videos/categories/tags/navigation/site-settings) into Supabase; wire reads; remove Strapi code
+- [ ] **Fresh Supabase: run migrations + env** — Run the unified schema SQL against the new project; set `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` from the user's new project
 
 ### Phase 4: Legacy Code Cleanup ✅ (2026-07-17)
 
@@ -832,13 +867,13 @@ node scripts/import-strapi-seed.mjs               # real import (env: VITE_STRAP
 
 ### Phase 5: Production Hardening
 
-> Superseded 2026-08-14 by the P0–P8 roadmap — production hosting is one VPS, natively installed (no Vercel/Docker/GitHub). See §18 P0–P8 and AD-028.
+> Superseded 2026-08-14 by the P0–P8 roadmap — production runs on **Hostinger Managed Node.js** (no VPS/Docker/Nginx/PM2/systemd; AD-029). See §18 P0–P8 (P7 = hardening).
 
-- [ ] **Deploy to VPS (P0/P6)** — Node 22 + PostgreSQL 16 + Nginx + Certbot installed natively; frontend SSR via PM2 (deploy.sh)
-- [ ] **Configure monitoring** — Uptime monitoring (UptimeRobot), health checks, logging
-- [ ] **Set up backups** — Nightly pg_dump for Strapi DB, Supabase automatic backups, weekly snapshots
-- [ ] **Performance tuning** — Bundle optimization, CDN for media (Nginx + Cloudflare), caching headers
-- [ ] **Security audit** — HTTPS, CORS, rate limiting, secrets management
+- [ ] **Deploy to Hostinger Managed Node.js (P0/P7)** — managed Node runtime, env vars in hPanel, Hostinger SSL/CDN/backups
+- [ ] **Configure monitoring** — Uptime monitoring, health checks, logging (Hostinger managed tooling)
+- [ ] **Set up backups** — Supabase automatic backups + Hostinger managed backups
+- [ ] **Performance tuning** — Bundle optimization, Hostinger CDN, caching headers
+- [ ] **Security audit** — HTTPS, CORS, rate limiting, secrets management, RLS review
 
 ### Historical Completion (Pre-Strapi)
 
@@ -1017,7 +1052,9 @@ useRef + setTimeout pattern avoids closure staleness from synchronous Supabase a
 
 **Date:** 2026-07-10
 
-### AD-023: Hybrid Strapi + Supabase Architecture
+### AD-023: Hybrid Strapi + Supabase Architecture — **SUPERSEDED 2026-08-14 (AD-029)**
+
+> **Superseded by AD-029:** the hybrid split (Strapi content + Supabase app data) is replaced by **Supabase as the unified backend** (content + application data in one database) with a **Refine + shadcn admin**. Strapi is historical/pending removal. Kept for historical reference.
 
 **Full decision record: §28 → Architecture Decisions (AD-023).** Summary — use Strapi v5 for content management + admin and Supabase for application data/auth, rather than putting everything in one system. Strapi is not designed for cart/purchases/per-user tracking; the 42 Supabase migrations stay put. Content reads → Strapi REST API; app data → Supabase via server functions; payments → provider-agnostic (AD-026: simulated → PipraPay → bKash/Nagad) → webhook → VPS → Supabase; admin edits → Strapi admin panel.
 
@@ -1045,7 +1082,7 @@ useRef + setTimeout pattern avoids closure staleness from synchronous Supabase a
 
 **What to configure when PipraPay is deployed on hosting (cPanel/VPS):**
 
-1. Deploy the PipraPay server (AGPL, PHP/MySQL — PHP-FPM on the production VPS, P4) and note its public base URL
+1. Deploy the PipraPay server (AGPL, PHP/MySQL — hosted on managed hosting, P5) and note its public base URL
 2. Create a merchant in the PipraPay admin panel → copy Merchant ID + API key
 3. Set the webhook/secret pair in the PipraPay admin (must match the app's `PIPRAPAY_WEBHOOK_SECRET`) and point its callback URL to `<SITE_URL>/api/payments/webhook`
 4. Set in `.env` on the frontend host: `PAYMENT_PROVIDER=piprapay`, `PIPRAPAY_BASE_URL`, `PIPRAPAY_MERCHANT_ID`, `PIPRAPAY_API_KEY`, `PIPRAPAY_API_SECRET`, `PIPRAPAY_WEBHOOK_SECRET` (and overrides if the deployed PipraPay uses non-default API paths)
@@ -1053,7 +1090,9 @@ useRef + setTimeout pattern avoids closure staleness from synchronous Supabase a
 
 **Date:** 2026-08-08
 
-### AD-027: Strapi-Primary Book Catalog with Supabase Commerce Mirror
+### AD-027: Strapi-Primary Book Catalog with Supabase Commerce Mirror — **SUPERSEDED 2026-08-14 (AD-029)**
+
+> **Superseded by AD-029:** with content unified in Supabase, books live directly in the Supabase `books` table (edited via the Refine admin) — no mirror is needed. The `scripts/sync-strapi-books.mjs` tool is historical/dead in the target architecture. Kept for historical reference.
 
 **Decision:** Strapi is the editorial source of truth for books (title/cover/description/category/featured). A one-way, idempotent sync mirrors only the commerce-critical fields (price, is_free, slug, cover path, pdf reference) into the existing Supabase `books` table. The frontend reads books from Supabase for grids/cart/checkout/library (fast, RLS-guarded); posts/pages/videos/nav/settings read from Strapi directly.
 
@@ -1065,7 +1104,9 @@ useRef + setTimeout pattern avoids closure staleness from synchronous Supabase a
 
 ---
 
-### AD-028: Single-VPS Production Architecture (no Vercel / Docker / GitHub)
+### AD-028: Single-VPS Production Architecture (no Vercel / Docker / GitHub) — **SUPERSEDED 2026-08-14 (AD-029)**
+
+> **Superseded by AD-029:** production runs on **Hostinger Managed Node.js** instead — no VPS, no Docker, no Nginx, no PM2/systemd administration, no server-installed PostgreSQL. Kept for historical reference.
 
 **Decision (2026-08-14):** Production runs on **one VPS, natively installed** — Hostinger KVM 2 (or Hetzner CX22), Ubuntu 24.04, with Node 22, PostgreSQL 16, Nginx, Certbot, and PHP-FPM/MySQL (PipraPay) installed via apt/systemd — **no Vercel, no Docker, no GitHub**. Cloudflare (free) in front for DNS/TLS/CDN; Supabase + Resend remain free cloud services.
 
@@ -1085,6 +1126,22 @@ useRef + setTimeout pattern avoids closure staleness from synchronous Supabase a
 
 ---
 
+### AD-029: Hostinger Managed Node.js + Supabase Unified Backend + Refine/shadcn Admin
+
+**Decision (2026-08-14):** Replace the single-VPS + Strapi architecture (AD-023/AD-027/AD-028) with:
+- **Hostinger Managed Node.js / Web Apps Hosting** — the managed platform runs the TanStack Start SSR app (Node runtime, deployment, SSL, CDN, security/WAF, DDoS protection, backups). **No VPS, no Docker, no manual Nginx, no PM2/systemd, no server-installed PostgreSQL.** Cloudflare is **optional** (introduce only if a specific requirement is demonstrated).
+- **Supabase = unified backend** — Auth, PostgreSQL (ALL data: content + application), Storage, RLS. Content tables (posts, pages, books, chapters, authors, videos, categories, tags, navigation, site settings, book-grid settings) live beside application tables (cart, orders, order items, purchases, progress, bookmarks, ratings, comments, notes/highlights, notifications, coupons, audit). Paid PDFs stay access-controlled via private buckets + signed URLs.
+- **Admin = Refine Core + shadcn/ui inside the TanStack app** — CRUD/data-handling patterns + component system; not a separate backend service. Refine provides the dataProvider → Supabase connection; the admin lives at `/admin`.
+- **Strapi is superseded** — historical, pending migration and removal (P3). Strapi code stays in the repo until the replacement admin/content system is implemented and validated (P2).
+- **Payments unchanged** — provider-agnostic interface (AD-026): simulated → PipraPay stopgap → direct bKash/Nagad (P8). Not coupled to PipraPay.
+- **Email unchanged** — Resend.
+
+**Roadmap:** P0 architecture validation → P1 Supabase content model → P2 custom admin → P3 content migration → P4 application data → P5 payments → P6 storage → P7 hardening → P8 future payment upgrade (see §18).
+
+**Date:** 2026-08-14
+
+---
+
 ## 22. Coding Notes
 
 Naming: PascalCase (components), camelCase (hooks/functions), snake_case (DB columns)
@@ -1098,9 +1155,11 @@ Component Pattern: Thin handler, no business logic, delegate to services
 
 | Service | Status |
 |---------|--------|
-| Supabase (DB, Auth, Storage) | Connected |
+| Supabase (Auth, PostgreSQL, Storage — **unified backend**) | Connected |
 | Google OAuth | Configured |
-| VPS (Hostinger/Hetzner) | Planned (P0) |
+| Hostinger Managed Node.js | **Target (P0)** — managed hosting (no VPS; AD-029) |
+| Refine Core + shadcn/ui (admin) | **Target (P2)** — not installed yet |
+| Strapi v5 | **Historical/superseded** — pending migration to Supabase + removal (P3); code kept for now (AD-029) |
 | Google Analytics | Configurable |
 | Payment provider | Provider-agnostic interface (simulated → PipraPay stopgap → bKash/Nagad). Stripe code exists but is **not viable for Bangladesh** — removal scheduled (P7) |
 | Email service (Resend) | Connected (contact form notifications) |
@@ -1128,14 +1187,14 @@ Component Pattern: Thin handler, no business logic, delegate to services
 
 | Metric | Value |
 |--------|-------|
-| Architecture | ✅ Hybrid Strapi + Supabase (see PROJECT.md §28) |
+| Architecture | ✅ **Supabase unified backend** (content + application) + TanStack Start + Refine/shadcn admin (target) + Hostinger Managed Node.js (AD-029) |
 | Documentation | ✅ PROJECT.md (§28 blueprint), AGENTS.md, CHANGELOG.md |
-| Completed modules | 33 (pre-Strapi) + 9 Strapi content types (comment/course removed 2026-08-14) |
-| Strapi setup | ✅ Running locally, 9 content types (11 minus `comment`/`course` — 2026-08-14), 2 book controller helpers (`getFeatured`/`getByCategory`); JWT auth middleware removed 2026-08-08 |
-| Phase 1 Progress | ✅ API client expanded, 8 service files wired, migration script created (JWT bridge implemented then removed 2026-08-08) |
-| Database migrations | 42 Supabase + Strapi SQLite/PostgreSQL |
+| Admin (target) | **Refine Core + shadcn/ui inside the TanStack app — P2 (not installed, not complete)** |
+| Strapi | **Historical/superseded (AD-029)** — runs locally in dev only; pending migration to Supabase + removal (P3) |
+| Hosting (target) | **Hostinger Managed Node.js — P0** (no VPS/Docker/Nginx/PM2/systemd; AD-029) |
+| Database migrations | Supabase migrations (unified schema = P1 design work; legacy `manual-setup.sql` covers the current app tables) |
 | Frontend typecheck | ✅ 0 TypeScript errors |
-| Migration script | ✅ `scripts/migrate-to-strapi.mjs` (legacy, kept for reference) — superseded by the fresh start: content is seeded directly into new instances |
+| Migration script | ✅ `scripts/migrate-to-strapi.mjs` (legacy, kept for reference) — superseded: content migrates into the unified Supabase schema (P1/P3) |
 | JWT middleware | 🗑 Removed 2026-08-08 — `supabase-auth.js` deleted; user data lives only in Supabase (AD-026/027) |
 | Blog hub page | ✅ `/blog` route with categories, post grid, pagination |
 | Dark mode | ✅ `useTheme` hook, localStorage cache, system detection, FOWT prevention |
@@ -1146,11 +1205,11 @@ Component Pattern: Thin handler, no business logic, delegate to services
 | `as any` casts | ~130 remaining (down from 270 — 140 removed) |
 | Supabase types | ✅ Regenerated — 49 tables, 9 enums, 8 RPC functions |
 | Test count | 442 (all passing) ✅ |
-| Current phase | **Mock Platform Transformation M0–M6 complete — full offline demo, production hookup is a config swap** |
+| Current phase | **Mock Platform Transformation M0–M6 complete — full offline demo; production hookup per the P0–P8 roadmap (AD-029)** |
 | Data layer | **Mock-first** — posts, books, videos, navigation, taxonomy, trending, site settings, pages + auth, profiles, cart, orders, purchases, comments, newsletter, progress, ratings, bookmarks, notifications, contact, CMS overrides, site-settings overrides |
-| Strapi transition | Phases 1, 2, 4 ✅ — Phase 3 superseded by the fresh start (P1–P8 roadmap), Phase 5 (production) pending |
-| Supabase connection | **Deferred to production** — frontend uses mock data, connect when ready (Phase 6 steps in README) |
-| Next milestone | Phase 3 data migration + Phase 6 Supabase connection — see `README.md` + `PROJECT.md §28` |
+| Strapi transition | Historical — Phases 1, 2, 4 ✅ (Strapi era); Strapi superseded 2026-08-14 (AD-029), pending migration + removal (P2/P3) |
+| Supabase connection | **Deferred to production** — frontend uses mock data; unified Supabase backend wired per P1/P3–P4 |
+| Next milestone | **P0 — Architecture validation** (Hostinger Managed Node.js + Refine + shadcn + Supabase + PipraPay) — see `README.md` + `PROJECT.md §18` |
 
 ### Latest Session Features (2026-07-22)
 
@@ -2040,7 +2099,7 @@ Week 1-4                                     Week 5-8                           
 
 ## 28. Platform Architecture (Technical Blueprint)
 
-> Formerly `ARCHITECTURE.md` — merged here 2026-08-08 during the docs consolidation. This chapter is the **timeless technical blueprint**: how the system is structured (architecture principles, hybrid systems, responsibility split, data flows, mock-platform seam, adapter contracts, navigation structure, hosting, security, env config, architecture decisions AD-023–025). The living project plan lives in the sections above. Keep this chapter in sync when the architecture changes.
+> Formerly `ARCHITECTURE.md` — merged here 2026-08-08 during the docs consolidation. This chapter is the **technical blueprint**: how the system is structured (architecture principles, unified-backend responsibility, data flows, mock-platform seam, adapter contracts, navigation structure, hosting, security, env config, architecture decisions). **Revised 2026-08-14 (AD-029):** the target architecture is **Supabase unified backend + Refine/shadcn admin + Hostinger Managed Node.js**; the previous Strapi/VPS sections are marked historical. The living project plan lives in the sections above. Keep this chapter in sync when the architecture changes.
 
 ### Architecture Principles
 
@@ -2048,10 +2107,10 @@ Week 1-4                                     Week 5-8                           
 
 Every domain has exactly one owner.
 
-- Strapi → Content
-- Supabase → Application Data
-- Stripe → Payments
-- Frontend → Presentation
+- Supabase → All backend data (content + application)
+- PipraPay (via the payment abstraction) → Payment processing
+- TanStack Start → Presentation + server orchestration (SSR, server functions, webhooks, email)
+- Refine + shadcn admin → Admin/CRUD UI (inside the TanStack app)
 
 Never duplicate ownership or business logic.
 
@@ -2109,8 +2168,8 @@ Idea
 
 1. One owner per domain.
 2. Frontend never owns business logic.
-3. CMS manages content.
-4. Supabase manages application data.
+3. Supabase manages ALL data (content + application).
+4. Server functions enforce auth and business rules.
 5. APIs connect all layers.
 6. Build modular, reusable, and scalable features.
 7. Prefer extending existing modules over creating new ones.
@@ -2118,61 +2177,55 @@ Idea
 
 ### 1. Architecture Overview
 
-Sabbe Satta uses a **Hybrid Architecture** where two backend systems divide responsibilities based on their strengths:
+Sabbe Satta uses a **Unified Architecture** — Supabase is the single backend, and the admin lives inside the TanStack application:
 
 | System | Owns | Lives On |
 |--------|------|----------|
-| **Strapi v5** | Content management, admin panel, media library, i18n, SEO | VPS (PostgreSQL, natively installed) |
-| **Supabase** | Auth, Storage, app-specific relational data (purchases, cart, progress, bookmarks, orders, etc.) | Supabase Cloud |
-| **TanStack Start (frontend)** | Frontend SSR, API server functions, payment webhook orchestration, email (Resend), PDF access control | **VPS** (same box as Strapi — approved 2026-08-14, no Vercel) |
-| **PipraPay** | Payment processing (initiation + verification; stopgap until direct bKash/Nagad, P8) | VPS (PHP-FPM + MySQL, isolated vhost) |
+| **Supabase** | **Unified backend** — Auth, PostgreSQL (ALL data: content + application), Storage (book PDFs private, covers, avatars), RLS | Supabase Cloud |
+| **TanStack Start (frontend)** | Frontend SSR, API server functions, payment webhook orchestration, email (Resend), PDF access control, **Refine + shadcn admin** | **Hostinger Managed Node.js** (managed platform — no VPS/Docker/Nginx/PM2/systemd) |
+| **Refine Core + shadcn/ui** | Admin/CRUD/data-handling UI (target — P2), dataProvider → Supabase | Inside the TanStack app |
+| **PipraPay** | Payment processing (initiation + verification; stopgap until direct bKash/Nagad, P8) | Hosted separately (managed hosting); the app only talks to it via the provider abstraction |
+
+> **Strapi v5 (historical):** was the content management system under the hybrid architecture (AD-023). **Superseded 2026-08-14 (AD-029)** — no longer part of the target architecture; code stays in the repo pending migration to Supabase + removal (P2/P3).
 
 ---
 
 ### 2. Responsibility Split
 
-#### Strapi Handles (Content Layer)
-
-| Domain | Details | Strapi Content Types |
-|--------|---------|---------------------|
-| **Posts / Blog** | Bilingual articles with categories, tags, cover images, SEO | `post` |
-| **Pages** | Static pages with sections, banners, SEO | `page` |
-| **Books** | Digital books with bilingual metadata, covers, PDF files, pricing (editorial truth → AD-027 mirror) | `book` |
-| **Videos** | YouTube-embedded video library | `video` |
-| **Categories** | Bilingual content taxonomy | `category` |
-| **Tags** | Bilingual content labels | `tag` |
-| **Navigation** | Header/footer menu structure | `navigation` |
-| **Site Settings** | Singleton: branding, SEO, social, contact, theme, features | `sitesetting` |
-| **Book Grid Setting** | Singleton: grid layout config (P6 → all grids) | `book-grid-setting` |
-| **Media Library** | Images, PDFs, and other file uploads | Strapi Upload plugin |
-
-> **Removed 2026-08-14:** `comment` and `course` content types — comments are **Supabase-owned** (user-generated, per-user moderation, tied to profiles), and courses have no frontend consumer. See §18 kit.
-| **Media Library** | Images, PDFs, and other file uploads | Strapi Upload plugin |
-
-#### Supabase Handles (Application Data Layer)
+#### Supabase Handles (Unified Backend — content + application)
 
 | Domain | Tables | Purpose |
 |--------|--------|---------|
-| **Auth** | `auth.users` (managed by Supabase) | User sign-up, login, Google OAuth, password reset |
+| **Auth** | `auth.users` (managed by Supabase) | User sign-up, login, Google OAuth, password reset, sessions, roles/authorization |
+| **Content — Posts** | `public.posts` | Bilingual articles, categories, tags, cover images, SEO, status |
+| **Content — Pages** | `public.pages` | Static pages, sections, banners, SEO, visibility |
+| **Content — Books** | `public.books` + `chapters` + `authors` | Digital books: bilingual metadata, covers, pricing, ratings, featured; chapters/authors tables |
+| **Content — Videos** | `public.videos` | YouTube-embedded video library, bilingual fields |
+| **Content — Taxonomies** | `public.categories` + `tags` | Bilingual taxonomy with colors + visibility |
+| **Content — Navigation** | `public.navigation_items` | Header/footer menu structure (tree) |
+| **Content — Site settings** | `public.site_settings` + `book_grid_settings` | Singleton branding/SEO/theme config + grid layout config |
 | **User Profiles** | `public.profiles` | User display names, avatars, preferences |
 | **RBAC** | `public.user_roles` | Role-based access control (user, editor, admin, super_admin) |
 | **Purchases** | `public.purchases` | Purchase records with UNIQUE(user_id, book_id) |
-| **Orders** | `public.orders` + `public.order_items` | Server-side order state machine (pending → paid/failed/cancelled) — **tables added in P3** |
+| **Orders** | `public.orders` + `public.order_items` | Server-side order state machine (pending → paid/failed/cancelled) |
 | **Reading Progress** | `public.reading_progress` | Per-user page tracking per book |
 | **Book Ratings** | `public.book_ratings` | 1-5 star ratings with auto-averaging (DB trigger → `books.avg_rating`) |
 | **Bookmarks** | `public.bookmarks` | Polymorphic (post/book) user bookmarks |
-| **Reader bookmarks + notes** | `public.reader_bookmarks` + `public.reader_notes` | In-PDF bookmarks and annotations |
+| **Reader bookmarks + notes** | `public.reader_bookmarks` + `public.reader_notes` (+ `reader_highlights` reserved) | In-PDF bookmarks, annotations, highlights |
 | **Cart** | `public.carts` + `public.cart_items` | Shopping cart per user |
 | **Coupons** | `public.coupons` | Discount code management |
-| **Comments** | `public.comments` | User comments on posts with moderation (Supabase-owned 2026-08-14) |
+| **Comments** | `public.comments` | User comments on posts with moderation |
 | **Newsletter** | `public.newsletter_subscribers` | Email subscriptions |
 | **Contact Messages** | `public.contact_messages` | Contact form submissions |
 | **Admin Notifications** | `public.admin_notifications` | System notifications per user |
-| **Search Analytics** | `public.search_analytics` | Search query logs |
-| **Books mirror** | `public.books` | Commerce-critical book fields mirrored from Strapi (AD-027) |
-| **Storage** | Supabase Storage buckets | User-uploaded files, book PDFs (private), cover images |
+| **Search Analytics / Audit** | `public.search_analytics` + `audit_log` | Query logs + audit trail |
+| **Storage** | Supabase Storage buckets | Private book PDFs, covers, avatars, other application media (paid PDFs access-controlled) |
 
-> **Excluded from the fresh instance (2026-08-14):** legacy content tables (posts, pages, videos, categories, tags, navigation_items, site_settings, content_*, media_*, dynamic_content_items), courses/enrollments/lesson_progress, reader_highlights, audit_log, redirects, role_hierarchy, role_permissions — verified zero code consumers; Strapi owns content.
+> **2026-08-14 (AD-029):** the previous split put content in Strapi and excluded legacy content tables from the fresh Supabase instance. That is **superseded** — Supabase owns content AND application data in one unified schema (P1).
+
+#### Strapi Handles (historical — superseded 2026-08-14, AD-029)
+
+> Strapi was the content layer under the hybrid architecture (AD-023): content management, admin panel, media library, taxonomies, navigation, site settings, i18n, REST/GraphQL APIs. **No longer part of the target architecture** — content moves to Supabase (P1/P3), the admin becomes Refine + shadcn (P2), and Strapi code is removed after the replacement is validated (P3). Kept in the repo until then; not to be described as the production CMS.
 
 #### TanStack Start Handles (Frontend + Integration Layer)
 
@@ -2205,48 +2258,60 @@ Sabbe Satta uses a **Hybrid Architecture** where two backend systems divide resp
                               └──────┬──────┘
                                      │
                           ┌──────────┴──────────┐
-                          │     VPS SSR (PM2)   │
-                          │  (TanStack Start)   │
+                          │  Hostinger Managed  │
+                          │  Node.js (TanStack  │
+                          │       Start SSR)    │
+                          │  + Refine admin     │
                           └──────┬─────────┬─────┘
                                  │         │
                     ┌────────────┘         └────────────┐
                     │                                    │
                     ▼                                    ▼
           ┌─────────────────┐                ┌──────────────────┐
-          │   Strapi API    │                │  Supabase API    │
-          │   (VPS:1337)    │                │  (Supabase Cloud)│
-          │                 │                │                  │
-          │  Content reads: │                │  Auth: signup/   │
-          │  - Posts/Books  │                │    login/OAuth   │
-          │  - Pages/Videos │                │  Storage: PDFs   │
-          │  - Categories/  │                │  App data:       │
-          │    Tags         │                │  - Purchases     │
-          │  - Navigation   │                │  - Cart          │
-          │  - Site Config  │                │  - Orders        │
-          │                 │                │  - Progress      │
-          │  Admin writes:  │                │  - Bookmarks     │
-          │  (via admin UI) │                │  - Comments      │
-          └────────┬────────┘                └────────┬─────────┘
-                   │                                  │
-                   ▼                                  ▼
-          ┌─────────────────┐                ┌──────────────────┐
-          │  Strapi DB      │                │  Supabase DB     │
-          │  (PostgreSQL)   │                │  (PostgreSQL)    │
-          │                 │                │                  │
-          │  Content data   │                │  App data + Auth │
-          │  Media metadata │                │  + Storage       │
-          └─────────────────┘                └──────────────────┘
+          │   Supabase API  │                │  PipraPay         │
+          │  (Supabase Cloud│                │  (managed host,   │
+          │   — unified)    │                │   P5 — via the    │
+          │                 │                │   provider        │
+          │  Auth: signup/  │                │   abstraction)    │
+          │    login/OAuth  │                │                  │
+          │  Storage: PDFs/ │                │  Initiate +       │
+          │    covers       │                │  verify payments  │
+          │  ALL data:      │                │  → webhook →      │
+          │  - Content      │                │  /api/payments/   │
+          │    (posts,      │                │    webhook        │
+          │     pages,      │                └──────────────────┘
+          │     books,      │
+          │     videos,     │
+          │     categories, │
+          │     navigation, │
+          │     settings)   │
+          │  - App data     │
+          │    (purchases,  │
+          │     cart,       │
+          │     orders,     │
+          │     progress,   │
+          │     bookmarks,  │
+          │     comments)   │
+          └────────┬────────┘
+                   │
+                   ▼
+          ┌─────────────────┐
+          │  Supabase DB    │
+          │  (PostgreSQL —  │
+          │   ALL data +    │
+          │   Auth + RLS)   │
+          └─────────────────┘
 ```
 
-> Updated 2026-08-14: frontend SSR runs on the **same VPS** as Strapi (no Vercel). Comments moved to Supabase; courses/enrollments removed.
+> Updated 2026-08-14 (AD-029): single backend (Supabase) — content and application data unified; frontend SSR + admin run on **Hostinger Managed Node.js** (no VPS, no Strapi).
 
 #### Read Flow (Public Pages)
 
 ```
 1. Browser requests /reflections
-2. VPS SSR renders route
-3. Route calls src/lib/posts.ts (Strapi-first API client)
-4. Strapi API returns post data (Strapi-only content reads after P1; Supabase fallbacks removed)
+2. Hostinger Managed Node.js SSR renders route
+3. Route calls src/lib/posts.ts (Supabase-backed reads after P3)
+4. Supabase returns post data (RLS-guarded; content reads via server functions)
 5. In mock mode (dev), mock data is returned first via isMockMode()
 6. Route also calls Supabase for user-specific data (purchases, cart count)
 7. Page renders with content + personalized data
@@ -2258,10 +2323,12 @@ Since M6, service files follow a **mock-first dispatch** rather than a network-f
 
 ```
 if (isMockMode()) → use mock store/data (src/lib/mock-data.ts + src/lib/mock-*.ts)
-else             → real adapter (Strapi → Supabase → ... )  // per-module, unchanged for production
+else             → real adapter (Supabase — unified backend)  // per-module, unchanged for production
 ```
 
 This means the old "try Strapi → try Supabase → mock" probe chains are no longer executed in mock mode — the reader, books grid, reflections, videos, search, and settings all short-circuit before touching the network. Real-mode chains remain intact behind the flag for when backends are configured. Mock data lives in `src/lib/mock-data.ts` — categories, posts, navigation items, books, videos, pages, and counts with bilingual fields.
+
+> **2026-08-14 (AD-029):** `VITE_DATA_SOURCE` remains a **feature-level migration/dispatch mechanism only** — it is NOT the architectural definition of backend ownership. Ownership is: Supabase = all data; Refine admin = admin UI; TanStack Start = orchestration.
 
 #### Mock Platform Data-Source Seam (2026-08-03)
 
@@ -2303,33 +2370,35 @@ Demo accounts: `demo@sabbesatta.test` / `demo1234` (user), `admin@sabbesatta.tes
 
 Each service module exposes a **fixed function signature** that the UI calls. The mock path satisfies that contract today; the real adapters (Strapi/Supabase/Stripe/Resend) must satisfy the **same inputs and outputs** — a swap is a config change, not a rewrite. Verification: `src/lib/__tests__/data-source.test.ts` (swap drill) forces mock mode and asserts every public read resolves.
 
-| Service module | Functions (public contract) | Output shape | Real adapter (when connected) |
+| Service module | Functions (public contract) | Output shape | Real adapter (when connected — target) |
 |----------------|-----------------------------|--------------|-------------------------------|
-| `posts.ts` | `fetchPosts(category?, page, pageSize, search?, categories?)`, `fetchPostBySlug(slug)`, `fetchPostCounts()`, `fetchPostById(id)` | `PaginatedResult<Post>` / `Post \| null` / `Record<category, count>` | Strapi `posts` (bilingual) → Supabase fallback |
-| `books.ts` | `fetchPublishedBooks(page, pageSize, options?)`, `fetchBookBySlug(slug)`, `fetchBookById(id)`, `fetchAllBooks(page, pageSize, options?)` | `PaginatedBooks` / `Book \| null` (rating aggregates overlaid) | Strapi `books` → Supabase fallback; rating aggregates from `book_ratings` trigger |
-| `videos.ts` | `fetchPublishedVideos(page, pageSize)` | `PaginatedVideos` | Strapi `videos` |
-| `navigation.ts` | `fetchPublicNavItems(location?)` | `NavItem[]` (flat; tree built via `safeBuildNavTree`) | Strapi `navigation` → Supabase `navigation_items` |
-| `taxonomy.ts` | `fetchCategories()` | `Category[]` | Strapi `categories` |
-| `pages.ts` | `fetchPageBySlug(slug)` | `Page \| null` | Strapi `pages` → Supabase fallback |
+| `posts.ts` | `fetchPosts(category?, page, pageSize, search?, categories?)`, `fetchPostBySlug(slug)`, `fetchPostCounts()`, `fetchPostById(id)` | `PaginatedResult<Post>` / `Post \| null` / `Record<category, count>` | Supabase `posts` (P3; Strapi historical) |
+| `books.ts` | `fetchPublishedBooks(page, pageSize, options?)`, `fetchBookBySlug(slug)`, `fetchBookById(id)`, `fetchAllBooks(page, pageSize, options?)` | `PaginatedBooks` / `Book \| null` (rating aggregates overlaid) | Supabase `books` (P3; no mirror needed — AD-029); rating aggregates from `book_ratings` trigger |
+| `videos.ts` | `fetchPublishedVideos(page, pageSize)` | `PaginatedVideos` | Supabase `videos` (P3) |
+| `navigation.ts` | `fetchPublicNavItems(location?)` | `NavItem[]` (flat; tree built via `safeBuildNavTree`) | Supabase `navigation_items` (P3) |
+| `taxonomy.ts` | `fetchCategories()` | `Category[]` | Supabase `categories` (P3) |
+| `pages.ts` | `fetchPageBySlug(slug)` | `Page \| null` | Supabase `pages` (P3) |
 | `search.ts` | `searchContent(query)` | `SearchResult[]` (posts/books/videos/pages) | Supabase FTS (`20260714000007_add_full_text_search.sql`) |
-| `siteSettings.tsx` | `fetchSiteSettings()` | `SiteConfig` (full merge over `DEFAULT_CONFIG`) | Strapi `sitesetting.config` |
-| `comments.ts` | `fetchComments(postId)`, `addComment`, `deleteCommentFn`, `updateCommentFn` | `Comment[]` / mutation results | Supabase `comments` (Supabase-owned 2026-08-14); mock ids never hit the UUID column |
+| `siteSettings.tsx` | `fetchSiteSettings()` | `SiteConfig` (full merge over `DEFAULT_CONFIG`) | Supabase `site_settings` (P3) |
+| `comments.ts` | `fetchComments(postId)`, `addComment`, `deleteCommentFn`, `updateCommentFn` | `Comment[]` / mutation results | Supabase `comments`; mock ids never hit the UUID column |
 | `newsletter.ts` | `subscribeToNewsletter(email)`, `unsubscribeFromNewsletter(token)` | `{ subscribed, alreadySubscribed }` / `{ success, ... }` | Supabase `newsletter_subscribers` + Resend |
 | `contact-messages.ts` | `submitContactMessage(input)` | `{ success }` | Supabase `contact_messages` + admin notification |
 | Auth | `useAuthSession()`, `useIsAdmin()`, `signOut()` | session / role / void | Supabase Auth (mock session mirrors the shape) |
 | Reader access | `canAccessPdf()`, `checkOwnership()`, `purchaseBook()`, `getUserPurchases()`, `getMyLibrary()` | ownership booleans / purchase lists | Supabase `purchases` (+ `orders`) |
 | Progress / ratings / bookmarks | `books-progress.ts`, `books-ratings.ts`, `bookmarks.ts`, `books-reader.ts` | per-user rows + aggregates | Supabase `reading_progress`, `book_ratings` (+ trigger), `bookmarks`, `reader_bookmarks`, `reader_notes` |
-| Commerce | `mock-cart` + `checkoutCart`, `completeMockCheckout`, coupon `validateCoupon`, `getOrders(userId)` | cart / order / purchase / receipt records | Supabase `carts` + `cart_items` + `orders` (P3) + `purchases`; provider-agnostic payment interface (simulated → PipraPay, AD-026) |
-| Receipts | `getOrders()` → `OrderReceipt[]` (`orders.ts`) | items + discount + tax + total per order | mock path reads `mockGetOrders`; **real adapter**: the `orders` + `order_items` tables (added P3) — one row per checkout; until then real mode derives one-item receipts from `purchases` |
+| Commerce | `mock-cart` + `checkoutCart`, `completeMockCheckout`, coupon `validateCoupon`, `getOrders(userId)` | cart / order / purchase / receipt records | Supabase `carts` + `cart_items` + `orders` + `purchases`; provider-agnostic payment interface (simulated → PipraPay, AD-026) |
+| Receipts | `getOrders()` → `OrderReceipt[]` (`orders.ts`) | items + discount + tax + total per order | mock path reads `mockGetOrders`; **real adapter**: the `orders` + `order_items` tables (P1/P4) — one row per checkout |
 | Notifications | `mockGetNotifications(userId)`, `mockGetUnreadCount`, `mockMarkRead`, `mockMarkAllRead`, `mockGetAllNotifications` | `MockNotification[]` (mirrors `admin_notifications`) | Supabase `admin_notifications` |
-| Admin CRUD (M5 mock panel) | `mockFetchAllBooks/Posts/Videos`, `mockUpsert*`, `mockDelete*`, `mockClearCms` | typed entity lists / void | Strapi admin (production `/admin` redirects there) |
-| Site settings editor (E5.4) | `mockGetSettings`, `mockUpdateSettings(patch)`, `mockClearSettings` | `SiteConfigPatch` | Strapi `sitesetting` write via admin |
+| Admin CRUD (M5 mock panel) | `mockFetchAllBooks/Posts/Videos`, `mockUpsert*`, `mockDelete*`, `mockClearCms` | typed entity lists / void | **Refine + shadcn admin (P2)** — supersedes the Strapi redirect |
+| Site settings editor (E5.4) | `mockGetSettings`, `mockUpdateSettings(patch)`, `mockClearSettings` | `SiteConfigPatch` | Refine admin → Supabase `site_settings` write (P2/P3) |
 
 **Swap drill (how to verify E6.2):**
 1. With `VITE_DATA_SOURCE=mock` (or `auto` + no Supabase env), run the app — every public page renders from mock stores with zero backend.
-2. Configure real Supabase/Strapi env vars and set `VITE_DATA_SOURCE=strapi` (content) / `supabase` (app data). No service file changes — the same UI renders from real data.
+2. Configure the real Supabase env vars and set `VITE_DATA_SOURCE=supabase` (unified backend). No service file changes — the same UI renders from real data.
 3. `npx vitest run src/lib/__tests__/data-source.test.ts` asserts the seam itself: mock mode short-circuits, flag values are the documented four, and site-settings overrides apply in mock mode.
 4. Any adapter that cannot satisfy the contract above (same function name, same inputs/outputs) is the seam to fix — before connecting production.
+
+> **2026-08-14 (AD-029):** the content adapters' target changed from Strapi to Supabase (P3). The `VITE_DATA_SOURCE` flag values stay the same (`mock|strapi|supabase|auto`) — `strapi` is retained for the legacy path until P3 removes it.
 
 #### Dynamic Navigation from Categories
 
@@ -2344,11 +2413,11 @@ fetchPublicNavItems()
   → no hardcoded category routes
 ```
 
-This works in both the Strapi path and Supabase fallback path. Adding a category in Strapi admin automatically creates the nav sub-item and a working route at `/reflections/:slug`.
+This works in both the (historical) Strapi path and the Supabase path. In the target architecture, adding a category in the **Refine admin** automatically creates the nav sub-item and a working route at `/reflections/:slug`.
 
 #### Current Navigation Structure (source of truth)
 
-> Nav items are defined in `src/lib/mock-data.ts` (mock) / the Strapi `navigation` content type (real mode) and rendered by the layout engine (`src/lib/layout-engine.tsx`). This section supersedes the retired `NAV-SITEMAP.md` (merged 2026-08-08).
+> Nav items are defined in `src/lib/mock-data.ts` (mock) / the Supabase `navigation_items` table (real mode — P3; Strapi `navigation` was the historical source) and rendered by the layout engine (`src/lib/layout-engine.tsx`). This section supersedes the retired `NAV-SITEMAP.md` (merged 2026-08-08).
 
 | Nav item | Type | Route | sort_order |
 |----------|------|-------|-----------|
@@ -2377,15 +2446,17 @@ This works in both the Strapi path and Supabase fallback path. Adding a category
 5. Response returned to frontend
 ```
 
-#### Admin Flow
+#### Admin Flow (target — P2)
 
 ```
-1. Admin visits cms.sabbesatta.com/admin
-2. Strapi auth validates admin credentials
-3. Admin creates/edits content via Strapi admin panel
-4. Content saved to Strapi PostgreSQL
-5. Frontend reads updated content via Strapi API
+1. Admin visits sabbesatta.com/admin
+2. Supabase Auth validates admin credentials (RBAC via user_roles)
+3. Admin creates/edits content via the Refine + shadcn admin panel
+4. Content saved to Supabase PostgreSQL (server functions + RLS)
+5. Frontend reads updated content from Supabase
 ```
+
+> Historical: under the Strapi architecture the admin lived at cms.sabbesatta.com/admin (Strapi auth → Strapi PostgreSQL → Strapi API). Superseded 2026-08-14 (AD-029).
 
 #### Purchase Flow
 
@@ -2417,107 +2488,93 @@ User signs up/logs in → Supabase Auth issues JWT
   → Server functions use requireSupabaseAuth middleware
 ```
 
-#### Admin Auth (Strapi)
+#### Admin Auth (target — Refine admin inside the app)
 
 ```
-Admin visits cms.sabbesatta.com/admin
-  → Strapi built-in auth (email/password)
-  → Separate from frontend user auth
-  → Strapi RBAC controls admin permissions
+Admin visits /admin (inside the TanStack app)
+  → Supabase Auth (same accounts as frontend users; RBAC via user_roles)
+  → Refine checks the admin role; guards non-admin routes
+  → Data writes go through Supabase server functions + RLS
 ```
 
-#### API Token for Public Content
+#### Public Content Reads (target)
 
 ```
-Frontend reads public content from Strapi API using:
-  VITE_STRAPI_API_TOKEN — a read-only Strapi API token
-  This token is safe to use client-side for public content
+Frontend reads public content from Supabase via server functions:
+  RLS allows public read for published content (or anon key with RLS policies)
+  No separate CMS API token needed (historical Strapi token removed at P3)
 ```
 
 #### Admin Button in Header
 
 ```
 Admin button in frontend header:
-  - Reads VITE_STRAPI_URL
-  - Opens Strapi admin in new tab
+  - Links to /admin (Refine admin inside the app)
   - Only visible to admin/super_admin role users
+  - (Historical: opened the Strapi admin in a new tab via VITE_STRAPI_URL — superseded)
 ```
 
 ---
 
 ### 5. Storage Architecture
 
-#### Media Storage Strategy
+> **2026-08-14 (AD-029):** Supabase Storage is the **single** storage layer — book PDFs (private), covers, avatars, and other application media. The Strapi local media library is historical (Strapi superseded).
 
-**Phase 1 (Current):** 
-- Strapi stores uploads locally in `strapi/public/uploads/`
-- Supabase Storage used for user-facing uploads (avatars, cover images via server functions)
+#### Media Storage Strategy (target)
 
-**Phase 2 (Production):**
-- Option A: Strapi stores media locally with CDN proxy (Nginx caching)
-- Option B: Custom Strapi upload provider → S3-compatible storage (Cloudflare R2, AWS S3)
-- Book PDFs remain in Supabase Storage (private bucket, signed URLs for access control)
+- **Book PDFs** → Supabase Storage `book-pdfs` bucket (**private**; signed URLs with 5-minute expiry, server-side ownership check via `/api/pdf?slug=`)
+- **Covers / avatars / site assets** → Supabase Storage buckets (`covers`, `avatars`, `site-assets`, `documents`)
+- **Paid PDFs must remain access-controlled** — never public; signed URLs only after `canAccessPdf()` verification
 
-**Decision:** Keep Supabase Storage for book PDFs and user uploads. Strapi local storage for admin-uploaded content images. Long-term, move all media to S3-compatible storage.
+**Historical:** Strapi local uploads (`strapi/public/uploads/`) served admin-uploaded content media under the hybrid architecture; superseded 2026-08-14.
 
 ---
 
 ### 6. Production Hosting Plan
 
-#### Production Topology
+> **2026-08-14 (AD-029):** production hosting is **Hostinger Managed Node.js / Web Apps Hosting**. The VPS/Nginx/Docker/PM2/systemd topology below is **historical** (AD-028, superseded). Hostinger's managed platform supplies Node runtime, deployment, SSL, CDN, security/WAF, DDoS protection, and backups. **Cloudflare is optional** — introduce only if a specific requirement is demonstrated.
+
+#### Production Topology (target)
 
 ```
-                      ┌─────────────────────────────┐
-                      │  Cloudflare (free) — DNS ·  │
-                      │  CDN · TLS · DDoS · cache   │
-                      └──────────────┬──────────────┘
-                                     │
-                                     ▼
-               ┌─────────────────────────────────────┐
-               │        ONE VPS (natively installed) │
-               │            Hostinger / Hetzner      │
-               │   sabbesatta.com · cms.* · pay.*    │
-               │                                     │
-               │  Nginx (reverse proxy + SSL)        │
-               │   ├── Frontend SSR (PM2, :3001)     │
-               │   ├── Strapi v5 (systemd, :1337)    │
-               │   ├── PostgreSQL 16 (Strapi DB)     │
-               │   └── PipraPay (PHP-FPM + MySQL)    │
-               └──────────────┬──────────────────────┘
-                              │
-                              ▼
-                    ┌────────────────────┐
-                    │  Supabase Cloud    │
-                    │  Auth · App Data   │
-                    │  Storage (PDFs)    │
-                    └────────────────────┘
+Hostinger Managed Node.js (Web Apps Hosting)
+  - Node runtime · Managed SSL · CDN
+  - Security · WAF · DDoS · Backups
+  - sabbesatta.com — TanStack Start SSR app
+  - /admin — Refine + shadcn admin (inside the app)
+        │
+        ▼
+Supabase Cloud — Auth · ALL data (content + app) · Storage (PDFs)
 ```
 
-> **Approved 2026-08-14 (AD-028):** production runs on **one VPS, natively installed** — no Vercel, no Docker, no GitHub (development-only tools). Strapi, the frontend, PostgreSQL, Nginx, and PipraPay share the box; Supabase/Resend/Cloudflare stay free cloud services.
+> **Approved 2026-08-14 (AD-029):** managed platform — **no VPS, no Docker, no manual Nginx, no PM2/systemd, no server-installed PostgreSQL**. Supabase (unified backend) + Resend stay free cloud services. PipraPay is hosted separately (managed hosting) and reached only through the provider abstraction (P5).
 
-#### VPS Requirements
-
-| Spec | Minimum | Recommended |
-|------|---------|------------|
-| CPU | 2 cores | 2–4 cores |
-| RAM | 4 GB | 8 GB (Hostinger KVM 2 / Hetzner CX22) |
-| Storage | 50 GB SSD | 100 GB SSD |
-| Bandwidth | 2 TB/mo | 4 TB/mo |
-| OS | Ubuntu 22.04 LTS | Ubuntu 24.04 LTS |
-| Providers | Hostinger (hPanel) | Hostinger, Hetzner (flat pricing) |
-
-#### Strapi on VPS (Native — no Docker)
+#### Historical Topology (AD-028 — superseded)
 
 ```
-Services running on VPS (installed via apt/systemd, no containers):
-  1. Node 22 (nvm/nodesource) — frontend SSR under PM2 (port 3001) + Strapi under systemd (port 1337)
+ONE VPS (natively installed): Nginx → Frontend SSR (PM2 :3001) + Strapi (systemd :1337) + PostgreSQL 16 (Strapi DB) + PipraPay (PHP-FPM + MySQL); Cloudflare (free) in front; Supabase for app data.
+```
+
+#### Hostinger Managed Node.js Requirements (target)
+
+| Item | Notes |
+|------|-------|
+| Plan | Hostinger Managed Node.js / Web Apps plan (Node 22 runtime) |
+| Deploy | Deploy the TanStack Start SSR build via Hostinger's managed flow (Git/repo or file upload per hPanel) |
+| Env | Set `VITE_DATA_SOURCE`, `SITE_URL`, Supabase keys, `PAYMENT_PROVIDER`, `RESEND_API_KEY` in hPanel |
+| SSL/CDN | Provided by the managed plan (free auto-renewed certificates; built-in CDN) |
+| Backups | Hostinger managed backups + Supabase automatic backups |
+| PipraPay | Separate managed host (P5); the app talks to it only via the provider abstraction |
+
+#### Historical: VPS/Strapi on VPS (AD-028 — superseded)
+
+```
+Services on the old VPS (installed via apt/systemd, no containers):
+  1. Node 22 — frontend SSR under PM2 (port 3001) + Strapi under systemd (port 1337)
   2. PostgreSQL 16 (apt) — Strapi database (pg_dump nightly)
-  3. Nginx (apt) — reverse proxy, TLS termination (port 80/443)
+  3. Nginx (apt) — reverse proxy, TLS termination
   4. Certbot (apt) — Let's Encrypt SSL auto-renewal
   5. PHP-FPM + MySQL — PipraPay stopgap (isolated vhost, P4)
-
-deploy.sh flow (rare code deploys — content never deploys):
-  git pull → npm ci/build (VITE_DATA_SOURCE=supabase) → pm2 reload (frontend) → systemctl restart strapi
 ```
 
 #### Supabase Configuration
@@ -2529,58 +2586,55 @@ deploy.sh flow (rare code deploys — content never deploys):
 | **Storage** | Free tier | 1 GB, CDN |
 | **Edge Functions** | Free tier | 500K invocations/mo |
 
-**Future scaling:** When exceeding free tier limits, migrate to Supabase Pro ($25/mo) or self-host Supabase on the same VPS as Strapi.
+**Future scaling:** When exceeding free tier limits, migrate to Supabase Pro ($25/mo).
 
-#### SSL/HTTPS
+#### SSL/HTTPS (target)
 
-- All services behind Nginx reverse proxy on the VPS
-- Let's Encrypt SSL certificates (auto-renewed via Certbot) for `sabbesatta.com`, `cms.sabbesatta.com`, `pay.sabbesatta.com`
-- Cloudflare (free) in front for DNS, edge TLS, CDN caching, DDoS protection
-- All API calls from frontend to Strapi go through HTTPS
+- Managed TLS by Hostinger's platform (free, auto-renewed) for `sabbesatta.com` (+ subdomains as needed)
+- All API calls from frontend to Supabase go through HTTPS (Supabase-managed)
+- Cloudflare optional — only if a specific requirement (e.g., advanced CDN/WAF) is demonstrated
 
 #### Database Backup Strategy
 
 | Database | Backup Method | Frequency |
 |----------|--------------|-----------|
-| Strapi PostgreSQL | pg_dump via cron job | Daily |
-| Supabase PostgreSQL | Supabase automatic backups | Daily + Point-in-time |
+| Supabase PostgreSQL (ALL data — content + application) | Supabase automatic backups | Daily + Point-in-time |
 
-#### CDN Strategy
+#### CDN Strategy (target)
 
-- **Cloudflare (free)**: global edge cache in front of the VPS — frontend assets, Strapi media
-- **Strapi media**: Nginx caching with `Cache-Control` headers (origin)
-- **Supabase Storage**: Built-in CDN for public buckets
-- **Cache purges**: after code deploys (Cloudflare dashboard/API)
+- **Hostinger built-in CDN**: frontend assets
+- **Supabase Storage**: built-in CDN for public buckets; private buckets via signed URLs
+- **Cache purges**: after code deploys (Hostinger panel)
 
 ---
 
-### 7. Domain Strategy
+### 7. Domain Strategy (target)
 
 | Domain | Points To | Service |
-|--------|-----------|---------|
-| `sabbesatta.com` | VPS (Nginx) | Frontend SSR |
-| `cms.sabbesatta.com` | VPS (Nginx) | Strapi Admin + API |
-| `pay.sabbesatta.com` | VPS (Nginx → PHP-FPM) | PipraPay gateway (P4) |
-| `api.sabbesatta.com` | VPS (Nginx) | Strapi API (if separated) |
+|--------|-----------|--------|
+| `sabbesatta.com` | Hostinger Managed Node.js | Frontend SSR + Refine admin (`/admin`) |
+| `pay.sabbesatta.com` (or managed host) | PipraPay host (P5) | PipraPay gateway (via provider abstraction) |
+
+> Historical (AD-028): `cms.sabbesatta.com` → Strapi Admin + API; `api.sabbesatta.com` → Strapi API; Nginx on the VPS. Superseded 2026-08-14.
 
 ---
 
-### 8. Migration Phases
+### 8. Migration Phases (historical — Strapi transition)
 
-#### Phase 1: Strapi Content API Foundation ✅ (2026-07-17)
+> **2026-08-14 (AD-029):** the Strapi transition phases below are **historical**. The active roadmap is the **P0–P8 revision** in §18 (Supabase unified backend + Refine/shadcn admin + Hostinger Managed Node.js). Strapi content migrates to Supabase in P1/P3; the Refine admin replaces the Strapi panel in P2.
+
+#### Phase 1: Strapi Content API Foundation ✅ (2026-07-17, historical)
 - **Strapi API client expanded** — `src/lib/strapi-client.ts` now has typed interfaces and operations for all 10 content types (posts, books, pages, videos, courses, categories, tags, navigation, comments, site settings)
 - **8 service files wired** — `pages.ts`, `videos.ts`, `courses.ts`, `comments.ts`, `navigation.ts`, `posts.ts`, `books.ts`, `taxonomy.ts` all use Strapi-first + Supabase-fallback pattern with type-mapping functions
 - **Frontend routes updated** — All content routes read from Strapi API first, fall back to Supabase
 - **JWT bridge implemented (removed 2026-08-08)** — Strapi middleware validated Supabase JWTs for the 4 app-data content types (`purchase`, `reading-progress`, `bookmark`, `book-rating`) + `book`; all deleted — user data lives only in Supabase (AD-026/027)
 - **Site settings** — Already handled independently with Strapi-first fetch
 
-#### Phase 2: Admin Transition
-- Admin button in frontend → opens Strapi admin ✅ (done in earlier phase)
-- Train content editors on Strapi admin
-- Keep Refine-based admin as fallback until migration complete
-- Remove Refine admin code after all workflows confirmed working
+#### Phase 2: Admin Transition (historical — reversed by AD-029)
+- Admin button in frontend → opens Strapi admin ✅ (done in earlier phase; superseded — the target admin is Refine + shadcn inside the app, P2)
+- Train content editors on Strapi admin (historical; editors will use the Refine admin instead)
 
-#### Phase 3: Data Migration
+#### Phase 3: Data Migration (historical — now P1/P3 Supabase migration)
 - **Migration script created** — `scripts/migrate-to-strapi.mjs` exports content from Supabase (via SDK), transforms HTML-to-blocks, imports via Strapi REST API
 - Handles relations, self-references, content type transformations
 - Unconditionally saves JSON export to `strapi-migration-data/migration-data.json`
@@ -2600,40 +2654,36 @@ deploy.sh flow (rare code deploys — content never deploys):
 - **Data flow** — Strapi-first → Supabase-fallback → Mock-fallback, same pattern in every service
 - **Next**: Build reader, books hub, commerce, user profile using mock data
 
-#### Phase 5: Production Hardening
-> Superseded 2026-08-14 by P0/P6 — VPS setup is **native** (no Docker): Node 22 + PostgreSQL 16 + Nginx + SSL, frontend via PM2.
-- VPS setup (native) + PostgreSQL + Nginx + SSL
-- Monitoring and alerting (UptimeRobot)
-- Backup strategy implementation (pg_dump + snapshots)
-- Performance tuning (Nginx + Cloudflare caching)
+#### Phase 5: Production Hardening (historical)
+> Superseded 2026-08-14 by P7 — hardening happens on the Hostinger managed platform (no VPS/Nginx/PM2).
+- (Historical VPS approach: Node 22 + PostgreSQL 16 + Nginx + SSL, frontend via PM2)
+- Monitoring, backup verification, performance tuning move to P7 (managed platform)
 
 ---
 
 ### 9. Development vs Production
 
-| Aspect | Development | Production |
+| Aspect | Development | Production (target — AD-029) |
 |--------|------------|------------|
-| **Strapi DB** | SQLite (local) | PostgreSQL 16 (VPS, native) |
-| **Strapi Host** | localhost:1337 | cms.sabbesatta.com (VPS) |
-| **Supabase** | Local/Cloud dev project | Production Supabase project |
-| **Frontend** | localhost:3000 | sabbesatta.com (VPS SSR, PM2) |
-| **Payments** | Simulated provider | PipraPay (P4) → bKash/Nagad (P8) |
+| **Database** | Supabase dev project (mock-first in dev) | Supabase production (unified content + application) |
+| **Admin** | MockAdminPanel (/admin) | Refine + shadcn admin (/admin, P2) |
+| **Frontend** | localhost:3000 (Vite) | sabbesatta.com (Hostinger Managed Node.js, P0) |
+| **CMS** | (historical) Strapi localhost:1337 | Supabase unified (P1/P3) — Strapi removed after migration |
+| **Payments** | Simulated provider | PipraPay (P5) → bKash/Nagad (P8) |
 | **Email** | Resend dev (onboarding@resend.dev) | Resend with verified domain |
-| **Storage** | Local + Supabase dev | Supabase production |
-| **SSL** | None (local) | Let's Encrypt + Nginx + Cloudflare |
+| **Storage** | Local + Supabase dev | Supabase production (private PDFs, signed URLs) |
+| **SSL** | None (local) | Managed TLS by Hostinger (+ optional Cloudflare later) |
 
 ---
 
 ### 10. Environmental Configuration
 
-#### Frontend (.env)
+#### App (.env)
 
 ```env
 # Required
 VITE_SUPABASE_URL=your-supabase-url
 VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-anon-key
-VITE_STRAPI_URL=https://cms.sabbesatta.com
-VITE_STRAPI_API_TOKEN=your-strapi-readonly-token
 
 # Payments (provider-agnostic — AD-026)
 PAYMENT_PROVIDER=simulated            # simulated | piprapay
@@ -2659,24 +2709,20 @@ RESEND_API_KEY=your-resend-api-key
 OPENAI_API_KEY=your-openai-api-key
 ```
 
-#### Strapi (.env)
+> **2026-08-14 (AD-029):** `VITE_STRAPI_URL` / `VITE_STRAPI_API_TOKEN` are **historical** — the Strapi REST reads are replaced by Supabase-backed reads (P3). `VITE_DATA_SOURCE` stays as the feature-level migration/dispatch seam (`mock|strapi|supabase|auto`).
+
+#### Strapi (.env) — HISTORICAL (superseded, AD-029)
+
+> The Strapi server env (HOST/PORT/DATABASE_*/secrets) belongs to the superseded Strapi architecture. Strapi runs locally in dev only, pending migration to Supabase + removal (P2/P3). Kept for historical reference:
 
 ```env
 # Server
 HOST=0.0.0.0
 PORT=1337
 
-# Database (SQLite for dev, PostgreSQL for prod)
+# Database (SQLite for dev)
 DATABASE_CLIENT=sqlite
 DATABASE_FILENAME=.tmp/data.db
-
-# For production:
-# DATABASE_CLIENT=postgres
-# DATABASE_HOST=postgres
-# DATABASE_PORT=5432
-# DATABASE_NAME=sabbe_satta
-# DATABASE_USERNAME=strapi
-# DATABASE_PASSWORD=your-secure-password
 
 # Secrets (generate unique values for production)
 APP_KEYS=key1,key2
@@ -2693,7 +2739,9 @@ NODE_ENV=development
 
 ### 11. Architecture Decisions
 
-#### AD-023: Hybrid Strapi + Supabase Architecture
+#### AD-023: Hybrid Strapi + Supabase Architecture — **SUPERSEDED 2026-08-14 (AD-029)**
+
+> Superseded: Supabase is now the unified backend (content + application); the admin is Refine + shadcn inside the TanStack app. Strapi is historical/pending removal. Kept for historical reference.
 
 **Decision:** Use Strapi for content management and Supabase for application data, rather than putting everything in one system.
 
@@ -2704,10 +2752,10 @@ NODE_ENV=development
 - Strapi is NOT designed for cart, purchases, or per-user data tracking
 - Supabase already has 42 migrations of app data (purchases, progress, bookmarks, cart, etc.)
 - Supabase Auth is already integrated with the frontend
-- Payment webhooks, email, and server functions run in the same Node process as the frontend (VPS)
+- Payment webhooks, email, and server functions run in the same Node process as the frontend
 - The data already lives where it should — we just need to wire content reads to Strapi
 
-**Consequences:**
+**Consequences (historical):**
 - Two backend systems to maintain, but each does what it's best at
 - Frontend reads content from Strapi API, app data from Supabase
 - No data duplication or sync issues (content ↔ app data are separate domains)
@@ -2752,29 +2800,34 @@ NODE_ENV=development
 
 | Priority | Approach | Example |
 |----------|----------|---------|
-| 1 | Fully free open-source (MIT/Apache/ISC) | Strapi, React, TanStack, shadcn |
+| 1 | Fully free open-source (MIT/Apache/ISC) | React, TanStack, shadcn, Refine |
 | 2 | Free tier with no caps/vendor lock-in | Supabase (free tier), Resend (free tier) |
 | 3 | Combine free tools + custom code | Free DB + custom hooks + raw API calls |
 | 4 | Paid tools (last resort, documented) | Only with explicit justification |
 
 **Never use:** Free tiers with growth limits, trial versions, freemium services requiring paid plans for essentials, any tool creating vendor lock-in.
 
-**Production scaling:** When free tier limits are approached, upgrade to paid plan or self-host as documented in Section 6.
+**Production scaling:** When free tier limits are approached, upgrade to paid plans as documented in Section 6.
 
 ---
 
-### 13. Security Considerations
+### 13. Mandatory Security Requirements
 
-| Concern | Mitigation |
-|---------|-----------|
-| Strapi API exposure | Read-only API token for public content; admin panel guarded by Strapi auth |
-| Supabase API exposure | RLS policies on all tables; server-side middleware validates JWTs |
-| PDF access control | Signed URLs (5-min expiry); server-side canAccessPdf() check |
-| Payment webhook | Provider webhook signature verification (`verifyWebhook` in `src/lib/payments/`) + amount check (±BDT 1) |
-| CORS | Strapi configured to accept requests only from frontend domain |
-| HTTPS | Nginx SSL termination with Let's Encrypt |
-| Secrets | Environment variables, never committed to git |
-| Rate limiting | Contact form rate limit (5/hr per IP); Strapi built-in rate limiting |
+> **Core architectural rule: “Never trust the client.”** All security enforcement happens **server-side** (Supabase RLS, Supabase Auth, server functions) — frontend restrictions are UX only, never security. Documented now; **implementation is part of the production phases (P1 schema/RLS, P4 application data, P5 payments, P6 storage, P7 hardening) — do not treat these as already implemented.**
+
+| # | Requirement | Mandate | Implemented in |
+|---|-------------|---------|----------------|
+| 1 | **Supabase RLS** | Enable RLS on **all** tables (content + application); enforce ownership and access at the **database level** (owner-scoped rows, admin roles, public-read policies only where intended). Never rely on the app layer alone | P1 (schema + RLS), P4 (application data) |
+| 2 | **Auth & RBAC** | Supabase Auth for authentication; **server-side** role/permission checks (user_roles + RLS + server functions). Never rely on frontend restrictions for authorization | P4 |
+| 3 | **Secrets** | Service-role keys, payment credentials, Resend keys etc. are **server-only** — never in `VITE_*` env, never in Git, never in browser code. Only anon/publishable keys may reach the client; server functions hold privileged keys | P0/P7 |
+| 4 | **API/server routes** | Authenticate, authorize, and **validate inputs** (Zod schemas) on every server function/API route; apply **rate limiting** where appropriate (contact form, auth, checkout) | P4/P7 |
+| 5 | **Payments** | **Never trust frontend payment success.** Verify webhook signature, amount (order total ±BDT 1), order state, and **idempotency** server-side before granting entitlement; grant purchases/unlock PDFs only after verification (AD-026) | P5 |
+| 6 | **Storage / PDFs** | Private paid PDFs in private buckets; **verify authentication + purchase entitlement** (`canAccessPdf`) before issuing signed URLs; short expiry; no public `.pdf` URLs | P6 |
+| 7 | **Database** | RLS + foreign keys + constraints (UNIQUE user×book, NOT NULL, checks) + **least-privilege** access (service role used only server-side; anon key minimal) | P1/P4 |
+| 8 | **Input / content security** | Protect against **XSS** (escape output, sanitize user content/comments), **SQL injection** (parameterized queries via Supabase SDK), **malicious uploads** (validate file type/size, scan, private storage), and unsafe user content | P4/P6 |
+| 9 | **Production posture** | Secure headers, **HTTPS** everywhere (Hostinger managed TLS), safe logging (no secrets/PII in logs), dependency updates, **backups + restore testing** (Supabase PITR + Hostinger backups) | P7 |
+
+**Historical:** Strapi API token + Strapi built-in rate limiting + Nginx/Certbot — superseded 2026-08-14 (AD-029).
 
 ---
 
@@ -2782,10 +2835,11 @@ NODE_ENV=development
 
 | Tool | Purpose | Cost |
 |------|---------|------|
-| Cloudflare analytics | Frontend performance + traffic | Free |
-| Nginx access logs | VPS/Strapi request monitoring | Free |
-| Uptime monitoring | UptimeRobot — frontend, CMS admin, webhook endpoint | Free |
-| PM2/systemd | Process health monitoring + restart-on-boot | Free |
+| Hostinger managed monitoring | App health, logs, uptime (managed platform) | Included |
+| Uptime monitoring | UptimeRobot — frontend, admin, webhook endpoint | Free |
+| Supabase dashboard | DB/storage/auth metrics + logs | Free |
+
+> Historical: Cloudflare analytics + Nginx access logs + PM2/systemd (AD-028 VPS era) — superseded 2026-08-14.
 
 ---
 
@@ -2798,9 +2852,9 @@ NODE_ENV=development
 | `AGENTS.md` | Development agent instructions, library stack |
 | `RULES.md` | Engineering rules and conventions |
 | `CHANGELOG.md` | Version history and changes |
-| `strapi/README.md` | Strapi setup and configuration |
-| `research/cms-evaluation/REPORT.md` | CMS platform evaluation |
+| `strapi/README.md` | Strapi setup guide (**historical** — Strapi superseded, AD-029) |
+| `research/cms-evaluation/REPORT.md` | CMS platform evaluation (**historical** — evaluated Strapi) |
 
 ---
 
-*Last updated: 2026-08-08 — Mock Platform (M0–M6) complete; ARCHITECTURE.md merged into §28; navigation structure consolidated here (was `NAV-SITEMAP.md`); design system lives in `DESIGN.md`*
+*Last updated: 2026-08-14 — Architecture revision (AD-029): Supabase unified backend + Refine/shadcn admin (target) + Hostinger Managed Node.js; Strapi/VPS/Docker superseded (historical); Mock Platform (M0–M6) complete; design system lives in `DESIGN.md`*

@@ -1,8 +1,10 @@
 # Sabbe Satta — Strapi CMS
 
-> Strapi v5 CMS for Sabbe Satta content management.
+> ⚠️ **HISTORICAL — SUPERSEDED (2026-08-14, AD-029).** Strapi is **no longer part of the target architecture**. The approved direction is **Supabase as the unified backend** (content + application data) with a **Refine + shadcn/ui admin** inside the TanStack app, hosted on **Hostinger Managed Node.js**. This guide is kept for historical reference / local dev only; Strapi is pending migration to Supabase and removal (roadmap P2/P3). Do not describe Strapi as the production CMS.
 
-## Quick Start
+> Strapi v5 CMS for Sabbe Satta content management (historical).
+
+## Quick Start (historical — dev only)
 
 ### Development (SQLite)
 

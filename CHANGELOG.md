@@ -1,6 +1,24 @@
 # Changelog
 
-## 2026-08-14
+## 2026-08-14 (evening)
+
+### Architecture decision — Hostinger Managed Node.js + Supabase unified backend + Refine/shadcn admin (AD-029) — docs only (no code)
+
+**The target production architecture changed (AD-029, superseding AD-023/AD-027/AD-028):**
+
+- **VPS architecture superseded** — production runs on **Hostinger Managed Node.js / Web Apps Hosting** (managed Node runtime, deployment, SSL, CDN, security/WAF, DDoS protection, backups). No VPS, no Docker, no manual Nginx, no PM2/systemd, no server-installed PostgreSQL.
+- **Strapi architecture superseded** — Strapi is **no longer the target CMS**; it is historical/superseded, **pending migration and removal** (P2/P3). Its code stays in the repo until the replacement admin/content system is validated.
+- **Refine + shadcn/ui selected as the target admin direction** — the admin/CRUD UI lives **inside the TanStack application** (not a separate backend service), backed by Supabase via server functions. Not installed yet (P2); not marked complete.
+- **Supabase becomes the unified application/content backend** — Auth, PostgreSQL (ALL data: content + application), Storage, RLS. Content tables (posts, pages, books, chapters, authors, videos, categories, tags, navigation, site settings, book-grid settings) join application tables in one database. Paid PDFs stay access-controlled.
+- **Cloudflare is optional, not mandatory** — Hostinger's managed platform provides SSL/CDN/security/backups; introduce Cloudflare only if a specific requirement is demonstrated.
+- **PipraPay remains the temporary payment provider** — through the existing provider abstraction (AD-026); the app is not coupled to it. Future direct bKash/Nagad APIs (P8).
+- **Roadmap revised (P0–P8):** P0 architecture validation · P1 Supabase content model · P2 custom Refine+shadcn admin · P3 content migration (Strapi → Supabase, then removal) · P4 application data · P5 PipraPay validation · P6 Storage/PDF authorization · P7 hardening · P8 direct bKash/Nagad.
+- **Mandatory Security Requirements documented** — “never trust the client” is now a core architectural rule. `PROJECT.md §28 → §13` gained a 9-point requirements table (RLS on all tables, server-side Auth & RBAC, server-only secrets, authenticated/validated/rate-limited API routes, server-side payment verification incl. signature/amount/order/idempotency, private PDFs with entitlement checks, DB constraints + least privilege, XSS/injection/upload protection, production posture incl. HTTPS/headers/logging/backups+restore testing) with the phase each is implemented in (P1/P4–P7). Mirrored as a concise rule block in `AGENTS.md` and `RULES.md §22`. **Documented only — implementation deferred to the production phases.**
+- **Implementation is intentionally deferred** — docs updated only; no packages installed, no schemas created, no Strapi/Supabase changes.
+
+Docs updated: `PROJECT.md` (stack/architecture/CMS/admin/DB/§18 roadmap + setup kit/§19/§21 AD records/§23/§25/§28 blueprint incl. security §13), `AGENTS.md` (objective, architecture tables, responsibility split, roadmap, phases, security), `README.md` (new-architecture orientation), `RULES.md` (Frontend First + free-tools examples + §22 security), `strapi/README.md` + research reports marked historical.
+
+Validation: docs only — no code, no schemas, no migrations, no infra, no Strapi/Refine/shadcn installation.
 
 ### Backend roadmap + production architecture revision — docs only (no code)
 

@@ -1,5 +1,7 @@
 # CMS Platform Evaluation: Strapi v5 vs Directus for Sabbe Satta
 
+> ⚠️ **HISTORICAL — SUPERSEDED (2026-08-14, AD-029).** This evaluation compared standalone CMS platforms for the then-hybrid architecture. The approved direction changed: **no separate CMS** — Supabase is the unified backend (content + application) with a **Refine + shadcn/ui admin** inside the TanStack app, hosted on **Hostinger Managed Node.js**. Kept as historical research.
+
 > Generated 2026-07-15 · depth: standard · 51 sources · workspace: research/cms-evaluation/
 
 ## Executive Summary

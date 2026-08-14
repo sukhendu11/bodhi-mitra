@@ -111,7 +111,7 @@ Document
 
 Complete
 
-**Frontend First** — polish UI and UX using mock data before connecting any backend (Strapi, Supabase). Mock data lives in `src/lib/mock-data.ts`. Every service file follows: try Strapi → try Supabase → return mock data. Only switch to live backend after the frontend is fully verified.
+**Frontend First** — polish UI and UX using mock data before connecting the backend (Supabase — the unified backend; Strapi is historical/superseded, AD-029). Mock data lives in `src/lib/mock-data.ts`. Every service file follows: try real backend (Supabase) → return mock data. Only switch to the live backend after the frontend is fully verified.
 
 Never skip steps.
 
@@ -642,6 +642,20 @@ Follow current security best practices.
 
 Security takes priority over convenience.
 
+### Mandatory Security Requirements (AD-029 architecture)
+
+> **Core rule: “Never trust the client.”** All security is enforced server-side (Supabase RLS, Supabase Auth, server functions). Frontend restrictions are UX only, never security. Full detail: `PROJECT.md §28 → §13 Mandatory Security Requirements`.
+
+- **RLS:** enable RLS on all tables (content + application); enforce ownership/access at the database level.
+- **Auth & RBAC:** Supabase Auth + server-side role/permission checks; never rely on frontend restrictions.
+- **Secrets:** service-role keys, payment credentials, Resend keys etc. are server-only — never in `VITE_*`, Git, or browser code.
+- **API/server routes:** authenticate, authorize, validate inputs (Zod), rate-limit where appropriate.
+- **Payments:** verify webhook signature, amount, order state and idempotency server-side; never trust frontend payment success (AD-026).
+- **Storage/PDFs:** private paid PDFs; verify auth + purchase entitlement before signed URLs.
+- **Database:** RLS, foreign keys, constraints, least-privilege access.
+- **Input/content:** XSS (escape/sanitize user content), injection (parameterized queries), malicious uploads, unsafe user content.
+- **Production:** secure headers, HTTPS, safe logging, dependency updates, backups + restore testing.
+
 ---
 
 ## 23. Performance Standards
@@ -721,7 +735,7 @@ When no fully free solution exists:
 - Use raw code for simple integrations
 - Document the tradeoff and migration path
 
-Example: Strapi (MIT) + Supabase (free tier, no caps) + custom React hooks = fully free stack.
+Example: Supabase (free tier, no caps) + TanStack (MIT) + shadcn/Refine (MIT) + custom React hooks = fully free stack.
 
 ---
 
