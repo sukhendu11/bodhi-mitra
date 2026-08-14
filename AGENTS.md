@@ -11,14 +11,14 @@
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| CMS / Admin | Strapi v5 (self-hosted, Docker on VPS) | Content management, admin panel, REST/GraphQL APIs |
-| Frontend SSR | React 19 + TanStack Start (Vercel) | Public website, reader, commerce |
+| CMS / Admin | Strapi v5 (self-hosted, VPS, native) | Content management, admin panel, REST/GraphQL APIs |
+| Frontend SSR | React 19 + TanStack Start (VPS, PM2) | Public website, reader, commerce |
 | Auth | Supabase Auth | Frontend user authentication (email + Google OAuth) |
 | App Database | Supabase PostgreSQL | Application data (purchases, cart, progress, bookmarks, etc.) |
 | Storage | Supabase Storage | File uploads (book PDFs, cover images, user avatars) |
 | Payments | Provider-agnostic interface (simulated → PipraPay stopgap → direct bKash/Nagad) | Payment processing, checkout redirects, IPN webhooks |
 | Email | Resend | Transactional emails (purchase confirmations, contact notifications) |
-| Hosting | VPS (DigitalOcean/Hetzner) + Vercel | VPS for Strapi, Vercel for frontend |
+| Hosting | VPS (Hostinger/Hetzner) — single box | Frontend SSR + Strapi + PipraPay on one VPS, natively installed (no Vercel/Docker/GitHub — AD-028) |
 
 ## Responsibility Split
 
@@ -28,7 +28,6 @@
 - Media library (admin-uploaded images)
 - Taxonomies (categories, tags)
 - Navigation (header/footer menus)
-- Comments (public moderation)
 - Site settings (branding, SEO, theme)
 - i18n (English + Bangla + 500+ locales)
 - REST/GraphQL APIs for content
@@ -42,7 +41,8 @@
 - Bookmarks (polymorphic: posts + books)
 - Shopping cart
 - Coupon codes
-- Course enrollments and lesson progress
+- Orders and order items (P3)
+- Comments (moderation) — Supabase-owned 2026-08-14 (Strapi `comment` type removed)
 - Newsletter subscriptions
 - Contact messages
 - Admin notifications
@@ -50,11 +50,12 @@
 - Audit logs
 - File storage (PDFs, cover images, avatars)
 
-### Vercel Owns (Frontend + Integration Layer)
+### TanStack Start Owns (Frontend + Integration Layer — runs on the production VPS)
 - Frontend SSR (React 19 + TanStack Start)
-- Payment webhook handling (provider-agnostic; currently simulated, Stripe webhook to be replaced)
+- Payment webhook handling (provider-agnostic IPN at `/api/payments/webhook` — simulated → PipraPay, AD-026)
 - Email sending (Resend)
 - Server functions (auth-guarded mutations)
+- Protected PDF access (ownership check → Supabase signed URL)
 
 ## Free Tools Policy
 
@@ -73,7 +74,7 @@
 
 | Concern | Library | Status |
 |---------|---------|--------|
-| CMS | Strapi v5 | ✅ Running (Docker, port 1337) |
+| CMS | Strapi v5 | ✅ Running (dev, port 1337; production = native on the VPS, no Docker) |
 | UI Components | shadcn/ui + Radix UI | ✅ Integrated |
 | Forms | React Hook Form + Zod | ✅ Integrated |
 | Tables | TanStack Table | ✅ Integrated |
@@ -97,7 +98,7 @@
 - **App data reads** (cart, purchases, progress, bookmarks, ratings, etc.) → Supabase (via server functions with auth middleware)
 - **Admin edits** → Strapi admin panel
 - **User actions** (purchase, bookmark, rate, etc.) → Supabase (via server functions)
-- **Payments** → provider-agnostic gateway interface → webhook → Vercel → verify server-side → Supabase (order + purchase) → unlock PDF → Resend email
+- **Payments** → provider-agnostic gateway interface → webhook → VPS server function → verify server-side → Supabase (order + purchase) → unlock PDF → Resend email
 
 ## Phase 1 Complete Files
 - `src/lib/strapi-client.ts` — Strapi REST client for public content reads (posts, books, pages, videos, courses, categories, tags, navigation, comments, site settings)
@@ -114,7 +115,7 @@
 | **Phase 2 — Admin Transition** | ✅ | Refine admin panel removed; Strapi admin is the sole CMS interface |
 | **Phase 3 — Data Migration** | ⏸ On hold | `scripts/migrate-to-strapi.mjs` created but not run; frontend is mock-first for dev |
 | **Phase 4 — Legacy Cleanup** | ✅ | Refine data provider, 27 admin routes, ~50 admin components removed |
-| **Phase 5 — Production Hardening** | ⏳ Pending | VPS deploy (Docker + PostgreSQL + Nginx + SSL), monitoring, backups, performance tuning |
+| **Phase 5 — Production Hardening** | ⏳ Pending | VPS deploy (native, no Docker — see P0/P6): Node 22 + PostgreSQL 16 + Nginx + SSL, monitoring, backups, performance tuning |
 
 **Data layer (dev):** Mock-first — `posts.ts`, `books.ts`, `videos.ts`, `navigation.ts`, `taxonomy.ts`, `siteSettings.tsx`, `pages.ts` return mock data. Tests: **453 passing**. TS: 0 errors.
 - **Phase 0 fixes (F1–F5)** — see "Mock Platform Transformation" section below.
@@ -137,7 +138,7 @@ Milestone tracker: see the milestone table below and `PROJECT.md §18`; the arch
 
 **Core seam:** `src/lib/data-source.ts` (`VITE_DATA_SOURCE=mock|strapi|supabase|auto` + `isMockMode()` + `setMockModeOverride()` test seam). Mock stores follow a **per-domain module pattern** (localStorage client / in-memory SSR-safe): `mock-session.ts`, `mock-cart.ts`, `mock-commerce.ts`, `mock-comments.ts`, `mock-progress.ts`, `mock-ratings.ts`, `mock-bookmarks.ts`, `mock-reader.ts`, `mock-notifications.ts`, `contact-messages.ts`, `newsletter.ts`. Demo accounts: `demo@sabbesatta.test` / `demo1234` (user), `admin@sabbesatta.test` / `admin1234` (super_admin).
 
-> **Deployment note (2026-08-13):** `VITE_DATA_SOURCE` is a **build-time** flag — the local `.env` is gitignored, so on Vercel it must be set as a **Production build env var** (`VITE_DATA_SOURCE=mock` for the demo, or `auto`/`supabase` when the fresh Supabase project is live) or the deployed site silently runs in real mode (no demo login buttons, real Supabase reads). After changing it, **Redeploy** from the Vercel dashboard (or push a new commit) — env changes don't rebuild automatically.
+> **Deployment note (2026-08-13):** `VITE_DATA_SOURCE` is a **build-time** flag — the local `.env` is gitignored, so on the dev/demo host it must be set as a **Production build env var** (`VITE_DATA_SOURCE=mock` for the demo, or `auto`/`supabase` when the fresh Supabase project is live) or the deployed site silently runs in real mode (no demo login buttons, real Supabase reads). After changing it, **Redeploy** (env changes don't rebuild automatically). **Production (2026-08-14, AD-028):** the frontend runs on the production VPS (Nitro `node-server` under PM2) with `VITE_DATA_SOURCE=supabase` set at build on the box — no Vercel.
 
 ### M1–M2 Delivery Notes (2026-08-04)
 - **M1 Identity**: `mock-session.ts` (demo accounts, persisted session + profiles CRUD), `useAuth.ts` rewired (mock-first session, roles, signOut), `/login` demo buttons + credential validation, `/profile` + `/settings` mock persistence, `useTheme` persists to mock profile, loading gates prevent SSR guest-flash.
@@ -286,28 +287,29 @@ Validation: 0 TS errors, 263/263 tests passing. Next up: M0 — Mock Platform Fo
 - **Books:** Strapi is the editorial source of truth; only commerce fields (price, is_free, slug, cover, pdf path) mirror one-way into Supabase `books` for fast RLS-guarded queries. No dual-write.
 - **Storage:** Supabase Storage — private PDFs and protected files via signed URLs.
 - **Payments:** one provider-agnostic interface — `initiate → redirect → webhook → verify server-side → order → purchase → unlock PDF → email`. Gateway swap is config, not rewrite. Stages: simulated → PipraPay (stopgap) → direct bKash/Nagad merchant APIs (licensed, final, when trade license lands). **Payment success must be verified server-side before granting purchased content.**
-- **Frontend:** Vercel / TanStack Start — SSR + auth-guarded server functions.
+- **Frontend:** VPS (PM2) / TanStack Start — SSR + auth-guarded server functions. No Vercel in production (AD-028).
 
-## Production Migration Roadmap (P1–P8)
+## Production Migration Roadmap (P0–P8)
 
 | Phase | Focus | Validation |
 |-------|-------|-----------|
-| P1 — Content real | Strapi-first content reads (posts/pages/videos/nav/settings) | Public pages render from Strapi, no mock |
-| P2 — Auth real | Supabase email + Google auth; remove mock-auth | Real signup/login; RBAC enforced |
-| P3 — App data real | Cart/orders/progress/bookmarks/ratings → Supabase-only (Strapi app-data types **removed** 2026-08-08; wire real reads) | Data persists across sessions |
-| P4 — Payments | Payment interface: simulated → PipraPay stopgap; server-side webhook verification | End-to-end purchase grants access |
-| P5 — Storage real | Private PDFs in Supabase Storage; signed-URL reader | Reader opens real books, access-controlled |
-| P6 — Hardening | Strapi → VPS (Docker+PG+Nginx+SSL), monitoring, backups, CDN | Live + monitored |
-| P7 — Cutover | Remove mock modules + Stripe code; force non-mock in prod | No mock in prod; tests green; security review |
+| P0 — Production foundation | Provision the VPS (Hostinger/Hetzner, Ubuntu 24.04), install Node 22 + PostgreSQL 16 + Nginx + Certbot natively (no Docker), deploy frontend SSR (Nitro node-server, PM2, deploy.sh), DNS + Cloudflare, backups | Frontend serves from the VPS; TLS auto-renews |
+| P1 — Content real | Fresh Strapi on the VPS (9 content types — comment/course removed), Book schema + AD-027 mirror amendments, seed content, Strapi-first reads, train editors | Public pages render from Strapi, no mock |
+| P2 — Auth real | Fresh Supabase (application tables only; orders/order_items added; comments Supabase-owned), email + Google auth, Resend templates, remove mock-auth | Real signup/login; RBAC enforced; email live |
+| P3 — App data real | Cart/orders/progress/bookmarks/ratings/comments → Supabase-only; wire order state machine to real `orders`/`order_items`; books reads from Supabase mirror | Data persists across sessions |
+| P4 — Payments | Payment interface: simulated → PipraPay stopgap (deployed on the VPS, PHP-FPM); server-side webhook verification + amount check | End-to-end purchase grants access |
+| P5 — Storage real | Private PDFs in Supabase Storage (`book-pdfs`); signed-URL reader | Reader opens real books, access-controlled |
+| P6 — Hardening | Monitoring (UptimeRobot), logging, backups verified, perf/CDN, secrets; admin-configurable grid density (admin/site-settings layer) | Live + monitored |
+| P7 — Cutover | Remove mock modules + dead Stripe code; force non-mock in prod | No mock in prod; tests green; security review |
 | P8 — License upgrade | Swap PipraPay → direct bKash/Nagad APIs | Licensed settlement, formal records |
 
 > ⚠️ **Working agreement (2026-08-08):** the user plans a **fresh start** for Supabase and Strapi — brand-new project instances with clean data, not the existing dev setups. **The user performs all real backend setup MANUALLY in the dashboards and does NOT share credentials with agents.** Agents must NOT connect to live Supabase/Strapi, assume `.env` values are valid (they are stale), or ask for API keys. Instead, prepare/update the **Manual Setup Kit** (`PROJECT.md §18 → Fresh Instance Manual Setup Kit`): paste-ready SQL (`supabase/manual-setup.sql`), dashboard checklists, content-type references, and content-entry guides. After the user confirms a step is done, the agent wires/verifies the frontend feature (per the Mock Data Removal Strategy). Mock-first frontend work is unaffected — this only gates live backend hookup.
 
 > 🔄 **Mock Data Removal Strategy (2026-08-08):** the site must stay fully functional throughout the migration — **never remove mock data at the start**. Each feature follows its own sequence: **Mock → Real Backend Connection → Admin/CMS Configuration → Frontend Verification → Full Feature Testing → Remove Mock Data**. A feature's mock path is removed only after its real backend, admin workflow, frontend rendering, and essential user flows are verified (the mock stays as a fallback via the `VITE_DATA_SOURCE` seam until then). Applies progressively to every feature: content (posts/pages/videos/nav/SEO/settings/books), auth, comments, cart, checkout, orders, purchases, PDF access, reading progress, bookmarks, ratings, search, newsletter/contact. P1–P5 each complete their features' steps 1–6; **P7 Cutover** removes leftover mock modules wholesale only after all features are individually verified. Full feature-coverage table: `PROJECT.md §18 → Mock Data Removal Strategy`.
 
-## Phase 5: Production Hardening ⏳ (pending)
-- Deploy Strapi to VPS with Docker + PostgreSQL + Nginx + SSL
-- Configure monitoring, backups, CDN
+## Phase 5: Production Hardening ⏳ (pending — superseded by P0/P6)
+- Deploy to the VPS natively (Node 22 + PostgreSQL 16 + Nginx + SSL; frontend via PM2) — no Docker/Vercel (AD-028)
+- Configure monitoring (UptimeRobot), backups, CDN (Nginx + Cloudflare)
 - Performance optimization
 
 ## Phase 6: Supabase Connection (Production)
@@ -315,7 +317,7 @@ Validation: 0 TS errors, 263/263 tests passing. Next up: M0 — Mock Platform Fo
 
 The user sets up the fresh Supabase + Strapi instances **manually** using the **Manual Setup Kit** (`PROJECT.md §18 → Fresh Instance Manual Setup Kit`) — no credentials are shared with agents:
 
-1. User creates the fresh Supabase project and pastes `supabase/manual-setup.sql` in the SQL Editor (all 59 migrations consolidated)
+1. User creates the fresh Supabase project and pastes `supabase/manual-setup.sql` in the SQL Editor (all 59 migrations consolidated) — **2026-08-14: fresh-instance schema = application tables only** (legacy content tables excluded; `orders`/`order_items` added; comments Supabase-owned)
 2. User creates the fresh Strapi instance, admin user, API token, and enters content (field + content guides in the kit)
 3. User fills `.env` with fresh values per the kit's env checklist (current `.env` is **stale** — replace everything, add `SITE_URL`)
 4. User promotes the first admin via `select public.set_user_role('<uuid>', 'admin');` and updates the hardcoded admin email in `src/lib/permissions.ts` + `src/hooks/useAuth.ts`
@@ -773,8 +775,8 @@ if (isMockMode()) return mockFetchX();   // fast, deterministic, offline — che
 ```
 
 The mock path is checked **first** via `isMockMode()` (`VITE_DATA_SOURCE=mock|strapi|supabase|auto` in `src/lib/data-source.ts`); real adapters run only when a backend is configured. Mock data lives in `src/lib/mock-data.ts` (static content) plus per-domain stores (`mock-session`, `mock-cart`, `mock-commerce`, `mock-comments`, `mock-progress`, `mock-ratings`, `mock-bookmarks`, `mock-reader`, `mock-notifications`, `mock-cms`, `mock-settings`, `newsletter`, `contact-messages`) for auth, commerce, engagement, community, and admin — each localStorage-persisted on the client with SSR-safe in-memory fallback. To add mock data for a new collection, add a `mockFetchX()` function to `mock-data.ts` (or a `mock-*` store) and gate it behind `isMockMode()` in the service.
-- `strapi/docker-compose.yml`: Strapi Docker configuration
-- `strapi/docker-compose.prod.yml`: Production Docker configuration
+- `strapi/docker-compose.yml`: Strapi Docker configuration (dev-only — production runs natively on the VPS, no Docker, AD-028)
+- `strapi/docker-compose.prod.yml`: Legacy production Docker configuration (dev-only reference; superseded by native VPS install)
 - `strapi/README.md`: Setup and configuration guide
 - `src/lib/strapi-client.ts`: Strapi API client for public content reads (no app-data functions — those were removed 2026-08-08)
 - `strapi/src/api/book/controllers/book.js`: Book controller — content-only helpers (`getFeatured`, `getByCategory`); purchase/rating enrichment removed 2026-08-08
@@ -787,5 +789,5 @@ The mock path is checked **first** via `isMockMode()` (`VITE_DATA_SOURCE=mock|st
 - `scripts/migrate-to-strapi.mjs`: Supabase → Strapi data migration script
 - `research/cms-evaluation/REPORT.md`: CMS platform evaluation report
 - `src/integrations/supabase/`: Supabase client, auth middleware, types
-- `src/integrations/stripe/`: Stripe configuration and server functions
+- `src/integrations/stripe/`: Legacy Stripe configuration (dead code — P7-scheduled removal; payments are provider-agnostic, AD-026)
 - `src/integrations/resend/`: Resend email client

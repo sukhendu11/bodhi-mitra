@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-08-14
+
+### Backend roadmap + production architecture revision — docs only (no code)
+
+**Approved architecture written into PROJECT.md / AGENTS.md (AD-028):** the production model is now **one VPS, natively installed** — Hostinger/Hetzner, Ubuntu 24.04, Node 22 + PostgreSQL 16 + Nginx + Certbot via apt/systemd (no Vercel, no Docker, no GitHub). The frontend SSR (Nitro `node-server` preset under PM2) runs on the same box as Strapi and PipraPay; Cloudflare (free) in front; Supabase + Resend free.
+
+**Roadmap corrected (P1–P8 → P0–P8):**
+- **P0 (new)** — VPS production foundation: provision, native install, frontend SSR deploy, DNS/Cloudflare, backups.
+- **P1** — fresh Strapi on the VPS with **9 content types** (`comment` and `course` types removed — comments are Supabase-owned, courses have no consumer); Book schema + AD-027 mirror amendments (`chapters`, `chapter_pages`, `author_bio_en/bn`); seed + Strapi-first reads; editor training.
+- **P2** — fresh Supabase with the **application-layer-only schema** (legacy content tables excluded; `orders`/`order_items` added); Resend templates now an explicit deliverable.
+- **P3** — order state machine wired to real `orders`/`order_items` tables (previously mock-only); comments Supabase-owned.
+- **P4** — status corrected to in-progress: PipraPay deployment on the VPS (PHP-FPM + MySQL vhost at `pay.*`) is the real deliverable.
+- **P6** — re-scoped to native hardening on the existing VPS; **grid density moved to the admin/site-settings layer** (per-breakpoint controls for ALL grids, site-settings-driven) — not core hardening.
+- **P7** — mock + dead Stripe code removal; P8 unchanged (direct bKash/Nagad after trade license).
+
+**Stale references cleaned:** Stripe removed from the architecture (overview table, responsibility split, purchase flow, dev/prod keys, env config, security, adapter contract, AD-014 marked superseded); legacy Supabase content fallbacks (posts/videos/navigation/pages/settings) flagged for P1 removal; §6 module table + §20 V2 sprints marked historical with corrected statuses (bookmarks restored, courses removed, donations built); hosting topology + domain strategy rewritten for the single VPS.
+
+Validation: docs only — no code, no schemas, no migrations, no infra.
+
 ## 2026-08-13
 
 ### PdfViewer mobile-first UX restructure — bottom control bar, sidebar drawer, spread collapse
