@@ -2,6 +2,16 @@
 
 ## 2026-08-15
 
+### Roadmap re-scope — Hostinger provisioning deferred to the Deployment milestone
+
+- Hostinger Managed Node.js provisioning is **no longer a development prerequisite** (was P0). Development continues locally on the approved architecture; the app stays Hostinger-compatible (node-server preset + `npm start`, env vars documented for hPanel). Added **D — Deployment milestone** to the P0–P8 roadmap (PROJECT.md §18 + AGENTS.md), triggered after P4/P5/P6 when the app is sufficiently complete.
+
+### P1 — Unified Supabase schema delta
+
+- **`supabase/migrations/20260815000001_unified_schema_delta.sql`** — adds the P1 gaps from AD-029: `orders` + `order_items` tables (server-side payment order state machine, RLS owner-scoped, server-side-only writes, idempotent-friendly), book amendments (`author_bio_en/bn`, `chapters` JSONB, `chapter_pages` JSONB — present in the frontend `Book` interface but never migrated), `book_grid_settings` (P6 admin/site-settings layer), and the `covers` storage bucket (public read, editors+ write, matching the book-covers pattern).
+- **`supabase/manual-setup.sql` regenerated** — now contains all **61** migrations (the previously-missing `create_avatars_bucket.sql` is section 60; delta is 61). Paste-ready for a fresh Supabase instance.
+- Verified: parens balanced, all FK/function targets exist (`coupons`, `books`, `has_role`, `update_updated_at_column`), column mapping matches `PaymentOrder`/`PaymentOrderItem`; **627/627 tests pass**, tsc 0 errors (frontend untouched).
+
 ### P0 code-side — Hostinger-compatible production build (node-server preset)
 
 - `vite.config.ts` + `nitro.config.ts`: Nitro preset `vercel` → **`node-server`** (AD-029 target: Hostinger Managed Node.js runs a plain Node HTTP server). Build now emits `.output/` runnable with `node .output/server/index.mjs`.

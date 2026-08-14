@@ -293,13 +293,14 @@ Validation: 0 TS errors, 263/263 tests passing. Next up: M0 — Mock Platform Fo
 
 | Phase | Focus | Validation |
 |-------|-------|-----------|
-| P0 — Architecture validation | Research + validate: Hostinger Managed Node.js deployment, TanStack Start on it, Refine Core, shadcn/ui, Supabase unified schema, PipraPay compatibility | Research documented; managed-host deploy proof |
-| P1 — Supabase content model | Design the unified schema (content + application tables, RLS, Storage buckets) | Schema + RLS + migration SQL documented |
+| P0 — Local dev foundation | Local dev on the approved stack: **node-server build preset** (done 2026-08-15 — `npm run build` → `.output/`, `npm start`), mock-first frontend, Refine/shadcn/ui + Supabase unified schema + PipraPay research. **Hostinger provisioning deferred to the Deployment milestone (D)** — not a prerequisite; keep compatibility ready (preset + env docs) | Local dev runs on the approved stack; Hostinger compatibility kept ready, not provisioned |
+| P1 — Supabase content model | Unified schema delta **done 2026-08-15** (`supabase/migrations/20260815000001_unified_schema_delta.sql` + `manual-setup.sql` regenerated to 61 sections): `orders`/`order_items` + RLS, book amendments (`author_bio_en/bn`, `chapters`, `chapter_pages`), `book_grid_settings`, `covers` bucket. Remaining: chapters/authors modeling + seeding | Schema + RLS + migration SQL documented; delta landed |
 | P2 — Custom admin | Implement Refine + shadcn admin inside the TanStack app (CRUD → Supabase) | Admin CRUD works; editors manage content without code |
 | P3 — Content migration | Move Strapi responsibilities into Supabase (migrate content, wire reads, **then** remove Strapi code) | All content served from Supabase; Strapi removed |
 | P4 — Application data | Cart/orders/progress/bookmarks/ratings/comments/notifications → Supabase-only; remove per-feature mock stores | Data persists across sessions |
 | P5 — Payments | Validate PipraPay through the provider abstraction (initiation, webhook, signature + amount check, idempotency, fulfillment, entitlement, email) | End-to-end purchase grants access |
 | P6 — Storage | Supabase Storage/PDF authorization (private `book-pdfs`, signed-URL reader) | Reader opens real books, access-controlled |
+| D — Deployment milestone | **Provision Hostinger Managed Node.js** (hPanel: Node 22, repo/file upload, env vars §28 §10, domain + TLS, backups) — triggered after P4/P5/P6 when the app is sufficiently complete. Not a development prerequisite; agent supplies the exact Hostinger config steps when due | `sabbesatta.com` serves the app from Hostinger; TLS + env configured; backups verified |
 | P7 — Hardening | Testing, security, backups, monitoring, performance on the managed platform; admin-configurable grid density (admin/site-settings layer) | Live + monitored; security review passes |
 | P8 — License upgrade | Swap PipraPay → direct bKash/Nagad APIs | Licensed settlement, formal records |
 
