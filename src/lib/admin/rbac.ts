@@ -56,6 +56,9 @@ const RBAC_MATRIX: Record<AppRole, Partial<Record<AdminResource, readonly AdminP
     navigation_items: FULL,
     orders: FULL,
     profiles: FULL,
+    site_settings: FULL,
+    tags: FULL,
+    notifications: FULL,
   },
   admin: {
     books: CONTENT_FULL,
@@ -65,6 +68,9 @@ const RBAC_MATRIX: Record<AppRole, Partial<Record<AdminResource, readonly AdminP
     categories: STRUCTURE,
     navigation_items: STRUCTURE,
     orders: ["view", "update"],
+    site_settings: ["view", "update"],
+    tags: CONTENT_FULL,
+    notifications: ["view", "update"],
     // profiles intentionally absent — user management is super_admin-only
   },
   editor: {
@@ -74,7 +80,8 @@ const RBAC_MATRIX: Record<AppRole, Partial<Record<AdminResource, readonly AdminP
     pages: STRUCTURE,
     categories: STRUCTURE,
     navigation_items: STRUCTURE,
-    // orders/profiles absent
+    tags: ["view", "create", "update"],
+    // orders/profiles/site_settings/notifications absent
   },
   author: {
     books: VIEW,
@@ -83,7 +90,8 @@ const RBAC_MATRIX: Record<AppRole, Partial<Record<AdminResource, readonly AdminP
     pages: VIEW,
     categories: VIEW,
     navigation_items: VIEW,
-    // orders/profiles absent
+    tags: VIEW,
+    // orders/profiles/site_settings/notifications absent
   },
   moderator: {
     books: VIEW,
@@ -93,7 +101,9 @@ const RBAC_MATRIX: Record<AppRole, Partial<Record<AdminResource, readonly AdminP
     categories: VIEW,
     navigation_items: VIEW,
     orders: VIEW,
-    // profiles absent
+    tags: VIEW,
+    notifications: VIEW,
+    // profiles/site_settings absent
   },
   user: {},
 };

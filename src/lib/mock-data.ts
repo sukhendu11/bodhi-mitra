@@ -1026,6 +1026,40 @@ export function mockFetchAllVideos(): Video[] {
   return mockApplyVideoOverrides(MOCK_VIDEOS_DATA);
 }
 
+// ─── Tags (admin list) ─────────────────────────────────────
+
+/** Tag shape matching `taxonomy.ts` (slug/name/color) for the admin registry. */
+export interface MockTag {
+  id: string;
+  slug: string;
+  name_en: string;
+  name_bn: string;
+  color: string;
+  created_at: string;
+}
+
+const TAG_COLORS = ["#8B5CF6", "#10B981", "#F59E0B", "#3B82F6", "#EC4899", "#14B8A6"];
+
+/** Distinct tags used across mock posts + books (admin tags list). */
+export function mockFetchTags(): MockTag[] {
+  const seen = new Map<string, string>(); // tag -> first-seen created_at
+  for (const p of mockApplyPostOverrides(MOCK_POSTS_DATA)) {
+    for (const t of p.tags ?? []) if (!seen.has(t)) seen.set(t, p.created_at);
+  }
+  for (const b of mockApplyBookOverrides(MOCK_BOOKS_DATA)) {
+    for (const t of b.tags ?? []) if (!seen.has(t)) seen.set(t, b.created_at);
+  }
+  let i = 0;
+  return [...seen.entries()].map(([tag, created]) => ({
+    id: `tag-${tag}`,
+    slug: tag,
+    name_en: tag,
+    name_bn: tag,
+    color: TAG_COLORS[i++ % TAG_COLORS.length],
+    created_at: created,
+  }));
+}
+
 // ─── Recently Added (for homepage) ─────────────────────────
 
 export interface TrendingItem {

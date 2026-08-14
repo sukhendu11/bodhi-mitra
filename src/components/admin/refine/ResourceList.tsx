@@ -54,9 +54,11 @@ export function ResourceList({ resource }: ResourceListProps) {
   // RBAC (P2): an action needs BOTH the role permission and mock-store
   // support (read-only resources like orders/pages lack mock write stores).
   const storeWritable = mockResourceWritable(resource as never);
-  const canCreate = canCreateResource(role, resource as never) && storeWritable;
+  // Single-row resources (site settings) are edited, never created/deleted.
+  const singleRow = def?.singleRow === true;
+  const canCreate = canCreateResource(role, resource as never) && storeWritable && !singleRow;
   const canEdit = canUpdateResource(role, resource as never) && storeWritable;
-  const canDelete = canDeleteResource(role, resource as never) && storeWritable;
+  const canDelete = canDeleteResource(role, resource as never) && storeWritable && !singleRow;
 
   const [editing, setEditing] = useState<Row | "new" | null>(null);
   const [deleting, setDeleting] = useState<Row | null>(null);

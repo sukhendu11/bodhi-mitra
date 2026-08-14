@@ -127,4 +127,26 @@ describe("admin RBAC matrix", () => {
     expect(superAdmin).toHaveLength(ALL_RESOURCES.length);
     expect(superAdmin).toContain("profiles");
   });
+
+  it("admin sees site settings + notifications; editor does not", () => {
+    expect(canViewResource("admin", "site_settings")).toBe(true);
+    expect(can("admin", "site_settings", "update")).toBe(true);
+    expect(can("admin", "site_settings", "create")).toBe(false);
+    expect(canViewResource("admin", "notifications")).toBe(true);
+    expect(can("admin", "notifications", "update")).toBe(true);
+
+    expect(canViewResource("editor", "site_settings")).toBe(false);
+    expect(canViewResource("editor", "notifications")).toBe(false);
+  });
+
+  it("tags follow the content ladder (editor CRUD, author/moderator view)", () => {
+    expect(can("admin", "tags", "create")).toBe(true);
+    expect(can("editor", "tags", "create")).toBe(true);
+    expect(canViewResource("editor", "tags")).toBe(true);
+    expect(canViewResource("author", "tags")).toBe(true);
+    expect(can("author", "tags", "create")).toBe(false);
+    expect(canViewResource("moderator", "tags")).toBe(true);
+    expect(can("moderator", "tags", "update")).toBe(false);
+    expect(canViewResource("user", "tags")).toBe(false);
+  });
 });

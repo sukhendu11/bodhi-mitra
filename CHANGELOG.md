@@ -2,6 +2,15 @@
 
 ## 2026-08-15
 
+### Remaining admin resources — site settings, tags, notifications
+
+**Registry grew from 8 → 11 resources.** `src/lib/admin/resources.ts` now registers **site_settings** (single-row: branding/theme/book-grid/maintenance, fields use dotted keys like `branding.site_name_en` so the flat generic form edits nested config), **tags** (derived from mock posts+books via `mockFetchTags()` in mock-data.ts), and **notifications** (admin-scope rows from `mockGetAllNotifications()`).
+
+- **`src/lib/admin/data-provider.ts`** — `ADMIN_RESOURCES` + mock adapter: `site_settings` flattens the merged `SiteConfig` into dotted keys for the list and unflattens form values back into a nested patch (`mockUpdateSettings`) on save; `tags` reads the derived tag list; `notifications` reads the mock admin store. `MOCK_READ_ONLY` extended (tags/notifications; site_settings is editable via the mock settings store).
+- **`src/lib/admin/rbac.ts`** — matrix extended: **super_admin** full CRUD on all three · **admin** site_settings/notifications view+update, tags full · **editor** tags create/edit · **author** tags view · **moderator** tags + notifications view · user none.
+- **`src/components/admin/refine/ResourceList.tsx`** — new `singleRow` flag on the resource def hides New/Delete for site settings (edit-only, like a config panel).
+- **Tests** — registry (single-row flag, dotted keys, notification select options), RBAC (admin vs editor site settings/notifications, tags content ladder), dataProvider (single-row list, nested patch update round-trip, tags/notifications lists). **668/668 tests**, tsc 0 errors, build green, browser-verified in the Refine mock preview (all 12 checks pass, zero console errors).
+
 ### P2 — role-based access control in the Refine admin
 
 - **`src/lib/admin/rbac.ts`** — the role→resource permission matrix driving the admin UI. Entry gate `canEnterAdmin` = editor+. Per-role access: **super_admin** all 8 resources full CRUD · **admin** content CRUD + structure edit + orders view/update, no profiles (user management is super_admin-only) · **editor** content CRUD + structure view/edit, no orders/profiles · **author** content view + posts create/edit · **moderator** view-only content + orders view · **user** nothing.

@@ -34,6 +34,10 @@ import {
 } from "@/lib/mock-data";
 import { mockGetAllOrders } from "@/lib/mock-commerce";
 import { mockFetchAllProfiles } from "@/lib/mock-session";
+import { mockFetchTags } from "@/lib/mock-data";
+import { mockGetAllNotifications } from "@/lib/mock-notifications";
+import { mockGetSettings, mockUpdateSettings } from "@/lib/mock-settings";
+import { mergeConfig, type SiteConfig } from "@/lib/siteSettings";
 import type { Book } from "@/lib/books";
 import type { Post } from "@/lib/posts";
 import type { Video } from "@/lib/videos";
@@ -48,6 +52,9 @@ export const ADMIN_RESOURCES = [
   "navigation_items",
   "orders",
   "profiles",
+  "site_settings",
+  "tags",
+  "notifications",
 ] as const;
 
 export type AdminResource = (typeof ADMIN_RESOURCES)[number];
@@ -61,7 +68,53 @@ const MOCK_READ_ONLY: ReadonlySet<AdminResource> = new Set([
   "navigation_items",
   "orders",
   "profiles",
+  "tags",
+  "notifications",
 ]);
+
+/* ─── site_settings helpers ───────────────────────────────────
+ * The mock store is a deep-partial patch (mock-settings.ts); the admin
+ * edits the *merged* config (SiteConfig) via the generic form. Flatten the
+ * merged config into dotted keys so the flat generic form works, and
+ * unflatten the form values back into a nested patch on save.
+ */
+
+function flattenConfig(
+  obj: Record<string, unknown>,
+  prefix = "",
+  out: Record<string, unknown> = {},
+): Record<string, unknown> {
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      flattenConfig(value as Record<string, unknown>, fullKey, out);
+    } else {
+      out[fullKey] = value;
+    }
+  }
+  return out;
+}
+
+function unflattenPatch(values: Record<string, unknown>): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (value === undefined) continue;
+    const parts = key.split(".");
+    let cursor = patch;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      cursor[part] ??= {};
+      cursor = cursor[part] as Record<string, unknown>;
+    }
+    cursor[parts[parts.length - 1]] = value;
+  }
+  return patch;
+}
+
+function mergedSettingsRow(): Row {
+  const merged = mergeConfig(mockGetSettings() ?? {});
+  return { id: "site", ...flattenConfig(merged as unknown as Record<string, unknown>) };
+}
 
 async function mockList(resource: AdminResource): Promise<Row[]> {
   switch (resource) {
@@ -81,6 +134,12 @@ async function mockList(resource: AdminResource): Promise<Row[]> {
       return (await mockGetAllOrders()) as unknown as Row[];
     case "profiles":
       return mockFetchAllProfiles() as unknown as Row[];
+    case "site_settings":
+      return [mergedSettingsRow()];
+    case "tags":
+      return mockFetchTags() as unknown as Row[];
+    case "notifications":
+      return (await mockGetAllNotifications()) as unknown as Row[];
   }
 }
 
@@ -116,6 +175,13 @@ function mockUpdateRow(resource: AdminResource, id: string | number, values: Rec
     case "videos": {
       const base = mockFetchAllVideos().find((v) => v.id === id) as Video | undefined;
       return mockUpsertVideo({ ...(base ?? ({} as Video)), ...values, id: String(id) }) as unknown as Row;
+    }
+    case "site_settings": {
+      // Single-row resource: unflatten the dotted form keys into a nested
+      // patch and merge into the mock settings store.
+      const patch = unflattenPatch(values);
+      mockUpdateSettings(patch as never);
+      return mergedSettingsRow();
     }
     default:
       throw new Error(`Update not available for ${resource} in mock mode`);

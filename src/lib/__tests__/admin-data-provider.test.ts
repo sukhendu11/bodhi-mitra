@@ -92,4 +92,49 @@ describe("admin dataProvider (mock seam)", () => {
       expect(Array.isArray(res.data)).toBe(true);
     }
   });
+
+  it("site_settings is a single flattened row with dotted keys", async () => {
+    const res = await mockDataProvider.getList({ resource: "site_settings" } as never);
+    expect(res.total).toBe(1);
+    const row = res.data[0] as Record<string, unknown>;
+    expect(row.id).toBe("site");
+    expect(row["branding.site_name_en"]).toBe("Sabbe Satta");
+    expect(row["theme.accent_color"]).toBe("#d35400");
+  });
+
+  it("site_settings update persists a nested patch via the mock store", async () => {
+    const updated = await mockDataProvider.update({
+      resource: "site_settings",
+      id: "site",
+      variables: {
+        "branding.site_name_en": "Sabbe Satta Test",
+        "theme.font_size_base": 18,
+        "maintenance.enabled": true,
+      },
+    } as never);
+    const row = updated.data as Record<string, unknown>;
+    expect(row["branding.site_name_en"]).toBe("Sabbe Satta Test");
+    expect(row["theme.font_size_base"]).toBe(18);
+    expect(row["maintenance.enabled"]).toBe(true);
+    // Untouched sections keep their defaults.
+    expect(row["branding.tagline_en"]).toBe(
+      "Where ancient wisdom meets modern psychology.",
+    );
+  });
+
+  it("tags getList returns derived rows with slug/name", async () => {
+    const res = await mockDataProvider.getList({ resource: "tags" } as never);
+    expect(res.data.length).toBeGreaterThan(0);
+    const row = res.data[0] as Record<string, unknown>;
+    expect(row.slug).toBeTruthy();
+    expect(row.name_en).toBeTruthy();
+  });
+
+  it("notifications getList returns admin-scope rows", async () => {
+    const res = await mockDataProvider.getList({ resource: "notifications" } as never);
+    expect(res.data.length).toBeGreaterThan(0);
+    const row = res.data[0] as Record<string, unknown>;
+    expect(row.message).toBeTruthy();
+    expect(row.type).toBeTruthy();
+  });
 });

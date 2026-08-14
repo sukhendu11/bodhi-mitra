@@ -99,5 +99,31 @@ describe("admin resource registry", () => {
     const profiles = getResourceDef("profiles");
     const userIdField = (profiles?.fields as ResourceField[]).find((f) => f.key === "user_id");
     expect(userIdField?.readOnly).toBe(true);
+
+    const tags = getResourceDef("tags");
+    const slugField = (tags?.fields as ResourceField[]).find((f) => f.key === "slug");
+    expect(slugField?.readOnly).toBe(true);
+  });
+
+  it("site_settings is a single-row resource (no create/delete in the UI)", () => {
+    const def = getResourceDef("site_settings");
+    expect(def?.singleRow).toBe(true);
+    expect(def?.name).toBe("site_settings");
+  });
+
+  it("site_settings fields use dotted keys for nested config", () => {
+    const def = getResourceDef("site_settings");
+    const fields = def?.fields as ResourceField[];
+    for (const f of fields ?? []) {
+      expect(f.key).toMatch(/\./);
+    }
+  });
+
+  it("notifications fields carry a select type with valid options", () => {
+    const def = getResourceDef("notifications");
+    const typeField = (def?.fields as ResourceField[]).find((f) => f.key === "type");
+    expect(typeField?.type).toBe("select");
+    expect(typeField?.options).toContain("new_purchase");
+    expect(typeField?.options).toContain("welcome");
   });
 });

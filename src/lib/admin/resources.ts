@@ -11,11 +11,14 @@
  */
 import type { ComponentType } from "react";
 import {
+  Bell,
   BookOpen,
   FileText,
   FolderTree,
   ListTree,
   Receipt,
+  Settings2,
+  Tag,
   Users,
   Video,
 } from "lucide-react";
@@ -56,6 +59,8 @@ export interface ResourceDef {
   icon: ComponentType<{ className?: string }>;
   columns: ResourceColumn[];
   fields: ResourceField[];
+  /** Single-row resources (site settings) — no New/Delete, edit only. */
+  singleRow?: boolean;
 }
 
 /* ─── Books ─────────────────────────────────────────────────────── */
@@ -261,6 +266,80 @@ export const ADMIN_RESOURCE_DEFS: ResourceDef[] = [
       { key: "created_at", labelEn: "Joined", labelBn: "যোগদান", format: (r) => String(r.created_at ?? "").slice(0, 10) },
     ],
     fields: PROFILE_FIELDS,
+  },
+  {
+    name: "site_settings",
+    labelEn: "Site Settings",
+    labelBn: "সাইট সেটিংস",
+    icon: Settings2,
+    singleRow: true,
+    columns: [
+      { key: "branding.site_name_en", labelEn: "Site Name", labelBn: "সাইটের নাম" },
+      { key: "branding.tagline_en", labelEn: "Tagline", labelBn: "ট্যাগলাইন" },
+      { key: "theme.accent_color", labelEn: "Accent", labelBn: "অ্যাকসেন্ট" },
+      { key: "theme.mode", labelEn: "Mode", labelBn: "মোড" },
+      { key: "maintenance.enabled", labelEn: "Maintenance", labelBn: "রক্ষণাবেক্ষণ", format: (r) => (r["maintenance.enabled"] ? "ON" : "off") },
+    ],
+    fields: [
+      // Branding
+      { key: "branding.site_name_en", labelEn: "Site Name (EN)", labelBn: "সাইটের নাম (ইংরেজি)", type: "text" },
+      { key: "branding.site_name_bn", labelEn: "Site Name (BN)", labelBn: "সাইটের নাম (বাংলা)", type: "text" },
+      { key: "branding.tagline_en", labelEn: "Tagline (EN)", labelBn: "ট্যাগলাইন (ইংরেজি)", type: "text" },
+      { key: "branding.tagline_bn", labelEn: "Tagline (BN)", labelBn: "ট্যাগলাইন (বাংলা)", type: "text" },
+      // Theme
+      { key: "theme.accent_color", labelEn: "Accent Color", labelBn: "অ্যাকসেন্ট রঙ", type: "text" },
+      { key: "theme.accent_hover", labelEn: "Accent Hover", labelBn: "অ্যাকসেন্ট হোভার", type: "text" },
+      { key: "theme.mode", labelEn: "Mode", labelBn: "মোড", type: "select", options: ["light", "dark"] },
+      { key: "theme.font_size_base", labelEn: "Base Font Size (px)", labelBn: "বেস ফন্ট সাইজ (px)", type: "number" },
+      { key: "theme.radius_scale", labelEn: "Radius Scale", labelBn: "রেডিয়াস স্কেল", type: "number" },
+      // Book grid
+      { key: "book_grid.page_size", labelEn: "Books per Page", labelBn: "প্রতি পৃষ্ঠায় বই", type: "number" },
+      { key: "book_grid.columns_mobile", labelEn: "Columns (Mobile)", labelBn: "কলাম (মোবাইল)", type: "select", options: ["1", "2"] },
+      { key: "book_grid.columns_tablet", labelEn: "Columns (Tablet)", labelBn: "কলাম (ট্যাবলেট)", type: "select", options: ["2", "3", "4"] },
+      { key: "book_grid.columns_desktop", labelEn: "Columns (Desktop)", labelBn: "কলাম (ডেস্কটপ)", type: "select", options: ["3", "4", "5"] },
+      { key: "book_grid.gap", labelEn: "Grid Gap (px)", labelBn: "গ্রিড গ্যাপ (px)", type: "number" },
+      // Maintenance
+      { key: "maintenance.enabled", labelEn: "Maintenance Mode", labelBn: "রক্ষণাবেক্ষণ মোড", type: "boolean" },
+      { key: "maintenance.title_en", labelEn: "Maintenance Title (EN)", labelBn: "রক্ষণাবেক্ষণ শিরোনাম (ইংরেজি)", type: "text" },
+      { key: "maintenance.message_en", labelEn: "Maintenance Message (EN)", labelBn: "রক্ষণাবেক্ষণ বার্তা (ইংরেজি)", type: "textarea" },
+    ],
+  },
+  {
+    name: "tags",
+    labelEn: "Tags",
+    labelBn: "ট্যাগ",
+    icon: Tag,
+    columns: [
+      { key: "name_en", labelEn: "Name", labelBn: "নাম" },
+      { key: "slug", labelEn: "Slug", labelBn: "স্লাগ" },
+      { key: "color", labelEn: "Color", labelBn: "রঙ" },
+    ],
+    fields: [
+      { key: "name_en", labelEn: "Name (EN)", labelBn: "নাম (ইংরেজি)", type: "text" },
+      { key: "name_bn", labelEn: "Name (BN)", labelBn: "নাম (বাংলা)", type: "text" },
+      { key: "slug", labelEn: "Slug", labelBn: "স্লাগ", type: "text", readOnly: true },
+      { key: "color", labelEn: "Color", labelBn: "রঙ", type: "text" },
+    ],
+  },
+  {
+    name: "notifications",
+    labelEn: "Notifications",
+    labelBn: "বিজ্ঞপ্তি",
+    icon: Bell,
+    columns: [
+      { key: "message", labelEn: "Message", labelBn: "বার্তা" },
+      { key: "type", labelEn: "Type", labelBn: "ধরন" },
+      { key: "userId", labelEn: "User", labelBn: "ব্যবহারকারী", format: (r) => String(r.userId ?? "").slice(0, 8) },
+      { key: "read", labelEn: "Read", labelBn: "পঠিত", format: (r) => (r.read ? "✓" : "") },
+      { key: "createdAt", labelEn: "Created", labelBn: "তৈরি", format: (r) => String(r.createdAt ?? "").slice(0, 10) },
+    ],
+    fields: [
+      { key: "message", labelEn: "Message", labelBn: "বার্তা", type: "textarea" },
+      { key: "type", labelEn: "Type", labelBn: "ধরন", type: "select", options: ["new_comment", "comment_reply", "contact_message", "new_purchase", "new_content", "recommendation", "welcome"] },
+      { key: "link", labelEn: "Link", labelBn: "লিংক", type: "text" },
+      { key: "read", labelEn: "Read", labelBn: "পঠিত", type: "boolean" },
+      { key: "userId", labelEn: "User ID", labelBn: "ব্যবহারকারী আইডি", type: "text", readOnly: true },
+    ],
   },
 ];
 
