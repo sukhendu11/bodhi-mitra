@@ -24,6 +24,12 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useLang, toBanglaDigits } from "@/lib/i18n";
 import { getResourceDef, type ResourceColumn } from "@/lib/admin/resources";
 import { mockResourceWritable } from "@/lib/admin/data-provider";
+import {
+  canCreateResource,
+  canDeleteResource,
+  canUpdateResource,
+  useAdminRole,
+} from "@/lib/admin/rbac";
 import { ResourceFormDialog } from "./ResourceFormDialog";
 
 type Row = Record<string, unknown> & { id: string | number };
@@ -44,7 +50,13 @@ export function ResourceList({ resource }: ResourceListProps) {
   const { lang } = useLang();
   const bn = lang === "bn";
   const def = getResourceDef(resource);
-  const writable = mockResourceWritable(resource as never);
+  const role = useAdminRole();
+  // RBAC (P2): an action needs BOTH the role permission and mock-store
+  // support (read-only resources like orders/pages lack mock write stores).
+  const storeWritable = mockResourceWritable(resource as never);
+  const canCreate = canCreateResource(role, resource as never) && storeWritable;
+  const canEdit = canUpdateResource(role, resource as never) && storeWritable;
+  const canDelete = canDeleteResource(role, resource as never) && storeWritable;
 
   const [editing, setEditing] = useState<Row | "new" | null>(null);
   const [deleting, setDeleting] = useState<Row | null>(null);
@@ -62,31 +74,35 @@ export function ResourceList({ resource }: ResourceListProps) {
         id: "actions",
         header: "",
         cell: ({ row }) =>
-          writable ? (
+          canEdit || canDelete ? (
             <div className="flex items-center justify-end gap-1.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0"
-                aria-label={bn ? "সম্পাদনা" : "Edit"}
-                onClick={() => setEditing(row.original)}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                aria-label={bn ? "মুছুন" : "Delete"}
-                onClick={() => setDeleting(row.original)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
+              {canEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  aria-label={bn ? "সম্পাদনা" : "Edit"}
+                  onClick={() => setEditing(row.original)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              {canDelete && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                  aria-label={bn ? "মুছুন" : "Delete"}
+                  onClick={() => setDeleting(row.original)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
           ) : null,
       },
     ],
-    [def, bn, writable],
+    [def, bn, canEdit, canDelete],
   );
 
   // Drive pagination through TanStack Table's own API: the react-table wrapper
@@ -141,7 +157,7 @@ export function ResourceList({ resource }: ResourceListProps) {
             placeholder={bn ? "অনুসন্ধান…" : "Search…"}
             className="h-8 w-44 rounded-md border border-border/60 bg-background px-2.5 text-sm outline-none focus:border-primary/50"
           />
-          {writable && (
+          {canCreate && (
             <Button size="sm" onClick={() => setEditing("new")}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
               {bn ? "নতুন" : "New"}

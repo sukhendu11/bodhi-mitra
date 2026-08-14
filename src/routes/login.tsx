@@ -276,7 +276,7 @@ function LoginPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">
             Demo mode
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <BrandCtaButton
               type="button"
               onClick={() => {
@@ -293,6 +293,19 @@ function LoginPage() {
             <button
               type="button"
               onClick={() => {
+                signInAsDemo("editor");
+                mockEnsureWelcome(DEMO_ACCOUNTS.editor.id);
+                ensureSessionGuard();
+                recordLogin("editor@sabbe-satta.test", "mock-demo");
+                toast.success("Signed in as demo editor");
+              }}
+              className="px-4 py-2.5 text-sm font-medium rounded-lg border border-border/60 bg-background/60 hover:border-foreground/30 hover:bg-secondary/40 transition-all duration-200"
+            >
+              Continue as demo editor
+            </button>
+            <button
+              type="button"
+              onClick={() => {
                 signInAsDemo("admin");
                 mockEnsureWelcome(DEMO_ACCOUNTS.admin.id);
                 ensureSessionGuard();
@@ -305,7 +318,8 @@ function LoginPage() {
             </button>
           </div>
           <p className="mt-3 text-xs text-muted-foreground/70 leading-relaxed">
-            demo@sabbe-satta.test / demo1234 · admin@sabbe-satta.test / admin1234
+            demo@sabbe-satta.test / demo1234 · editor@sabbe-satta.test / editor1234 ·
+            admin@sabbe-satta.test / admin1234
           </p>
         </div>
       )}

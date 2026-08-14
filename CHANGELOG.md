@@ -2,6 +2,15 @@
 
 ## 2026-08-15
 
+### P2 — role-based access control in the Refine admin
+
+- **`src/lib/admin/rbac.ts`** — the role→resource permission matrix driving the admin UI. Entry gate `canEnterAdmin` = editor+. Per-role access: **super_admin** all 8 resources full CRUD · **admin** content CRUD + structure edit + orders view/update, no profiles (user management is super_admin-only) · **editor** content CRUD + structure view/edit, no orders/profiles · **author** content view + posts create/edit · **moderator** view-only content + orders view · **user** nothing.
+- **Gating wired everywhere**: `RefineAdminApp` filters sidebar tabs + dashboard cards by visible resources; `ResourceList` shows New/Edit/Delete only when the role has the matching permission (combined with mock-store writability); `ResourceFormDialog` blocks saves without create/update permission.
+- **Route**: `/admin` mock guard now uses `canEnterAdmin` (editor+). Limited roles (editor today) render the RBAC-aware Refine shell directly; full admins keep MockAdminPanel by default with the `?admin=refine` preview seam. Non-visible active tabs fall back to Dashboard.
+- **Demo editor account**: `editor@sabbe-satta.test` / `editor1234` + "Continue as demo editor" button on `/login` (demo grid 2→3 columns, stacks on mobile).
+- **Verified in the browser** (headless Chrome): editor sees content tabs only (no Orders/Users), full CRUD on books, no actions on mock-read-only pages; admin sees Orders but not Users; super_admin sees both. **659/659 tests** (+8 RBAC matrix tests), tsc 0 errors, `npm run build` green.
+- **Remaining (P2)**: server-side `requirePermission` enforcement on real-mode mutations (the client matrix is the UI layer — "never trust the client" is enforced server-side when Supabase mutations are wired).
+
 ### P2 — admin resource registry + form dialog tests
 
 - **`src/lib/__tests__/admin-resources.test.ts`** (8 tests) — pins the schema-driven registry contract: every resource covered with unique bilingual labels + icon, valid column/field shapes, select options present, `title_en` required on books/posts/videos, `getResourceDef` lookups, read-only identity fields.

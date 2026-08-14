@@ -24,6 +24,11 @@ import { Loader2, X } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { getResourceDef, type ResourceField } from "@/lib/admin/resources";
 import { mockResourceWritable } from "@/lib/admin/data-provider";
+import {
+  canCreateResource,
+  canUpdateResource,
+  useAdminRole,
+} from "@/lib/admin/rbac";
 
 type Row = Record<string, unknown> & { id: string | number };
 
@@ -196,8 +201,14 @@ export function ResourceFormDialog({ resource, initial, onClose }: ResourceFormD
   const { lang } = useLang();
   const bn = lang === "bn";
   const def = getResourceDef(resource);
-  const writable = mockResourceWritable(resource as never);
   const isEdit = Boolean(initial);
+  const role = useAdminRole();
+  // RBAC (P2): create/edit needs both the role permission and mock-store
+  // support. Read-only resources render disabled with a hint.
+  const roleWritable = isEdit
+    ? canUpdateResource(role, resource as never)
+    : canCreateResource(role, resource as never);
+  const writable = roleWritable && mockResourceWritable(resource as never);
 
   const { onFinish, formLoading } = useForm<Row>({
     resource,

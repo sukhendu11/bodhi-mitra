@@ -18,11 +18,15 @@ import { Button } from "@/components/ui/button";
 import { useLang } from "@/lib/i18n";
 import { getAdminDataProvider } from "@/lib/admin/data-provider";
 import { ADMIN_RESOURCE_DEFS } from "@/lib/admin/resources";
+import { canViewResource, useAdminRole } from "@/lib/admin/rbac";
 import { ResourceList } from "./ResourceList";
 
 function DashboardTab() {
   const { lang } = useLang();
   const bn = lang === "bn";
+  const role = useAdminRole();
+  // Only show resources the signed-in role may view (RBAC, P2).
+  const visibleDefs = ADMIN_RESOURCE_DEFS.filter((def) => canViewResource(role, def.name));
   return (
     <div className="px-6 pt-5">
       <h2 className="font-serif text-xl text-foreground">
@@ -34,7 +38,7 @@ function DashboardTab() {
           : "Manage every resource from the sidebar. Real-mode CRUD runs through Supabase; mock mode uses the offline stores."}
       </p>
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {ADMIN_RESOURCE_DEFS.map((def) => {
+        {visibleDefs.map((def) => {
           const Icon = def.icon;
           return (
             <div
@@ -59,17 +63,27 @@ function DashboardTab() {
 function RefineAdminBody() {
   const { lang } = useLang();
   const bn = lang === "bn";
+  const role = useAdminRole();
+  // RBAC (P2): only resources the role may view appear in the sidebar.
+  const visibleDefs = ADMIN_RESOURCE_DEFS.filter((def) => canViewResource(role, def.name));
   const [active, setActive] = useState<string>("dashboard");
 
   const tabs: { id: string; labelEn: string; labelBn: string; icon: ComponentType<{ className?: string }> }[] = [
     { id: "dashboard", labelEn: "Dashboard", labelBn: "ড্যাশবোর্ড", icon: LayoutDashboard },
-    ...ADMIN_RESOURCE_DEFS.map((def) => ({
+    ...visibleDefs.map((def) => ({
       id: def.name,
       labelEn: def.labelEn,
       labelBn: def.labelBn,
       icon: def.icon,
     })),
   ];
+
+  // If the active tab is no longer visible (role change / mock reset),
+  // render the dashboard instead of a hidden resource (no state write
+  // during render — the sidebar click handler still drives real switches).
+  const effectiveActive = active !== "dashboard" && !tabs.some((t) => t.id === active)
+    ? "dashboard"
+    : active;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -86,7 +100,7 @@ function RefineAdminBody() {
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-4">
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = active === tab.id;
+            const isActive = effectiveActive === tab.id;
             return (
               <button
                 key={tab.id}
@@ -123,7 +137,7 @@ function RefineAdminBody() {
                 key={tab.id}
                 onClick={() => setActive(tab.id)}
                 className={`shrink-0 rounded-full px-3 py-1 text-xs ${
-                  active === tab.id
+                  effectiveActive === tab.id
                     ? "bg-primary/10 font-medium text-foreground"
                     : "text-muted-foreground"
                 }`}
@@ -134,10 +148,10 @@ function RefineAdminBody() {
           </div>
         </div>
 
-        {active === "dashboard" ? (
+        {effectiveActive === "dashboard" ? (
           <DashboardTab />
         ) : (
-          <ResourceList key={active} resource={active} />
+          <ResourceList key={effectiveActive} resource={effectiveActive} />
         )}
       </div>
     </div>

@@ -7,11 +7,11 @@ import { MockAdminPanel } from "@/components/admin/mock/MockAdminPanel";
 import { RefineAdminApp } from "@/components/admin/refine/RefineAdminApp";
 import { isMockMode } from "@/lib/data-source";
 import { getMockSession, getMockUserRole } from "@/lib/mock-session";
+import { canEnterAdmin } from "@/lib/admin/rbac";
 
 function isMockAdmin(): boolean {
   if (!isMockMode()) return false;
-  const role = getMockUserRole();
-  return role === "super_admin" || role === "admin";
+  return canEnterAdmin(getMockUserRole());
 }
 
 /* ─── Route ──────────────────────────────────────────────────────── */
@@ -69,8 +69,9 @@ function VerifyingShell() {
 function AdminShell() {
   const { user, loading } = useAuthSession();
   // Preview seam: ?admin=refine exercises the Refine admin offline in mock
-  // mode (mock mode default stays MockAdminPanel per the Mock Data Removal
-  // Strategy — the Refine admin replaces it in production once verified).
+  // mode (mock mode default stays MockAdminPanel for full admins per the
+  // Mock Data Removal Strategy — the Refine admin replaces it in production
+  // once verified).
   const search = useSearch({ strict: false }) as { admin?: string };
   const previewRefine = search.admin === "refine";
 
@@ -79,9 +80,17 @@ function AdminShell() {
     return <VerifyingShell />;
   }
 
-  // Mock mode — the offline mock admin panel (Refine preview via ?admin=refine)
+  // Mock mode:
+  //  - editor or above: admittable (isMockAdmin guard runs in beforeLoad).
+  //  - full admins (super_admin/admin) get MockAdminPanel by default, with
+  //    the RBAC-aware Refine shell via ?admin=refine preview.
+  //  - limited roles (editor + in the future author/moderator) go straight
+  //    to the Refine shell — it filters resources/actions by role (RBAC, P2).
   if (isMockMode()) {
-    return previewRefine ? <RefineAdminApp /> : <MockAdminPanel session={getMockSession()} />;
+    const role = getMockUserRole();
+    const isFullAdmin = role === "super_admin" || role === "admin";
+    if (previewRefine || !isFullAdmin) return <RefineAdminApp />;
+    return <MockAdminPanel session={getMockSession()} />;
   }
 
   // Real mode — the Refine + shadcn admin inside the app (P2, AD-029).

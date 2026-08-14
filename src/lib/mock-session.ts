@@ -18,12 +18,12 @@ export interface DemoAccount {
   id: string;
   email: string;
   password: string;
-  role: "user" | "super_admin";
+  role: "user" | "super_admin" | "editor";
   displayName: string;
 }
 
 /** Demo accounts — passwords fixed for the offline demo. */
-export const DEMO_ACCOUNTS: Record<"user" | "admin", DemoAccount> = {
+export const DEMO_ACCOUNTS: Record<"user" | "admin" | "editor", DemoAccount> = {
   user: {
     id: "demo-user",
     email: "demo@sabbe-satta.test",
@@ -37,6 +37,13 @@ export const DEMO_ACCOUNTS: Record<"user" | "admin", DemoAccount> = {
     password: "admin1234",
     role: "super_admin",
     displayName: "Demo Admin",
+  },
+  editor: {
+    id: "demo-editor",
+    email: "editor@sabbe-satta.test",
+    password: "editor1234",
+    role: "editor",
+    displayName: "Demo Editor",
   },
 };
 
@@ -133,8 +140,8 @@ export function signInWithMock(email: string, password: string): { error?: strin
   return {};
 }
 
-/** One-click demo sign-in ("Continue as demo user/admin"). */
-export function signInAsDemo(role: "user" | "admin") {
+/** One-click demo sign-in ("Continue as demo user/admin/editor"). */
+export function signInAsDemo(role: "user" | "admin" | "editor") {
   const account = DEMO_ACCOUNTS[role];
   writeRawSession(makeMockSession(account));
   ensureMockProfile(account);
