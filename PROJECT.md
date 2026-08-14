@@ -170,7 +170,7 @@ Sabbe Satta uses a **unified architecture**: **Supabase** owns the entire backen
 
 | Aspect | Detail |
 |--------|--------|
-| **Buckets** | blog-images, site-assets, book-covers, avatars, book-pdfs |
+| **Buckets** | dev schema: blog-images, site-assets, book-covers, avatars, book-pdfs (target P1: book-pdfs, covers, avatars, site-assets, documents — see §18 kit A) |
 | **Features** | Grid/list toggle, bucket filter, multi-file upload, search, pagination |
 | **Details** | Slide-over panel with copy URL / open / delete |
 | **Status** | Complete |
@@ -274,8 +274,8 @@ Sabbe Satta uses a **unified architecture**: **Supabase** owns the entire backen
 | Authentication | Done | Supabase Auth, email/password + Google OAuth |
 | Authorization (RBAC) | Done | user_roles table, RLS, RPC functions |
 | Database foundation | Done | 40+ migrations applied |
-| Admin dashboard shell | Transitioned to Strapi ✅ | `/admin` route redirects to Strapi admin panel |
-| CMS framework | Transitioned to Strapi ✅ | Content managed via Strapi admin panel; TipTap replaced by Strapi built-in editor |
+| Admin dashboard shell | Transitioned to Strapi ✅ (historical — superseded by AD-029) | `/admin` route redirected to the Strapi admin panel (now: MockAdminPanel in mock mode; Refine + shadcn admin target P2) |
+| CMS framework | Transitioned to Strapi ✅ (historical — superseded by AD-029) | Content was managed via the Strapi admin panel (now: Supabase unified backend, P1/P3; Refine admin target P2) |
 | Media library | Done | Grid/list, multiple buckets, search |
 | Global settings | Done | 8-tab customizer, singleton JSON blob |
 | Navigation system | Done | Drag-and-drop tree builder |
@@ -377,7 +377,7 @@ Frontend reads → Supabase (server functions / RLS-guarded queries)
 
 ## 9. Content Management Architecture
 
-**Covered by §7 (CMS Architecture)** — content types, the bilingual paired-field pattern, `pickLocalized()` runtime selection, and the editor → Strapi → frontend content flow. Merged into §7 during the 2026-08-08 dedup.
+**Covered by §7 (CMS Architecture)** — content types, the bilingual paired-field pattern, `pickLocalized()` runtime selection, and the content flow. Target (AD-029): Editor → **Refine + shadcn admin** (`/admin`, P2) → Supabase server functions → Supabase PostgreSQL → frontend renders. (The old editor → Strapi → frontend flow was superseded 2026-08-14.) Merged into §7 during the 2026-08-08 dedup.
 
 ---
 
@@ -408,7 +408,7 @@ RLS: Every table guarded. Admin routes guarded by beforeLoad middleware.
 
 ## 13. Media Library
 
-Buckets: blog-images (public), site-assets (public), book-covers (public), avatars (public), book-pdfs (private)
+Buckets (dev schema, current code): blog-images (public), site-assets (public), book-covers (public), avatars (public), book-pdfs (private). **Target (P1, AD-029):** `book-pdfs` (private), `covers`, `avatars`, `site-assets`, `documents` — see §18 kit A.
 Upload: Client validate -> Supabase Storage -> media_assets table -> return URL
 
 ---
@@ -586,7 +586,7 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 > **Production hosting (approved 2026-08-14, AD-029):** **Hostinger Managed Node.js / Web Apps Hosting** — the managed platform provides Node runtime, deployment, SSL, CDN, security/WAF, DDoS protection, and backups. **No VPS, no Docker, no Nginx administration, no PM2/systemd, no server-installed PostgreSQL.** Cloudflare is optional (only if a specific requirement is demonstrated later). See **AD-029** and §28 §6.
 
 1. **Create the Hostinger Managed Node.js web app** — Hostinger hPanel → Web Apps / Managed Node.js → choose Node.js runtime (Node 22) → connect the repo (or deploy via Git / file upload per Hostinger's managed flow).
-2. **Deploy the TanStack Start frontend** — build output deployable on the managed Node runtime; set env vars in hPanel (`VITE_DATA_SOURCE`, `SITE_URL`, Supabase keys, `PAYMENT_PROVIDER`, `RESEND_API_KEY`).
+2. **Deploy the TanStack Start frontend** — build output deployable on the managed Node runtime; set env vars in hPanel (`VITE_DATA_SOURCE`, `SITE_URL`, Supabase keys, `PAYMENT_PROVIDER`, `RESEND_API_KEY`). Build/deploy: `npm run build` (Nitro `node-server` preset → `.output/`) then run `npm start` (`node .output/server/index.mjs`) — implemented 2026-08-15 (P0 code-side).
 3. **Domain + TLS** — point `sabbesatta.com` at the Hostinger managed app; Hostinger handles SSL (free auto-renewed certificates on the managed plan). Subdomains (`admin.*`/`api.*`) as needed — Hostinger's managed platform handles routing.
 4. **Backups** — rely on Hostinger managed backups + Supabase automatic backups.
 
@@ -610,33 +610,16 @@ Milestone tracker: the table below + `PROJECT.md §28` (Mock Platform seam). (Fo
 
 > **2026-08-14 (AD-029):** Strapi is **no longer part of the target architecture**. Do **not** create a fresh Strapi instance. The sections below are kept for **historical reference only** — the Strapi instance, its content types, and its API reads are **pending migration to Supabase and removal** (P3 of the new roadmap). Do not describe Strapi as the production CMS.
 
-#### A. Supabase — fresh project (P2 prerequisite)
+**Historical setup steps (superseded — do not run):**
 
-1. **Create project** — supabase.com → New project (name `sabbe-satta`, nearest region). Note the URL `https://<ref>.supabase.co`.
-2. **Apply schema** — Dashboard → **SQL Editor → New query** → paste the entire **`supabase/manual-setup.sql`** → **Run**. (Generated from all 59 migrations in `supabase/migrations/`; the regeneration command is in the file header. `supabase/seed.sql` sample data is intentionally excluded — it requires a real user UUID.)
-   - Creates every table, RLS policy, storage bucket, and the signup trigger that auto-creates a profile row. Buckets: `post-covers`, `blog-images`, `site-assets`, `avatars`, `book-covers`, `book-pdfs`, `audio`, `documents`.
-3. **Sanity check** — Tables list includes: `posts, pages, books, videos, courses, categories, tags, profiles, purchases, carts, orders, bookmarks, reading_progress, book_ratings, comments, newsletter_subscribers, contact_messages, admin_notifications, site_settings, media_assets` with RLS enabled.
-4. **Auth → Providers** — enable **Email**. Enable **Google**: create an OAuth Client in Google Cloud Console (Web application); Authorized redirect URI → `https://<ref>.supabase.co/auth/v1/callback`; paste Client ID + Secret.
-5. **Auth → URL Configuration** — Site URL `http://localhost:3000` (dev; production domain later) + redirect URLs.
-6. **First admin** — sign up via the frontend, then promote in SQL Editor:
-   ```sql
-   select public.set_user_role('<your-user-uuid>', 'admin');  -- or 'super_admin'
-   ```
-   Then update the hardcoded admin email in `src/lib/permissions.ts` and `src/hooks/useAuth.ts`.
-7. **Settings → API keys** — copy **anon (publishable)** + **service_role** into `.env` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`). Never commit `.env`.
-
-#### B. Strapi — fresh instance (P1 prerequisite)
-
-> **Recommended:** run the existing `strapi/` project with a fresh database — the **9 content types** auto-register from `strapi/src/api/*/content-types/*/schema.json`. No rebuilding by hand. The field reference in §D is only needed if you create a blank Strapi project instead. (The legacy `comment` and `course` types were removed 2026-08-14 — comments are Supabase-owned; courses have no frontend consumer.)
-
-1. **Fresh database** — wipe the old dev DB, then `npm run develop` (or Docker per `strapi/docker-compose.yml`).
-2. **Admin user** — first-run registration screen (email + strong password).
-3. **API token** — Settings → API Tokens → Create `frontend-read`, type **Read-only**, grant every content-type permission → copy into `.env` → `VITE_STRAPI_API_TOKEN`.
-4. **i18n** — Settings → Internationalization → add locale **Bengali (bn)** (default: English).
-5. **Media Library** — upload book covers + PDFs, post covers, logo/favicon/OG image.
-6. **Site Settings (single type)** — fill top-level fields (table below); the large `config` JSON field can stay empty (frontend merges `DEFAULT_CONFIG`).
-7. **Content** — enter the minimum content (table below), then **Publish** everything (draftAndPublish).
-8. **Verify** — `curl -H "Authorization: Bearer <token>" http://localhost:1337/api/posts?populate=*` returns entries.
+1. ~~Fresh database~~ — wipe the old dev DB, then `npm run develop` (or Docker per `strapi/docker-compose.yml`).
+2. ~~Admin user~~ — first-run registration screen (email + strong password).
+3. ~~API token~~ — Settings → API Tokens → Create `frontend-read`, type **Read-only**, grant every content-type permission → copy into `.env` → `VITE_STRAPI_API_TOKEN`.
+4. ~~i18n~~ — Settings → Internationalization → add locale **Bengali (bn)** (default: English).
+5. ~~Media Library~~ — upload book covers + PDFs, post covers, logo/favicon/OG image.
+6. ~~Site Settings (single type)~~ — fill top-level fields (table below); the large `config` JSON field can stay empty (frontend merges `DEFAULT_CONFIG`).
+7. ~~Content~~ — enter the minimum content (table below), then **Publish** everything (draftAndPublish).
+8. ~~Verify~~ — `curl -H "Authorization: Bearer <token>" http://localhost:1337/api/posts?populate=*` returns entries.
 
 | Content type | Kind | Draft/Publish | Used by |
 |---|---|---|---|

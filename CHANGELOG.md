@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-15
+
+### P0 code-side — Hostinger-compatible production build (node-server preset)
+
+- `vite.config.ts` + `nitro.config.ts`: Nitro preset `vercel` → **`node-server`** (AD-029 target: Hostinger Managed Node.js runs a plain Node HTTP server). Build now emits `.output/` runnable with `node .output/server/index.mjs`.
+- `package.json`: added `npm start` (`node .output/server/index.mjs`) for the Hostinger managed runtime.
+- Verified: `npm run build` succeeds, the SSR server boots and serves HTTP 200 on `/` and `/books` with real SSR HTML; tsc 0 errors; **627/627 tests pass**.
+- Docs: PROJECT.md §18 P0 kit + README deployment steps updated with the build/start commands.
+
 ## 2026-08-14 (evening)
 
 ### Architecture decision — Hostinger Managed Node.js + Supabase unified backend + Refine/shadcn admin (AD-029) — docs only (no code)

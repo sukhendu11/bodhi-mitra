@@ -46,7 +46,11 @@ export default defineConfig({
     tanstackStart({
       server: { entry: "server" },
     }),
-    nitro({ preset: "vercel" }),
+    // Production build target (AD-029): Hostinger Managed Node.js runs a plain
+    // Node HTTP server — the `node-server` Nitro preset produces `.output/`
+    // runnable with `node .output/server/index.mjs` (`npm start`). The former
+    // `vercel` preset (dev-only, superseded 2026-08-14) is gone.
+    nitro({ preset: "node-server" }),
     viteReact(),
     tailwindcss(),
     tsConfigPaths(),

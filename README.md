@@ -162,10 +162,11 @@ bodhi-mitra/
 ## Deployment (target — Hostinger Managed Node.js)
 
 1. Create a **Hostinger Managed Node.js** web app (Node 22).
-2. Deploy the TanStack Start SSR build via Hostinger's managed flow.
-3. Configure environment variables in hPanel (`VITE_DATA_SOURCE`, `SITE_URL`, Supabase keys, `PAYMENT_PROVIDER`, `RESEND_API_KEY`).
-4. Hostinger manages SSL, CDN, security/WAF, DDoS protection, and backups.
-5. Point `sabbesatta.com` at the managed app.
+2. Build locally with `npm run build` (Nitro `node-server` preset → `.output/`) and deploy via Hostinger's managed flow.
+3. Run the production server with `npm start` (`node .output/server/index.mjs`).
+4. Configure environment variables in hPanel (`VITE_DATA_SOURCE`, `SITE_URL`, Supabase keys, `PAYMENT_PROVIDER`, `RESEND_API_KEY`).
+5. Hostinger manages SSL, CDN, security/WAF, DDoS protection, and backups.
+6. Point `sabbesatta.com` at the managed app.
 
 > **Historical deployment models** (superseded 2026-08-14, AD-029): Vercel frontend + VPS backend (Docker Compose + Nginx + PM2/systemd), then a single self-managed VPS. Neither is the target. Cloudflare is optional, not required.
 
