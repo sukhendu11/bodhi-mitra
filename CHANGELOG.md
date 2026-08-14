@@ -2,6 +2,14 @@
 
 ## 2026-08-15
 
+### Deployment model verified — Nitro node-server IS TanStack Start's official Node shape
+
+Verified against the current official TanStack Start hosting docs (not an old-roadmap assumption): **Nitro's `node-server` preset is the documented Node.js deployment mechanism for TanStack Start** — "Nitro is an agnostic layer... the nitro/vite plugin natively integrates with Vite Environments API as the underlying build tool for TanStack Start"; the Node.js/Docker section directs Vite builds to the `node-server` preset. The `tanstackStart()` Vite plugin itself ships no production runtime (confirmed zero Nitro dependency in `@tanstack/start-plugin-core`; `srvx` is dev/preview middleware only). The built output binds `NITRO_PORT ?? PORT` (default 3000) and `NITRO_HOST || HOST`, matching Hostinger Managed Node.js expectations.
+
+- **`package.json`** — added `engines.node: ">=22.12.0"` (TanStack Start's requirement) so Hostinger hPanel auto-detects the Node runtime instead of guessing from a default.
+- **`vite.config.ts`** — comment expanded to cite the official docs as the basis for the `node-server` preset (future agents won't mistake it for a roadmap artifact).
+- Docs updated: PROJECT.md §18 P0 (verified-model note + hPanel runtime auto-detection) and AGENTS.md (same).
+
 ### Remaining admin resources — site settings, tags, notifications
 
 **Registry grew from 8 → 11 resources.** `src/lib/admin/resources.ts` now registers **site_settings** (single-row: branding/theme/book-grid/maintenance, fields use dotted keys like `branding.site_name_en` so the flat generic form edits nested config), **tags** (derived from mock posts+books via `mockFetchTags()` in mock-data.ts), and **notifications** (admin-scope rows from `mockGetAllNotifications()`).

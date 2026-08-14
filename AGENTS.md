@@ -118,6 +118,8 @@
 | **Phase 4 — Legacy Cleanup** | ✅ (historical) | Refine data provider, 27 admin routes, ~50 admin components removed |
 | **Phase 5 — Production Hardening** | ⏳ Superseded by P7 | Old VPS hardening approach superseded — hardening on the Hostinger managed platform (P7, AD-029) |
 
+> **Deployment model verified 2026-08-15:** Nitro's **`node-server` preset is TanStack Start's officially documented Node deployment mechanism** — not an old-roadmap assumption. The official hosting guide (`docs/framework/react/guide/hosting`) calls Nitro "an agnostic layer" whose `nitro/vite` plugin "natively integrates with Vite Environments API as the underlying build tool for TanStack Start", and directs Vite builds deploying to Node to the `node-server` preset. The `tanstackStart()` plugin ships no production runtime (no Nitro dep in `@tanstack/start-plugin-core`; `srvx` is dev/preview middleware only). Build → `.output/server/index.mjs` (binds `NITRO_PORT ?? PORT` default 3000 / `NITRO_HOST || HOST`) → `npm start`. `package.json` has `engines.node >= 22.12.0` so Hostinger hPanel auto-detects the runtime.
+
 **Data layer (dev):** Mock-first — `posts.ts`, `books.ts`, `videos.ts`, `navigation.ts`, `taxonomy.ts`, `siteSettings.tsx`, `pages.ts` return mock data. Tests: **453 passing**. TS: 0 errors.
 - **Phase 0 fixes (F1–F5)** — see "Mock Platform Transformation" section below.
 

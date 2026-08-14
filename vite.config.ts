@@ -47,9 +47,16 @@ export default defineConfig({
       server: { entry: "server" },
     }),
     // Production build target (AD-029): Hostinger Managed Node.js runs a plain
-    // Node HTTP server — the `node-server` Nitro preset produces `.output/`
-    // runnable with `node .output/server/index.mjs` (`npm start`). The former
-    // `vercel` preset (dev-only, superseded 2026-08-14) is gone.
+    // Node HTTP server. Nitro IS TanStack Start's officially documented Node
+    // deployment mechanism (docs/framework/react/guide/hosting — "Nitro is an
+    // agnostic layer... the nitro/vite plugin natively integrates with Vite
+    // Environments API as the underlying build tool for TanStack Start"; the
+    // Node.js/Docker section directs Vite builds to the Nitro node-server
+    // preset). The `node-server` preset emits `.output/server/index.mjs`,
+    // runnable with `node .output/server/index.mjs` (`npm start`), binding to
+    // NITRO_PORT ?? PORT (default 3000) and NITRO_HOST || HOST — matching
+    // Hostinger's managed Node expectations. The former `vercel` preset
+    // (dev-only, superseded 2026-08-14) is gone.
     nitro({ preset: "node-server" }),
     viteReact(),
     tailwindcss(),
