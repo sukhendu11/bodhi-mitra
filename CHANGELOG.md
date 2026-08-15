@@ -2,6 +2,14 @@
 
 ## 2026-08-15
 
+### P2 admin — dashboard analytics stat cards (M5 dashboard parity)
+
+**`src/lib/admin/dashboard-stats.ts`** — `AdminDashboardStats` shape + pure `computeAdminDashboardStats` derivation (content counts + published counts, orders/paid orders, purchases, and **paid-orders-only revenue** in BDT) + mock-first `getAdminDashboardStats` seam (mock mode aggregates the offline stores; real mode returns the zeroed `source: "pending"` shape, rendered as "—", until Supabase aggregate queries are wired in P4 — the dashboard keeps rendering in both modes, matching the dataProvider seam pattern).
+
+- **`src/components/admin/refine/RefineAdminApp.tsx`** — `DashboardTab` gains 6 stat cards (Books · Reflections · Videos · Orders · Purchases · Revenue) with bilingual labels, Bengali digits in BN mode (`toBanglaDigits`), `BDT`/টাকা formatting via `formatMoney`, and a **Resources** quick-link index below (RBAC-filtered, clickable to the resource tab).
+- **`scripts/verify-admin-dashboard-stats.mjs`** — browser check (8 assertions: labels, mock counts 10/25/8/2, BDT revenue, resource index, zero console errors). Fixed a poll race in the script itself: it evaluated against the un-committed navigation context (null `document.body` → the first poll returned a truthy `"EXC: …"` string and broke the loop), so it now sleeps for the SPA route to commit and guards the body read.
+- **Tests** — `admin-dashboard-stats.test.ts` (6): pure derivations (published filtering, paid-only revenue, mock source, empty inputs) + mock-first seam (mock aggregates real store counts; real mode returns the pending shape). **684/684 tests**, tsc 0 errors, browser-verified (ALL 8 CHECKS PASSED, zero console errors).
+
 ### P1 books model — author/chapters kept denormalized on `books` (docs aligned)
 
 Resolved the P1 "chapters/authors table-level modeling" open item: the shipped P1 delta models authors and chapters **denormalized on the `books` row** — `author_name` + `author_bio_en/bn` columns and `chapters`/`chapter_pages` JSONB — matching exactly what the frontend consumes (no separate `authors`/`chapters` tables exist in any migration). Documentation that promised a relational `authors` table (PROJECT.md §7/§16/§18/§28 + Manual Setup Kit sanity check + AD-029 + AGENTS.md) was corrected to the shipped model, with a relational `authors` table noted as a **future improvement** (multi-author books / author pages). P1 remaining now: only content seeding decisions (mock data is the seed set, executed in P3). No code or schema changed.

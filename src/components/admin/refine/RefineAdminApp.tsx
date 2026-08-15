@@ -11,22 +11,71 @@
  * the `?admin=mock` preview seam until its features are fully covered).
  */
 import { Refine } from "@refinedev/core";
+import { useQuery } from "@tanstack/react-query";
 import { useState, type ComponentType } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, LayoutDashboard } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  LayoutDashboard,
+  Receipt,
+  Video,
+  Feather,
+  ShoppingBag,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLang } from "@/lib/i18n";
+import { useLang, toBanglaDigits, formatMoney } from "@/lib/i18n";
 import { getAdminDataProvider } from "@/lib/admin/data-provider";
 import { ADMIN_RESOURCE_DEFS } from "@/lib/admin/resources";
 import { canViewResource, useAdminRole } from "@/lib/admin/rbac";
+import { getAdminDashboardStats } from "@/lib/admin/dashboard-stats";
 import { ResourceList } from "./ResourceList";
+
+function StatCard({
+  label,
+  value,
+  sub,
+  icon: Icon,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  icon: ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-center gap-2">
+        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <Icon className="h-4 w-4" />
+        </span>
+        <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      </div>
+      <p className="mt-2 font-serif text-2xl text-foreground">{value}</p>
+      {sub && <p className="mt-0.5 text-xs text-muted-foreground/80">{sub}</p>}
+    </div>
+  );
+}
 
 function DashboardTab() {
   const { lang } = useLang();
   const bn = lang === "bn";
   const role = useAdminRole();
+
+  const { data: stats } = useQuery({
+    queryKey: ["admin", "dashboard-stats"],
+    queryFn: getAdminDashboardStats,
+  });
+
   // Only show resources the signed-in role may view (RBAC, P2).
   const visibleDefs = ADMIN_RESOURCE_DEFS.filter((def) => canViewResource(role, def.name));
+  const s = stats ?? null;
+  // Bengali digits only in BN mode — never in EN (was unconditional).
+  const dash = (v: number | undefined) =>
+    v === undefined ? "—" : bn ? toBanglaDigits(String(v)) : String(v);
+  const money = (v: number | undefined) =>
+    v === undefined ? "—" : formatMoney(v, bn ? "bn" : "en");
+
   return (
     <div className="px-6 pt-5">
       <h2 className="font-serif text-xl text-foreground">
@@ -37,7 +86,22 @@ function DashboardTab() {
           ? "সব রিসোর্স বাম প্যানেল থেকে পরিচালনা করুন।"
           : "Manage every resource from the sidebar. Real-mode CRUD runs through Supabase; mock mode uses the offline stores."}
       </p>
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+      {/* Analytics — stat cards (M5 dashboard parity) */}
+      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+        <StatCard label={bn ? "বই" : "Books"} value={dash(s?.books)} sub={`${dash(s?.publishedBooks)} ${bn ? "প্রকাশিত" : "published"}`} icon={BookOpen} />
+        <StatCard label={bn ? "প্রতিফলন" : "Reflections"} value={dash(s?.posts)} sub={`${dash(s?.publishedPosts)} ${bn ? "প্রকাশিত" : "published"}`} icon={Feather} />
+        <StatCard label={bn ? "ভিডিও" : "Videos"} value={dash(s?.videos)} icon={Video} />
+        <StatCard label={bn ? "অর্ডার" : "Orders"} value={dash(s?.orders)} sub={`${dash(s?.paidOrders)} ${bn ? "পরিশোধিত" : "paid"}`} icon={Receipt} />
+        <StatCard label={bn ? "ক্রয়" : "Purchases"} value={dash(s?.purchases)} icon={ShoppingBag} />
+        <StatCard label={bn ? "আয়" : "Revenue"} value={money(s?.revenue)} sub={bn ? "পরিশোধিত অর্ডার" : "paid orders only"} icon={Wallet} />
+      </div>
+
+      {/* Resource index — clickable quick links (RBAC-filtered) */}
+      <h3 className="mt-8 font-serif text-base text-foreground">
+        {bn ? "রিসোর্স" : "Resources"}
+      </h3>
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {visibleDefs.map((def) => {
           const Icon = def.icon;
           return (
