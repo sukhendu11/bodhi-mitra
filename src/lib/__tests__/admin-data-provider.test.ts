@@ -137,4 +137,76 @@ describe("admin dataProvider (mock seam)", () => {
     expect(row.message).toBeTruthy();
     expect(row.type).toBeTruthy();
   });
+
+  it("getList honors sorters (asc) — server-mode sorting contract", async () => {
+    const res = await mockDataProvider.getList({
+      resource: "books",
+      sorters: [{ field: "title_en", order: "asc" }],
+    } as never);
+    const titles = res.data.map((b) => String((b as { title_en: string }).title_en));
+    const sorted = [...titles].sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
+    );
+    expect(titles).toEqual(sorted);
+  });
+
+  it("getList honors sorters (desc) and reverses the ascending order", async () => {
+    const asc = await mockDataProvider.getList({
+      resource: "books",
+      sorters: [{ field: "title_en", order: "asc" }],
+    } as never);
+    const desc = await mockDataProvider.getList({
+      resource: "books",
+      sorters: [{ field: "title_en", order: "desc" }],
+    } as never);
+    const ascTitles = asc.data.map((b) => String((b as { title_en: string }).title_en));
+    const descTitles = desc.data.map((b) => String((b as { title_en: string }).title_en));
+    expect([...descTitles].reverse()).toEqual(ascTitles);
+  });
+
+  it("getList sorts numbers numerically (price asc)", async () => {
+    const res = await mockDataProvider.getList({
+      resource: "books",
+      sorters: [{ field: "price", order: "asc" }],
+    } as never);
+    const prices = res.data.map((b) => Number((b as { price: number }).price) || 0);
+    expect(prices).toEqual([...prices].sort((a, b) => a - b));
+  });
+
+  it("getList 'q' filter matches across all columns (list search)", async () => {
+    const all = await mockDataProvider.getList({ resource: "books" } as never);
+    const needle = String((all.data[0] as { title_en: string }).title_en).slice(0, 5);
+    const res = await mockDataProvider.getList({
+      resource: "books",
+      filters: [{ field: "q", operator: "contains", value: needle }],
+    } as never);
+    expect(res.total).toBeGreaterThan(0);
+    expect(res.total).toBeLessThanOrEqual(all.total);
+  });
+
+  it("getList 'eq' filter narrows to exact matches", async () => {
+    const all = await mockDataProvider.getList({ resource: "books" } as never);
+    const first = all.data[0] as { status?: string };
+    if (!first.status) return; // status may be absent on some rows
+    const res = await mockDataProvider.getList({
+      resource: "books",
+      filters: [{ field: "status", operator: "eq", value: first.status }],
+    } as never);
+    expect(res.total).toBeGreaterThan(0);
+    for (const row of res.data) {
+      expect((row as { status?: string }).status).toBe(first.status);
+    }
+  });
+
+  it("empty sorters/filters leave the list untouched", async () => {
+    const plain = await mockDataProvider.getList({ resource: "books" } as never);
+    const withEmpty = await mockDataProvider.getList({
+      resource: "books",
+      sorters: [],
+      filters: [],
+    } as never);
+    expect(withEmpty.data.map((r) => (r as { id: string }).id)).toEqual(
+      plain.data.map((r) => (r as { id: string }).id),
+    );
+  });
 });

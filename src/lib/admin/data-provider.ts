@@ -204,6 +204,69 @@ function mockDeleteRow(resource: AdminResource, id: string | number): void {
   }
 }
 
+/* ─── getList sorters + filters ────────────────────────────────
+ * The generic list renders sortable headers and a search box; the mock
+ * adapter must honor the same params the Supabase provider receives so the
+ * swap stays a config change (refine-core `sorters`/`filters` shapes).
+ */
+
+function compareValues(a: unknown, b: unknown): number {
+  if (a == null && b == null) return 0;
+  if (a == null) return 1; // null/undefined sort last
+  if (b == null) return -1;
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  return String(a).localeCompare(String(b), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
+function sortRows(
+  rows: Row[],
+  sorters: { field: string; order: "asc" | "desc" }[],
+): Row[] {
+  return [...rows].sort((a, b) => {
+    for (const s of sorters) {
+      const cmp = compareValues(a[s.field], b[s.field]);
+      if (cmp !== 0) return s.order === "asc" ? cmp : -cmp;
+    }
+    return 0;
+  });
+}
+
+function filterRows(
+  rows: Row[],
+  filters: { field?: string; key?: string; operator: string; value: unknown }[],
+): Row[] {
+  return rows.filter((row) =>
+    filters.every((f) => {
+      // Refine always sends `field`; the `key` alias is defensive.
+      const field = f.field ?? f.key;
+      if (!field) return true;
+      const needle = String(f.value ?? "").toLowerCase();
+      if (!needle) return true;
+      // The list search box filters by a virtual "q" field — match it
+      // across every column of the row (server-mode List Search pattern).
+      if (field === "q") {
+        return Object.values(row).some((rv) =>
+          String(rv ?? "").toLowerCase().includes(needle),
+        );
+      }
+      const v = row[field];
+      switch (f.operator) {
+        case "contains":
+          return String(v ?? "").toLowerCase().includes(needle);
+        case "eq":
+          return String(v ?? "").toLowerCase() === needle;
+        case "startswith":
+          return String(v ?? "").toLowerCase().startsWith(needle);
+        default:
+          return true;
+      }
+    }),
+  );
+}
+
 /** True when a resource has mock-mode CRUD (write) support. */
 export function mockResourceWritable(resource: AdminResource): boolean {
   return !MOCK_READ_ONLY.has(resource);
@@ -238,11 +301,24 @@ export const mockDataProvider = {
   async getList({
     resource,
     pagination,
+    sorters,
+    filters,
   }: {
     resource: string;
     pagination?: { current?: number; currentPage?: number; pageSize?: number };
+    sorters?: { field: string; order: "asc" | "desc" }[];
+    filters?: { field?: string; key?: string; operator: string; value: unknown }[];
   }) {
-    const all = await mockList(resource as AdminResource);
+    let all = await mockList(resource as AdminResource);
+    // Sorters (refine-core sorting state — synced from the react-table
+    // wrapper). null/undefined sort last; strings compare numeric-aware.
+    if (sorters?.length) {
+      all = sortRows(all, sorters);
+    }
+    // Filters (e.g. the list search box: field "q", operator "contains").
+    if (filters?.length) {
+      all = filterRows(all, filters);
+    }
     // Refine v5 sends `currentPage` (v4 sent `current`) — accept both so the
     // mock adapter matches whatever the real provider receives.
     const page = pagination?.currentPage ?? pagination?.current ?? 1;

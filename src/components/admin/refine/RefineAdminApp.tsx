@@ -27,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useLang, toBanglaDigits, formatMoney } from "@/lib/i18n";
 import { getAdminDataProvider } from "@/lib/admin/data-provider";
+import { adminAccessControlProvider } from "@/lib/admin/access-control";
 import { ADMIN_RESOURCE_DEFS } from "@/lib/admin/resources";
 import { canViewResource, useAdminRole } from "@/lib/admin/rbac";
 import { getAdminDashboardStats } from "@/lib/admin/dashboard-stats";
@@ -182,6 +183,12 @@ function RefineAdminBody() {
           })}
         </nav>
         <div className="border-t border-border/60 px-4 py-3">
+          {/* Signed-in role — Refine's accessControlProvider reads the same
+              session role, so the badge is the visible mirror of the gate. */}
+          <p className="mb-2 flex items-center gap-1.5 px-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+            {bn ? "ভূমিকা" : "Role"}: {role ?? "—"}
+          </p>
           <Link to="/">
             <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground">
               <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
@@ -215,7 +222,11 @@ function RefineAdminBody() {
         {effectiveActive === "dashboard" ? (
           <DashboardTab />
         ) : (
-          <ResourceList key={effectiveActive} resource={effectiveActive} />
+          <ResourceList
+            key={effectiveActive}
+            resource={effectiveActive}
+            onOpenDashboard={() => setActive("dashboard")}
+          />
         )}
       </div>
     </div>
@@ -224,7 +235,13 @@ function RefineAdminBody() {
 
 export function RefineAdminApp() {
   return (
-    <Refine dataProvider={{ default: getAdminDataProvider() }}>
+    <Refine
+      dataProvider={{ default: getAdminDataProvider() }}
+      // Refine's accessControlProvider (RBAC, P2) — `can({resource, action})`
+      // delegates to the same matrix the sidebar/actions use, so <CanAccess />
+      // and useCan stay consistent with the visible UI (access-control docs).
+      accessControlProvider={adminAccessControlProvider}
+    >
       <RefineAdminBody />
     </Refine>
   );

@@ -2,6 +2,16 @@
 
 ## 2026-08-15
 
+### P2 admin — Refine-doc-aligned RBAC, list sorting/search, layout polish
+
+Applied Refine's documented patterns (advanced tutorials: Access Control, Custom Layout, Mutation/Notification + shadcn DataTable integration) to the Refine admin:
+
+- **`accessControlProvider` (`src/lib/admin/access-control.ts`)** — Refine's canonical RBAC API wired into `<Refine>`. `can({resource, action, params})` delegates to the SAME role→resource matrix as `rbac.ts` (single source of truth), normalizing Refine's action vocabulary (`list`/`show`→view, `edit`→update) alongside our own; role resolution is hook-free (mock session sync, `user_roles` + hardcoded-admin bypass in real mode). `ResourceList` + `ResourceFormDialog` now gate New/Edit/Delete/Save via `useCan` instead of calling the matrix helpers directly.
+- **Server-mode sorting + list search now actually work in mock mode** — `ResourceList` headers are click-to-sort (TanStack Table sorter icons, asc/desc), synced through the react-table wrapper's `sorters`; the mock dataProvider `getList` implements `sorters` (null-last, numeric-aware compare) and `filters` (`q` = search across ALL row values, `eq`/`startswith`/`contains`). The search box previously sent filters the mock provider ignored.
+- **Layout (Custom Layout / ListView patterns)** — breadcrumb header (Dashboard / resource, clickable back to Dashboard), Refresh button (`useInvalidate`), sidebar role badge (mirror of the access-control gate), focus-visible rings on the admin search/select inputs (DESIGN.md §5.4.1).
+- **Mutation feedback (Notification pattern)** — bilingual Sonner toasts on create/update save and delete (success + error), replacing silent mutations.
+- **Tests** — `admin-access-control.test.ts` (8: action normalization, mock-mode role resolution, per-role grant/deny) + mock provider sorting/filter tests (6) → **698/698**, tsc 0 errors. Browser-verified: new `scripts/verify-refine-list-features.mjs` (10 checks: role badge, breadcrumb, refresh, useCan actions, search narrowing, asc/desc sorting, zero console errors) + existing dashboard-stats + RBAC scripts all pass.
+
 ### P2 admin — dashboard analytics stat cards (M5 dashboard parity)
 
 **`src/lib/admin/dashboard-stats.ts`** — `AdminDashboardStats` shape + pure `computeAdminDashboardStats` derivation (content counts + published counts, orders/paid orders, purchases, and **paid-orders-only revenue** in BDT) + mock-first `getAdminDashboardStats` seam (mock mode aggregates the offline stores; real mode returns the zeroed `source: "pending"` shape, rendered as "—", until Supabase aggregate queries are wired in P4 — the dashboard keeps rendering in both modes, matching the dataProvider seam pattern).

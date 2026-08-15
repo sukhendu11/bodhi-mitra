@@ -6,7 +6,8 @@
  * Refine routing is optional in v5) with shadcn/ui form controls.
  */
 import { useState } from "react";
-import { useForm } from "@refinedev/core";
+import { useCan, useForm } from "@refinedev/core";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -24,11 +25,6 @@ import { Loader2, X } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { getResourceDef, type ResourceField } from "@/lib/admin/resources";
 import { mockResourceWritable } from "@/lib/admin/data-provider";
-import {
-  canCreateResource,
-  canUpdateResource,
-  useAdminRole,
-} from "@/lib/admin/rbac";
 
 type Row = Record<string, unknown> & { id: string | number };
 
@@ -171,7 +167,7 @@ function FieldControl({
           value={(value as string) ?? ""}
           disabled={disabled || field.readOnly}
           onChange={(e) => onChange(e.target.value)}
-          className="h-8 w-full rounded-md border border-border/60 bg-background px-2.5 text-sm outline-none focus:border-primary/50 disabled:opacity-50"
+          className="h-8 w-full rounded-md border border-border/60 bg-background px-2.5 text-sm outline-none focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-primary/40 disabled:opacity-50"
         >
           <option value="">—</option>
           {(field.options ?? []).map((o) => (
@@ -202,12 +198,14 @@ export function ResourceFormDialog({ resource, initial, onClose }: ResourceFormD
   const bn = lang === "bn";
   const def = getResourceDef(resource);
   const isEdit = Boolean(initial);
-  const role = useAdminRole();
-  // RBAC (P2): create/edit needs both the role permission and mock-store
-  // support. Read-only resources render disabled with a hint.
-  const roleWritable = isEdit
-    ? canUpdateResource(role, resource as never)
-    : canCreateResource(role, resource as never);
+  // RBAC through Refine's accessControlProvider (useCan) — same matrix as
+  // the list actions. Writable = role permission AND mock-store support;
+  // read-only resources render disabled with a hint.
+  const { data: canData } = useCan({
+    resource,
+    action: isEdit ? "edit" : "create",
+  });
+  const roleWritable = canData?.can ?? false;
   const writable = roleWritable && mockResourceWritable(resource as never);
 
   const { onFinish, formLoading } = useForm<Row>({
@@ -243,10 +241,15 @@ export function ResourceFormDialog({ resource, initial, onClose }: ResourceFormD
     try {
       const result = await onFinish(values);
       // onFinish resolves with the saved record — close on success.
-      if (result) onClose();
+      if (result) {
+        toast.success(bn ? "সংরক্ষণ হয়েছে" : "Saved");
+        onClose();
+      }
     } catch (err) {
-      // Refine surfaces the error via its notification provider / thrown error;
-      // leave the dialog open so the user can correct the form.
+      // Leave the dialog open so the user can correct the form.
+      toast.error(bn ? "সংরক্ষণ ব্যর্থ হয়েছে" : "Save failed", {
+        description: err instanceof Error ? err.message : undefined,
+      });
       console.error("[admin] create/update failed:", err);
     }
   };

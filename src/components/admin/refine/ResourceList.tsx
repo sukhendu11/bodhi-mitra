@@ -7,8 +7,9 @@
  */
 import { useState, useMemo, type ReactNode } from "react";
 import { useTable } from "@refinedev/react-table";
-import { useDelete } from "@refinedev/core";
+import { useCan, useDelete, useInvalidate } from "@refinedev/core";
 import { flexRender, type ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,22 +21,33 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { useLang, toBanglaDigits } from "@/lib/i18n";
 import { getResourceDef, type ResourceColumn } from "@/lib/admin/resources";
 import { mockResourceWritable } from "@/lib/admin/data-provider";
-import {
-  canCreateResource,
-  canDeleteResource,
-  canUpdateResource,
-  useAdminRole,
-} from "@/lib/admin/rbac";
 import { ResourceFormDialog } from "./ResourceFormDialog";
 
 type Row = Record<string, unknown> & { id: string | number };
 
 interface ResourceListProps {
   resource: string;
+  /** Optional — breadcrumb "Dashboard" link back to the dashboard tab. */
+  onOpenDashboard?: () => void;
+}
+
+/** Sort-state indicator for a sortable column header (DataTable pattern). */
+function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
+  if (sorted === "asc") return <ArrowUp className="h-3 w-3 text-primary" />;
+  if (sorted === "desc") return <ArrowDown className="h-3 w-3 text-primary" />;
+  return <ArrowUpDown className="h-3 w-3 opacity-40" />;
 }
 
 function cellValue(row: Row, col: ResourceColumn): ReactNode {
@@ -46,19 +58,23 @@ function cellValue(row: Row, col: ResourceColumn): ReactNode {
   return String(v);
 }
 
-export function ResourceList({ resource }: ResourceListProps) {
+export function ResourceList({ resource, onOpenDashboard }: ResourceListProps) {
   const { lang } = useLang();
   const bn = lang === "bn";
   const def = getResourceDef(resource);
-  const role = useAdminRole();
-  // RBAC (P2): an action needs BOTH the role permission and mock-store
+  // RBAC through Refine's accessControlProvider (useCan): the provider
+  // delegates to the same matrix as the sidebar, so actions can never drift
+  // from what the role may actually do. An action ALSO needs mock-store
   // support (read-only resources like orders/pages lack mock write stores).
   const storeWritable = mockResourceWritable(resource as never);
   // Single-row resources (site settings) are edited, never created/deleted.
   const singleRow = def?.singleRow === true;
-  const canCreate = canCreateResource(role, resource as never) && storeWritable && !singleRow;
-  const canEdit = canUpdateResource(role, resource as never) && storeWritable;
-  const canDelete = canDeleteResource(role, resource as never) && storeWritable && !singleRow;
+  const { data: canCreateData } = useCan({ resource, action: "create" });
+  const { data: canEditData } = useCan({ resource, action: "edit" });
+  const { data: canDeleteData } = useCan({ resource, action: "delete" });
+  const canCreate = (canCreateData?.can ?? false) && storeWritable && !singleRow;
+  const canEdit = (canEditData?.can ?? false) && storeWritable;
+  const canDelete = (canDeleteData?.can ?? false) && storeWritable && !singleRow;
 
   const [editing, setEditing] = useState<Row | "new" | null>(null);
   const [deleting, setDeleting] = useState<Row | null>(null);
@@ -68,12 +84,27 @@ export function ResourceList({ resource }: ResourceListProps) {
       ...(def?.columns ?? []).map(
         (col): ColumnDef<Row> => ({
           id: col.key,
-          header: bn ? col.labelBn : col.labelEn,
+          // accessorKey drives the wrapper's server-side sorters (manualSorting
+          // mode — sorting state syncs to the dataProvider `sorters` param).
+          accessorKey: col.key,
+          enableSorting: true,
+          header: ({ column }) => (
+            <button
+              type="button"
+              onClick={column.getToggleSortingHandler()}
+              className="flex items-center gap-1 font-medium hover:text-foreground"
+              aria-label={`${bn ? "সাজান" : "Sort by"} ${bn ? col.labelBn : col.labelEn}`}
+            >
+              {bn ? col.labelBn : col.labelEn}
+              <SortIcon sorted={column.getIsSorted()} />
+            </button>
+          ),
           cell: ({ row }) => cellValue(row.original, col),
         }),
       ),
       {
         id: "actions",
+        enableSorting: false,
         header: "",
         cell: ({ row }) =>
           canEdit || canDelete ? (
@@ -123,6 +154,8 @@ export function ResourceList({ resource }: ResourceListProps) {
 
   const { mutation: deleteMutation } = useDelete();
   const deletingLoading = deleteMutation.isPending;
+  // Refine v5 exposes invalidate directly from the hook (not destructured).
+  const invalidate = useInvalidate();
 
   if (!def) return <p className="p-6 text-muted-foreground">Unknown resource: {resource}</p>;
 
@@ -130,20 +163,54 @@ export function ResourceList({ resource }: ResourceListProps) {
     (filters ?? []).find((f) => "field" in f && f.field === "q")?.value ?? "",
   );
 
+  const refresh = () =>
+    invalidate({
+      resource,
+      // Refine v5 invalidate keys: the resource's list + the resource-level
+      // queries (site_settings is single-row — list + resourceAll cover it).
+      invalidates: ["list", "resourceAll"],
+    });
+
   const confirmDelete = () => {
     if (!deleting) return;
     deleteMutation.mutate(
       { resource, id: deleting.id },
       {
-        onSuccess: () => setDeleting(null),
+        onSuccess: () => {
+          setDeleting(null);
+          toast.success(bn ? "আইটেমটি মুছে ফেলা হয়েছে" : "Item deleted");
+        },
+        onError: (err) => {
+          toast.error(
+            bn ? "মুছতে ব্যর্থ হয়েছে — আবার চেষ্টা করুন" : "Delete failed — try again",
+            { description: err instanceof Error ? err.message : undefined },
+          );
+        },
       },
     );
   };
 
   return (
     <div>
+      {/* Breadcrumb — ListView header pattern (Dashboard / resource) */}
+      <nav aria-label="Breadcrumb" className="px-6 pt-5 text-xs text-muted-foreground">
+        {onOpenDashboard ? (
+          <button
+            type="button"
+            onClick={onOpenDashboard}
+            className="hover:text-foreground"
+          >
+            {bn ? "ড্যাশবোর্ড" : "Dashboard"}
+          </button>
+        ) : (
+          <span>{bn ? "ড্যাশবোর্ড" : "Dashboard"}</span>
+        )}
+        <span className="mx-1.5">/</span>
+        <span className="text-foreground">{bn ? def.labelBn : def.labelEn}</span>
+      </nav>
+
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-6 pt-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-6 pt-2">
         <div>
           <h2 className="font-serif text-xl text-foreground">{bn ? def.labelBn : def.labelEn}</h2>
           <p className="text-xs text-muted-foreground">
@@ -157,8 +224,17 @@ export function ResourceList({ resource }: ResourceListProps) {
               setFilters?.([{ field: "q", operator: "contains", value: e.target.value }])
             }
             placeholder={bn ? "অনুসন্ধান…" : "Search…"}
-            className="h-8 w-44 rounded-md border border-border/60 bg-background px-2.5 text-sm outline-none focus:border-primary/50"
+            className="h-8 w-44 rounded-md border border-border/60 bg-background px-2.5 text-sm outline-none focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-primary/40"
           />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={bn ? "রিফ্রেশ" : "Refresh"}
+            onClick={refresh}
+            className="h-8 w-8"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
           {canCreate && (
             <Button size="sm" onClick={() => setEditing("new")}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
@@ -174,11 +250,11 @@ export function ResourceList({ resource }: ResourceListProps) {
           <thead>
             <tr className="border-b border-border/60 text-left text-xs uppercase tracking-[0.12em] text-muted-foreground">
               {reactTable.getHeaderGroups()[0]?.headers.map((header) => (
-                <th key={header.id} className="px-4 py-2.5 font-medium">
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </th>
+              <th key={header.id} className="px-4 py-2.5 font-medium">
+                {header.isPlaceholder
+                  ? null
+                  : flexRender(header.column.columnDef.header, header.getContext())}
+              </th>
               ))}
             </tr>
           </thead>
