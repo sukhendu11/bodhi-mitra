@@ -98,19 +98,48 @@ function generateId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/* ─── Seed demo purchases (ROADMAP §2.3: 2 purchased books) ─────── */
+/* ─── Seed demo orders + purchases (ROADMAP §2.3) ─────────────────
+ *
+ * The demo account ships with a small purchase history + a handful of paid
+ * orders spread over the last ~14 days (mirrors the reading-stats 28-day
+ * seed) so the admin dashboard's revenue-by-day chart is demoable
+ * immediately. A version marker heals stale/partial seeds — bump SEED_VERSION
+ * when the demo data's shape changes.
+ */
+
+/** Bump when the demo seed's shape changes so stale seeds regenerate. */
+const SEED_VERSION = 2;
+const SEED_VERSION_KEY = "sabbe-satta-commerce-seed-version";
+
+function readSeedVersion(): number | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SEED_VERSION_KEY);
+    return raw ? Number(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSeedVersion() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
+  } catch {
+    /* ignore */
+  }
+}
 
 function seedOnce(): Promise<void> {
-  // Idempotent — re-seeds only when the demo user has no purchases yet.
-  // Store-based (not flag-based) so it stays correct when storage is
-  // cleared/re-hydrated (e.g. between tests). The in-flight promise guards
-  // against concurrent first reads double-seeding; if the store is later
-  // emptied (tests, reset), the guard resets so seeding can run again.
+  // Idempotent — re-seeds only when the demo seed is missing or stale.
+  // The version marker heals old seeds (pre-revenue demo data); the
+  // in-flight promise guards concurrent first reads double-seeding.
   const store = readStore();
   const hasDemoPurchases = store.purchases.some(
     (p) => p.userId === DEMO_ACCOUNTS.user.id,
   );
-  if (!hasDemoPurchases) seedPromise = null;
+  const fresh = hasDemoPurchases && readSeedVersion() === SEED_VERSION;
+  if (!fresh) seedPromise = null;
   if (!seedPromise) {
     seedPromise = doSeed();
   }
@@ -122,48 +151,72 @@ async function doSeed() {
   const hasDemoPurchases = store.purchases.some(
     (p) => p.userId === DEMO_ACCOUNTS.user.id,
   );
-  if (hasDemoPurchases) return;
+  if (hasDemoPurchases && readSeedVersion() === SEED_VERSION) return;
 
   const { data } = await mockFetchPublishedBooks(1, 100);
-  const books = data.filter((b) => !b.is_free).slice(0, 2); // 2 paid books
-  if (books.length === 0) return;
+  const paid = data.filter((b) => !b.is_free);
+  if (paid.length === 0) return;
+
+  // Clear any stale/partial demo seed (orders + purchases for the demo user)
+  // so the revenue chart never mixes old rows with fresh ones.
+  store.orders = store.orders.filter((o) => o.userId !== DEMO_ACCOUNTS.user.id);
+  store.purchases = store.purchases.filter((p) => p.userId !== DEMO_ACCOUNTS.user.id);
 
   const now = Date.now();
-  const items: MockOrderItem[] = books.map((b) => ({
-    bookId: b.id,
-    titleEn: b.title_en,
-    titleBn: b.title_bn,
-    price: Number(b.price),
-  }));
+  // Day offsets (most recent first): today + spread across the last ~2 weeks.
+  const dayOffsets = [0, 2, 4, 7, 10, 13];
+  const orders: MockOrder[] = [];
+  const purchases: MockPurchase[] = [];
 
-  const order: MockOrder = {
-    id: `order-${now}`,
-    userId: DEMO_ACCOUNTS.user.id,
-    items,
-    discount: 0,
-    tax: 0,
-    total: items.reduce((s, i) => s + i.price, 0),
-    status: "paid",
-    provider: "simulated",
-    gatewayReference: null,
-    couponId: null,
-    createdAt: new Date(now).toISOString(),
-    completedAt: new Date(now).toISOString(),
-  };
+  dayOffsets.forEach((daysAgo, i) => {
+    // Rotate through the paid books so each order buys 1–2 different books.
+    const count = i % 2 === 0 ? 2 : 1;
+    const books = Array.from({ length: count }, (_, j) => paid[(i + j) % paid.length]);
+    const at = new Date(now);
+    at.setDate(at.getDate() - daysAgo);
+    // Stagger the time of day so the line chart's points spread naturally.
+    at.setHours(10 + ((i * 3) % 10), (i * 17) % 60, 0, 0);
+    const ts = at.toISOString();
 
-  const purchases: MockPurchase[] = books.map((b) => ({
-    id: `purchase-${now}-${b.id}`,
-    userId: DEMO_ACCOUNTS.user.id,
-    bookId: b.id,
-    amountPaid: Number(b.price),
-    purchaseDate: new Date(now).toISOString(),
-    createdAt: new Date(now).toISOString(),
-    updatedAt: new Date(now).toISOString(),
-  }));
+    const items: MockOrderItem[] = books.map((b) => ({
+      bookId: b.id,
+      titleEn: b.title_en,
+      titleBn: b.title_bn,
+      price: Number(b.price),
+    }));
+    const total = items.reduce((s, it) => s + it.price, 0);
 
-  store.orders = [...store.orders, order];
+    orders.push({
+      id: `order-${at.getTime()}-${i}`,
+      userId: DEMO_ACCOUNTS.user.id,
+      items,
+      discount: 0,
+      tax: 0,
+      total,
+      status: "paid",
+      provider: "simulated",
+      gatewayReference: null,
+      couponId: null,
+      createdAt: ts,
+      completedAt: ts,
+    });
+    purchases.push(
+      ...books.map((b) => ({
+        id: `purchase-${at.getTime()}-${i}-${b.id}`,
+        userId: DEMO_ACCOUNTS.user.id,
+        bookId: b.id,
+        amountPaid: Number(b.price),
+        purchaseDate: ts,
+        createdAt: ts,
+        updatedAt: ts,
+      })),
+    );
+  });
+
+  store.orders = [...store.orders, ...orders];
   store.purchases = [...store.purchases, ...purchases];
   writeStore(store);
+  writeSeedVersion();
 }
 
 /* ─── Reads ────────────────────────────────────────────────────── */

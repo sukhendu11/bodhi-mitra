@@ -28,6 +28,14 @@ export interface OrderStatusBucket {
   count: number;
 }
 
+/** One point of the revenue-by-day line (local-day bucket, paid orders only). */
+export interface RevenueByDayPoint {
+  /** ISO date (yyyy-mm-dd) of the local day. */
+  date: string;
+  /** Sum of PAID order totals for that day (BDT). */
+  revenue: number;
+}
+
 /** A recent admin notification row (activity overview on the dashboard). */
 export interface AdminActivityItem {
   id: string;
@@ -53,6 +61,8 @@ export interface AdminDashboardStats {
   revenue: number;
   /** Orders bucketed by status — feeds the status chart. */
   ordersByStatus: OrderStatusBucket[];
+  /** Paid revenue per local day (ascending, zero-filled window) — feeds the revenue chart. */
+  revenueByDay: RevenueByDayPoint[];
   /** Unpaid orders awaiting fulfilment — needs-attention flag. */
   pendingOrders: number;
   /** Unpublished content rows across books/posts/videos — needs-attention flag. */
@@ -77,6 +87,7 @@ export const EMPTY_DASHBOARD_STATS: AdminDashboardStats = {
   purchases: 0,
   revenue: 0,
   ordersByStatus: [],
+  revenueByDay: [],
   pendingOrders: 0,
   draftContent: 0,
   resourceCounts: [],
@@ -98,12 +109,53 @@ export function bucketOrdersByStatus(
     .sort((a, b) => b.count - a.count || a.status.localeCompare(b.status));
 }
 
+/**
+ * Local-day key from an ISO timestamp (yyyy-mm-dd in the server's local tz).
+ * Falls back to the date portion for invalid/empty timestamps.
+ */
+function localDayKey(iso: string | undefined | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Pure derivation — paid revenue bucketed by local day, zero-filled over a
+ * trailing window ending today so the line chart renders a continuous axis.
+ * @param orders orders with status + total + createdAt
+ * @param days trailing window length (default 14)
+ */
+export function bucketRevenueByDay(
+  orders: { status?: string | null; total?: number; createdAt?: string | null }[],
+  days = 14,
+): RevenueByDayPoint[] {
+  const sums = new Map<string, number>();
+  for (const o of orders) {
+    if (o.status !== "paid") continue;
+    const key = localDayKey(o.createdAt);
+    if (!key) continue;
+    sums.set(key, (sums.get(key) ?? 0) + (o.total ?? 0));
+  }
+  const points: RevenueByDayPoint[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    points.push({ date: key, revenue: sums.get(key) ?? 0 });
+  }
+  return points;
+}
+
 /** Pure derivation — no I/O, unit-testable. */
 export function computeAdminDashboardStats(
   books: { status?: string | null }[],
   posts: { status?: string | null }[],
   videos: { status?: string | null }[],
-  orders: { status?: string | null; total?: number }[],
+  orders: { status?: string | null; total?: number; createdAt?: string | null }[],
   purchases: unknown[],
   activity: AdminActivityItem[] = [],
   resourceCounts: { resource: string; count: number }[] = [],
@@ -124,6 +176,7 @@ export function computeAdminDashboardStats(
     purchases: purchases.length,
     revenue: paidOrders.reduce((sum, o) => sum + (o.total ?? 0), 0),
     ordersByStatus: bucketOrdersByStatus(orders),
+    revenueByDay: bucketRevenueByDay(orders),
     pendingOrders: orders.filter((o) => o.status === "pending").length,
     draftContent:
       (books.length - publishedBooks) +

@@ -11,9 +11,15 @@ import {
   computeAdminDashboardStats,
   getAdminDashboardStats,
   bucketOrdersByStatus,
+  bucketRevenueByDay,
   EMPTY_DASHBOARD_STATS,
 } from "@/lib/admin/dashboard-stats";
 import { setMockModeOverride } from "@/lib/data-source";
+
+/** Local yyyy-mm-dd key for a Date (mirrors the derivation's local-day bucketing). */
+function localDayKeyISO(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 beforeEach(() => {
   setMockModeOverride(true);
@@ -72,6 +78,38 @@ describe("computeAdminDashboardStats (pure derivations)", () => {
     ]);
   });
 
+  it("buckets paid revenue by local day over a zero-filled trailing window", () => {
+    const today = new Date();
+    const twoDaysAgo = new Date(today);
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    const sixDaysAgo = new Date(today);
+    sixDaysAgo.setDate(sixDaysAgo.getDate() - 6);
+    const points = bucketRevenueByDay(
+      [
+        { status: "paid", total: 100, createdAt: twoDaysAgo.toISOString() },
+        { status: "paid", total: 50, createdAt: twoDaysAgo.toISOString() },
+        { status: "paid", total: 75, createdAt: sixDaysAgo.toISOString() },
+        { status: "pending", total: 9999, createdAt: today.toISOString() },
+        { status: "failed", total: 9999, createdAt: today.toISOString() },
+      ],
+      14,
+    );
+    expect(points).toHaveLength(14);
+    expect(points[13].revenue).toBe(0); // today: only non-paid orders
+    const twoAgo = points.find((p) => p.date === localDayKeyISO(twoDaysAgo));
+    const sixAgo = points.find((p) => p.date === localDayKeyISO(sixDaysAgo));
+    expect(twoAgo?.revenue).toBe(150);
+    expect(sixAgo?.revenue).toBe(75);
+  });
+
+  it("sums revenue from the derive helper into the full stats", () => {
+    const stats = computeAdminDashboardStats([], [], [], [
+      { status: "paid", total: 100, createdAt: new Date().toISOString() },
+    ], []);
+    expect(stats.revenueByDay).toHaveLength(14);
+    expect(stats.revenueByDay[13].revenue).toBe(100);
+  });
+
   it("passes recent activity rows through to the stats", () => {
     const activity = [
       { id: "n1", message: "New purchase", type: "new_purchase", createdAt: "2026-08-15T00:00:00Z", read: false },
@@ -95,6 +133,7 @@ describe("computeAdminDashboardStats (pure derivations)", () => {
       purchases: 0,
       revenue: 0,
       ordersByStatus: [],
+      revenueByDay: expect.any(Array),
       pendingOrders: 0,
       draftContent: 0,
       resourceCounts: [],
@@ -138,7 +177,12 @@ describe("getAdminDashboardStats (mock-first seam)", () => {
     expect(stats.videos).toBeGreaterThan(0);
     // Revenue equals the demo seed's paid order total.
     expect(stats.revenue).toBeGreaterThan(0);
-    expect(stats.purchases).toBe(2);
+    // Seed v2: 6 paid orders (1–2 books each) → 9 purchases for the demo user.
+    expect(stats.purchases).toBe(9);
+    // Revenue-by-day is a zero-filled 14-day window ending today.
+    expect(stats.revenueByDay).toHaveLength(14);
+    expect(stats.revenueByDay[13].revenue).toBeGreaterThan(0);
+    expect(stats.revenueByDay.some((p) => p.revenue > 0)).toBe(true);
   });
 
   it("returns the zeroed pending shape in real mode (Supabase aggregates not wired)", async () => {

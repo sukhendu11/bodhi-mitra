@@ -1,6 +1,6 @@
 /**
  * Admin dashboard analytics widgets — finefoods-template pattern (charts on
- * the dashboard: content performance + order insights).
+ * the dashboard: content performance + order insights + revenue trend).
  *
  * ECharts (already used by /stats) with an SSR + jsdom guard: charts mount
  * only client-side AND only when a 2d canvas context is actually available
@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useLang, toBanglaDigits } from "@/lib/i18n";
 import { useTheme } from "@/hooks/useTheme";
-import type { AdminDashboardStats, OrderStatusBucket } from "@/lib/admin/dashboard-stats";
+import type { AdminDashboardStats, OrderStatusBucket, RevenueByDayPoint } from "@/lib/admin/dashboard-stats";
 
 const SAFRON = "#d35400";
 
@@ -157,6 +157,94 @@ function ContentOverviewChart({ stats }: { stats: AdminDashboardStats }) {
   );
 }
 
+/** Line/area: paid revenue per day (last 14 days). */
+function RevenueByDayChart({ points }: { points: RevenueByDayPoint[] }) {
+  const { lang } = useLang();
+  const bn = lang === "bn";
+  const isDark = useIsDark();
+  const t = chartTheme(isDark);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const option = useMemo(() => {
+    const fmt = (v: number) =>
+      `${bn ? "৳" : "BDT"} ${bn ? toBanglaDigits(Math.round(v)) : Math.round(v)}`;
+    // Compact day labels: "8/14" (month/day) — Bengali digits in BN mode.
+    const labels = points.map((p) => {
+      const [, m, d] = p.date.split("-");
+      return bn ? toBanglaDigits(`${Number(m)}/${Number(d)}`) : `${Number(m)}/${Number(d)}`;
+    });
+    return {
+      tooltip: {
+        trigger: "axis" as const,
+        backgroundColor: t.tooltipBg,
+        borderColor: t.split,
+        textStyle: { color: t.tooltipText, fontSize: 12 },
+        formatter: (params: any) => {
+          const arr = Array.isArray(params) ? params : [params];
+          const first = arr[0];
+          if (!first) return "";
+          const idx = first.dataIndex as number;
+          const pt = points[idx];
+          return `${bn ? "দিন" : "Day"}: ${labels[idx] ?? ""}<br/>${bn ? "আয়" : "Revenue"}: ${fmt(pt?.revenue ?? 0)}`;
+        },
+      },
+      grid: { left: 8, right: 16, top: 16, bottom: 28, containLabel: true },
+      xAxis: {
+        type: "category" as const,
+        data: labels,
+        boundaryGap: false,
+        axisLabel: { color: t.axis, fontSize: 10, hideOverlap: true },
+        axisLine: { lineStyle: { color: t.split } },
+        axisTick: { show: false },
+      },
+      yAxis: {
+        type: "value" as const,
+        axisLabel: {
+          color: t.axis,
+          fontSize: 10,
+          formatter: (v: number) => (bn ? toBanglaDigits(v) : String(v)),
+        },
+        splitLine: { lineStyle: { color: t.split } },
+      },
+      series: [
+        {
+          name: bn ? "আয়" : "Revenue",
+          type: "line" as const,
+          smooth: 0.25,
+          symbol: "circle",
+          symbolSize: 5,
+          data: points.map((p) => p.revenue),
+          lineStyle: { color: SAFRON, width: 2.5 },
+          itemStyle: { color: SAFRON },
+          areaStyle: {
+            color: {
+              type: "linear" as const,
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: "rgba(211, 84, 0, 0.28)" },
+                { offset: 1, color: "rgba(211, 84, 0, 0.02)" },
+              ],
+            },
+          },
+        },
+      ],
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [points, bn, t, isDark]);
+
+  if (!mounted || !canvas2dAvailable()) {
+    return (
+      <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+        {bn ? "চার্ট লোড হচ্ছে…" : "Loading chart…"}
+      </div>
+    );
+  }
+  return (
+    <ReactECharts option={option} style={{ height: "100%", width: "100%" }} notMerge lazyUpdate />
+  );
+}
+
 /** Donut: orders bucketed by status. */
 function OrdersByStatusChart({ buckets }: { buckets: OrderStatusBucket[] }) {
   const { lang } = useLang();
@@ -238,6 +326,15 @@ export function DashboardCharts({ stats }: { stats: AdminDashboardStats }) {
       <ChartCard title={bn ? "অর্ডার (অবস্থা অনুযায়ী)" : "Orders by status"} height={230}>
         <OrdersByStatusChart buckets={stats.ordersByStatus} />
       </ChartCard>
+      {/* Revenue line spans the full width below the two-up row. */}
+      <div className="lg:col-span-2">
+        <ChartCard
+          title={bn ? "আয় (দিন অনুযায়ী)" : "Revenue by day"}
+          height={230}
+        >
+          <RevenueByDayChart points={stats.revenueByDay} />
+        </ChartCard>
+      </div>
     </div>
   );
 }

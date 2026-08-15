@@ -2,6 +2,16 @@
 
 ## 2026-08-15
 
+### Admin dashboard — revenue-by-day line chart + demo commerce seed
+
+The analytics row gained a third chart, closing the finefoods-template pattern (stat cards → charts → recent activity):
+
+- **`RevenueByDayChart`** (`src/components/admin/refine/DashboardCharts.tsx`) — saffron line/area chart of paid revenue per day (last 14 days, zero-filled window), BDT-tooltip, bilingual (আয় (দিন অনুযায়ী)), dark-mode aware; spans full width below the two-up row (content overview + orders-by-status).
+- **Stats seam** — `AdminDashboardStats` gained `revenueByDay: RevenueByDayPoint[]` (`{ date, revenue }`, local-day keys) via a new pure `bucketRevenueByDay` derivation in `src/lib/admin/dashboard-stats.ts` (paid orders only, zero-filled 14-day window).
+- **Demo commerce seed v2** (`src/lib/mock-commerce.ts`) — mirrors the reading-stats seed convention: `SEED_VERSION = 2` marker + heal, and **6 paid orders (9 purchases) spread over the last ~2 weeks** (day offsets 0/2/4/7/10/13, staggered times of day, rotating through the paid books) so the line chart is demoable immediately. Stale v1 seeds regenerate via the version marker.
+- **Tests** — dashboard-stats suite updated for the new seed counts (purchases 2 → 9, orders 1 → 6) + new `bucketRevenueByDay` pure-derivation tests (bucketing, zero-fill, local-day boundaries). `verify-admin-dashboard-stats.mjs` now asserts the **3 canvases**, the chart title, and the new seed stats (Orders 6 / Purchases 9).
+- **Validation** — tsc 0 errors, **707/707 tests**, browser-verified **15/15 PASS** with zero console errors; list-features script still green.
+
 ### Site Settings form — remaining config groups added (Contact · Article · Reader · Commerce)
 
 Closed the last gap between the Site Settings editor and the site's `SiteConfig` (all 12 groups now editable — only the `navigation`/`email`/`features`/`about`/`book_grid` micro-fields the form intentionally leaves to other surfaces remain):

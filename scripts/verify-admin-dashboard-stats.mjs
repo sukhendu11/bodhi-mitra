@@ -98,12 +98,14 @@ try {
   check("dashboard hydrated with stat labels", ready === true);
 
   const bodyText = await evalJs(`(()=>document.body.innerText)()`);
-  // Mock catalog: 10 books, 25 posts, 8 videos; demo seed = 1 order + 2 purchases.
+  // Mock catalog: 10 books, 25 posts, 8 videos; demo seed v2 = 6 paid orders
+  // spread over ~2 weeks → 9 purchases for the demo user.
   check("Books stat shows the mock count (10)", /books\s*\n*\s*10/i.test(bodyText), "found 'BOOKS 10'");
   check("Reflections stat shows 25", /reflections\s*\n*\s*25/i.test(bodyText), "found 'REFLECTIONS 25'");
   check("Videos stat shows 8", /videos\s*\n*\s*8/i.test(bodyText), "found 'VIDEOS 8'");
   check("Revenue renders BDT (paid orders)", /revenue\s*\n*\s*BDT/i.test(bodyText), "found 'REVENUE BDT …'");
-  check("Purchases stat shows 2", /purchases\s*\n*\s*2/i.test(bodyText), "found 'PURCHASES 2'");
+  check("Orders stat shows 6 (demo seed)", /orders\s*\n*\s*6/i.test(bodyText), "found 'ORDERS 6'");
+  check("Purchases stat shows 9 (demo seed)", /purchases\s*\n*\s*9/i.test(bodyText), "found 'PURCHASES 9'");
   // Resource index still below (RBAC-filtered machine names).
   check("resource index retains machine names", /site_settings/.test(bodyText) && /notifications/.test(bodyText));
   // Resource cards carry row-count badges (10 books, 25 posts, 8 videos, …).
@@ -112,8 +114,10 @@ try {
     return !!card;
   })()`);
   check("resource cards show row counts (books = 10)", bookCountBadge === true);
-  // Analytics charts (ECharts canvases — content overview + orders by status).
-  check("analytics charts render canvases", (await evalJs(`document.querySelectorAll("canvas").length`)) >= 2, "canvas count");
+  // Analytics charts (ECharts canvases — content overview, orders by status,
+  // and the revenue-by-day line chart).
+  check("analytics charts render 3 canvases", (await evalJs(`document.querySelectorAll("canvas").length`)) >= 3, "canvas count");
+  check("revenue-by-day chart title renders", /revenue by day|আয়.*প্রতিদিন|daily revenue|দৈনিক আয়/i.test(bodyText));
   check("recent activity lists notifications", /recent activity/i.test(bodyText) && /new_purchase|welcome/i.test(bodyText));
 
   // E2E: creating a draft book surfaces the "needs attention" strip on the
