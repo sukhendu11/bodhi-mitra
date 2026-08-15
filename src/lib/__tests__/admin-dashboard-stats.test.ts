@@ -10,6 +10,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   computeAdminDashboardStats,
   getAdminDashboardStats,
+  bucketOrdersByStatus,
   EMPTY_DASHBOARD_STATS,
 } from "@/lib/admin/dashboard-stats";
 import { setMockModeOverride } from "@/lib/data-source";
@@ -55,6 +56,31 @@ describe("computeAdminDashboardStats (pure derivations)", () => {
     expect(stats.source).toBe("mock");
   });
 
+  it("buckets orders by status (most frequent first)", () => {
+    const buckets = bucketOrdersByStatus([
+      { status: "paid" },
+      { status: "pending" },
+      { status: "paid" },
+      { status: "failed" },
+      { status: undefined },
+    ]);
+    expect(buckets).toEqual([
+      { status: "paid", count: 2 },
+      { status: "failed", count: 1 },
+      { status: "pending", count: 1 },
+      { status: "unknown", count: 1 },
+    ]);
+  });
+
+  it("passes recent activity rows through to the stats", () => {
+    const activity = [
+      { id: "n1", message: "New purchase", type: "new_purchase", createdAt: "2026-08-15T00:00:00Z", read: false },
+      { id: "n2", message: "Welcome", type: "welcome", createdAt: "2026-08-14T00:00:00Z", read: true },
+    ];
+    const stats = computeAdminDashboardStats([], [], [], [], [], activity);
+    expect(stats.recentActivity).toEqual(activity);
+  });
+
   it("empty inputs produce zeroed stats", () => {
     const stats = computeAdminDashboardStats([], [], [], [], []);
     expect(stats).toEqual({
@@ -67,6 +93,8 @@ describe("computeAdminDashboardStats (pure derivations)", () => {
       paidOrders: 0,
       purchases: 0,
       revenue: 0,
+      ordersByStatus: [],
+      recentActivity: [],
       source: "mock",
     });
   });

@@ -11,6 +11,22 @@
 import { isMockMode } from "@/lib/data-source";
 import { mockFetchAllBooks, mockFetchAllPosts, mockFetchAllVideos } from "@/lib/mock-data";
 import { mockGetAllOrders, mockGetAllPurchases } from "@/lib/mock-commerce";
+import { mockGetAllNotifications } from "@/lib/mock-notifications";
+
+/** One bucket of the orders-by-status breakdown (finefoods-style analytics). */
+export interface OrderStatusBucket {
+  status: string;
+  count: number;
+}
+
+/** A recent admin notification row (activity overview on the dashboard). */
+export interface AdminActivityItem {
+  id: string;
+  message: string;
+  type: string;
+  createdAt: string;
+  read: boolean;
+}
 
 export interface AdminDashboardStats {
   /** Total content counts. */
@@ -25,6 +41,10 @@ export interface AdminDashboardStats {
   purchases: number;
   /** Sum of PAID order totals (BDT) — server-verified revenue only. */
   revenue: number;
+  /** Orders bucketed by status — feeds the status chart. */
+  ordersByStatus: OrderStatusBucket[];
+  /** Latest admin notifications — feeds the activity overview. */
+  recentActivity: AdminActivityItem[];
   /** Which backend produced the numbers ("mock" | "pending"). */
   source: "mock" | "pending";
 }
@@ -39,8 +59,24 @@ export const EMPTY_DASHBOARD_STATS: AdminDashboardStats = {
   paidOrders: 0,
   purchases: 0,
   revenue: 0,
+  ordersByStatus: [],
+  recentActivity: [],
   source: "pending",
 };
+
+/** Bucket orders by status, ordered by frequency (most common first). */
+export function bucketOrdersByStatus(
+  orders: { status?: string | null }[],
+): OrderStatusBucket[] {
+  const counts = new Map<string, number>();
+  for (const o of orders) {
+    const status = o.status ?? "unknown";
+    counts.set(status, (counts.get(status) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([status, count]) => ({ status, count }))
+    .sort((a, b) => b.count - a.count || a.status.localeCompare(b.status));
+}
 
 /** Pure derivation — no I/O, unit-testable. */
 export function computeAdminDashboardStats(
@@ -49,6 +85,7 @@ export function computeAdminDashboardStats(
   videos: unknown[],
   orders: { status?: string | null; total?: number }[],
   purchases: unknown[],
+  activity: AdminActivityItem[] = [],
 ): AdminDashboardStats {
   const paidOrders = orders.filter((o) => o.status === "paid");
   return {
@@ -61,6 +98,8 @@ export function computeAdminDashboardStats(
     paidOrders: paidOrders.length,
     purchases: purchases.length,
     revenue: paidOrders.reduce((sum, o) => sum + (o.total ?? 0), 0),
+    ordersByStatus: bucketOrdersByStatus(orders),
+    recentActivity: activity,
     source: "mock",
   };
 }
@@ -72,12 +111,22 @@ export function computeAdminDashboardStats(
  */
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   if (!isMockMode()) return EMPTY_DASHBOARD_STATS;
-  const [books, posts, videos, orders, purchases] = await Promise.all([
+  const [books, posts, videos, orders, purchases, notifications] = await Promise.all([
     Promise.resolve(mockFetchAllBooks()),
     Promise.resolve(mockFetchAllPosts()),
     Promise.resolve(mockFetchAllVideos()),
     mockGetAllOrders(),
     mockGetAllPurchases(),
+    mockGetAllNotifications(),
   ]);
-  return computeAdminDashboardStats(books, posts, videos, orders, purchases);
+  const activity: AdminActivityItem[] = notifications
+    .slice(0, 5)
+    .map((n) => ({
+      id: String(n.id),
+      message: String(n.message ?? ""),
+      type: String(n.type ?? ""),
+      createdAt: String(n.createdAt ?? ""),
+      read: Boolean(n.read),
+    }));
+  return computeAdminDashboardStats(books, posts, videos, orders, purchases, activity);
 }

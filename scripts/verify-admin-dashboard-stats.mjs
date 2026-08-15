@@ -106,6 +106,9 @@ try {
   check("Purchases stat shows 2", /purchases\s*\n*\s*2/i.test(bodyText), "found 'PURCHASES 2'");
   // Resource index still below (RBAC-filtered machine names).
   check("resource index retains machine names", /site_settings/.test(bodyText) && /notifications/.test(bodyText));
+  // Analytics charts (ECharts canvases — content overview + orders by status).
+  check("analytics charts render canvases", (await evalJs(`document.querySelectorAll("canvas").length`)) >= 2, "canvas count");
+  check("recent activity lists notifications", /recent activity/i.test(bodyText) && /new_purchase|welcome/i.test(bodyText));
   // Zero console errors.
   const errors = consoleMsgs.filter((m) => /error|uncaught/i.test(m));
   check("zero console errors", errors.length === 0, errors.slice(0, 2).join(" | "));

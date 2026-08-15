@@ -2,6 +2,15 @@
 
 ## 2026-08-15
 
+### P2 admin — dashboard analytics charts + recent activity (finefoods-template pattern)
+
+Following Refine's template docs (react-admin-panel finefoods example — dashboard with "insightful charts" + activity overview):
+
+- **`src/lib/admin/dashboard-stats.ts`** — stats seam extended: `ordersByStatus` buckets (`bucketOrdersByStatus`, most-frequent-first, unknown for missing statuses) + `recentActivity` (top 5 admin notifications, mapped from `mockGetAllNotifications`).
+- **`src/components/admin/refine/DashboardCharts.tsx`** — two ECharts widgets (same library as `/stats`): **Content overview** (grouped horizontal bars, total vs published per content type) and **Orders by status** (donut with semantic status colors). SSR-safe `mounted` guard + `canvas2dAvailable()` check so jsdom tests render a "Loading chart…" fallback instead of crashing ECharts. Dark-mode aware (axis/legend/tooltip colors + chart card theme), bilingual labels + Bengali numerals.
+- **`RefineAdminApp` DashboardTab** — charts row (2-up, stacks on mobile) + **Recent activity** card (latest notifications with unread dot, `timeAgo`, type) above the Resources index.
+- **Tests** — `admin-dashboard-stats.test.ts` +2 (status bucketing, activity passthrough; empty-shape updated) → **700/700**, tsc 0 errors. Browser-verified: `verify-admin-dashboard-stats.mjs` now also asserts both chart canvases + the activity list render (10/10 PASS), zero console errors; list-features script unchanged (ALL PASS).
+
 ### P2 admin — Refine-doc-aligned RBAC, list sorting/search, layout polish
 
 Applied Refine's documented patterns (advanced tutorials: Access Control, Custom Layout, Mutation/Notification + shadcn DataTable integration) to the Refine admin:

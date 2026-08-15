@@ -25,12 +25,13 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLang, toBanglaDigits, formatMoney } from "@/lib/i18n";
+import { useLang, toBanglaDigits, formatMoney, timeAgo } from "@/lib/i18n";
 import { getAdminDataProvider } from "@/lib/admin/data-provider";
 import { adminAccessControlProvider } from "@/lib/admin/access-control";
 import { ADMIN_RESOURCE_DEFS } from "@/lib/admin/resources";
 import { canViewResource, useAdminRole } from "@/lib/admin/rbac";
 import { getAdminDashboardStats } from "@/lib/admin/dashboard-stats";
+import { DashboardCharts } from "./DashboardCharts";
 import { ResourceList } from "./ResourceList";
 
 function StatCard({
@@ -97,6 +98,37 @@ function DashboardTab() {
         <StatCard label={bn ? "ক্রয়" : "Purchases"} value={dash(s?.purchases)} icon={ShoppingBag} />
         <StatCard label={bn ? "আয়" : "Revenue"} value={money(s?.revenue)} sub={bn ? "পরিশোধিত অর্ডার" : "paid orders only"} icon={Wallet} />
       </div>
+
+      {/* Analytics — charts (finefoods-template pattern) */}
+      {s && <DashboardCharts stats={s} />}
+
+      {/* Recent activity — latest admin notifications */}
+      {s && s.recentActivity.length > 0 && (
+        <div className="mt-6 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+          <h3 className="font-serif text-base text-foreground">
+            {bn ? "সাম্প্রতিক কার্যক্রম" : "Recent activity"}
+          </h3>
+          <ul className="mt-3 space-y-2.5">
+            {s.recentActivity.map((item) => (
+              <li key={item.id} className="flex items-start gap-2.5">
+                <span
+                  className={`mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
+                    item.read ? "bg-muted-foreground/40" : "bg-primary"
+                  }`}
+                  aria-hidden
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-foreground">{item.message}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {timeAgo(item.createdAt, lang)}
+                    {item.type ? ` · ${item.type}` : ""}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Resource index — clickable quick links (RBAC-filtered) */}
       <h3 className="mt-8 font-serif text-base text-foreground">
