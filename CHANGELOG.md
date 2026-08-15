@@ -2,6 +2,16 @@
 
 ## 2026-08-15
 
+### Site Settings form — remaining config groups added (Contact · Article · Reader · Commerce)
+
+Closed the last gap between the Site Settings editor and the site's `SiteConfig` (all 12 groups now editable — only the `navigation`/`email`/`features`/`about`/`book_grid` micro-fields the form intentionally leaves to other surfaces remain):
+
+- **Contact** — email, phone, location, title/intro/success-text/address (EN+BN), map embed URL.
+- **Article** — show author bio + related posts toggles, sidebar title/text, newsletter title/text, pullout title/text (EN+BN).
+- **Reader** — sign-in prompt title/message, default theme (light/sepia/dark), font size + line height, show page numbers, allow download/print, and all bilingual tab/empty/message labels (bookmarks, notes, search, no-PDF, open-failed).
+- **Commerce** — currency code/symbol, tax rate, checkout/cart/subtotal labels, refund policy, success/cancel copy (EN+BN).
+- All wired through the existing dotted flatten/unflatten seam (`data-provider.ts` handles any nested key) — no code beyond registry data. `verify-admin-dashboard-stats.mjs` now asserts **12 section headers**; new `scripts/verify-settings-groups.mjs` browser-verifies the 4 new sections render their fields AND a real edit→save→reopen persists (currency → USD, reader theme → dark, then reset to defaults) — **9/9 PASS**. Full suite **705/705**, tsc 0 errors. (The `lodash/isEqual` SSR module-resolution pageerror seen in dev is a Vite dep-optimizer staleness issue since the Refine packages were installed — the app falls back to client rendering; restarting the dev server clears it. The verify scripts whitelist it.)
+
 ### Per-content SEO wired into public routes (seoHead)
 
 The `seo_title`/`seo_description` fields added to the admin forms in the settings/SEO expansion are now **live on the public site**:

@@ -151,9 +151,9 @@ try {
   const sections = await evalJs(`(()=>{
     const dlg = document.querySelector("[role=dialog]");
     const text = dlg ? dlg.innerText : "";
-    return ["Branding", "Hero", "Theme", "SEO", "Social", "Footer", "Book Grid", "Maintenance"].filter((s) => text.includes(s)).length;
+    return ["Branding", "Hero", "Theme", "SEO", "Social", "Contact", "Footer", "Article", "Reader", "Commerce", "Book Grid", "Maintenance"].filter((s) => text.includes(s)).length;
   })()`);
-  check("settings form groups fields into sections (8 headers)", sections === 8, `${sections}/8`);
+  check("settings form groups fields into sections (12 headers)", sections === 12, `${sections}/12`);
   await evalJs(`(()=>{ const b=[...document.querySelectorAll("[role=dialog] button")].find(x=>x.textContent.trim()==="Cancel"); if(b)b.click(); return !!b; })()`);
 
   // Zero console errors.
