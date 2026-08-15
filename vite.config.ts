@@ -41,7 +41,29 @@ function copyPdfjsAssets(): Plugin {
 }
 
 // Redirect TanStack Start's bundled server entry to src/server.ts
+//
+// @refinedev/react-table's ESM build imports "lodash/isEqual" WITHOUT an
+// extension. lodash has no `exports` map, so Node's native ESM resolver
+// rejects it (ERR_MODULE_NOT_FOUND — "Did you mean lodash/isEqual.js?").
+// In dev, Nitro's vite env externalizes node_modules, so the .mjs loads
+// natively and breaks SSR of /admin ("Error in renderToReadableStream").
+// Production is unaffected (Nitro bundles with resolve.noExternal: true,
+// where Rollup's resolver handles extensionless imports). Fix: alias the
+// specifier to a project-local ESM shim (src/lib/vendor/lodash-isEqual.ts)
+// AND force Vite's dev-SSR pipeline to process @refinedev/react-table
+// (ssr.noExternal) — externalized modules load natively and bypass
+// resolve.alias, so both halves are required. The shim re-exports the real
+// CJS file via a bare, extensioned import that stays external in SSR, so
+// Node loads it natively instead of Vite inlining the CJS `require` calls.
 export default defineConfig({
+  resolve: {
+    alias: {
+      "lodash/isEqual": resolve(ROOT, "src/lib/vendor/lodash-isEqual.ts"),
+    },
+  },
+  ssr: {
+    noExternal: ["@refinedev/react-table"],
+  },
   plugins: [
     tanstackStart({
       server: { entry: "server" },

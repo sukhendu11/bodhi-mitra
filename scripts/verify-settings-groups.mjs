@@ -187,17 +187,10 @@ try {
   await evalJs(`(()=>{ const b=[...document.querySelectorAll("[role=dialog] button")].find(x=>x.textContent.trim()==="Save"); if(b)b.click(); return !!b; })()`);
   await sleep(1500);
 
-  // Known pre-existing dev-server noise: @refinedev/react-table imports
-  // lodash/isEqual which the running Vite server can't resolve until it is
-  // restarted (dep-optimizer staleness). SSR falls back to client rendering;
-  // the app works — only this module-resolution error is expected in dev.
-  // Windows paths use backslashes, so match on the two tokens separately.
-  const realErrors = errors.filter((e) => !(e.includes("Cannot find module") && e.includes("lodash")));
-  check(
-    "zero app errors (lodash SSR module-resolution whitelisted)",
-    realErrors.length === 0,
-    realErrors.slice(0, 3).join(", ")
-  );
+  // Strict zero-error check — the @refinedev/react-table lodash/isEqual SSR
+  // resolution bug that previously produced noise here is fixed via the
+  // lodash-isEqual ESM shim (vite.config.ts), so no whitelist is needed.
+  check("zero console/page errors", errors.length === 0, errors.slice(0, 3).join(", "));
 
   ws.close();
 } catch (err) {

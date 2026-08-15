@@ -2,6 +2,14 @@
 
 ## 2026-08-15
 
+### Fixed: @refinedev/react-table broke SSR of /admin (lodash/isEqual ESM resolution)
+
+The `Error in renderToReadableStream: Cannot find module 'lodash/isEqual'` thrown whenever `/admin` server-rendered is **fixed at the root** — it was a real bug, not dev noise:
+
+- **Root cause** — `@refinedev/react-table`'s ESM build imports `lodash/isEqual` without an extension, and lodash ships no `exports` map, so Node's native ESM resolver rejects the specifier. In dev, Nitro's vite env externalizes node_modules, so the `.mjs` loads natively and blows up SSR (production was unaffected — Nitro bundles with `resolve.noExternal: true`, where Rollup resolves extensionless imports).
+- **Fix** — `vite.config.ts` aliases `lodash/isEqual` → `src/lib/vendor/lodash-isEqual.ts` (an ESM shim re-exporting the real CJS file via a bare, extensioned import) and forces Vite's dev-SSR pipeline to process `@refinedev/react-table` (`ssr.noExternal` — externalized modules bypass `resolve.alias`, so both halves are required). The shim's bare `lodash/isEqual.js` import stays external in SSR, so Node loads the CJS natively instead of Vite inlining it and failing on `require`.
+- **Verification** — `/admin` SSR output is clean (no render error, no client-render fallback); dev browser E2E passes with **zero console/page errors** — the `verify-settings-groups.mjs` whitelist for this error was **removed** (strict 9/9); `verify-admin-dashboard-stats.mjs` 15/15; the production `node-server` build succeeds and serves `/admin` SSR with zero errors. tsc 0 errors, **707/707 tests**.
+
 ### Admin dashboard — revenue-by-day line chart + demo commerce seed
 
 The analytics row gained a third chart, closing the finefoods-template pattern (stat cards → charts → recent activity):
@@ -20,7 +28,7 @@ Closed the last gap between the Site Settings editor and the site's `SiteConfig`
 - **Article** — show author bio + related posts toggles, sidebar title/text, newsletter title/text, pullout title/text (EN+BN).
 - **Reader** — sign-in prompt title/message, default theme (light/sepia/dark), font size + line height, show page numbers, allow download/print, and all bilingual tab/empty/message labels (bookmarks, notes, search, no-PDF, open-failed).
 - **Commerce** — currency code/symbol, tax rate, checkout/cart/subtotal labels, refund policy, success/cancel copy (EN+BN).
-- All wired through the existing dotted flatten/unflatten seam (`data-provider.ts` handles any nested key) — no code beyond registry data. `verify-admin-dashboard-stats.mjs` now asserts **12 section headers**; new `scripts/verify-settings-groups.mjs` browser-verifies the 4 new sections render their fields AND a real edit→save→reopen persists (currency → USD, reader theme → dark, then reset to defaults) — **9/9 PASS**. Full suite **705/705**, tsc 0 errors. (The `lodash/isEqual` SSR module-resolution pageerror seen in dev is a Vite dep-optimizer staleness issue since the Refine packages were installed — the app falls back to client rendering; restarting the dev server clears it. The verify scripts whitelist it.)
+- All wired through the existing dotted flatten/unflatten seam (`data-provider.ts` handles any nested key) — no code beyond registry data. `verify-admin-dashboard-stats.mjs` now asserts **12 section headers**; new `scripts/verify-settings-groups.mjs` browser-verifies the 4 new sections render their fields AND a real edit→save→reopen persists (currency → USD, reader theme → dark, then reset to defaults) — **9/9 PASS**. Full suite **705/705**, tsc 0 errors. (Note: the `lodash/isEqual` SSR module-resolution pageerror seen in dev at the time was fixed at the root on 2026-08-15 — see the "Fixed: @refinedev/react-table broke SSR" entry above; no whitelist remains.)
 
 ### Per-content SEO wired into public routes (seoHead)
 
