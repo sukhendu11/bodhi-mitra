@@ -74,7 +74,7 @@ async function main() {
   await send("Page.enable");
   await send("Runtime.enable");
 
-  const seed = async (role, email, displayName, previewRefine = false) => {
+  const seed = async (role, email, displayName) => {
     await send("Page.navigate", { url: APP_URL + "/login" });
     await sleep(2500);
     const seeded = await evalJs(`(()=>{
@@ -85,9 +85,10 @@ async function main() {
       return true;
     })()`);
     if (!seeded) throw new Error("failed to seed mock session");
-    // Full admins get MockAdminPanel by default — use the preview seam to
-    // exercise the RBAC-aware Refine shell.
-    await send("Page.navigate", { url: APP_URL + "/admin" + (previewRefine ? "?admin=refine" : "") });
+    // The Refine shell is the mock-mode default for every role (since
+    // 2026-08-15); the old MockAdminPanel is only reachable via ?admin=mock,
+    // so a plain /admin navigation reaches the RBAC-aware Refine shell.
+    await send("Page.navigate", { url: APP_URL + "/admin" });
     await sleep(5000);
   };
 
@@ -161,7 +162,7 @@ async function main() {
 
   // ── SUPER_ADMIN (via the Refine preview seam — full admins default to
   // MockAdminPanel, the Refine shell is what RBAC filters) ──
-  await seed("super_admin", "root@sabbe-satta.test", "Demo Root", true);
+  await seed("super_admin", "root@sabbe-satta.test", "Demo Root");
   await waitForAside();
   const superSidebar = await sidebarText();
   checks["super_admin sidebar: Users visible"] = /Users/.test(superSidebar);

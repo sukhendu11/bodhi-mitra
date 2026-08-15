@@ -6,9 +6,9 @@
  * is optional in v5, so resources render in tabs managed by local state
  * (same pattern as the verified MockAdminPanel).
  *
- * Rendered by `/admin` in real mode (and mock mode via the `?admin=refine`
- * preview seam). Mock mode default stays MockAdminPanel per the Mock Data
- * Removal Strategy.
+ * Rendered by `/admin` in real mode AND mock mode (Refine is the mock-mode
+ * default since 2026-08-15; the legacy MockAdminPanel remains reachable via
+ * the `?admin=mock` preview seam until its features are fully covered).
  */
 import { Refine } from "@refinedev/core";
 import { useState, type ComponentType } from "react";

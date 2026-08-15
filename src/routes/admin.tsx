@@ -68,29 +68,24 @@ function VerifyingShell() {
 
 function AdminShell() {
   const { user, loading } = useAuthSession();
-  // Preview seam: ?admin=refine exercises the Refine admin offline in mock
-  // mode (mock mode default stays MockAdminPanel for full admins per the
-  // Mock Data Removal Strategy — the Refine admin replaces it in production
-  // once verified).
+  // Preview seam: in mock mode the Refine admin is the DEFAULT (P2 admin
+  // direction). The legacy MockAdminPanel remains reachable via ?admin=mock
+  // as a fallback per the Mock Data Removal Strategy, until its features are
+  // fully covered by the Refine admin and it can be removed.
   const search = useSearch({ strict: false }) as { admin?: string };
-  const previewRefine = search.admin === "refine";
+  const previewMock = search.admin === "mock";
 
   // Not signed in / still loading — neutral shell (avoids hydration mismatch).
   if (loading || (!isMockMode() && !user)) {
     return <VerifyingShell />;
   }
 
-  // Mock mode:
-  //  - editor or above: admittable (isMockAdmin guard runs in beforeLoad).
-  //  - full admins (super_admin/admin) get MockAdminPanel by default, with
-  //    the RBAC-aware Refine shell via ?admin=refine preview.
-  //  - limited roles (editor + in the future author/moderator) go straight
-  //    to the Refine shell — it filters resources/actions by role (RBAC, P2).
+  // Mock mode: the RBAC-aware Refine shell is the default for every role
+  // (super_admin/admin/editor). The old MockAdminPanel renders only via the
+  // ?admin=mock preview seam.
   if (isMockMode()) {
-    const role = getMockUserRole();
-    const isFullAdmin = role === "super_admin" || role === "admin";
-    if (previewRefine || !isFullAdmin) return <RefineAdminApp />;
-    return <MockAdminPanel session={getMockSession()} />;
+    if (previewMock) return <MockAdminPanel session={getMockSession()} />;
+    return <RefineAdminApp />;
   }
 
   // Real mode — the Refine + shadcn admin inside the app (P2, AD-029).

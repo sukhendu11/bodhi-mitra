@@ -2,6 +2,15 @@
 
 ## 2026-08-15
 
+### Refine admin is now the /admin default in mock mode (MockAdminPanel → ?admin=mock preview)
+
+Per the approved direction, the new Refine + shadcn admin is now the default at `/admin` in mock mode for every role — previously full admins (super_admin/admin) landed on the legacy MockAdminPanel and had to use the `?admin=refine` preview seam to see the new design. The old panel remains reachable via `?admin=mock` until its features are fully covered by the Refine admin (Mock Data Removal Strategy).
+
+- **`src/routes/admin.tsx`** — RefineAdminApp is now the mock-mode default for all admittable roles; MockAdminPanel renders only on `?admin=mock`.
+- **`src/components/admin/refine/RefineAdminApp.tsx`** — header comment updated to match (Refine default, MockAdminPanel preview seam).
+- **`scripts/verify-refine-admin-rbac.mjs`** — RBAC browser verification no longer needs the preview seam for full admins (plain `/admin` reaches the Refine shell).
+- Docs updated: AGENTS.md, PROJECT.md §18/§38, CHANGELOG.
+
 ### Deployment model verified — Nitro node-server IS TanStack Start's official Node shape
 
 Verified against the current official TanStack Start hosting docs (not an old-roadmap assumption): **Nitro's `node-server` preset is the documented Node.js deployment mechanism for TanStack Start** — "Nitro is an agnostic layer... the nitro/vite plugin natively integrates with Vite Environments API as the underlying build tool for TanStack Start"; the Node.js/Docker section directs Vite builds to the `node-server` preset. The `tanstackStart()` Vite plugin itself ships no production runtime (confirmed zero Nitro dependency in `@tanstack/start-plugin-core`; `srvx` is dev/preview middleware only). The built output binds `NITRO_PORT ?? PORT` (default 3000) and `NITRO_HOST || HOST`, matching Hostinger Managed Node.js expectations.
@@ -23,7 +32,7 @@ Verified against the current official TanStack Start hosting docs (not an old-ro
 
 - **`src/lib/admin/rbac.ts`** — the role→resource permission matrix driving the admin UI. Entry gate `canEnterAdmin` = editor+. Per-role access: **super_admin** all 8 resources full CRUD · **admin** content CRUD + structure edit + orders view/update, no profiles (user management is super_admin-only) · **editor** content CRUD + structure view/edit, no orders/profiles · **author** content view + posts create/edit · **moderator** view-only content + orders view · **user** nothing.
 - **Gating wired everywhere**: `RefineAdminApp` filters sidebar tabs + dashboard cards by visible resources; `ResourceList` shows New/Edit/Delete only when the role has the matching permission (combined with mock-store writability); `ResourceFormDialog` blocks saves without create/update permission.
-- **Route**: `/admin` mock guard now uses `canEnterAdmin` (editor+). Limited roles (editor today) render the RBAC-aware Refine shell directly; full admins keep MockAdminPanel by default with the `?admin=refine` preview seam. Non-visible active tabs fall back to Dashboard.
+- **Route**: `/admin` mock guard now uses `canEnterAdmin` (editor+). The RBAC-aware Refine shell renders for every role in mock mode (default since 2026-08-15); the legacy MockAdminPanel remains reachable via the `?admin=mock` preview seam. Non-visible active tabs fall back to Dashboard.
 - **Demo editor account**: `editor@sabbe-satta.test` / `editor1234` + "Continue as demo editor" button on `/login` (demo grid 2→3 columns, stacks on mobile).
 - **Verified in the browser** (headless Chrome): editor sees content tabs only (no Orders/Users), full CRUD on books, no actions on mock-read-only pages; admin sees Orders but not Users; super_admin sees both. **659/659 tests** (+8 RBAC matrix tests), tsc 0 errors, `npm run build` green.
 - **Remaining (P2)**: server-side `requirePermission` enforcement on real-mode mutations (the client matrix is the UI layer — "never trust the client" is enforced server-side when Supabase mutations are wired).
@@ -40,7 +49,7 @@ Verified against the current official TanStack Start hosting docs (not an old-ro
 - **Schema-driven resource registry** (`src/lib/admin/resources.ts`): one config per resource (books, posts, videos, pages, categories, navigation_items, orders, profiles) with bilingual columns + form fields (text/textarea/number/boolean/select/tags/url).
 - **Mock-first dataProvider seam** (`src/lib/admin/data-provider.ts`): `getAdminDataProvider()` is `VITE_DATA_SOURCE`-gated — mock mode reads/writes the existing mock stores (books/posts/videos via mock-cms, orders via mock-commerce, categories/nav/pages via mock-data, profiles via mock-session; pages/categories/nav/orders/profiles read-only in mock), real mode delegates to `@refinedev/supabase` against the unified schema. Handles Refine v5's `currentPage` pagination key.
 - **Generic CRUD UI** (`src/components/admin/refine/`): `RefineAdminApp` (provider + sidebar + tabbed resources), `ResourceList` (TanStack Table + search + pagination + edit/delete actions), `ResourceFormDialog` (create/edit with shadcn controls + tags input; `noValidate` so relative content paths like `pdf_url="/pdfs/x.pdf"` don't block submission; field `id`s wired to labels).
-- **`/admin` route**: real mode now renders the Refine shell (replaces the Strapi redirect shell); mock mode keeps the verified MockAdminPanel with a `?admin=refine` preview seam; SSR-safe "Verifying access…" gate (no hydration mismatch).
+- **`/admin` route**: real mode now renders the Refine shell (replaces the Strapi redirect shell); mock mode follows suit (Refine default since 2026-08-15, MockAdminPanel via `?admin=mock` preview); SSR-safe "Verifying access…" gate (no hydration mismatch).
 - **Verified in the browser** (headless Chrome, mock mode): books list renders, create persists + list refetches, pagination loads page 2, edit updates + closes, delete confirms + removes. **634/634 tests** (+7 dataProvider tests), tsc 0 errors, `npm run build` green (heap flag embedded in the build script for SSR bundling with Refine).
 
 ### Roadmap re-scope — Hostinger provisioning deferred to the Deployment milestone
