@@ -1,206 +1,153 @@
 # Sabbe Satta
 
-> **A modern digital platform for wisdom, mindfulness, learning, and compassionate living.**
+> A modern digital platform for wisdom, mindfulness, learning, and compassionate living.
 
-Sabbe Satta is a full-stack platform for publishing, digital reading, multimedia learning, community engagement, and digital commerce. Built with **TanStack Start** (React 19), **Supabase** as the unified backend (Auth, PostgreSQL, Storage), and a **Refine + shadcn/ui admin** living inside the TanStack app.
+Sabbe Satta (সব্বে সত্তা) is a bilingual (English & Bangla) digital platform for publishing, digital reading, multimedia learning, community engagement, and digital commerce. It brings together reflections and articles on meditation, mindfulness, mental health, and philosophy; a digital book collection with a full-featured reading experience; videos; and a community space with comments, ratings, and reviews — all wrapped in a calm, content-focused design.
 
-> **Architecture note (2026-08-14, AD-029):** the target production architecture is **Hostinger Managed Node.js + TanStack Start + Refine + shadcn/ui + Supabase**. Supabase is the single backend for both content and application data. **Strapi is superseded** (historical) — its code remains in the repo pending migration to Supabase and removal; it is not the production CMS. See `PROJECT.md §18/§21/§28` for the full roadmap and decision records.
+## About
 
----
+Sabbe Satta is built for readers who want thoughtful, practice-oriented content. The platform centers on:
+
+- **Reflections** — articles across meditation, mindfulness, mental health, philosophy, and Buddhist psychology, with full-text search and topic-based browsing.
+- **Books & the Reader** — a growing digital library with a dedicated PDF reader (zoom modes, reading themes, table of contents, full-text search, bookmarks, and notes) and per-book reading progress.
+- **Videos** — a curated collection of talks and guided content.
+- **Community** — comments on posts, book ratings and reviews, bookmarks, and wishlists.
+- **Commerce** — a secure checkout for digital books, purchase history, and your personal library of owned titles.
+
+The site is fully bilingual, responsive, and SEO-optimized, with a public site and an in-app administrative interface.
 
 ## Features
 
-### Public Platform
+**Public platform**
 
-- Bilingual (English & Bangla)
-- Responsive modern interface
-- Articles & Blog (Reflections)
-- Digital Books
-- PDF Reader (with configurable themes, zoom, bookmarks, notes)
-- Categories & Collections
-- Search
-- User Authentication
-- Reading Progress
-- Bookmarks
-- Comments & Discussions
-- Videos & Multimedia
-- Shopping Cart & Checkout
-- AI Chat Assistant
-- Book Recommendations
-- SEO Optimized
+- Bilingual interface (English & Bangla)
+- Reflections (articles) with topic categories and full-text search
+- Digital books with a dedicated PDF reader (themes, zoom, contents, search, bookmarks, notes)
+- Reading progress and reading statistics
+- Videos
+- Bookmarks and wishlists
+- Comments, book ratings, and reviews
+- User accounts, profiles, and settings
+- Shopping cart, secure checkout, orders, and a personal library of purchased books
+- Notifications
 - Newsletter
-- Contact & About Pages
-- Maintenance Mode
+- AI assistant
+- SEO optimization (per-page metadata, sitemap)
+- About, Contact, FAQ, Terms, Privacy, and Donate pages
 
-### Administration (target — Refine + shadcn/ui, inside the app)
+**Administration** (`/admin`)
 
-- Admin Dashboard (`/admin`)
-- Content Management (posts, pages, books, videos, categories, tags, navigation, site settings)
-- Media management (Supabase Storage)
-- User & Role Management
-- Site-wide Configuration
-- Commerce administration (orders, purchases, coupons)
-- Draft & Publish / content status
-- Role-Based Access Control (RBAC)
-
-> **Status:** the Refine + shadcn admin is the **target** (roadmap P2) — not yet installed. The current `/admin` route renders the offline MockAdminPanel in mock mode. **Strapi is not the target admin** (superseded, pending removal).
-
----
+- Dashboard with analytics (content stats, orders, revenue)
+- Content management — posts, pages, books, videos, categories, tags, navigation, and site settings
+- Order and purchase administration
+- User and role management
+- Role-based access control
 
 ## Technology Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Backend (unified) | Supabase (Auth + PostgreSQL + Storage + RLS) | All data (content + application), auth, file storage |
-| Admin (target) | Refine Core + shadcn/ui (inside the TanStack app) | Admin/CRUD/data-handling patterns + component system |
-| Frontend | React 19 + TanStack Start | Public website, reader, commerce, SSR |
-| Routing | TanStack Router | File-based, type-safe routing |
-| Styling | Tailwind CSS v4 | Utility-first CSS |
-| Components | shadcn/ui | Accessible primitives |
-| Rich Text | TipTap | WYSIWYG editor |
-| Forms | React Hook Form + Zod | Schema-driven validation |
-| Database | Supabase PostgreSQL | Unified content + application database |
-| Auth | Supabase Auth | Frontend auth (email + Google OAuth) + admin RBAC |
-| Storage | Supabase Storage | Private book PDFs, covers, avatars, media |
-| Payments | Provider-agnostic interface (simulated → PipraPay → bKash/Nagad) | Checkout, redirects, IPN webhooks |
-| Email | Resend | Transactional email |
-| Hosting (target) | Hostinger Managed Node.js | Managed SSR hosting (no VPS/Docker/Nginx/PM2) |
-| Package Manager | npm / Bun | Package management |
+| Area | Technology |
+|------|-----------|
+| Frontend | React 19 + TanStack Start (server-side rendering) |
+| Routing | TanStack Router (type-safe, file-based) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| UI components | shadcn/ui (Radix UI) |
+| Admin interface | Refine Core + shadcn/ui |
+| Backend | Supabase — Auth, PostgreSQL, Storage, RLS |
+| Forms & validation | React Hook Form + Zod |
+| Rich text | TipTap |
+| Data tables | TanStack Table |
+| Charts | Apache ECharts |
+| PDF rendering | pdf.js |
+| Email | Resend |
+| Payments | Provider-agnostic interface (simulated in development) |
+| Testing | Vitest + Testing Library |
 
-> **Strapi v5 (historical):** previously the CMS (admin panel, content types, media library). Superseded 2026-08-14 (AD-029) — pending migration to Supabase + removal (P2/P3). Docker/VPS hosting is also historical (superseded by Hostinger Managed Node.js).
+## High-Level Architecture
 
----
+```text
+TanStack Start
+   ├── Public Website
+   └── Admin (Refine + shadcn/ui)
+             │
+          Supabase
+      ┌──────┼──────┐
+     Auth  Database Storage
+```
 
 ## Getting Started
 
 ### Requirements
 
-- Node.js 22+
-- npm or Bun
-- Supabase Project (for Auth, database, and Storage)
-- (Dev only, historical) Strapi local instance — not required for mock-first frontend work
+- Node.js 22 or newer
+- npm
 
 ### Installation
 
 ```bash
-git clone https://github.com/sukhendu11/bodhi-mitra.git
-cd bodhi-mitra
+git clone <repository-url>
+cd <repository>
 npm install
 ```
 
-### Frontend Setup
+### Run the development server
 
 ```bash
 npm run dev
 ```
 
-Frontend: http://localhost:5173
+The app is served at `http://localhost:3001`.
 
-The app runs **mock-first** in dev (`VITE_DATA_SOURCE=mock`) — the whole product (auth, commerce, reader, comments, search, admin) works offline with demo accounts. See `PROJECT.md §18` for the data-source seam and mock stores.
+The development build runs **fully offline** with built-in demo data — auth, catalog, cart, checkout, and admin all work without any external services (set `VITE_DATA_SOURCE=mock`, the default in `.env.example`). Demo accounts are documented in the codebase.
 
-### Strapi CMS Setup (historical — dev only)
+### Common commands
 
-Strapi is superseded and scheduled for removal (P3). For legacy local runs only:
-
-```bash
-cd strapi
-npm install
-npm run develop
-```
-
-Strapi admin panel: http://localhost:1337/admin
-
----
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Start the development server |
+| `npm test` | Run the test suite (Vitest) |
+| `npx tsc --noEmit` | Type-check the project |
+| `npm run lint` | Run ESLint |
+| `npm run build` | Build the production bundle (Nitro `node-server` preset → `.output/`) |
+| `npm start` | Run the production server (`node .output/server/index.mjs`) |
 
 ## Environment Variables
 
-### App (.env)
+Copy `.env.example` to `.env` and fill in the values you need:
 
-```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
-SUPABASE_URL=
-SUPABASE_PUBLISHABLE_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-VITE_DATA_SOURCE=mock              # feature-level migration/dispatch seam
-SITE_URL=https://sabbesatta.com
-PAYMENT_PROVIDER=simulated         # simulated | piprapay
-PIPRAPAY_BASE_URL=
-PIPRAPAY_MERCHANT_ID=
-PIPRAPAY_API_KEY=
-PIPRAPAY_API_SECRET=
-PIPRAPAY_WEBHOOK_SECRET=
-RESEND_API_KEY=
-OPENAI_API_KEY=
+```bash
+cp .env.example .env
 ```
 
-> **Strapi env vars (`VITE_STRAPI_URL` / `VITE_STRAPI_API_TOKEN`) are historical** — content reads move to Supabase (P3).
-
----
+For the offline development experience, `VITE_DATA_SOURCE=mock` is all you need — no keys required. To connect real backends (Supabase Auth/database/storage, transactional email, payments), set the corresponding values documented in `.env.example`. Secrets are only ever read server-side; never expose service-role or API keys in client code.
 
 ## Project Structure
 
 ```text
-bodhi-mitra/
-├── src/                    # Frontend + server functions (React + TanStack Start)
-├── supabase/               # Database migrations / manual setup SQL
-├── strapi/                 # (Historical — Strapi CMS, pending removal; dev only)
-├── scripts/                # Utility + seed/migration scripts
-├── research/               # Research & evaluation docs
-├── design-references/      # Shared design research library (awesome-design-md)
-├── public/                 # Static assets
-├── DESIGN.md               # Canonical UI design system (single source of truth)
-├── AGENTS.md               # Development agent instructions
-├── PROJECT.md              # Architecture & roadmap (technical blueprint in §28)
-├── RULES.md                # Engineering standards
-├── CHANGELOG.md            # Change history
-└── README.md               # This file
+src/                    Application source code
+├── routes/             File-based routes (pages and API endpoints)
+├── components/         Reusable UI components
+├── lib/                Services, mock data, and utilities
+├── hooks/              Shared React hooks
+└── integrations/       External service clients (Supabase, Resend, etc.)
+supabase/               Database migrations and setup SQL
+scripts/                Utility and generation scripts
+public/                 Static assets
 ```
 
----
+## Development
 
-## Deployment (target — Hostinger Managed Node.js)
+The codebase is organized as a standard TanStack Start application: routes in `src/routes/`, shared UI in `src/components/`, and business logic/services in `src/lib/`. The data layer is swappable between built-in demo data and real backends via the `VITE_DATA_SOURCE` environment variable — you can develop the full product experience offline without standing up any services.
 
-1. Create a **Hostinger Managed Node.js** web app (Node 22).
-2. Build locally with `npm run build` (Nitro `node-server` preset → `.output/`) and deploy via Hostinger's managed flow.
-3. Run the production server with `npm start` (`node .output/server/index.mjs`).
-4. Configure environment variables in hPanel (`VITE_DATA_SOURCE`, `SITE_URL`, Supabase keys, `PAYMENT_PROVIDER`, `RESEND_API_KEY`).
-5. Hostinger manages SSL, CDN, security/WAF, DDoS protection, and backups.
-6. Point `sabbesatta.com` at the managed app.
-
-> **Historical deployment models** (superseded 2026-08-14, AD-029): Vercel frontend + VPS backend (Docker Compose + Nginx + PM2/systemd), then a single self-managed VPS. Neither is the target. Cloudflare is optional, not required.
-
----
-
-## Data Ownership
-
-| Domain | Owner |
-|--------|-------|
-| Content (posts, pages, books, videos, categories, tags, navigation, site settings) | **Supabase** (unified schema — P1) |
-| Application data (profiles, purchases, orders, cart, progress, bookmarks, ratings, comments, notifications, coupons, audit) | **Supabase** |
-| Auth (email + Google OAuth, sessions, RBAC) | **Supabase Auth** |
-| Storage (private PDFs, covers, avatars) | **Supabase Storage** |
-| Payments | **Provider-agnostic interface** → PipraPay (stopgap) → direct bKash/Nagad (future) |
-| Email | **Resend** |
-| Admin UI | **Refine + shadcn** (inside the TanStack app — target, P2) |
-| Presentation + orchestration | **TanStack Start** (Hostinger Managed Node.js) |
-
----
+Run `npm test` before pushing changes; the suite includes unit tests, component tests, and browser-level verification scripts (in `scripts/`).
 
 ## Documentation
 
-| File | Purpose |
-|------|---------|
-| README.md | Project overview and setup |
-| DESIGN.md | Canonical UI design system — colors, typography, layout, components, reader design |
-| RULES.md | Engineering standards and workflow |
-| PROJECT.md | Architecture + roadmap in one doc (technical blueprint in §28; AD-029 = current target architecture) |
-| CHANGELOG.md | Completed changes and history |
-| AGENTS.md | Development agent instructions (incl. Shared Design Research Library rule) |
-| strapi/README.md | Strapi CMS guide (**historical** — Strapi superseded, AD-029) |
-
----
+- **[PROJECT.md](PROJECT.md)** — Architecture, security model, and project state
+- **[DESIGN.md](DESIGN.md)** — The Sabbe Satta design system (colors, typography, components)
+- **[RULES.md](RULES.md)** — Engineering standards and workflow
+- **[CHANGELOG.md](CHANGELOG.md)** — Change history
 
 ## License
 
-MIT License
+MIT
