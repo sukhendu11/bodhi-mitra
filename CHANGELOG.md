@@ -2,6 +2,16 @@
 
 ## 2026-08-15
 
+### Per-content SEO wired into public routes (seoHead)
+
+The `seo_title`/`seo_description` fields added to the admin forms in the settings/SEO expansion are now **live on the public site**:
+
+- **Posts** — `Post` interface gained optional `seo_title`/`seo_description`; `posts.$slug` head prefers them over derived values (`seo_title || title_en || title_bn || title`; `seo_description || excerpt_en || excerpt_bn`, sliced to 158 chars). The admin posts form now edits the matching fields (`seo_description` — was `meta_description_en/bn`, which don't exist on `Post`).
+- **Books** — `Book` interface gained optional `seo_title`; `books.$slug` head prefers it over `title_en` (description already consumed the existing `meta_description_en/bn`). Admin books form now edits the schema-true fields (`seo_title` + `meta_description_en/bn`).
+- **Pages** — admin pages form corrected to the schema-true `meta_description_en/bn` (pages route already consumed them).
+- **Mock data** — 2 posts + 1 book carry explicit SEO overrides (the rest fall back cleanly — verified).
+- **Tests** — new `content-seo.test.ts` (3) pins which mock rows carry overrides and that rows without them fall back; `ResourceFormDialog.test.tsx` label lookup anchored (labels like "SEO Description (EN)" must not substring-match "Description (EN)"). Full suite **705/705**, tsc 0 errors. Browser-verified (`scripts/verify-content-seo.mjs`, 5 checks): post/book page `<title>` + meta description use the overrides; fallback post uses title/excerpt; zero console errors.
+
 ### P2 admin — settings/SEO editor expansion + dashboard stats depth
 
 Analyzed the admin against the site's `SiteConfig` (14 groups) and the content schema; closed the highest-value gaps:

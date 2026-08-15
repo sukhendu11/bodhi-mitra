@@ -55,7 +55,10 @@ describe("ResourceFormDialog schema-driven rendering", () => {
     renderDialog("books");
     const def = getResourceDef("books")!;
     for (const field of def.fields) {
-      expect(screen.getByLabelText(new RegExp(field.labelEn.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))).toBeInTheDocument();
+      // Anchored (with optional required-asterisk suffix): labels like
+      // "SEO Description (EN)" must not substring-match "Description (EN)".
+      const escaped = field.labelEn.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      expect(screen.getByLabelText(new RegExp(`^${escaped}(\\s*\\*)?$`))).toBeInTheDocument();
     }
   });
 

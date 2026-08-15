@@ -88,7 +88,8 @@ const BOOK_FIELDS: ResourceField[] = [
   { key: "tags", labelEn: "Tags", labelBn: "ট্যাগ", type: "tags" },
   { key: "sort_order", labelEn: "Sort", labelBn: "ক্রম", type: "number" },
   { key: "seo_title", labelEn: "SEO Title", labelBn: "SEO শিরোনাম", type: "text", section: "SEO" },
-  { key: "seo_description", labelEn: "SEO Description", labelBn: "SEO বর্ণনা", type: "textarea" },
+  { key: "meta_description_en", labelEn: "SEO Description (EN)", labelBn: "SEO বর্ণনা (ইংরেজি)", type: "textarea" },
+  { key: "meta_description_bn", labelEn: "SEO Description (BN)", labelBn: "SEO বর্ণনা (বাংলা)", type: "textarea" },
 ];
 
 /* ─── Posts ─────────────────────────────────────────────────────── */
@@ -131,8 +132,8 @@ const PAGE_FIELDS: ResourceField[] = [
   { key: "slug", labelEn: "Slug", labelBn: "স্লাগ", type: "text", readOnly: true },
   { key: "visible", labelEn: "Visible", labelBn: "দৃশ্যমান", type: "boolean" },
   { key: "sort_order", labelEn: "Sort", labelBn: "ক্রম", type: "number" },
-  { key: "seo_title", labelEn: "SEO Title", labelBn: "SEO শিরোনাম", type: "text", section: "SEO" },
-  { key: "seo_description", labelEn: "SEO Description", labelBn: "SEO বর্ণনা", type: "textarea" },
+  { key: "meta_description_en", labelEn: "SEO Description (EN)", labelBn: "SEO বর্ণনা (ইংরেজি)", type: "textarea", section: "SEO" },
+  { key: "meta_description_bn", labelEn: "SEO Description (BN)", labelBn: "SEO বর্ণনা (বাংলা)", type: "textarea" },
 ];
 
 /* ─── Categories (read-only in mock) ────────────────────────────── */

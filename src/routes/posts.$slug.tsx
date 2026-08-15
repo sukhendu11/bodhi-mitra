@@ -40,11 +40,12 @@ export const Route = createFileRoute("/posts/$slug")({
     return { post, siteName: settings.branding.site_name_en || "Sabbe Satta", siteUrl: settings.seo.site_url || "https://sabbesatta.com" };
   },
   head: ({ loaderData }: Record<string, unknown>) => {
-    const ld = loaderData as { post: { title_en?: string | null; title_bn?: string | null; title?: string | null; excerpt_en?: string | null; excerpt_bn?: string | null; content_en?: string | null; content?: string | null; cover_image?: string | null; slug?: string | null; created_at?: string | null; author_name?: string | null } | null; siteName: string; siteUrl: string } | undefined;
+    const ld = loaderData as { post: { title_en?: string | null; title_bn?: string | null; title?: string | null; excerpt_en?: string | null; excerpt_bn?: string | null; content_en?: string | null; content?: string | null; cover_image?: string | null; slug?: string | null; created_at?: string | null; author_name?: string | null; seo_title?: string | null; seo_description?: string | null } | null; siteName: string; siteUrl: string } | undefined;
     const p = ld?.post;
     const name = ld?.siteName ?? "Sabbe Satta";
-    const postTitle = p?.title_en || p?.title_bn || p?.title || "Post";
-    const desc = (p?.excerpt_en || p?.excerpt_bn || "Read a reflection.").slice(0, 158);
+    // Per-content SEO overrides win when present (admin-editable).
+    const postTitle = p?.seo_title || p?.title_en || p?.title_bn || p?.title || "Post";
+    const desc = (p?.seo_description || p?.excerpt_en || p?.excerpt_bn || "Read a reflection.").slice(0, 158);
     const postUrl = `/posts/${p?.slug || ""}`;
     const rawContent = (p?.content_en || p?.content || "").replace(/<[^>]*>/g, "");
     const wordCount = rawContent.split(/\s+/).filter(Boolean).length;

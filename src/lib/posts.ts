@@ -30,6 +30,9 @@ export interface Post {
   status: PostStatus;
   tags: string[];
   created_at: string;
+  /** Optional SEO overrides — fall back to title/excerpt when absent. */
+  seo_title?: string | null;
+  seo_description?: string | null;
 }
 
 export interface PostInput {

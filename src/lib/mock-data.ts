@@ -220,6 +220,31 @@ const MOCK_POSTS_DATA: Post[] = [
   ),
 ];
 
+// ─── Per-content SEO overrides ───────────────────────────────
+// A few posts carry explicit SEO metadata (admin-editable via the Refine
+// admin's posts form); the detail route prefers these over derived values.
+
+const POST_SEO_OVERRIDES: Record<string, { seo_title: string; seo_description: string }> = {
+  "the-art-of-sitting-still": {
+    seo_title: "The Art of Sitting Still — A Beginner's Meditation Guide",
+    seo_description:
+      "What it means to be fully present in meditation, beyond technique. A simple ten-minute daily sitting practice.",
+  },
+  "mindfulness-in-the-morning": {
+    seo_title: "Mindfulness in the Morning — Start Your Day Present",
+    seo_description:
+      "A gentle morning mindfulness practice: three conscious breaths and full attention for a calmer day.",
+  },
+};
+
+for (const [slug, seo] of Object.entries(POST_SEO_OVERRIDES)) {
+  const post = MOCK_POSTS_DATA.find((p) => p.slug === slug);
+  if (post) {
+    post.seo_title = seo.seo_title;
+    post.seo_description = seo.seo_description;
+  }
+}
+
 // ─── Navigation ──────────────────────────────────────────────
 
 function mockNavItem(
@@ -408,6 +433,7 @@ const MOCK_BOOKS_DATA: Book[] = [
     category: "Meditation",
     meta_description_en: "A comprehensive guide to meditation practice.",
     meta_description_bn: "ধ্যান অনুশীলনের একটি বিস্তৃত নির্দেশিকা।",
+    seo_title: "The Heart of Meditation — A Complete Practice Guide",
     sort_order: 0,
     avg_rating: 4.5,
     total_ratings: 128,

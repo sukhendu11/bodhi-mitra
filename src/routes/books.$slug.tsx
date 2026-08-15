@@ -51,7 +51,9 @@ export const Route = createFileRoute("/books/$slug")({
     const ld = loaderData as { book: Book; siteName: string; siteUrl: string; currency: string } | undefined;
     const b = ld?.book;
     const name = ld?.siteName ?? "Sabbe Satta";
-    const bookTitle = b?.title_en || b?.title_bn || "Book";
+    // Per-content SEO title override wins when present (admin-editable); the
+    // description already prefers the admin-managed meta_description_en.
+    const bookTitle = b?.seo_title || b?.title_en || b?.title_bn || "Book";
     const desc = b?.meta_description_en || b?.description_en || "View book details.";
     const bookUrl = `/books/${b?.slug || ""}`;
 

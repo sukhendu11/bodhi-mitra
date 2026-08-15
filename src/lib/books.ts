@@ -43,6 +43,8 @@ export interface Book {
   total_ratings: number;
   created_at: string;
   updated_at: string;
+  /** Optional SEO title override — falls back to title_en when absent. */
+  seo_title?: string | null;
 }
 
 export interface BookInput {
