@@ -89,14 +89,41 @@ describe("computeAdminDashboardStats (pure derivations)", () => {
       posts: 0,
       publishedPosts: 0,
       videos: 0,
+      publishedVideos: 0,
       orders: 0,
       paidOrders: 0,
       purchases: 0,
       revenue: 0,
       ordersByStatus: [],
+      pendingOrders: 0,
+      draftContent: 0,
+      resourceCounts: [],
       recentActivity: [],
       source: "mock",
     });
+  });
+
+  it("derives pending orders and draft content flags", () => {
+    const stats = computeAdminDashboardStats(
+      [{ status: "published" }, { status: "draft" }],
+      [{ status: "draft" }],
+      [{ status: "published" }],
+      [{ status: "paid" }, { status: "pending" }],
+      [],
+    );
+    expect(stats.pendingOrders).toBe(1);
+    expect(stats.draftContent).toBe(2); // 1 draft book + 1 draft post
+  });
+
+  it("threads resource counts through", () => {
+    const stats = computeAdminDashboardStats([], [], [], [], [], [], [
+      { resource: "books", count: 10 },
+      { resource: "orders", count: 1 },
+    ]);
+    expect(stats.resourceCounts).toEqual([
+      { resource: "books", count: 10 },
+      { resource: "orders", count: 1 },
+    ]);
   });
 });
 

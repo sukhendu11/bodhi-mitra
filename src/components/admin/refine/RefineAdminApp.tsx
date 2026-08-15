@@ -23,6 +23,8 @@ import {
   Feather,
   ShoppingBag,
   Wallet,
+  CircleAlert,
+  PenLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang, toBanglaDigits, formatMoney, timeAgo } from "@/lib/i18n";
@@ -59,7 +61,7 @@ function StatCard({
   );
 }
 
-function DashboardTab() {
+function DashboardTab({ onOpenResource }: { onOpenResource?: (resource: string) => void }) {
   const { lang } = useLang();
   const bn = lang === "bn";
   const role = useAdminRole();
@@ -130,6 +132,36 @@ function DashboardTab() {
         </div>
       )}
 
+      {/* Needs attention — actionable flags (pending orders, drafts) */}
+      {s && (s.pendingOrders > 0 || s.draftContent > 0) && (
+        <div className="mt-6 flex flex-wrap gap-2">
+          {s.pendingOrders > 0 && onOpenResource && (
+            <button
+              type="button"
+              onClick={() => onOpenResource("orders")}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/40 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-foreground/30 hover:bg-secondary/60"
+            >
+              <CircleAlert className="h-3.5 w-3.5 text-destructive" />
+              {bn
+                ? `${toBanglaDigits(s.pendingOrders)}টি পেন্ডিং অর্ডার`
+                : `${s.pendingOrders} pending order${s.pendingOrders === 1 ? "" : "s"}`}
+            </button>
+          )}
+          {s.draftContent > 0 && onOpenResource && (
+            <button
+              type="button"
+              onClick={() => onOpenResource("books")}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/40 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-foreground/30 hover:bg-secondary/60"
+            >
+              <PenLine className="h-3.5 w-3.5 text-primary" />
+              {bn
+                ? `${toBanglaDigits(s.draftContent)}টি খসড়া পর্যালোচনা করুন`
+                : `${s.draftContent} draft${s.draftContent === 1 ? "" : "s"} to review`}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Resource index — clickable quick links (RBAC-filtered) */}
       <h3 className="mt-8 font-serif text-base text-foreground">
         {bn ? "রিসোর্স" : "Resources"}
@@ -137,19 +169,28 @@ function DashboardTab() {
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {visibleDefs.map((def) => {
           const Icon = def.icon;
+          const count = s?.resourceCounts.find((r) => r.resource === def.name)?.count;
           return (
-            <div
+            <button
               key={def.name}
-              className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4"
+              type="button"
+              disabled={!onOpenResource}
+              onClick={() => onOpenResource?.(def.name)}
+              className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 text-left transition-all hover:border-foreground/20 hover:shadow-md disabled:pointer-events-none"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Icon className="h-4.5 w-4.5" />
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground">{bn ? def.labelBn : def.labelEn}</p>
                 <p className="truncate text-xs text-muted-foreground">{def.name}</p>
               </div>
-            </div>
+              {count !== undefined && (
+                <span className="rounded-md bg-secondary/60 px-1.5 py-0.5 text-xs font-medium text-foreground">
+                  {bn ? toBanglaDigits(count) : count}
+                </span>
+              )}
+            </button>
           );
         })}
       </div>
@@ -252,7 +293,7 @@ function RefineAdminBody() {
         </div>
 
         {effectiveActive === "dashboard" ? (
-          <DashboardTab />
+          <DashboardTab onOpenResource={(name) => setActive(name)} />
         ) : (
           <ResourceList
             key={effectiveActive}

@@ -106,9 +106,56 @@ try {
   check("Purchases stat shows 2", /purchases\s*\n*\s*2/i.test(bodyText), "found 'PURCHASES 2'");
   // Resource index still below (RBAC-filtered machine names).
   check("resource index retains machine names", /site_settings/.test(bodyText) && /notifications/.test(bodyText));
+  // Resource cards carry row-count badges (10 books, 25 posts, 8 videos, …).
+  const bookCountBadge = await evalJs(`(()=>{
+    const card = [...document.querySelectorAll("button")].find((b) => /books/i.test(b.textContent) && b.querySelector("span:last-child")?.textContent.trim() === "10");
+    return !!card;
+  })()`);
+  check("resource cards show row counts (books = 10)", bookCountBadge === true);
   // Analytics charts (ECharts canvases — content overview + orders by status).
   check("analytics charts render canvases", (await evalJs(`document.querySelectorAll("canvas").length`)) >= 2, "canvas count");
   check("recent activity lists notifications", /recent activity/i.test(bodyText) && /new_purchase|welcome/i.test(bodyText));
+
+  // E2E: creating a draft book surfaces the "needs attention" strip on the
+  // dashboard (draftContent > 0 → chip) — exercises CRUD → dashboard reactivity.
+  await evalJs(`(()=>{
+    const b = [...document.querySelectorAll("aside nav button")].find((x) => x.textContent.trim() === "Books");
+    if (b) b.click();
+    return !!b;
+  })()`);
+  await sleep(2000);
+  await evalJs(`(()=>{ const b=[...document.querySelectorAll("button")].find(x=>x.textContent.trim()==="New"); if(b)b.click(); return !!b; })()`);
+  await sleep(1200);
+  await evalJs(`(()=>{
+    const inputs = [...document.querySelectorAll("input, select")];
+    const title = inputs.find((i) => i.id === "field-title_en");
+    const status = inputs.find((i) => i.id === "field-status");
+    if (title) { const s = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set; s.call(title, "Draft Insight Book"); title.dispatchEvent(new Event("input", { bubbles: true })); }
+    if (status) { status.value = "draft"; status.dispatchEvent(new Event("change", { bubbles: true })); }
+    return !!(title && status);
+  })()`);
+  await sleep(400);
+  await evalJs(`(()=>{ const b=[...document.querySelectorAll("button")].find(x=>x.textContent.trim()==="Save"); if(b)b.click(); return !!b; })()`);
+  await sleep(2000);
+  // Back to dashboard — the draft chip must appear.
+  await evalJs(`(()=>{ const b=[...document.querySelectorAll("aside nav button")].find(x=>x.textContent.trim()==="Dashboard"); if(b)b.click(); return !!b; })()`);
+  await sleep(2000);
+  const attention = await evalJs(`(()=>{ const t = document.body.innerText; return /draft.*review/i.test(t); })()`);
+  check("needs-attention strip flags drafts after creating one", attention === true);
+
+  // Site Settings editor — grouped sections render (SEO/Hero/Theme/Social/…).
+  await evalJs(`(()=>{ const b=[...document.querySelectorAll("aside nav button")].find(x=>x.textContent.trim()==="Site Settings"); if(b)b.click(); return !!b; })()`);
+  await sleep(2000);
+  await evalJs(`(()=>{ const b=[...document.querySelectorAll("button")].find(x=>x.getAttribute("aria-label")==="Edit"); if(b)b.click(); return !!b; })()`);
+  await sleep(1200);
+  const sections = await evalJs(`(()=>{
+    const dlg = document.querySelector("[role=dialog]");
+    const text = dlg ? dlg.innerText : "";
+    return ["Branding", "Hero", "Theme", "SEO", "Social", "Footer", "Book Grid", "Maintenance"].filter((s) => text.includes(s)).length;
+  })()`);
+  check("settings form groups fields into sections (8 headers)", sections === 8, `${sections}/8`);
+  await evalJs(`(()=>{ const b=[...document.querySelectorAll("[role=dialog] button")].find(x=>x.textContent.trim()==="Cancel"); if(b)b.click(); return !!b; })()`);
+
   // Zero console errors.
   const errors = consoleMsgs.filter((m) => /error|uncaught/i.test(m));
   check("zero console errors", errors.length === 0, errors.slice(0, 2).join(" | "));

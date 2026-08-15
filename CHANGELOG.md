@@ -2,6 +2,15 @@
 
 ## 2026-08-15
 
+### P2 admin — settings/SEO editor expansion + dashboard stats depth
+
+Analyzed the admin against the site's `SiteConfig` (14 groups) and the content schema; closed the highest-value gaps:
+
+- **Site Settings editor gains grouped sections** — `ResourceField.section` renders a header when the section changes, and the single-row form is now organized into **Branding · Hero · Theme · SEO · Social · Footer · Book Grid · Maintenance**. Newly editable: **SEO group** (`seo.meta_desc_en/bn`, `og_image_url`, `google_analytics_id`, `enable_sitemap` — which actually gates sitemap generation, `site_url`), theme **preset** (the 6 legacy presets) + **custom_css**, **Hero** (visible/image/eyebrow/title/desc/CTA EN+BN), **Social** (5 networks), **Footer** (copyright/text/explore title). The mock settings store already carried these values (dotted flatten/unflatten), so edits persist + apply live.
+- **Per-content SEO fields** — posts/books/pages forms gain `seo_title` + `seo_description` (schema parity per PROJECT.md §18D; the frontend route wiring is a P3/P7 item — the fields are inert until `seoHead` consumes them).
+- **Dashboard stats depth** — `AdminDashboardStats` gains `publishedVideos`, `pendingOrders`, `draftContent` (needs-attention flags) and `resourceCounts` (per-resource row counts from the mock stores). DashboardTab: resource index cards are now **clickable quick links with row-count badges**, plus a **needs-attention strip** (pending orders / drafts to review chips that jump to the resource).
+- **Tests** — dashboard-stats +3 (pending/draft derivation, resourceCounts threading; empty-shape updated), full suite **702/702**, tsc 0 errors. Browser-verified (`verify-admin-dashboard-stats.mjs` now 13 checks): resource count badges, an **E2E draft-create → needs-attention chip** flow, and the 8 settings section headers in the edit dialog — ALL PASS, zero console errors.
+
 ### P2 admin — dashboard analytics charts + recent activity (finefoods-template pattern)
 
 Following Refine's template docs (react-admin-panel finefoods example — dashboard with "insightful charts" + activity overview):

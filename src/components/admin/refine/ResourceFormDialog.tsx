@@ -284,20 +284,27 @@ export function ResourceFormDialog({ resource, initial, onClose }: ResourceFormD
           }}
           className="space-y-4"
         >
-          {def.fields.map((f) => (
-            <div key={f.key} className="space-y-1">
-              <Label htmlFor={`field-${f.key}`} className="text-xs">
-                {bn ? f.labelBn : f.labelEn}
-                {f.required && <span className="text-destructive"> *</span>}
-              </Label>
-              <FieldControl
-                field={f}
-                value={values[f.key]}
-                disabled={!writable}
-                onChange={(v) => setValues((prev) => ({ ...prev, [f.key]: v }))}
-              />
-            </div>
-          ))}
+          {def.fields.map((f, index) => {
+            const prevSection = index > 0 ? def.fields[index - 1].section : undefined;
+            const showSection = f.section && f.section !== prevSection;
+            return (
+              <div key={f.key} className="space-y-1">
+                {showSection && (
+                  <h4 className="pt-2 font-serif text-sm text-foreground">{f.section}</h4>
+                )}
+                <Label htmlFor={`field-${f.key}`} className="text-xs">
+                  {bn ? f.labelBn : f.labelEn}
+                  {f.required && <span className="text-destructive"> *</span>}
+                </Label>
+                <FieldControl
+                  field={f}
+                  value={values[f.key]}
+                  disabled={!writable}
+                  onChange={(v) => setValues((prev) => ({ ...prev, [f.key]: v }))}
+                />
+              </div>
+            );
+          })}
 
           <DialogFooter className="pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={formLoading}>

@@ -42,6 +42,12 @@ export interface ResourceField {
   required?: boolean;
   /** When true the field is shown but read-only in the form. */
   readOnly?: boolean;
+  /**
+   * Optional grouping header rendered above the field (e.g. "SEO" for a
+   * settings form) — a header appears when the section changes between
+   * consecutive fields.
+   */
+  section?: string;
 }
 
 export interface ResourceColumn {
@@ -81,6 +87,8 @@ const BOOK_FIELDS: ResourceField[] = [
   { key: "description_bn", labelEn: "Description (BN)", labelBn: "বর্ণনা (বাংলা)", type: "textarea" },
   { key: "tags", labelEn: "Tags", labelBn: "ট্যাগ", type: "tags" },
   { key: "sort_order", labelEn: "Sort", labelBn: "ক্রম", type: "number" },
+  { key: "seo_title", labelEn: "SEO Title", labelBn: "SEO শিরোনাম", type: "text", section: "SEO" },
+  { key: "seo_description", labelEn: "SEO Description", labelBn: "SEO বর্ণনা", type: "textarea" },
 ];
 
 /* ─── Posts ─────────────────────────────────────────────────────── */
@@ -97,6 +105,8 @@ const POST_FIELDS: ResourceField[] = [
   { key: "content_bn", labelEn: "Content (BN)", labelBn: "বিষয়বস্তু (বাংলা)", type: "textarea" },
   { key: "cover_image", labelEn: "Cover URL", labelBn: "প্রচ্ছদ URL", type: "url" },
   { key: "tags", labelEn: "Tags", labelBn: "ট্যাগ", type: "tags" },
+  { key: "seo_title", labelEn: "SEO Title", labelBn: "SEO শিরোনাম", type: "text", section: "SEO" },
+  { key: "seo_description", labelEn: "SEO Description", labelBn: "SEO বর্ণনা", type: "textarea" },
 ];
 
 /* ─── Videos ────────────────────────────────────────────────────── */
@@ -121,6 +131,8 @@ const PAGE_FIELDS: ResourceField[] = [
   { key: "slug", labelEn: "Slug", labelBn: "স্লাগ", type: "text", readOnly: true },
   { key: "visible", labelEn: "Visible", labelBn: "দৃশ্যমান", type: "boolean" },
   { key: "sort_order", labelEn: "Sort", labelBn: "ক্রম", type: "number" },
+  { key: "seo_title", labelEn: "SEO Title", labelBn: "SEO শিরোনাম", type: "text", section: "SEO" },
+  { key: "seo_description", labelEn: "SEO Description", labelBn: "SEO বর্ণনা", type: "textarea" },
 ];
 
 /* ─── Categories (read-only in mock) ────────────────────────────── */
@@ -282,24 +294,54 @@ export const ADMIN_RESOURCE_DEFS: ResourceDef[] = [
     ],
     fields: [
       // Branding
-      { key: "branding.site_name_en", labelEn: "Site Name (EN)", labelBn: "সাইটের নাম (ইংরেজি)", type: "text" },
+      { key: "branding.site_name_en", labelEn: "Site Name (EN)", labelBn: "সাইটের নাম (ইংরেজি)", type: "text", section: "Branding" },
       { key: "branding.site_name_bn", labelEn: "Site Name (BN)", labelBn: "সাইটের নাম (বাংলা)", type: "text" },
       { key: "branding.tagline_en", labelEn: "Tagline (EN)", labelBn: "ট্যাগলাইন (ইংরেজি)", type: "text" },
       { key: "branding.tagline_bn", labelEn: "Tagline (BN)", labelBn: "ট্যাগলাইন (বাংলা)", type: "text" },
+      // Hero
+      { key: "hero.visible", labelEn: "Show Hero", labelBn: "হিরো দেখান", type: "boolean", section: "Hero" },
+      { key: "hero.image_url", labelEn: "Image URL", labelBn: "ছবির URL", type: "url" },
+      { key: "hero.eyebrow_en", labelEn: "Eyebrow (EN)", labelBn: "আইব্রো (ইংরেজি)", type: "text" },
+      { key: "hero.title_en", labelEn: "Title (EN)", labelBn: "শিরোনাম (ইংরেজি)", type: "text" },
+      { key: "hero.title_bn", labelEn: "Title (BN)", labelBn: "শিরোনাম (বাংলা)", type: "text" },
+      { key: "hero.desc_en", labelEn: "Description (EN)", labelBn: "বর্ণনা (ইংরেজি)", type: "textarea" },
+      { key: "hero.desc_bn", labelEn: "Description (BN)", labelBn: "বর্ণনা (বাংলা)", type: "textarea" },
+      { key: "hero.cta_label", labelEn: "CTA Label (EN)", labelBn: "CTA লেবেল (ইংরেজি)", type: "text" },
+      { key: "hero.cta_label_bn", labelEn: "CTA Label (BN)", labelBn: "CTA লেবেল (বাংলা)", type: "text" },
+      { key: "hero.cta_url", labelEn: "CTA URL", labelBn: "CTA URL", type: "text" },
       // Theme
+      { key: "theme.preset", labelEn: "Preset", labelBn: "প্রিসেট", type: "select", options: ["Warm Saffron", "Cool Indigo", "Forest Green", "Minimal Gray", "Elegant Serif", "Modern Clean"], section: "Theme" },
       { key: "theme.accent_color", labelEn: "Accent Color", labelBn: "অ্যাকসেন্ট রঙ", type: "text" },
       { key: "theme.accent_hover", labelEn: "Accent Hover", labelBn: "অ্যাকসেন্ট হোভার", type: "text" },
       { key: "theme.mode", labelEn: "Mode", labelBn: "মোড", type: "select", options: ["light", "dark"] },
       { key: "theme.font_size_base", labelEn: "Base Font Size (px)", labelBn: "বেস ফন্ট সাইজ (px)", type: "number" },
       { key: "theme.radius_scale", labelEn: "Radius Scale", labelBn: "রেডিয়াস স্কেল", type: "number" },
+      { key: "theme.custom_css", labelEn: "Custom CSS", labelBn: "কাস্টম CSS", type: "textarea" },
+      // SEO
+      { key: "seo.meta_desc_en", labelEn: "Meta Description (EN)", labelBn: "মেটা বর্ণনা (ইংরেজি)", type: "textarea", section: "SEO" },
+      { key: "seo.meta_desc_bn", labelEn: "Meta Description (BN)", labelBn: "মেটা বর্ণনা (বাংলা)", type: "textarea" },
+      { key: "seo.og_image_url", labelEn: "OG Image URL", labelBn: "OG ছবি URL", type: "url" },
+      { key: "seo.google_analytics_id", labelEn: "Google Analytics ID", labelBn: "গুগল অ্যানালিটিক্স আইডি", type: "text" },
+      { key: "seo.enable_sitemap", labelEn: "Enable Sitemap", labelBn: "সাইটম্যাপ চালু করুন", type: "boolean" },
+      { key: "seo.site_url", labelEn: "Site URL", labelBn: "সাইট URL", type: "text" },
+      // Social
+      { key: "social.facebook", labelEn: "Facebook", labelBn: "ফেসবুক", type: "url", section: "Social" },
+      { key: "social.twitter", labelEn: "Twitter / X", labelBn: "টুইটার / X", type: "url" },
+      { key: "social.instagram", labelEn: "Instagram", labelBn: "ইনস্টাগ্রাম", type: "url" },
+      { key: "social.linkedin", labelEn: "LinkedIn", labelBn: "লিংকডইন", type: "url" },
+      { key: "social.youtube", labelEn: "YouTube", labelBn: "ইউটিউব", type: "url" },
+      // Footer
+      { key: "footer.copyright_en", labelEn: "Copyright (EN)", labelBn: "কপিরাইট (ইংরেজি)", type: "text", section: "Footer" },
+      { key: "footer.text_en", labelEn: "Footer Text (EN)", labelBn: "ফুটার টেক্সট (ইংরেজি)", type: "textarea" },
+      { key: "footer.explore_title_en", labelEn: "Explore Title (EN)", labelBn: "এক্সপ্লোর শিরোনাম (ইংরেজি)", type: "text" },
       // Book grid
-      { key: "book_grid.page_size", labelEn: "Books per Page", labelBn: "প্রতি পৃষ্ঠায় বই", type: "number" },
+      { key: "book_grid.page_size", labelEn: "Books per Page", labelBn: "প্রতি পৃষ্ঠায় বই", type: "number", section: "Book Grid" },
       { key: "book_grid.columns_mobile", labelEn: "Columns (Mobile)", labelBn: "কলাম (মোবাইল)", type: "select", options: ["1", "2"] },
       { key: "book_grid.columns_tablet", labelEn: "Columns (Tablet)", labelBn: "কলাম (ট্যাবলেট)", type: "select", options: ["2", "3", "4"] },
       { key: "book_grid.columns_desktop", labelEn: "Columns (Desktop)", labelBn: "কলাম (ডেস্কটপ)", type: "select", options: ["3", "4", "5"] },
       { key: "book_grid.gap", labelEn: "Grid Gap (px)", labelBn: "গ্রিড গ্যাপ (px)", type: "number" },
       // Maintenance
-      { key: "maintenance.enabled", labelEn: "Maintenance Mode", labelBn: "রক্ষণাবেক্ষণ মোড", type: "boolean" },
+      { key: "maintenance.enabled", labelEn: "Maintenance Mode", labelBn: "রক্ষণাবেক্ষণ মোড", type: "boolean", section: "Maintenance" },
       { key: "maintenance.title_en", labelEn: "Maintenance Title (EN)", labelBn: "রক্ষণাবেক্ষণ শিরোনাম (ইংরেজি)", type: "text" },
       { key: "maintenance.message_en", labelEn: "Maintenance Message (EN)", labelBn: "রক্ষণাবেক্ষণ বার্তা (ইংরেজি)", type: "textarea" },
     ],

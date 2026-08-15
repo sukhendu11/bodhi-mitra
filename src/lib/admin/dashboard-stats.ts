@@ -9,8 +9,17 @@
  *               dashboard rendering in both modes)
  */
 import { isMockMode } from "@/lib/data-source";
-import { mockFetchAllBooks, mockFetchAllPosts, mockFetchAllVideos } from "@/lib/mock-data";
+import {
+  mockFetchAllBooks,
+  mockFetchAllPosts,
+  mockFetchAllVideos,
+  mockFetchCategories,
+  mockFetchPages,
+  mockFetchPublicNavItems,
+  mockFetchTags,
+} from "@/lib/mock-data";
 import { mockGetAllOrders, mockGetAllPurchases } from "@/lib/mock-commerce";
+import { mockFetchAllProfiles } from "@/lib/mock-session";
 import { mockGetAllNotifications } from "@/lib/mock-notifications";
 
 /** One bucket of the orders-by-status breakdown (finefoods-style analytics). */
@@ -35,6 +44,7 @@ export interface AdminDashboardStats {
   posts: number;
   publishedPosts: number;
   videos: number;
+  publishedVideos: number;
   /** Commerce counts. */
   orders: number;
   paidOrders: number;
@@ -43,6 +53,12 @@ export interface AdminDashboardStats {
   revenue: number;
   /** Orders bucketed by status — feeds the status chart. */
   ordersByStatus: OrderStatusBucket[];
+  /** Unpaid orders awaiting fulfilment — needs-attention flag. */
+  pendingOrders: number;
+  /** Unpublished content rows across books/posts/videos — needs-attention flag. */
+  draftContent: number;
+  /** Row counts per admin resource — feeds the resource index. */
+  resourceCounts: { resource: string; count: number }[];
   /** Latest admin notifications — feeds the activity overview. */
   recentActivity: AdminActivityItem[];
   /** Which backend produced the numbers ("mock" | "pending"). */
@@ -55,11 +71,15 @@ export const EMPTY_DASHBOARD_STATS: AdminDashboardStats = {
   posts: 0,
   publishedPosts: 0,
   videos: 0,
+  publishedVideos: 0,
   orders: 0,
   paidOrders: 0,
   purchases: 0,
   revenue: 0,
   ordersByStatus: [],
+  pendingOrders: 0,
+  draftContent: 0,
+  resourceCounts: [],
   recentActivity: [],
   source: "pending",
 };
@@ -82,23 +102,34 @@ export function bucketOrdersByStatus(
 export function computeAdminDashboardStats(
   books: { status?: string | null }[],
   posts: { status?: string | null }[],
-  videos: unknown[],
+  videos: { status?: string | null }[],
   orders: { status?: string | null; total?: number }[],
   purchases: unknown[],
   activity: AdminActivityItem[] = [],
+  resourceCounts: { resource: string; count: number }[] = [],
 ): AdminDashboardStats {
   const paidOrders = orders.filter((o) => o.status === "paid");
+  const publishedBooks = books.filter((b) => b.status === "published").length;
+  const publishedPosts = posts.filter((p) => p.status === "published").length;
+  const publishedVideos = videos.filter((v) => v.status === "published").length;
   return {
     books: books.length,
-    publishedBooks: books.filter((b) => b.status === "published").length,
+    publishedBooks,
     posts: posts.length,
-    publishedPosts: posts.filter((p) => p.status === "published").length,
+    publishedPosts,
     videos: videos.length,
+    publishedVideos,
     orders: orders.length,
     paidOrders: paidOrders.length,
     purchases: purchases.length,
     revenue: paidOrders.reduce((sum, o) => sum + (o.total ?? 0), 0),
     ordersByStatus: bucketOrdersByStatus(orders),
+    pendingOrders: orders.filter((o) => o.status === "pending").length,
+    draftContent:
+      (books.length - publishedBooks) +
+      (posts.length - publishedPosts) +
+      (videos.length - publishedVideos),
+    resourceCounts,
     recentActivity: activity,
     source: "mock",
   };
@@ -111,13 +142,30 @@ export function computeAdminDashboardStats(
  */
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   if (!isMockMode()) return EMPTY_DASHBOARD_STATS;
-  const [books, posts, videos, orders, purchases, notifications] = await Promise.all([
+  const [
+    books,
+    posts,
+    videos,
+    orders,
+    purchases,
+    notifications,
+    pages,
+    categories,
+    navItems,
+    profiles,
+    tags,
+  ] = await Promise.all([
     Promise.resolve(mockFetchAllBooks()),
     Promise.resolve(mockFetchAllPosts()),
     Promise.resolve(mockFetchAllVideos()),
     mockGetAllOrders(),
     mockGetAllPurchases(),
     mockGetAllNotifications(),
+    Promise.resolve(mockFetchPages()),
+    Promise.resolve(mockFetchCategories()),
+    Promise.resolve(mockFetchPublicNavItems()),
+    mockFetchAllProfiles(),
+    Promise.resolve(mockFetchTags()),
   ]);
   const activity: AdminActivityItem[] = notifications
     .slice(0, 5)
@@ -128,5 +176,17 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       createdAt: String(n.createdAt ?? ""),
       read: Boolean(n.read),
     }));
-  return computeAdminDashboardStats(books, posts, videos, orders, purchases, activity);
+  const resourceCounts = [
+    { resource: "books", count: books.length },
+    { resource: "posts", count: posts.length },
+    { resource: "videos", count: videos.length },
+    { resource: "pages", count: pages.length },
+    { resource: "categories", count: categories.length },
+    { resource: "navigation_items", count: navItems.length },
+    { resource: "orders", count: orders.length },
+    { resource: "profiles", count: profiles.length },
+    { resource: "tags", count: tags.length },
+    { resource: "notifications", count: notifications.length },
+  ];
+  return computeAdminDashboardStats(books, posts, videos, orders, purchases, activity, resourceCounts);
 }
