@@ -2,6 +2,10 @@
 
 ## 2026-08-15
 
+### P1 books model — author/chapters kept denormalized on `books` (docs aligned)
+
+Resolved the P1 "chapters/authors table-level modeling" open item: the shipped P1 delta models authors and chapters **denormalized on the `books` row** — `author_name` + `author_bio_en/bn` columns and `chapters`/`chapter_pages` JSONB — matching exactly what the frontend consumes (no separate `authors`/`chapters` tables exist in any migration). Documentation that promised a relational `authors` table (PROJECT.md §7/§16/§18/§28 + Manual Setup Kit sanity check + AD-029 + AGENTS.md) was corrected to the shipped model, with a relational `authors` table noted as a **future improvement** (multi-author books / author pages). P1 remaining now: only content seeding decisions (mock data is the seed set, executed in P3). No code or schema changed.
+
 ### Refine admin is now the /admin default in mock mode (MockAdminPanel → ?admin=mock preview)
 
 Per the approved direction, the new Refine + shadcn admin is now the default at `/admin` in mock mode for every role — previously full admins (super_admin/admin) landed on the legacy MockAdminPanel and had to use the `?admin=refine` preview seam to see the new design. The old panel remains reachable via `?admin=mock` until its features are fully covered by the Refine admin (Mock Data Removal Strategy).
